@@ -85,9 +85,20 @@ router.post('/readMailInfo', async (req, res) => {
                     console.log(err)
                 } else {
                     if (doc) {
-                        email.aggregate([{ $match: { "user_id": doc.user_id, "is_moved": false } },
-                        { $group: { _id: { "from_email": "$from_email" }, data: { $push: { "labelIds": "$labelIds", "subject": "$subject", "url": "$unsubscribe", "email_id": "$email_id", "history_id": "$historyId" } }, count: { $sum: 1 } } },
-                        { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
+                        email.aggregate([{ $match: { "is_moved": false, "user_id": doc.user_id } },{
+                            $group: {
+                                _id: { "from_email": "$from_email" }, data: {
+                                    $push: {
+                                        "labelIds": "$labelIds",
+                                        "subject": "$subject", "url": "$unsubscribe", "email_id": "$email_id",
+                                        "history_id": "$historyId"
+                                    }
+                                }, count: { $sum: 1 }
+                            }
+                        },
+                            { $sort: { "count": -1 } },
+                            
+                            { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
                             function (err, emailinfos) {
                                 if (err) {
                                     console.log(err)
@@ -271,7 +282,7 @@ function createEmailLabel(user_id, auth) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 async function getRecentEmail(user_id, auth, nextPageToken) {
-    gmail.users.messages.list({ auth: auth, userId: 'me', maxResults: 100, 'pageToken': nextPageToken, q: 'after:2018/05/01' }, async function (err, response) {
+    gmail.users.messages.list({ auth: auth, userId: 'me', maxResults: 100, 'pageToken': nextPageToken, q: 'after:2018/05/04 before:2018/05/06' }, async function (err, response) {
         if (err) {
             console.log('The API returned an error: unknown list msg' + err);
             return;
@@ -325,11 +336,21 @@ let checkEmail = (emailObj, mail, user_id) => {
     let emailInfo = {};
     $('a').each(function (i, elem) {
         let fa = $(this).text();
-        if (fa.toLowerCase().indexOf("unsubscribe") != -1) {
+        if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe")!=-1) {
             url = $(this).attr().href
             console.log($(this).attr().href)
         }
     })
+        // if(url == null){
+            // $('span').each(function (i, elem) {
+            //     if ($(this).text().toLowerCase().indexOf("unsubscribe") != -1) {
+            //         console.log($(this).html())
+            //         // console.log($(this).children('a').attr().href)
+            //         url = $(this).children('a').attr().href
+            //         console.log(url)
+            //     }
+            // })
+        // }
     if (url != null) {
         emailInfo['user_id'] = user_id;
         emailInfo['mail_data'] = mail

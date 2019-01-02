@@ -2,7 +2,7 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-var callIndex = require('./index.js');
+// var callIndex = require('./index.js');
 let mongoose = require('mongoose');
 mongoose.connect("mongodb://localhost:27017/subscribe_development");
 mongoose.connection.once('connected', function () {
