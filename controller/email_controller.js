@@ -87,7 +87,7 @@ router.post('/readMailInfo', async (req, res) => {
                 } else {
                     if (doc) {
                         console.log(doc.user_id)
-                        email.aggregate([{ $match: { "is_moved": false, "user_id": doc.user_id } },{
+                        email.aggregate([{ $match: { "is_moved": !true, "user_id": doc.user_id } },{
                             $group: {
                                 _id: { "from_email": "$from_email" }, data: {
                                     $push: {
@@ -361,7 +361,6 @@ let checkEmail = (emailObj, mail, user_id) => {
         emailInfo['historyId'] = mail.historyId;
         emailInfo['labelIds'] = mail.labelIds;
         emailInfo['unsubscribe'] = url;
-        emailInfo['is_moved'] = false;
         header_raw = mail['payload']['headers']
         header_raw.forEach(data => {
             if (data.name == "From") {
