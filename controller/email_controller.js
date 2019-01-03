@@ -97,7 +97,7 @@ router.post('/readMailInfo', async (req, res) => {
                                 }, count: { $sum: 1 }
                             }
                         },
-                            // { $sort: { "count": -1 } },
+                            { $sort: { "count": -1 } },
                             
                             { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
                             function (err, emailinfos) {
