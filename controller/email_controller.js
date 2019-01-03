@@ -86,6 +86,7 @@ router.post('/readMailInfo', async (req, res) => {
                     console.log(err)
                 } else {
                     if (doc) {
+                        console.log(doc.user_id)
                         email.aggregate([{ $match: { "is_moved": false, "user_id": doc.user_id } },{
                             $group: {
                                 _id: { "from_email": "$from_email" }, data: {
@@ -104,6 +105,7 @@ router.post('/readMailInfo', async (req, res) => {
                                 if (err) {
                                     console.log(err)
                                 } else {
+                                    console.log(emailinfos)
                                     email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_moved": false, "user_id": doc.user_id } },
                                     { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
                                     { $project: { "count": 1 } }],
