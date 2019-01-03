@@ -77,6 +77,7 @@ router.post('/getMailInfo', async (req, res) => {
 
 
 router.post('/readMailInfo', async (req, res) => {
+    console.log("get api called")
     try {
         let auth_id = req.body.authID;
         token_model.findOne({ "token": auth_id },
