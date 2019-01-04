@@ -17,8 +17,7 @@
       }
       console.log("checking in email api");
       console.log(req.body.message.data)
-         const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64')
-         .toString('utf8');
+         const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64');
             var b = new Buffer(req.body.message.data, 'base64')
             var s = b.toString();
             console.log(s)
