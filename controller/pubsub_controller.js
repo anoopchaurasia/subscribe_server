@@ -21,6 +21,7 @@
          .toString('utf8');
          var content;
          try {
+             console.log(dataUtf8encoded)
              content = JSON.parse(dataUtf8encoded);
              var emaildata = content.emailAddress;
              var historyId = content.historyId;
