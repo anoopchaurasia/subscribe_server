@@ -28,11 +28,11 @@
              content = JSON.parse(dataUtf8encoded);
              var emaildata = content.emailAddress;
              var historyId = content.historyId;
+             res.sendStatus(200);
             } catch (ex) {
                 console.log(ex)
-                return res.sendStatus(400);
+                res.sendStatus(400);
             }
-            res.sendStatus(200);
     //     fcmInfo.find({"email":emaildata},{'fcmToken': true,_id:false},async function(err, fcminfo) {
     //         if (err) {
     //                 console.log(err);
