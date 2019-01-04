@@ -12,7 +12,7 @@ const simpleParser = require('mailparser').simpleParser;
 var gmail = google.gmail('v1');
 
 
-router.post('/moveEmailToExpbit', (req, res) => {
+router.post('/moveEmailToExpbit',async (req, res) => {
     try {
         console.log("Move Email Called")
         console.log(req.body);
@@ -20,18 +20,19 @@ router.post('/moveEmailToExpbit', (req, res) => {
         let from_email = req.body.from_email;
         console.log(auth_id, from_email)
         token_model.findOne({ "token": auth_id },
-            function (err, doc) {
+           async function (err, doc) {
                 if (err) {
                     console.log(err)
                 } else {
                     console.log(doc);
-                    auth_token.findOne({ "user_id": doc.user_id }, function (err, tokenInfo) {
+                    auth_token.findOne({ "user_id": doc.user_id },async function (err, tokenInfo) {
                         if (err) {
                             console.log(err)
                         }
                         if (tokenInfo) {
                             console.log(tokenInfo);
-                            check_Token_info(doc.user_id, tokenInfo, from_email, tokenInfo.label_id);
+                            // let labelInfo = await getLabelFromEmail(doc.user_id,tokenInfo,tokenInfo.label_id)
+                            let checkToken = await check_Token_info(doc.user_id, tokenInfo, from_email, tokenInfo.label_id);
                         }
                     })
                 }
@@ -41,6 +42,133 @@ router.post('/moveEmailToExpbit', (req, res) => {
 
     }
 });
+
+
+router.post('/checkLabelInformation',async (req,res)=>{
+    try {
+        console.log("Move Email Called")
+        console.log(req.body);
+        let auth_id = req.body.authID;
+        console.log(auth_id)
+        token_model.findOne({ "token": auth_id },
+            async function (err, doc) {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log(doc);
+                    auth_token.findOne({ "user_id": doc.user_id }, async function (err, tokenInfo) {
+                        if (err) {
+                            console.log(err)
+                        }
+                        if (tokenInfo) {
+                            console.log(tokenInfo);
+                            let labelInfo = await getLabelFromEmail(doc.user_id, tokenInfo, tokenInfo.label_id)
+                        }
+                    })
+                }
+            }
+        );
+    } catch (ex) {
+
+    }
+})
+
+let getLabelFromEmail =async (user_id,token,from_email,label_id)=> {
+    fs.readFile('./client_secret.json',
+        async function processClientSecrets(err, content) {
+            if (err) {
+                console.log('Error loading client secret file: ' + err);
+                return;
+            }
+            console.log(token);
+            let credentials = JSON.parse(content);
+            console.log(credentials);
+            let clientSecret = credentials.installed.client_secret;
+            let clientId = credentials.installed.client_id;
+            let redirectUrl = credentials.installed.redirect_uris[0];
+
+            let OAuth2 = google.auth.OAuth2;
+            let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
+            oauth2Client.credentials = token;
+            let labelInfo = await getListLabel(user_id,oauth2Client,from_email);
+            console.log(labelInfo)
+         });
+}
+
+
+let getListLabel = async (user_id, auth,from_email)=> {
+    const gmail = google.gmail({ version: 'v1', auth });
+    gmail.users.labels.list({
+        userId: 'me',
+    },async (err, res) => {
+        if (err) return console.log('The API returned an error for label: ' + err);
+        if (res) {
+            console.log(res.data);
+            let lbl_id = null;
+            res.data.labels.forEach(lbl => {
+                console.log(lbl.name)
+                if (lbl.name === "ExpenseBit"){
+                    lbl_id=lbl.id;
+                }
+            });
+            console.log(lbl_id);
+            if(lbl_id==null){
+                gmail.users.labels.create({
+                    userId: 'me',
+                    resource: {
+                        "labelListVisibility": "labelShow",
+                        "messageListVisibility": "show",
+                        "name": "ExpenseBit"
+                    }
+                },async (err, res) => {
+                        if (err) return console.log('The API returned an error for label: ' + err);
+                        if(res){
+                            var oldvalue = {
+                                user_id: user_id
+                            };
+                            var newvalues = {
+                                $set: {
+                                    "label_id": res.data.id
+                                }
+                            };
+                            var upsert = {
+                                upsert: true
+                            };
+                            auth_token.updateOne(oldvalue, newvalues, upsert,async function (err, result) {
+                                if (result) {
+                                    console.log(result);
+                                    // return result;
+                                    MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
+                                }
+                            });
+                        }
+                });
+            }else{
+                var oldvalue = {
+                    user_id: user_id
+                };
+                var newvalues = {
+                    $set: {
+                        "label_id": lbl_id
+                    }
+                };
+                var upsert = {
+                    upsert: true
+                };
+                auth_token.updateOne(oldvalue, newvalues, upsert,async function (err, result) {
+                    if (result) {
+                        console.log(result);
+                        // return result;
+                        MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
+                    }
+                });
+            }
+            
+        }
+
+    });
+}
+
 
 router.post('/getMailInfo', async (req, res) => {
     try {
@@ -398,7 +526,7 @@ let checkEmail = (emailObj, mail, user_id) => {
 
 async function check_Token_info(user_id, tokenInfo, from_email, label) {
     if (new Date(tokenInfo.expiry_date) >= new Date()) {
-        moveToExpensebit(user_id, tokenInfo, from_email, label);
+        getLabelFromEmail(user_id, tokenInfo, from_email, label);
     } else {
         let content = await fs.readFileSync('./client_secret.json');
         let cred = JSON.parse(content);
@@ -446,7 +574,7 @@ async function check_Token_info(user_id, tokenInfo, from_email, label) {
                 auth_token.updateOne(oldvalue, newvalues, upsert, function (err, result) {
                     if (result) {
                         console.log(result);
-                        moveToExpensebit(user_id, tokenInfo, from_email, label);
+                        getLabelFromEmail(user_id, tokenInfo, from_email, label);
                     }
                 });
             }
