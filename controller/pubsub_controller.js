@@ -31,7 +31,7 @@
              res.sendStatus(200);
             } catch (ex) {
                 console.log(ex)
-                res.sendStatus(400);
+                res.sendStatus(200);
             }
     //     fcmInfo.find({"email":emaildata},{'fcmToken': true,_id:false},async function(err, fcminfo) {
     //         if (err) {
