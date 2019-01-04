@@ -26,6 +26,7 @@
              var historyId = content.historyId;
              res.sendStatus(200);
         } catch (ex) {
+            console.log(ex)
             return res.sendStatus(400);
         }
     //     fcmInfo.find({"email":emaildata},{'fcmToken': true,_id:false},async function(err, fcminfo) {
