@@ -16,19 +16,18 @@
         return res.sendStatus(400);
       }
       console.log("checking in email api");
-     const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64')
+      console.log(req.body.message.data)
+         const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64')
          .toString('utf8');
-        var content;
-         content = JSON.parse(dataUtf8encoded);
-         console.log(content)
-     res.sendStatus(200);
-         //   const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64')
-    //     .toString('utf8');
-    //   var content;
-    //   try {
-    //     content = JSON.parse(dataUtf8encoded);
-    //     var emaildata = content.emailAddress;
-    //     var historyId = content.historyId;
+         var content;
+         try {
+             content = JSON.parse(dataUtf8encoded);
+             var emaildata = content.emailAddress;
+             var historyId = content.historyId;
+             res.sendStatus(200);
+        } catch (ex) {
+            return res.sendStatus(400);
+        }
     //     fcmInfo.find({"email":emaildata},{'fcmToken': true,_id:false},async function(err, fcminfo) {
     //         if (err) {
     //                 console.log(err);
