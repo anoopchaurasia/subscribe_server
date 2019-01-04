@@ -17,7 +17,8 @@
       }
       console.log("checking in email api");
       console.log(req.body.message.data)
-         const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64');
+         const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64')
+         .toString('utf8');
             var b = new Buffer(req.body.message.data, 'base64')
             var s = b.toString();
             console.log(s)
@@ -27,11 +28,11 @@
              content = JSON.parse(dataUtf8encoded);
              var emaildata = content.emailAddress;
              var historyId = content.historyId;
-             res.sendStatus(200);
-        } catch (ex) {
-            console.log(ex)
-            return res.sendStatus(400);
-        }
+            } catch (ex) {
+                console.log(ex)
+                return res.sendStatus(400);
+            }
+            res.sendStatus(200);
     //     fcmInfo.find({"email":emaildata},{'fcmToken': true,_id:false},async function(err, fcminfo) {
     //         if (err) {
     //                 console.log(err);
