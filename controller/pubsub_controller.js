@@ -11,6 +11,7 @@
 
 
  router.post('/getemail',async (req, res) => {
+     console.log(req)
       console.log(req.body);
       if (!req.body || !req.body.message || !req.body.message.data) {
         return res.sendStatus(400);
