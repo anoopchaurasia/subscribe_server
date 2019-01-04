@@ -16,7 +16,12 @@
         return res.sendStatus(400);
       }
       console.log("checking in email api");
-    //   const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64')
+     const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64')
+         .toString('utf8');
+     var content;
+         content = JSON.parse(dataUtf8encoded);
+         console.log(content)
+         //   const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64')
     //     .toString('utf8');
     //   var content;
     //   try {
