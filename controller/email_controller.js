@@ -159,6 +159,7 @@ let getListLabel = async (user_id, auth,from_email)=> {
                                 if (result) {
                                     console.log(result);
                                     // return result;
+                                      let watch = await watchapi(user_id,oauth2Client);
                                     MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
                                 }
                             });
