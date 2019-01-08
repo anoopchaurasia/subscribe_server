@@ -90,9 +90,30 @@ let getLabelFromEmail =async (user_id,token,from_email,label_id)=> {
             let OAuth2 = google.auth.OAuth2;
             let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
             oauth2Client.credentials = token;
+            // let watch = await watchapi(user_id,oauth2Client);
             let labelInfo = await getListLabel(user_id,oauth2Client,from_email);
             console.log(labelInfo)
          });
+}
+
+let watchapi = (user_id, oauth2Client) =>{
+    var options = {
+        userId: 'me',
+        auth: oauth2Client,
+        resource: {
+            labelIds: ["INBOX","CATEGORY_PROMOTIONS","UNREAD"],
+            topicName: 'projects/retail-1083/topics/subscribeMail'
+        }
+    };
+
+    gmail.users.watch(options, function (err, res) {
+        if (err) {
+            // doSomething here;
+            return;
+        }
+        console.log(res)
+        // doSomething here;
+    });
 }
 
 
@@ -411,7 +432,7 @@ function createEmailLabel(user_id, auth) {
  * Get the recent email from your Gmail account
  *
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */
+ */ 
 async function getRecentEmail(user_id, auth, nextPageToken) {
     gmail.users.messages.list({ auth: auth, userId: 'me', maxResults: 100, 'pageToken': nextPageToken, q: 'after:2018/12/01' }, async function (err, response) {
         if (err) {
@@ -556,7 +577,7 @@ async function check_Token_info(user_id, tokenInfo, from_email, label) {
             if (body) {
                 body = JSON.parse(body);
                 let milisec = new Date().getTime();
-                milisec = milisec + body.expires_in;
+                milisec = milisec + (body.expires_in*1000);
                 tokenInfo.accessToken = body.access_token;
                 tokenInfo.expiry_date = new Date(milisec);
                 var oldvalue = {
@@ -621,7 +642,7 @@ async function extract_token(user_id, tokenInfo) {
                 body = JSON.parse(body);
                 console.log(body);
                 let milisec = new Date().getTime();
-                milisec = milisec + body.expires_in;
+                milisec = milisec + (body.expires_in*1000);
                 tokenInfo.accessToken = body.access_token;
                 tokenInfo.expiry_date = new Date(milisec);
                 var oldvalue = {
