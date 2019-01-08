@@ -33,6 +33,7 @@ router.post('/moveEmailToExpbit',async (req, res) => {
                             console.log(tokenInfo);
                             // let labelInfo = await getLabelFromEmail(doc.user_id,tokenInfo,tokenInfo.label_id)
                             let checkToken = await check_Token_info(doc.user_id, tokenInfo, from_email, tokenInfo.label_id);
+                            res.sendStatus(200);
                         }
                     })
                 }
@@ -159,7 +160,7 @@ let getListLabel = async (user_id, auth,from_email)=> {
                                 if (result) {
                                     console.log(result);
                                     // return result;
-                                      let watch = await watchapi(user_id,oauth2Client);
+                                      let watch = await watchapi(user_id,auth);
                                     await MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
                                 }
                             });
