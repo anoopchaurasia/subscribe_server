@@ -372,18 +372,20 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
             labelarry[0] = label;
             console.log(labelarry)
             mailList.forEach(oneEmail => {
-                gmail.users.messages.modify({
-                    userId: 'me',
-                    'id': oneEmail.email_id,
-                    resource: {
-                        'addLabelIds': labelarry,
-                    }
-                }, (err, res) => {
-                    if (err) return console.log('The API returned an error: ' + err);
-                    if (res) {
-                        console.log(res);
-                    }
-                });
+                if(oneEmail.email_id){
+                    gmail.users.messages.modify({
+                        userId: 'me',
+                        'id': oneEmail.email_id,
+                        resource: {
+                            'addLabelIds': labelarry,
+                        }
+                    }, (err, res) => {
+                        if (err) return console.log('The API returned an error: ' + err);
+                        if (res) {
+                            console.log(res);
+                        }
+                    });
+                }
             });
         });
 }
