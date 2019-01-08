@@ -160,7 +160,7 @@ let getListLabel = async (user_id, auth,from_email)=> {
                                     console.log(result);
                                     // return result;
                                       let watch = await watchapi(user_id,oauth2Client);
-                                    MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
+                                    await MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
                                 }
                             });
                         }
@@ -181,7 +181,7 @@ let getListLabel = async (user_id, auth,from_email)=> {
                     if (result) {
                         console.log(result);
                         // return result;
-                        MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
+                       await  MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
                     }
                 });
             }
@@ -346,7 +346,7 @@ let moveToExpensebit = (user_id, token, from_email, label) => {
 
 
 
-function MoveMailFromInBOX(user_id, auth, from_email, label) {
+async function MoveMailFromInBOX(user_id, auth, from_email, label) {
     const gmail = google.gmail({ version: 'v1', auth });
     email.find({ "from_email": from_email },
         function (err, mailList) {
