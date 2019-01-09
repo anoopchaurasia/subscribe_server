@@ -191,13 +191,13 @@ router.post('/getemail', async (req, response) => {
                         }
                     })
                 }else{
-                    res.sendStatus(400);
+                    response.sendStatus(400);
                 }
             }
         );
     } catch (ex) {
         console.log(ex)
-        res.sendStatus(400);
+        response.sendStatus(400);
     }
 });
 
