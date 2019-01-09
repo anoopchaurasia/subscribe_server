@@ -40,15 +40,14 @@ router.post('/getemail', async (req, response) => {
             async function (err, doc) {
                 if (err) {
                     console.log(err)
-                } else {
+                } 
+                if(doc){
                     console.log(doc)
                     auth_token.findOne({ "user_id": doc._id }, async function (err, tokenInfo) {
                         if (err) {
                             console.log(err)
                         }
                         if (tokenInfo) {
-                            // let historyID = req.body.historyID;
-                            console.log(tokenInfo.expiry_date, new Date())
                             if (tokenInfo.expiry_date >= new Date()) {
                                 tokenInfo.expiry_date = tokenInfo.expiry_date.getTime();
                                 fs.readFile('./client_secret.json',
@@ -90,17 +89,9 @@ router.post('/getemail', async (req, response) => {
                                                 });
                                                 console.log(messageIDS)
                                                 getRecentEmail(doc._id, oauth2Client, messageIDS, null);
-                                                // response.status(200).json({
-                                                //     error: false,
-                                                //     data: messageIDS
-                                                // })
                                                 response.sendStatus(200);
                                             } else if (data && !data.history) {
                                                 response.sendStatus(200);
-                                                // response.status(200).json({
-                                                //     error: false,
-                                                //     data: "no msg ids"
-                                                // })
                                             }
 
                                         });
@@ -138,15 +129,9 @@ router.post('/getemail', async (req, response) => {
                                         body = JSON.parse(body);
                                         // console.log(body);
                                         let milisec = new Date().getTime();
-                                        console.log(milisec)
-                                        console.log(body.expires_in)
-                                        console.log(new Date(milisec))
                                         milisec = milisec + (body.expires_in * 1000);
-                                        console.log(milisec)
-                                        console.log(new Date(milisec))
                                         tokenInfo.accessToken = body.access_token;
                                         tokenInfo.expiry_date = new Date(milisec);
-                                        console.log(tokenInfo.expiry_date)
                                         var oldvalue = {
                                             user_id: doc._id
                                         };
@@ -162,25 +147,14 @@ router.post('/getemail', async (req, response) => {
                                         auth_token.updateOne(oldvalue, newvalues, upsert, async function (err, result) {
                                             if (result) {
                                                 console.log(result)
-                                                // fs.readFile('./client_secret.json',
-                                                //     async function processClientSecrets(err, coontent) {
-                                                //         if (err) {
-                                                //             console.log('Error loading client secret file: ' + err);
-                                                //             return;
-                                                //         }
-                                                //         let credentials = JSON.parse(coontent);
-                                                // let clientSecret = credentials.installed.client_secret;
-                                                // let clientId = credentials.installed.client_id;
                                                 let redirectUrl = cred.installed.redirect_uris[0];
 
                                                 let OAuth2 = google.auth.OAuth2;
                                                 let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
                                                 oauth2Client.credentials = tokenInfo;
-                                                // let watch = await historyListapi(oauth2Client, historyID);
                                                 var options = {
                                                     userId: 'me',
                                                     'startHistoryId': historyID,
-                                                    // 'pageToken': nextPageToken,
                                                     auth: oauth2Client
 
                                                 };
@@ -201,22 +175,13 @@ router.post('/getemail', async (req, response) => {
                                                         });
                                                         console.log(messageIDS)
                                                         getRecentEmail(doc._id, oauth2Client, messageIDS, null);
-                                                        // response.status(200).json({
-                                                        //     error: false,
-                                                        //     data: messageIDS
-                                                        // })
                                                         response.sendStatus(200);
                                                     } else if (data && !data.history) {
                                                         response.sendStatus(200);
-                                                        // response.status(200).json({
-                                                        //     error: false,
-                                                        //     data: "no msg ids"
-                                                        // })
                                                     }
 
                                                 });
-                                                // });
-
+             
                                             }
                                         });
                                     }
@@ -225,10 +190,11 @@ router.post('/getemail', async (req, response) => {
 
                         }
                     })
+                }else{
+                    res.sendStatus(400);
                 }
             }
         );
-        // res.sendStatus(200);
     } catch (ex) {
         console.log(ex)
         res.sendStatus(400);
@@ -444,8 +410,9 @@ async function getRecentEmail(user_id, auth,messageIDS, nextPageToken) {
                     console.log('The API returned an error getting: ' + err);
                     return;
                 }
-                console.log(response.data)
+                // console.log(response.data)
                 let header_raw = response['data']['payload']['headers'];
+                // console.log(header_raw)
                 let head;
                 header_raw.forEach(data => {
                     if (data.name == "Subject") {
@@ -489,7 +456,7 @@ let checkEmail = (emailObj, mail, user_id) => {
         let fa = $(this).text();
         if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1) {
             url = $(this).attr().href
-            console.log($(this).attr().href)
+            // console.log($(this).attr().href)
         }
     })
     if (url != null) {
@@ -503,7 +470,9 @@ let checkEmail = (emailObj, mail, user_id) => {
         header_raw = mail['payload']['headers']
         header_raw.forEach(data => {
             if (data.name == "From") {
-                emailInfo['from_email'] = data.value;
+                let from_data = data.value.indexOf("<") != -1 ? data.value.split("<")[1].replace(">", "") : data.value;
+                emailInfo['from_email_name'] = data.value;
+                emailInfo['from_email'] = from_data;
             } else if (data.name == "To") {
                 emailInfo['to_email'] = data.value;
             } else if (data.name == "Subject") {

@@ -24,6 +24,10 @@ var email = new Schema({
         type: String,
         es_indexed: true
     },
+    from_email_name: {
+        type: String,
+        es_indexed: true
+    },
     to_email: {
         type: String,
         es_indexed: false

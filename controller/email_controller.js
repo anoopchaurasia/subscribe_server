@@ -32,8 +32,12 @@ router.post('/moveEmailToExpbit',async (req, res) => {
                         if (tokenInfo) {
                             console.log(tokenInfo);
                             // let labelInfo = await getLabelFromEmail(doc.user_id,tokenInfo,tokenInfo.label_id)
-                            let checkToken = await check_Token_info(doc.user_id, tokenInfo, from_email, tokenInfo.label_id);
-                            res.sendStatus(200);
+                            check_Token_info(doc.user_id, tokenInfo, from_email, tokenInfo.label_id);
+                            res.status(200).json({
+                                error: false,
+                                data: "moving"
+                            })
+
                         }
                     })
                 }
@@ -243,8 +247,11 @@ router.post('/readMailInfo', async (req, res) => {
                                 _id: { "from_email": "$from_email" }, data: {
                                     $push: {
                                         "labelIds": "$labelIds",
-                                        "subject": "$subject", "url": "$unsubscribe", "email_id": "$email_id",
-                                        "history_id": "$historyId"
+                                        "subject": "$subject", 
+                                        "url": "$unsubscribe", 
+                                        "email_id": "$email_id",
+                                        "history_id": "$historyId",
+                                        "from_email_name": "$from_email_name"
                                     }
                                 }, count: { $sum: 1 }
                             }
@@ -518,7 +525,9 @@ let checkEmail = (emailObj, mail, user_id) => {
         header_raw = mail['payload']['headers']
         header_raw.forEach(data => {
             if (data.name == "From") {
-                emailInfo['from_email'] = data.value;
+                let from_data = data.value.indexOf("<") != -1 ? data.value.split("<")[1].replace(">", "") : data.value;
+                emailInfo['from_email_name'] = data.value;
+                emailInfo['from_email'] = from_data;
             } else if (data.name == "To") {
                 emailInfo['to_email'] = data.value;
             } else if (data.name == "Subject") {
