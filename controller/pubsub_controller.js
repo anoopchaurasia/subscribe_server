@@ -24,15 +24,15 @@ router.post('/getemail', async (req, response) => {
         return res.sendStatus(400);
     }
     console.log("checking in email api");
-    console.log(req.body.message.data)
+    // console.log(req.body.message.data)
     const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64')
         .toString('utf8');
-    var b = new Buffer(req.body.message.data, 'base64')
-    var s = b.toString();
-    console.log(s)
+    // var b = new Buffer(req.body.message.data, 'base64')
+    // var s = b.toString();
+    // console.log(s)
     var content;
     try {
-        console.log(dataUtf8encoded)
+        // console.log(dataUtf8encoded)
         content = JSON.parse(dataUtf8encoded);
         var email_id = content.emailAddress;
         var historyID = content.historyId;
@@ -40,8 +40,8 @@ router.post('/getemail', async (req, response) => {
             async function (err, doc) {
                 if (err) {
                     console.log(err)
-                } 
-                if(doc){
+                }
+                if (doc) {
                     console.log(doc)
                     auth_token.findOne({ "user_id": doc._id }, async function (err, tokenInfo) {
                         if (err) {
@@ -99,7 +99,13 @@ router.post('/getemail', async (req, response) => {
 
                             } else {
                                 console.log("expire")
-                                let content = await fs.readFileSync('./client_secret.json');
+                                // let content = await fs.readFileSync('./client_secret.json');
+                                fs.readFile('./client_secret.json',
+                                    async function processClientSecrets(err, content) {
+                                        if (err) {
+                                            console.log('Error loading client secret file: ' + err);
+                                            return;
+                                        }
                                 let cred = JSON.parse(content);
                                 let clientSecret = cred.installed.client_secret;
                                 let clientId = cred.installed.client_id;
@@ -181,16 +187,17 @@ router.post('/getemail', async (req, response) => {
                                                     }
 
                                                 });
-             
+
                                             }
                                         });
                                     }
                                 });
+                                 });
                             }
 
                         }
                     })
-                }else{
+                } else {
                     response.sendStatus(400);
                 }
             }
@@ -202,7 +209,7 @@ router.post('/getemail', async (req, response) => {
 });
 
 
-router.post('/gethistoryList', async function(req, response){
+router.post('/gethistoryList', async function (req, response) {
     console.log(req.body);
     try {
         console.log(req.body);
@@ -219,7 +226,7 @@ router.post('/gethistoryList', async function(req, response){
                         }
                         if (tokenInfo) {
                             let historyID = req.body.historyID;
-                            console.log(tokenInfo.expiry_date,new Date())
+                            console.log(tokenInfo.expiry_date, new Date())
                             if (tokenInfo.expiry_date >= new Date()) {
                                 tokenInfo.expiry_date = tokenInfo.expiry_date.getTime();
                                 fs.readFile('./client_secret.json',
@@ -277,7 +284,13 @@ router.post('/gethistoryList', async function(req, response){
 
                             } else {
                                 console.log("expire")
-                                let content = await fs.readFileSync('./client_secret.json');
+                                // let content = await fs.readFileSync('./client_secret.json');
+                                fs.readFile('./client_secret.json',
+                                    async function processClientSecrets(err, content) {
+                                        if (err) {
+                                            console.log('Error loading client secret file: ' + err);
+                                            return;
+                                        }
                                 let cred = JSON.parse(content);
                                 let clientSecret = cred.installed.client_secret;
                                 let clientId = cred.installed.client_id;
@@ -310,7 +323,7 @@ router.post('/gethistoryList', async function(req, response){
                                         console.log(milisec)
                                         console.log(body.expires_in)
                                         console.log(new Date(milisec))
-                                        milisec = milisec + (body.expires_in*1000);
+                                        milisec = milisec + (body.expires_in * 1000);
                                         console.log(milisec)
                                         console.log(new Date(milisec))
                                         tokenInfo.accessToken = body.access_token;
@@ -345,6 +358,7 @@ router.post('/gethistoryList', async function(req, response){
                                                 let OAuth2 = google.auth.OAuth2;
                                                 let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
                                                 oauth2Client.credentials = tokenInfo;
+                                                console.log(oauth2Client)
                                                 // let watch = await historyListapi(oauth2Client, historyID);
                                                 var options = {
                                                     userId: 'me',
@@ -369,7 +383,7 @@ router.post('/gethistoryList', async function(req, response){
                                                             });
                                                         });
                                                         console.log(messageIDS)
-                                                        getRecentEmail(doc._id,oauth2Client,messageIDS,null);
+                                                        getRecentEmail(doc._id, oauth2Client, messageIDS, null);
                                                         response.status(200).json({
                                                             error: false,
                                                             data: messageIDS
@@ -388,7 +402,7 @@ router.post('/gethistoryList', async function(req, response){
                                         });
                                     }
                                 });
-                            }
+                         }); }
 
                         }
                     })
@@ -402,56 +416,56 @@ router.post('/gethistoryList', async function(req, response){
 });
 
 
-async function getRecentEmail(user_id, auth,messageIDS, nextPageToken) {
+async function getRecentEmail(user_id, auth, messageIDS, nextPageToken) {
     messageIDS.forEach(mids => {
-       
-            gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }, async function (err, response) {
-                if (err) {
-                    console.log('The API returned an error getting: ' + err);
-                    return;
+
+        gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }, async function (err, response) {
+            if (err) {
+                console.log('The API returned an error getting: ' + err);
+                return;
+            }
+            // console.log(response.data)
+            let header_raw = response['data']['payload']['headers'];
+            // console.log(header_raw)
+            let head;
+            header_raw.forEach(data => {
+                if (data.name == "Subject") {
+                    head = data.value
+                    // console.log(head)
                 }
-                // console.log(response.data)
-                let header_raw = response['data']['payload']['headers'];
-                // console.log(header_raw)
-                let head;
-                header_raw.forEach(data => {
-                    if (data.name == "Subject") {
-                        head = data.value
-                        console.log(head)
+            });
+            if (response.data.payload) {
+                let message_raw = response.data.payload.parts[0].body.data;
+                let data = message_raw;
+                buff = new Buffer(data, 'base64');
+                text = buff.toString();
+                simpleParser(text, (err, parsed) => {
+                    if (parsed) {
+                        if (parsed['text']) {
+                            checkEmail(parsed['text'], response['data'], user_id, auth);
+                        }
+                        if (parsed['headerLines']) {
+                            checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
+                        }
+                        if (parsed['textAsHtml']) {
+                            checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
+                        }
                     }
                 });
-                if (response.data.payload) {
-                    let message_raw = response.data.payload.parts[0].body.data;
-                    let data = message_raw;
-                    buff = new Buffer(data, 'base64');
-                    text = buff.toString();
-                    simpleParser(text, (err, parsed) => {
-                        if (parsed) {
-                            if (parsed['text']) {
-                                checkEmail(parsed['text'], response['data'], user_id);
-                            }
-                            if (parsed['headerLines']) {
-                                checkEmail(parsed.headerLines[0].line, response['data'], user_id);
-                            }
-                            if (parsed['textAsHtml']) {
-                                checkEmail(parsed['textAsHtml'], response['data'], user_id);
-                            }
-                        }
-                    });
-                }
-            
-    });
+            }
+
+        });
 
     });
 }
 
 
 
-let checkEmail = (emailObj, mail, user_id) => {
+let checkEmail = (emailObj, mail, user_id, auth) => {
     $ = cheerio.load(emailObj)
     let url = null;
     let emailInfo = {};
-    
+
     $('a').each(function (i, elem) {
         let fa = $(this).text();
         if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1) {
@@ -489,12 +503,18 @@ let checkEmail = (emailObj, mail, user_id) => {
                         if (err) {
                             console.log(err)
                         } else {
+                            console.log(doc)
+                            console.log(emailInfo)
+                            email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true },
+                                function (err, mailList) {
+                                    if (mailList) {
+                                        getListLabel(user_id, auth, mailList)
+                                    }
+                                });
                         }
-                    }
-                    );
+                    });
                 }
-            }
-            );
+            });
         } catch (err) {
             console.log(err)
         }
@@ -502,6 +522,120 @@ let checkEmail = (emailObj, mail, user_id) => {
 }
 
 
+let getListLabel = async (user_id, auth, mailList) => {
+    const gmail = google.gmail({ version: 'v1', auth });
+    gmail.users.labels.list({
+        userId: 'me',
+    }, async (err, res) => {
+        if (err) return console.log('The API returned an error for label: ' + err);
+        if (res) {
+            console.log(res.data);
+            let lbl_id = null;
+            res.data.labels.forEach(lbl => {
+                console.log(lbl.name)
+                if (lbl.name === "ExpenseBit") {
+                    lbl_id = lbl.id;
+                }
+            });
+            console.log(lbl_id);
+            if (lbl_id == null) {
+                gmail.users.labels.create({
+                    userId: 'me',
+                    resource: {
+                        "labelListVisibility": "labelShow",
+                        "messageListVisibility": "show",
+                        "name": "ExpenseBit"
+                    }
+                }, async (err, res) => {
+                    if (err) return console.log('The API returned an error for label: ' + err);
+                    if (res) {
+                        var oldvalue = {
+                            user_id: user_id
+                        };
+                        var newvalues = {
+                            $set: {
+                                "label_id": res.data.id
+                            }
+                        };
+                        var upsert = {
+                            upsert: true
+                        };
+                        auth_token.updateOne(oldvalue, newvalues, upsert, async function (err, result) {
+                            if (result) {
+                                console.log(result);
+                                // return result;
+                                let watch = await watchapi(user_id, auth);
+                                await MoveMailFromInBOX(user_id, auth, mailList, res.data.id);
+                            }
+                        });
+                    }
+                });
+            } else {
+                var oldvalue = {
+                    user_id: user_id
+                };
+                var newvalues = {
+                    $set: {
+                        "label_id": lbl_id
+                    }
+                };
+                var upsert = {
+                    upsert: true
+                };
+                auth_token.updateOne(oldvalue, newvalues, upsert, async function (err, result) {
+                    if (result) {
+                        console.log(result);
+                        // return result;
+                        await MoveMailFromInBOX(user_id, auth, mailList, lbl_id);
+                    }
+                });
+            }
+
+        }
+
+    });
+}
+
+
+
+async function MoveMailFromInBOX(user_id, auth, mailList, label) {
+    const gmail = google.gmail({ version: 'v1', auth });
+    var oldvalue = {
+        user_id: user_id,
+        "from_email": mailList.from_email
+    };
+    var newvalues = {
+        $set: {
+            "is_moved": true
+        }
+    };
+    var upsert = {
+        upsert: true
+    };
+    email.updateMany(oldvalue, newvalues, upsert, function (err, result) {
+        if (result) {
+            console.log(result);
+        }
+    });
+    console.log(label)
+    let labelarry = [];
+    labelarry[0] = label;
+    console.log(labelarry)
+    if (mailList.email_id) {
+        gmail.users.messages.modify({
+            userId: 'me',
+            'id': mailList.email_id,
+            resource: {
+                'addLabelIds': labelarry,
+            }
+        }, (err, res) => {
+            if (err) return console.log('The API returned an error: ' + err);
+            if (res) {
+                console.log(res);
+            }
+        });
+    }
+}
 let historyListapi = async (oauth2Client, historyID) => {
     var options = {
         userId: 'me',

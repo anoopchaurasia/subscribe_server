@@ -297,6 +297,80 @@ router.post('/readMailInfo', async (req, res) => {
 });
 
 
+
+router.post('/readProfileInfo', async (req, res) => {
+    console.log("get api called")
+    try {
+        let auth_id = req.body.authID;
+        token_model.findOne({ "token": auth_id },
+            function (err, doc) {
+                if (err) {
+                    console.log(err)
+                } else {
+                    if (doc) {
+                        console.log(doc.user_id)
+                        email.aggregate([{ $match: {  "user_id": doc.user_id } }, {
+                            $group: {
+                                _id: { "from_email": "$from_email" }, data: {
+                                    $push: {
+                                        "labelIds": "$labelIds",
+                                        "subject": "$subject",
+                                        "url": "$unsubscribe",
+                                        "email_id": "$email_id",
+                                        "history_id": "$historyId",
+                                        "from_email_name": "$from_email_name"
+                                    }
+                                }, count: { $sum: 1 }
+                            }
+                        },
+                        { $sort: { "count": -1 } },
+
+                        { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
+                            function (err, emailinfos) {
+                                if (err) {
+                                    console.log(err)
+                                } else {
+                                    console.log(emailinfos)
+                                    
+                                    email.aggregate([{ $match: { "is_moved": true, "user_id": doc.user_id } }, {
+                                        $group: {
+                                            _id: { "from_email": "$from_email" }, data: {
+                                                $push: {
+                                                    "labelIds": "$labelIds",
+                                                    "subject": "$subject",
+                                                    "url": "$unsubscribe",
+                                                    "email_id": "$email_id",
+                                                    "history_id": "$historyId",
+                                                    "from_email_name": "$from_email_name"
+                                                }
+                                            }, count: { $sum: 1 }
+                                        }
+                                    },
+                                    { $sort: { "count": -1 } },
+
+                                    { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
+                                        function (err, movedMail) {
+                                            if (movedMail) {
+                                                    res.status(200).json({
+                                                        error: false,
+                                                        data: emailinfos,
+                                                        moveMail: movedMail
+                                                    })
+
+                                            }
+                                        });
+                                }
+                            }
+                        );
+                    }
+                }
+            });
+    } catch (err) {
+        console.log(err)
+    }
+});
+
+
 let getMailInfo = async (user_id, token) => {
     fs.readFile('./client_secret.json',
         async function processClientSecrets(err, content) {
