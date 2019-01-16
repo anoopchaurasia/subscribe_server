@@ -6,33 +6,34 @@ let token_model = require('../models/token');
 let Request = require("request");
 let router = express.Router();
 var { google } = require('googleapis');
-const cheerio = require('cheerio')
+const cheerio = require('cheerio');
 const simpleParser = require('mailparser').simpleParser;
 
 var gmail = google.gmail('v1');
 
 
-router.post('/moveEmailToExpbit',async (req, res) => {
+router.post('/moveEmailToExpbit', async (req, res) => {
     try {
-        console.log("Move Email Called")
+        console.log("Move Email Called");
         console.log(req.body);
         let auth_id = req.body.authID;
         let from_email = req.body.from_email;
-        console.log(auth_id, from_email)
+        let is_unscubscribe = req.body.is_unscubscribe;
+        console.log(auth_id, from_email);
         token_model.findOne({ "token": auth_id },
-           async function (err, doc) {
+            async function (err, doc) {
                 if (err) {
-                    console.log(err)
+                    console.log(err);
                 } else {
                     console.log(doc);
-                    auth_token.findOne({ "user_id": doc.user_id },async function (err, tokenInfo) {
+                    auth_token.findOne({ "user_id": doc.user_id }, async function (err, tokenInfo) {
                         if (err) {
-                            console.log(err)
+                            console.log(err);
                         }
                         if (tokenInfo) {
                             console.log(tokenInfo);
                             // let labelInfo = await getLabelFromEmail(doc.user_id,tokenInfo,tokenInfo.label_id)
-                            check_Token_info(doc.user_id, tokenInfo, from_email, tokenInfo.label_id);
+                            check_Token_info(doc.user_id, tokenInfo, from_email, tokenInfo.label_id, is_unscubscribe);
                             res.status(200).json({
                                 error: false,
                                 data: "moving"
@@ -49,21 +50,21 @@ router.post('/moveEmailToExpbit',async (req, res) => {
 });
 
 
-router.post('/checkLabelInformation',async (req,res)=>{
+router.post('/checkLabelInformation', async (req, res) => {
     try {
-        console.log("Move Email Called")
+        console.log("Move Email Called");
         console.log(req.body);
         let auth_id = req.body.authID;
-        console.log(auth_id)
+        console.log(auth_id);
         token_model.findOne({ "token": auth_id },
             async function (err, doc) {
                 if (err) {
-                    console.log(err)
+                    console.log(err);
                 } else {
                     console.log(doc);
                     auth_token.findOne({ "user_id": doc.user_id }, async function (err, tokenInfo) {
                         if (err) {
-                            console.log(err)
+                            console.log(err);
                         }
                         if (tokenInfo) {
                             console.log(tokenInfo);
@@ -78,7 +79,7 @@ router.post('/checkLabelInformation',async (req,res)=>{
     }
 })
 
-let getLabelFromEmail =async (user_id,token,from_email,label_id)=> {
+let getLabelFromEmail = async (user_id, token, from_email, label_id, is_unscubscribe) => {
     fs.readFile('./client_secret.json',
         async function processClientSecrets(err, content) {
             if (err) {
@@ -96,17 +97,17 @@ let getLabelFromEmail =async (user_id,token,from_email,label_id)=> {
             let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
             oauth2Client.credentials = token;
             // let watch = await watchapi(user_id,oauth2Client);
-            let labelInfo = await getListLabel(user_id,oauth2Client,from_email);
-            console.log(labelInfo)
-         });
+            let labelInfo = await getListLabel(user_id, oauth2Client, from_email, is_unscubscribe);
+            console.log(labelInfo);
+        });
 }
 
-let watchapi = (user_id, oauth2Client) =>{
+let watchapi = (user_id, oauth2Client) => {
     var options = {
         userId: 'me',
         auth: oauth2Client,
         resource: {
-            labelIds: ["INBOX","CATEGORY_PROMOTIONS","UNREAD"],
+            labelIds: ["INBOX", "CATEGORY_PROMOTIONS", "UNREAD"],
             topicName: 'projects/retail-1083/topics/subscribeMail'
         }
     };
@@ -122,23 +123,23 @@ let watchapi = (user_id, oauth2Client) =>{
 }
 
 
-let getListLabel = async (user_id, auth,from_email)=> {
+let getListLabel = async (user_id, auth, from_email, is_unscubscribe) => {
     const gmail = google.gmail({ version: 'v1', auth });
     gmail.users.labels.list({
         userId: 'me',
-    },async (err, res) => {
+    }, async (err, res) => {
         if (err) return console.log('The API returned an error for label: ' + err);
         if (res) {
             console.log(res.data);
             let lbl_id = null;
             res.data.labels.forEach(lbl => {
                 console.log(lbl.name)
-                if (lbl.name === "ExpenseBit"){
-                    lbl_id=lbl.id;
+                if (lbl.name === "ExpenseBit") {
+                    lbl_id = lbl.id;
                 }
             });
             console.log(lbl_id);
-            if(lbl_id==null){
+            if (lbl_id == null) {
                 gmail.users.labels.create({
                     userId: 'me',
                     resource: {
@@ -146,31 +147,36 @@ let getListLabel = async (user_id, auth,from_email)=> {
                         "messageListVisibility": "show",
                         "name": "ExpenseBit"
                     }
-                },async (err, res) => {
-                        if (err) return console.log('The API returned an error for label: ' + err);
-                        if(res){
-                            var oldvalue = {
-                                user_id: user_id
-                            };
-                            var newvalues = {
-                                $set: {
-                                    "label_id": res.data.id
-                                }
-                            };
-                            var upsert = {
-                                upsert: true
-                            };
-                            auth_token.updateOne(oldvalue, newvalues, upsert,async function (err, result) {
-                                if (result) {
-                                    console.log(result);
-                                    // return result;
-                                      let watch = await watchapi(user_id,auth);
+                }, async (err, res) => {
+                    if (err) return console.log('The API returned an error for label: ' + err);
+                    if (res) {
+                        var oldvalue = {
+                            user_id: user_id
+                        };
+                        var newvalues = {
+                            $set: {
+                                "label_id": res.data.id
+                            }
+                        };
+                        var upsert = {
+                            upsert: true
+                        };
+                        auth_token.updateOne(oldvalue, newvalues, upsert, async function (err, result) {
+                            if (result) {
+                                console.log(result);
+                                // return result;
+                                console.log(is_unscubscribe)
+                                let watch = await watchapi(user_id, auth);
+                                if (is_unscubscribe){
+                                    await MoveMailFromExpenseBit(user_id, auth, from_email, res.data.id);
+                                }else{
                                     await MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
                                 }
-                            });
-                        }
+                            }
+                        });
+                    }
                 });
-            }else{
+            } else {
                 var oldvalue = {
                     user_id: user_id
                 };
@@ -182,15 +188,20 @@ let getListLabel = async (user_id, auth,from_email)=> {
                 var upsert = {
                     upsert: true
                 };
-                auth_token.updateOne(oldvalue, newvalues, upsert,async function (err, result) {
+                auth_token.updateOne(oldvalue, newvalues, upsert, async function (err, result) {
                     if (result) {
                         console.log(result);
                         // return result;
-                       await  MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
+                        console.log(is_unscubscribe)
+                        if (is_unscubscribe) {
+                            await MoveMailFromExpenseBit(user_id, auth, from_email, lbl_id);
+                        } else {
+                            await MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
+                        }
                     }
                 });
             }
-            
+
         }
 
     });
@@ -200,16 +211,16 @@ let getListLabel = async (user_id, auth,from_email)=> {
 router.post('/getMailInfo', async (req, res) => {
     try {
         let auth_id = req.body.authID;
-        console.log(auth_id)
+        console.log(auth_id);
         token_model.findOne({ "token": auth_id },
             async function (err, doc) {
                 if (err) {
-                    console.log(err)
+                    console.log(err);
                 } else {
                     console.log(doc);
                     auth_token.findOne({ "user_id": doc.user_id }, async function (err, tokenInfo) {
                         if (err) {
-                            console.log(err)
+                            console.log(err);
                         }
                         if (tokenInfo) {
                             console.log(tokenInfo);
@@ -232,23 +243,23 @@ router.post('/getMailInfo', async (req, res) => {
 
 
 router.post('/readMailInfo', async (req, res) => {
-    console.log("get api called")
+    console.log("get api called");
     try {
         let auth_id = req.body.authID;
         token_model.findOne({ "token": auth_id },
             function (err, doc) {
                 if (err) {
-                    console.log(err)
+                    console.log(err);
                 } else {
                     if (doc) {
-                        console.log(doc.user_id)
-                        email.aggregate([{ $match: { "is_moved": false, "user_id": doc.user_id } },{
+                        console.log(doc.user_id);
+                        email.aggregate([{ $match: { "is_moved": false, "user_id": doc.user_id } }, {
                             $group: {
                                 _id: { "from_email": "$from_email" }, data: {
                                     $push: {
                                         "labelIds": "$labelIds",
-                                        "subject": "$subject", 
-                                        "url": "$unsubscribe", 
+                                        "subject": "$subject",
+                                        "url": "$unsubscribe",
                                         "email_id": "$email_id",
                                         "history_id": "$historyId",
                                         "from_email_name": "$from_email_name"
@@ -256,15 +267,153 @@ router.post('/readMailInfo', async (req, res) => {
                                 }, count: { $sum: 1 }
                             }
                         },
-                            { $sort: { "count": -1 } },
-                            
-                            { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
+                        { $sort: { "count": -1 } },
+
+                        { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
                             function (err, emailinfos) {
                                 if (err) {
-                                    console.log(err)
+                                    console.log(err);
                                 } else {
-                                    console.log(emailinfos)
+                                    console.log(emailinfos);
                                     email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_moved": false, "user_id": doc.user_id } },
+                                    { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
+                                    { $project: { "count": 1 } }],
+                                        function (err, unreademail) {
+                                            let unreadData = {};
+                                            if (unreademail) {
+                                                unreademail.forEach(element => {
+                                                    unreadData[element._id.from_email] = element.count
+                                                });
+                                                email.find({ 'user_id': doc.user_id }, function (err, allEmail) {
+                                                    console.log(allEmail.length);
+                                                    res.status(200).json({
+                                                        error: false,
+                                                        data: emailinfos,
+                                                        unreadData: unreadData,
+                                                        totalEmail: allEmail.length
+                                                    })
+                                                });
+
+                                            }
+                                        });
+                                }
+                            }
+                        );
+                    }
+                }
+            });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+
+router.post('/readProfileInfo', async (req, res) => {
+    console.log("get api called");
+    try {
+        let auth_id = req.body.authID;
+        token_model.findOne({ "token": auth_id },
+            function (err, doc) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    if (doc) {
+                        console.log(doc.user_id);
+                        email.aggregate([{ $match: { "user_id": doc.user_id } }, {
+                            $group: {
+                                _id: { "from_email": "$from_email" }, data: {
+                                    $push: {
+                                        "labelIds": "$labelIds",
+                                        "subject": "$subject",
+                                        "url": "$unsubscribe",
+                                        "email_id": "$email_id",
+                                        "history_id": "$historyId",
+                                        "from_email_name": "$from_email_name"
+                                    }
+                                }, count: { $sum: 1 }
+                            }
+                        },
+                        { $sort: { "count": -1 } },
+                        { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
+                            function (err, emailinfos) {
+                                if (err) {
+                                    console.log(err);
+                                } else {
+                                    console.log(emailinfos);
+
+                                    email.aggregate([{ $match: { "is_moved": true, "user_id": doc.user_id } }, {
+                                        $group: {
+                                            _id: { "from_email": "$from_email" }, data: {
+                                                $push: {
+                                                    "labelIds": "$labelIds",
+                                                    "subject": "$subject",
+                                                    "url": "$unsubscribe",
+                                                    "email_id": "$email_id",
+                                                    "history_id": "$historyId",
+                                                    "from_email_name": "$from_email_name"
+                                                }
+                                            }, count: { $sum: 1 }
+                                        }
+                                    },
+                                    { $sort: { "count": -1 } },
+                                    { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
+                                        function (err, movedMail) {
+                                            if (movedMail) {
+                                                res.status(200).json({
+                                                    error: false,
+                                                    data: emailinfos,
+                                                    moveMail: movedMail
+                                                })
+
+                                            }
+                                        });
+                                }
+                            }
+                        );
+                    }
+                }
+            });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+router.post('/getUnsubscribeMailInfo', async (req, res) => {
+    console.log("get api called");
+    try {
+        let auth_id = req.body.authID;
+        token_model.findOne({ "token": auth_id },
+            function (err, doc) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    if (doc) {
+                        console.log(doc.user_id);
+                        email.aggregate([{ $match: { "is_moved": true, "user_id": doc.user_id } }, {
+                            $group: {
+                                _id: { "from_email": "$from_email" }, data: {
+                                    $push: {
+                                        "labelIds": "$labelIds",
+                                        "subject": "$subject",
+                                        "url": "$unsubscribe",
+                                        "email_id": "$email_id",
+                                        "history_id": "$historyId",
+                                        "from_email_name": "$from_email_name"
+                                    }
+                                }, count: { $sum: 1 }
+                            }
+                        },
+                        { $sort: { "count": -1 } },
+
+                        { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
+                            function (err, emailinfos) {
+                                if (err) {
+                                    console.log(err);
+                                } else {
+                                    console.log(emailinfos);
+                                    email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_moved": true, "user_id": doc.user_id } },
                                     { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
                                     { $project: { "count": 1 } }],
                                         function (err, unreademail) {
@@ -296,79 +445,6 @@ router.post('/readMailInfo', async (req, res) => {
     }
 });
 
-
-
-router.post('/readProfileInfo', async (req, res) => {
-    console.log("get api called")
-    try {
-        let auth_id = req.body.authID;
-        token_model.findOne({ "token": auth_id },
-            function (err, doc) {
-                if (err) {
-                    console.log(err)
-                } else {
-                    if (doc) {
-                        console.log(doc.user_id)
-                        email.aggregate([{ $match: {  "user_id": doc.user_id } }, {
-                            $group: {
-                                _id: { "from_email": "$from_email" }, data: {
-                                    $push: {
-                                        "labelIds": "$labelIds",
-                                        "subject": "$subject",
-                                        "url": "$unsubscribe",
-                                        "email_id": "$email_id",
-                                        "history_id": "$historyId",
-                                        "from_email_name": "$from_email_name"
-                                    }
-                                }, count: { $sum: 1 }
-                            }
-                        },
-                        { $sort: { "count": -1 } },
-
-                        { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
-                            function (err, emailinfos) {
-                                if (err) {
-                                    console.log(err)
-                                } else {
-                                    console.log(emailinfos)
-                                    
-                                    email.aggregate([{ $match: { "is_moved": true, "user_id": doc.user_id } }, {
-                                        $group: {
-                                            _id: { "from_email": "$from_email" }, data: {
-                                                $push: {
-                                                    "labelIds": "$labelIds",
-                                                    "subject": "$subject",
-                                                    "url": "$unsubscribe",
-                                                    "email_id": "$email_id",
-                                                    "history_id": "$historyId",
-                                                    "from_email_name": "$from_email_name"
-                                                }
-                                            }, count: { $sum: 1 }
-                                        }
-                                    },
-                                    { $sort: { "count": -1 } },
-
-                                    { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
-                                        function (err, movedMail) {
-                                            if (movedMail) {
-                                                    res.status(200).json({
-                                                        error: false,
-                                                        data: emailinfos,
-                                                        moveMail: movedMail
-                                                    })
-
-                                            }
-                                        });
-                                }
-                            }
-                        );
-                    }
-                }
-            });
-    } catch (err) {
-        console.log(err)
-    }
-});
 
 
 let getMailInfo = async (user_id, token) => {
@@ -428,10 +504,74 @@ let moveToExpensebit = (user_id, token, from_email, label) => {
 
 
 
+async function MoveMailFromExpenseBit(user_id, auth, from_email, label) {
+    const gmail = google.gmail({ version: 'v1', auth });
+    email.find({ "from_email": from_email },
+        function (err, mailList) {
+            let allLabels = [];
+
+            let mailLBL = mailList[0].labelIds.split(",");
+            mailLBL.forEach(lblmail => {
+                if (lblmail != label) {
+                    allLabels.push(lblmail);
+                }
+            });
+            console.log(allLabels);
+            var oldvalue = {
+                user_id: user_id,
+                "from_email": from_email
+            };
+            var newvalues = {
+                $set: {
+                    "is_moved": false
+                }
+            };
+            var upsert = {
+                upsert: true
+            };
+            email.updateMany(oldvalue, newvalues, upsert, function (err, result) {
+                if (result) {
+                    console.log(result);
+                }
+            });
+            // console.log(label)
+            let labelarry = [];
+            labelarry[0] = label;
+            console.log(labelarry)
+            mailList.forEach(oneEmail => {
+                if (oneEmail.email_id) {
+                    gmail.users.messages.modify({
+                        userId: 'me',
+                        'id': oneEmail.email_id,
+                        resource: {
+                            'addLabelIds': allLabels,
+                            "removeLabelIds": labelarry
+                        }
+                    }, (err, res) => {
+                        if (err) return console.log('The API returned an error: ' + err);
+                        if (res) {
+                            console.log(res.data);
+                        }
+                    });
+                }
+            });
+        });
+}
+
+
 async function MoveMailFromInBOX(user_id, auth, from_email, label) {
     const gmail = google.gmail({ version: 'v1', auth });
     email.find({ "from_email": from_email },
         function (err, mailList) {
+            let allLabels = [];
+            
+            let mailLBL = mailList[0].labelIds.split(",");
+            mailLBL.forEach(lblmail => {
+                if(lblmail!=label){
+                    allLabels.push(lblmail);
+                }
+            });
+            console.log(allLabels);
             var oldvalue = {
                 user_id: user_id,
                 "from_email": from_email
@@ -449,22 +589,24 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
                     console.log(result);
                 }
             });
-            console.log(label)
+            // console.log(label)
             let labelarry = [];
             labelarry[0] = label;
-            console.log(labelarry)
+            // console.log(labelarry)
             mailList.forEach(oneEmail => {
-                if(oneEmail.email_id){
+                if (oneEmail.email_id) {
                     gmail.users.messages.modify({
                         userId: 'me',
                         'id': oneEmail.email_id,
                         resource: {
                             'addLabelIds': labelarry,
+                            "removeLabelIds": allLabels
                         }
                     }, (err, res) => {
                         if (err) return console.log('The API returned an error: ' + err);
                         if (res) {
-                            console.log(res);
+                            console.log("scuess")
+                            // console.log(res);
                         }
                     });
                 }
@@ -517,7 +659,7 @@ function createEmailLabel(user_id, auth) {
  * Get the recent email from your Gmail account
  *
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */ 
+ */
 async function getRecentEmail(user_id, auth, nextPageToken) {
     gmail.users.messages.list({ auth: auth, userId: 'me', maxResults: 100, 'pageToken': nextPageToken, q: 'after:2018/12/01' }, async function (err, response) {
         if (err) {
@@ -568,26 +710,27 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
 
 
 let checkEmail = (emailObj, mail, user_id) => {
-    $ = cheerio.load(emailObj)
+    $ = cheerio.load(emailObj);
     let url = null;
     let emailInfo = {};
     $('a').each(function (i, elem) {
         let fa = $(this).text();
-        if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe")!=-1) {
-            url = $(this).attr().href
-            console.log($(this).attr().href)
+        if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1 || 
+            $(this).text().toLowerCase().indexOf("do not wish to receive our mails")!=-1) {
+            url = $(this).attr().href;
+            console.log($(this).attr().href);
         }
     })
-        // if(url == null){
-            // $('span').each(function (i, elem) {
-            //     if ($(this).text().toLowerCase().indexOf("unsubscribe") != -1) {
-            //         console.log($(this).html())
-            //         // console.log($(this).children('a').attr().href)
-            //         url = $(this).children('a').attr().href
-            //         console.log(url)
-            //     }
-            // })
-        // }
+    // if(url == null){
+    // $('span').each(function (i, elem) {
+    //     if ($(this).text().toLowerCase().indexOf("unsubscribe") != -1) {
+    //         console.log($(this).html())
+    //         // console.log($(this).children('a').attr().href)
+    //         url = $(this).children('a').attr().href
+    //         console.log(url)
+    //     }
+    // })
+    // }
     if (url != null) {
         emailInfo['user_id'] = user_id;
         emailInfo['mail_data'] = mail
@@ -611,12 +754,12 @@ let checkEmail = (emailObj, mail, user_id) => {
         try {
             email.findOne({ "email_id": emailInfo.email_id }, function (err, doc) {
                 if (err) {
-                    console.log(err)
-                } 
-                if(!doc){
+                    console.log(err);
+                }
+                if (!doc) {
                     email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }, function (err, doc) {
                         if (err) {
-                            console.log(err)
+                            console.log(err);
                         } else {
                         }
                     }
@@ -625,16 +768,16 @@ let checkEmail = (emailObj, mail, user_id) => {
             }
             );
         } catch (err) {
-            console.log(err)
+            console.log(err);
         }
     }
 }
 
 
 
-async function check_Token_info(user_id, tokenInfo, from_email, label) {
+async function check_Token_info(user_id, tokenInfo, from_email, label, is_unscubscribe) {
     if (new Date(tokenInfo.expiry_date) >= new Date()) {
-        getLabelFromEmail(user_id, tokenInfo, from_email, label);
+        getLabelFromEmail(user_id, tokenInfo, from_email, label, is_unscubscribe);
     } else {
         let content = await fs.readFileSync('./client_secret.json');
         let cred = JSON.parse(content);
@@ -664,7 +807,7 @@ async function check_Token_info(user_id, tokenInfo, from_email, label) {
             if (body) {
                 body = JSON.parse(body);
                 let milisec = new Date().getTime();
-                milisec = milisec + (body.expires_in*1000);
+                milisec = milisec + (body.expires_in * 1000);
                 tokenInfo.accessToken = body.access_token;
                 tokenInfo.expiry_date = new Date(milisec);
                 var oldvalue = {
@@ -682,7 +825,7 @@ async function check_Token_info(user_id, tokenInfo, from_email, label) {
                 auth_token.updateOne(oldvalue, newvalues, upsert, function (err, result) {
                     if (result) {
                         console.log(result);
-                        getLabelFromEmail(user_id, tokenInfo, from_email, label);
+                        getLabelFromEmail(user_id, tokenInfo, from_email, label, is_unscubscribe);
                     }
                 });
             }
@@ -729,7 +872,7 @@ async function extract_token(user_id, tokenInfo) {
                 body = JSON.parse(body);
                 console.log(body);
                 let milisec = new Date().getTime();
-                milisec = milisec + (body.expires_in*1000);
+                milisec = milisec + (body.expires_in * 1000);
                 tokenInfo.accessToken = body.access_token;
                 tokenInfo.expiry_date = new Date(milisec);
                 var oldvalue = {
@@ -756,6 +899,39 @@ async function extract_token(user_id, tokenInfo) {
         });
     }
 }
+
+
+router.post('/unSubscribeMail', async (req, res) => {
+    try {
+        console.log("Unsubscribe Called");
+        console.log(req.body);
+        let from_email = req.body.from_email;
+        console.log(from_email);
+        email.findOne({ "from_email": from_email },
+            function (err, mailList) {
+                console.log(mailList.unsubscribe);
+                var settings = {
+                    "url": mailList.unsubscribe,
+                    "method": "get"
+                }
+
+                console.log(settings);
+                Request(settings, (error, response, body) => {
+                    if (error) {
+                        return console.log(error);
+                    }
+                    if(response){
+                        console.log(response);
+                    }
+                    if (body) {
+                        console.log(body);
+                    }
+                });
+            });
+    } catch (ex) {
+
+    }
+});
 
 
 module.exports = router
