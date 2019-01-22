@@ -12,13 +12,12 @@ const simpleParser = require('mailparser').simpleParser;
 var gmail = google.gmail('v1');
 
 
-router.post('/moveEmailToExpbit', async (req, res) => {
+router.post('/deleteMailFromInbox', async (req, res) => {
     try {
         console.log("Move Email Called");
         console.log(req.body);
         let auth_id = req.body.authID;
         let from_email = req.body.from_email;
-        let is_unscubscribe = req.body.is_unscubscribe;
         console.log(auth_id, from_email);
         token_model.findOne({ "token": auth_id },
             async function (err, doc) {
@@ -33,7 +32,46 @@ router.post('/moveEmailToExpbit', async (req, res) => {
                         if (tokenInfo) {
                             console.log(tokenInfo);
                             // let labelInfo = await getLabelFromEmail(doc.user_id,tokenInfo,tokenInfo.label_id)
-                            check_Token_info(doc.user_id, tokenInfo, from_email, tokenInfo.label_id, is_unscubscribe);
+                            checkTokenLifetime(doc.user_id, tokenInfo, from_email);
+                            res.status(200).json({
+                                error: false,
+                                data: "moving"
+                            })
+
+                        }
+                    })
+                }
+            }
+        );
+    } catch (ex) {
+
+    }
+});
+
+
+router.post('/moveEmailToExpbit', async (req, res) => {
+    try {
+        console.log("Move Email Called");
+        console.log(req.body);
+        let auth_id = req.body.authID;
+        let from_email = req.body.from_email;
+        let is_unscubscribe = req.body.is_unscubscribe;
+        let is_remove_all = req.body.is_remove_all;
+        console.log(auth_id, from_email,is_unscubscribe,is_remove_all);
+        token_model.findOne({ "token": auth_id },
+            async function (err, doc) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log(doc);
+                    auth_token.findOne({ "user_id": doc.user_id }, async function (err, tokenInfo) {
+                        if (err) {
+                            console.log(err);
+                        }
+                        if (tokenInfo) {
+                            console.log(tokenInfo);
+                            // let labelInfo = await getLabelFromEmail(doc.user_id,tokenInfo,tokenInfo.label_id)
+                            check_Token_info(doc.user_id, tokenInfo, from_email, tokenInfo.label_id, is_unscubscribe, is_remove_all);
                             res.status(200).json({
                                 error: false,
                                 data: "moving"
@@ -79,7 +117,7 @@ router.post('/checkLabelInformation', async (req, res) => {
     }
 })
 
-let getLabelFromEmail = async (user_id, token, from_email, label_id, is_unscubscribe) => {
+let getLabelFromEmail = async (user_id, token, from_email, label_id, is_unscubscribe, is_remove_all) => {
     fs.readFile('./client_secret.json',
         async function processClientSecrets(err, content) {
             if (err) {
@@ -97,7 +135,7 @@ let getLabelFromEmail = async (user_id, token, from_email, label_id, is_unscubsc
             let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
             oauth2Client.credentials = token;
             // let watch = await watchapi(user_id,oauth2Client);
-            let labelInfo = await getListLabel(user_id, oauth2Client, from_email, is_unscubscribe);
+            let labelInfo = await getListLabel(user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
             console.log(labelInfo);
         });
 }
@@ -123,7 +161,7 @@ let watchapi = (user_id, oauth2Client) => {
 }
 
 
-let getListLabel = async (user_id, auth, from_email, is_unscubscribe) => {
+let getListLabel = async (user_id, auth, from_email, is_unscubscribe, is_remove_all) => {
     const gmail = google.gmail({ version: 'v1', auth });
     gmail.users.labels.list({
         userId: 'me',
@@ -165,9 +203,11 @@ let getListLabel = async (user_id, auth, from_email, is_unscubscribe) => {
                             if (result) {
                                 console.log(result);
                                 // return result;
-                                console.log(is_unscubscribe)
+                                console.log(is_unscubscribe,is_remove_all)
                                 let watch = await watchapi(user_id, auth);
-                                if (is_unscubscribe){
+                                if(is_remove_all){
+                                    await MoveAllMailFromInBOX(user_id, auth, from_email, res.data.id);
+                                }else if (is_unscubscribe){
                                     await MoveMailFromExpenseBit(user_id, auth, from_email, res.data.id);
                                 }else{
                                     await MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
@@ -193,7 +233,10 @@ let getListLabel = async (user_id, auth, from_email, is_unscubscribe) => {
                         console.log(result);
                         // return result;
                         console.log(is_unscubscribe)
-                        if (is_unscubscribe) {
+                        console.log(is_unscubscribe, is_remove_all)
+                        if (is_remove_all) {
+                            await MoveAllMailFromInBOX(user_id, auth, from_email, lbl_id);
+                        } else if (is_unscubscribe) {
                             await MoveMailFromExpenseBit(user_id, auth, from_email, lbl_id);
                         } else {
                             await MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
@@ -509,8 +552,10 @@ async function MoveMailFromExpenseBit(user_id, auth, from_email, label) {
     email.find({ "from_email": from_email },
         function (err, mailList) {
             let allLabels = [];
-
-            let mailLBL = mailList[0].labelIds.split(",");
+            let mailLBL=[];
+            if(mailList[0].labelIds){
+                mailLBL = mailList[0].labelIds.split(",");
+            }
             mailLBL.forEach(lblmail => {
                 if (lblmail != label) {
                     allLabels.push(lblmail);
@@ -558,6 +603,65 @@ async function MoveMailFromExpenseBit(user_id, auth, from_email, label) {
         });
 }
 
+
+async function MoveAllMailFromInBOX(user_id, auth, from_email, label) {
+    const gmail = google.gmail({ version: 'v1', auth });
+    email.find({ "user_id":user_id,"is_moved":false },
+        function (err, mailList) {
+            var oldvalue = {
+                user_id: user_id
+            };
+            var newvalues = {
+                $set: {
+                    "is_moved": true
+                }
+            };
+            var upsert = {
+                upsert: true
+            };
+            email.updateMany(oldvalue, newvalues, upsert, function (err, result) {
+                if (result) {
+                    console.log(result);
+                }
+            });
+            // console.log(label)
+            let labelarry = [];
+            labelarry[0] = label;
+            console.log(labelarry)
+            mailList.forEach(async oneEmail => {
+                // let allLabels = [];
+                // let mailLBL = oneEmail.labelIds.split(",");
+               
+                if (oneEmail.email_id) {
+                    // mailLBL.forEach(async lblmail => {
+                    //     if (lblmail != label) {
+                    //         allLabels.push(lblmail);
+                    //     }
+                    // });
+                    console.log(oneEmail.main_label);
+                    gmail.users.messages.modify({
+                        userId: 'me',
+                        'id': oneEmail.email_id,
+                        resource: {
+                            'addLabelIds': labelarry,
+                            "removeLabelIds": oneEmail.main_label
+                        }
+                    },async (err, res) => {
+                        if (err) return console.log('The API returned an error: ' + err);
+                        if (res) {
+                            console.log("scuess all")
+                            console.log(res.data);
+                        }
+                    });
+                    sleep(2000);
+                }
+            });
+        });
+}
+
+const sleep = (milliseconds) => {
+    return new Promise(resolve => setTimeout(resolve, milliseconds))
+}
 
 async function MoveMailFromInBOX(user_id, auth, from_email, label) {
     const gmail = google.gmail({ version: 'v1', auth });
@@ -732,13 +836,16 @@ let checkEmail = (emailObj, mail, user_id) => {
     // })
     // }
     if (url != null) {
+       
         emailInfo['user_id'] = user_id;
         emailInfo['mail_data'] = mail
         emailInfo['email_id'] = mail.id;
         emailInfo['historyId'] = mail.historyId;
         emailInfo['labelIds'] = mail.labelIds;
         emailInfo['unsubscribe'] = url;
+        emailInfo['main_label'] = mail.labelIds;
         emailInfo['is_moved'] = false;
+        emailInfo['is_delete'] = false;
         header_raw = mail['payload']['headers']
         header_raw.forEach(data => {
             if (data.name == "From") {
@@ -775,9 +882,9 @@ let checkEmail = (emailObj, mail, user_id) => {
 
 
 
-async function check_Token_info(user_id, tokenInfo, from_email, label, is_unscubscribe) {
+async function check_Token_info(user_id, tokenInfo, from_email, label, is_unscubscribe, is_remove_all) {
     if (new Date(tokenInfo.expiry_date) >= new Date()) {
-        getLabelFromEmail(user_id, tokenInfo, from_email, label, is_unscubscribe);
+        getLabelFromEmail(user_id, tokenInfo, from_email, label, is_unscubscribe, is_remove_all);
     } else {
         let content = await fs.readFileSync('./client_secret.json');
         let cred = JSON.parse(content);
@@ -825,7 +932,7 @@ async function check_Token_info(user_id, tokenInfo, from_email, label, is_unscub
                 auth_token.updateOne(oldvalue, newvalues, upsert, function (err, result) {
                     if (result) {
                         console.log(result);
-                        getLabelFromEmail(user_id, tokenInfo, from_email, label, is_unscubscribe);
+                        getLabelFromEmail(user_id, tokenInfo, from_email, label, is_unscubscribe, is_remove_all);
                     }
                 });
             }
@@ -933,6 +1040,297 @@ router.post('/unSubscribeMail', async (req, res) => {
     }
 });
 
+
+
+async function checkTokenLifetime(user_id, tokenInfo, from_email) {
+    if (new Date(tokenInfo.expiry_date) >= new Date()) {
+        getAllEmailIds(user_id, tokenInfo, from_email);
+    } else {
+        let content = await fs.readFileSync('./client_secret.json');
+        let cred = JSON.parse(content);
+        let clientSecret = cred.installed.client_secret;
+        let clientId = cred.installed.client_id;
+        var body = JSON.stringify({
+            "client_id": clientId,
+            "client_secret": clientSecret,
+            "refresh_token": tokenInfo.refresh_token,
+            "grant_type": 'refresh_token'
+        });
+
+
+        var settings = {
+            "url": "https://www.googleapis.com/oauth2/v4/token",
+            "method": "POST",
+            body: body,
+            "headers": {
+                'Content-Type': 'application/json',
+            }
+        }
+
+        Request(settings, (error, response, body) => {
+            if (error) {
+                return console.log(error);
+            }
+            if (body) {
+                body = JSON.parse(body);
+                let milisec = new Date().getTime();
+                milisec = milisec + (body.expires_in * 1000);
+                tokenInfo.accessToken = body.access_token;
+                tokenInfo.expiry_date = new Date(milisec);
+                var oldvalue = {
+                    user_id: user_id
+                };
+                var newvalues = {
+                    $set: {
+                        access_token: body.access_token,
+                        expiry_date: new Date(milisec)
+                    }
+                };
+                var upsert = {
+                    upsert: true
+                };
+                auth_token.updateOne(oldvalue, newvalues, upsert, function (err, result) {
+                    if (result) {
+                        console.log(result);
+                        getAllEmailIds(user_id, tokenInfo, from_email);
+                    }
+                });
+            }
+        });
+    }
+}
+let getAllEmailIds = async (user_id, token, from_email) => {
+    fs.readFile('./client_secret.json',
+        async function processClientSecrets(err, content) {
+            if (err) {
+                console.log('Error loading client secret file: ' + err);
+                return;
+            }
+            console.log(token);
+            let credentials = JSON.parse(content);
+            console.log(credentials);
+            let clientSecret = credentials.installed.client_secret;
+            let clientId = credentials.installed.client_id;
+            let redirectUrl = credentials.installed.redirect_uris[0];
+
+            let OAuth2 = google.auth.OAuth2;
+            let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
+            oauth2Client.credentials = token;
+            // let watch = await watchapi(user_id,oauth2Client);
+            let mail = await deleteAllEmailsAndMoveToTrash(user_id, oauth2Client, from_email);
+            console.log(mail);
+        });
+}
+
+
+async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email) {
+    const gmail = google.gmail({ version: 'v1', auth });
+    email.find({ "from_email": from_email },
+        function (err, mailList) {
+            let mailIds = [];
+
+
+            mailList.forEach(email => {
+                mailIds.push(email.email_id);
+            });
+            var oldvalue = {
+                user_id: user_id,
+                "from_email": from_email
+            };
+            var newvalues = {
+                $set: {
+                    "is_delete": true
+                }
+            };
+            var upsert = {
+                upsert: true
+            };
+            email.updateMany(oldvalue, newvalues, upsert, function (err, result) {
+                if (result) {
+                    console.log(result);
+                }
+            });
+            console.log(mailIds)
+            mailIds.forEach(mailid => {
+                gmail.users.messages.trash({
+                    userId: 'me',
+                    'id': mailid
+                }, (err, res) => {
+                    if (err) return console.log('The API returned an error: ' + err);
+                    if (res) {
+                        console.log("deleted email")
+                        // console.log(res);
+                    }
+                });
+            });
+        });
+}
+
+async function deleteAllEmails(user_id, auth, from_email) {
+    const gmail = google.gmail({ version: 'v1', auth });
+    email.find({ "from_email": from_email },
+        function (err, mailList) {
+            let mailIds = [];
+
+            
+            mailList.forEach(email => {
+                mailIds.push(email.email_id);
+            });
+            var oldvalue = {
+                user_id: user_id,
+                "from_email": from_email
+            };
+            var newvalues = {
+                $set: {
+                    "is_delete": true
+                }
+            };
+            var upsert = {
+                upsert: true
+            };
+            email.updateMany(oldvalue, newvalues, upsert, function (err, result) {
+                if (result) {
+                    console.log(result);
+                }
+            });
+            console.log(mailIds)
+            mailIds.forEach(mailid => {
+                gmail.users.messages.delete({
+                    userId: 'me',
+                    'id': mailid
+                }, (err, res) => {
+                    if (err) return console.log('The API returned an error: ' + err);
+                    if (res) {
+                        console.log("deleted email")
+                        // console.log(res);
+                    }
+                }); 
+            });
+        });
+}
+
+
+
+router.post('/getDeletedEmailData', async (req, res) => {
+    console.log("get api called");
+    try {
+        let auth_id = req.body.authID;
+        token_model.findOne({ "token": auth_id },
+            function (err, doc) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    if (doc) {
+                        console.log(doc.user_id);
+                        email.aggregate([{ $match: { "is_deleted": true, "user_id": doc.user_id } }, {
+                            $group: {
+                                _id: { "from_email": "$from_email" }, data: {
+                                    $push: {
+                                        "labelIds": "$labelIds",
+                                        "subject": "$subject",
+                                        "url": "$unsubscribe",
+                                        "email_id": "$email_id",
+                                        "history_id": "$historyId",
+                                        "from_email_name": "$from_email_name"
+                                    }
+                                }, count: { $sum: 1 }
+                            }
+                        },
+                        { $sort: { "count": -1 } },
+
+                        { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
+                            function (err, emailinfos) {
+                                if (err) {
+                                    console.log(err);
+                                } else {
+                                    console.log(emailinfos);
+                                    email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_deleted": true, "user_id": doc.user_id } },
+                                    { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
+                                    { $project: { "count": 1 } }],
+                                        function (err, unreademail) {
+                                            let unreadData = {};
+                                            if (unreademail) {
+                                                unreademail.forEach(element => {
+                                                    unreadData[element._id.from_email] = element.count
+                                                });
+                                                email.find({ 'user_id': doc.user_id }, function (err, allEmail) {
+                                                    console.log(allEmail.length);
+                                                    res.status(200).json({
+                                                        error: false,
+                                                        data: emailinfos,
+                                                        unreadData: unreadData,
+                                                        totalEmail: allEmail.length
+                                                    })
+                                                });
+
+                                            }
+                                        });
+                                }
+                            }
+                        );
+                    }
+                }
+            });
+    } catch (err) {
+        console.log(err)
+    }
+});
+
+
+
+router.post('/setMailForDeleteFromInbox', async (req, res) => {
+    console.log("Email Delete Set api called");
+    try {
+        console.log("Move Email Called");
+        console.log(req.body);
+        let auth_id = req.body.authID;
+        let from_email = req.body.from_email;
+        console.log(auth_id, from_email);
+        token_model.findOne({ "token": auth_id },
+            async function (err, doc) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log(doc);
+                    var oldvalue = {
+                        user_id: doc.user_id,
+                        "from_email": from_email
+                    };
+                    var newvalues = {
+                        $set: {
+                            "set_deleted_at": new Date(new Date().getTime() + (86400 * 1000 * 2))
+                        }
+                    };
+                    var upsert = {
+                        upsert: true
+                    };
+                    email.updateMany(oldvalue, newvalues, upsert, function (err, result) {
+                        if (result) {
+                            console.log(result);
+                        }
+                    });
+                    // auth_token.findOne({ "user_id": doc.user_id }, async function (err, tokenInfo) {
+                    //     if (err) {
+                    //         console.log(err);
+                    //     }
+                    //     if (tokenInfo) {
+                    //         console.log(tokenInfo);
+                    //         // let labelInfo = await getLabelFromEmail(doc.user_id,tokenInfo,tokenInfo.label_id)
+                    //         checkTokenLifetime(doc.user_id, tokenInfo, from_email);
+                    //         res.status(200).json({
+                    //             error: false,
+                    //             data: "moving"
+                    //         })
+
+                    //     }
+                    // })
+                }
+            }
+        );
+    } catch (ex) {
+
+    }
+});
 
 module.exports = router
 

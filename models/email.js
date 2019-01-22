@@ -46,6 +46,13 @@ var email = new Schema({
     is_moved: {
         type: Boolean,
         default: false
+    },
+    is_delete:{
+        type:Boolean,
+        default:false
+    },
+    main_label:{
+        type:Array
     }
 });
 
