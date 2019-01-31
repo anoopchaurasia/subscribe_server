@@ -18,7 +18,8 @@ router.post('/deleteMailFromInbox', async (req, res) => {
         console.log(req.body);
         let auth_id = req.body.authID;
         let from_email = req.body.from_email;
-        console.log(auth_id, from_email);
+        let emailIDS = req.body.emailIDS;
+        console.log(auth_id, from_email, emailIDS);
         token_model.findOne({ "token": auth_id },
             async function (err, doc) {
                 if (err) {
@@ -32,7 +33,7 @@ router.post('/deleteMailFromInbox', async (req, res) => {
                         if (tokenInfo) {
                             console.log(tokenInfo);
                             // let labelInfo = await getLabelFromEmail(doc.user_id,tokenInfo,tokenInfo.label_id)
-                            checkTokenLifetime(doc.user_id, tokenInfo, from_email);
+                            checkTokenLifetime(doc.user_id, tokenInfo, from_email, emailIDS);
                             res.status(200).json({
                                 error: false,
                                 data: "moving"
@@ -57,7 +58,7 @@ router.post('/moveEmailToExpbit', async (req, res) => {
         let from_email = req.body.from_email;
         let is_unscubscribe = req.body.is_unscubscribe;
         let is_remove_all = req.body.is_remove_all;
-        console.log(auth_id, from_email,is_unscubscribe,is_remove_all);
+        console.log(auth_id, from_email, is_unscubscribe, is_remove_all);
         token_model.findOne({ "token": auth_id },
             async function (err, doc) {
                 if (err) {
@@ -203,13 +204,13 @@ let getListLabel = async (user_id, auth, from_email, is_unscubscribe, is_remove_
                             if (result) {
                                 console.log(result);
                                 // return result;
-                                console.log(is_unscubscribe,is_remove_all)
+                                console.log(is_unscubscribe, is_remove_all)
                                 let watch = await watchapi(user_id, auth);
-                                if(is_remove_all){
+                                if (is_remove_all) {
                                     await MoveAllMailFromInBOX(user_id, auth, from_email, res.data.id);
-                                }else if (is_unscubscribe){
+                                } else if (is_unscubscribe) {
                                     await MoveMailFromExpenseBit(user_id, auth, from_email, res.data.id);
-                                }else{
+                                } else {
                                     await MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
                                 }
                             }
@@ -552,8 +553,8 @@ async function MoveMailFromExpenseBit(user_id, auth, from_email, label) {
     email.find({ "from_email": from_email },
         function (err, mailList) {
             let allLabels = [];
-            let mailLBL=[];
-            if(mailList[0].labelIds){
+            let mailLBL = [];
+            if (mailList[0].labelIds) {
                 mailLBL = mailList[0].labelIds.split(",");
             }
             mailLBL.forEach(lblmail => {
@@ -564,7 +565,8 @@ async function MoveMailFromExpenseBit(user_id, auth, from_email, label) {
             console.log(allLabels);
             var oldvalue = {
                 user_id: user_id,
-                "from_email": from_email
+                "from_email": from_email,
+                "is_moved": true
             };
             var newvalues = {
                 $set: {
@@ -606,10 +608,11 @@ async function MoveMailFromExpenseBit(user_id, auth, from_email, label) {
 
 async function MoveAllMailFromInBOX(user_id, auth, from_email, label) {
     const gmail = google.gmail({ version: 'v1', auth });
-    email.find({ "user_id":user_id,"is_moved":false },
+    email.find({ "user_id": user_id, "is_moved": false },
         function (err, mailList) {
             var oldvalue = {
-                user_id: user_id
+                user_id: user_id,
+                "is_moved": false
             };
             var newvalues = {
                 $set: {
@@ -631,7 +634,7 @@ async function MoveAllMailFromInBOX(user_id, auth, from_email, label) {
             mailList.forEach(async oneEmail => {
                 // let allLabels = [];
                 // let mailLBL = oneEmail.labelIds.split(",");
-               
+
                 if (oneEmail.email_id) {
                     // mailLBL.forEach(async lblmail => {
                     //     if (lblmail != label) {
@@ -646,7 +649,7 @@ async function MoveAllMailFromInBOX(user_id, auth, from_email, label) {
                             'addLabelIds': labelarry,
                             "removeLabelIds": oneEmail.main_label
                         }
-                    },async (err, res) => {
+                    }, async (err, res) => {
                         if (err) return console.log('The API returned an error: ' + err);
                         if (res) {
                             console.log("scuess all")
@@ -668,17 +671,18 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
     email.find({ "from_email": from_email },
         function (err, mailList) {
             let allLabels = [];
-            
+
             let mailLBL = mailList[0].labelIds.split(",");
             mailLBL.forEach(lblmail => {
-                if(lblmail!=label){
+                if (lblmail != label) {
                     allLabels.push(lblmail);
                 }
             });
             console.log(allLabels);
             var oldvalue = {
                 user_id: user_id,
-                "from_email": from_email
+                "from_email": from_email,
+                "is_moved": false
             };
             var newvalues = {
                 $set: {
@@ -765,7 +769,7 @@ function createEmailLabel(user_id, auth) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 async function getRecentEmail(user_id, auth, nextPageToken) {
-    gmail.users.messages.list({ auth: auth, userId: 'me', maxResults: 100, 'pageToken': nextPageToken, q: 'after:2018/12/01' }, async function (err, response) {
+    gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'after:2018/12/01' }, async function (err, response) {
         if (err) {
             console.log('The API returned an error: unknown list msg' + err);
             return;
@@ -819,8 +823,8 @@ let checkEmail = (emailObj, mail, user_id) => {
     let emailInfo = {};
     $('a').each(function (i, elem) {
         let fa = $(this).text();
-        if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1 || 
-            $(this).text().toLowerCase().indexOf("do not wish to receive our mails")!=-1) {
+        if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1 ||
+            $(this).text().toLowerCase().indexOf("do not wish to receive our mails") != -1) {
             url = $(this).attr().href;
             console.log($(this).attr().href);
         }
@@ -836,7 +840,7 @@ let checkEmail = (emailObj, mail, user_id) => {
     // })
     // }
     if (url != null) {
-       
+
         emailInfo['user_id'] = user_id;
         emailInfo['mail_data'] = mail
         emailInfo['email_id'] = mail.id;
@@ -1021,13 +1025,12 @@ router.post('/unSubscribeMail', async (req, res) => {
                     "url": mailList.unsubscribe,
                     "method": "get"
                 }
-
                 console.log(settings);
                 Request(settings, (error, response, body) => {
                     if (error) {
                         return console.log(error);
                     }
-                    if(response){
+                    if (response) {
                         console.log(response);
                     }
                     if (body) {
@@ -1042,9 +1045,9 @@ router.post('/unSubscribeMail', async (req, res) => {
 
 
 
-async function checkTokenLifetime(user_id, tokenInfo, from_email) {
+async function checkTokenLifetime(user_id, tokenInfo, from_email, emailIDS) {
     if (new Date(tokenInfo.expiry_date) >= new Date()) {
-        getAllEmailIds(user_id, tokenInfo, from_email);
+        getAllEmailIds(user_id, tokenInfo, from_email, emailIDS);
     } else {
         let content = await fs.readFileSync('./client_secret.json');
         let cred = JSON.parse(content);
@@ -1092,14 +1095,16 @@ async function checkTokenLifetime(user_id, tokenInfo, from_email) {
                 auth_token.updateOne(oldvalue, newvalues, upsert, function (err, result) {
                     if (result) {
                         console.log(result);
-                        getAllEmailIds(user_id, tokenInfo, from_email);
+                        getAllEmailIds(user_id, tokenInfo, from_email, emailIDS);
                     }
                 });
             }
         });
     }
 }
-let getAllEmailIds = async (user_id, token, from_email) => {
+
+
+let getAllEmailIds = async (user_id, token, from_email, emailIDS) => {
     fs.readFile('./client_secret.json',
         async function processClientSecrets(err, content) {
             if (err) {
@@ -1112,58 +1117,102 @@ let getAllEmailIds = async (user_id, token, from_email) => {
             let clientSecret = credentials.installed.client_secret;
             let clientId = credentials.installed.client_id;
             let redirectUrl = credentials.installed.redirect_uris[0];
-
             let OAuth2 = google.auth.OAuth2;
             let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
             oauth2Client.credentials = token;
             // let watch = await watchapi(user_id,oauth2Client);
-            let mail = await deleteAllEmailsAndMoveToTrash(user_id, oauth2Client, from_email);
+            let mail = await deleteAllEmailsAndMoveToTrash(user_id, oauth2Client, from_email, emailIDS);
             console.log(mail);
         });
 }
 
 
-async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email) {
+async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS) {
     const gmail = google.gmail({ version: 'v1', auth });
-    email.find({ "from_email": from_email },
-        function (err, mailList) {
-            let mailIds = [];
 
+    if (emailIDS.length != 0) {
 
-            mailList.forEach(email => {
-                mailIds.push(email.email_id);
-            });
+        var upsert = {
+            upsert: true
+        };
+        emailIDS.forEach(emid => {
             var oldvalue = {
                 user_id: user_id,
-                "from_email": from_email
+                "email_id": emid,
+                "is_delete": false
             };
             var newvalues = {
                 $set: {
                     "is_delete": true
                 }
             };
-            var upsert = {
-                upsert: true
-            };
-            email.updateMany(oldvalue, newvalues, upsert, function (err, result) {
+            email.updateOne(oldvalue, newvalues, upsert, function (err, result) {
                 if (result) {
                     console.log(result);
                 }
             });
-            console.log(mailIds)
-            mailIds.forEach(mailid => {
-                gmail.users.messages.trash({
-                    userId: 'me',
-                    'id': mailid
-                }, (err, res) => {
-                    if (err) return console.log('The API returned an error: ' + err);
-                    if (res) {
-                        console.log("deleted email")
-                        // console.log(res);
+        });
+
+
+        console.log(emailIDS)
+        emailIDS.forEach(email_singleid => {
+            console.log(email_singleid)
+            // gmail.users.messages.delete({
+            //     userId: 'me',
+            //     'id': email_singleid
+            // }, (err, res) => {
+            //     if (err) return console.log('The API returned an error: ' + err);
+            //     if (res) {
+            //         console.log("deleted email")
+            //     }
+            // });    
+        });
+
+    } else {
+        email.find({ "from_email": from_email },
+            function (err, mailList) {
+                let mailIds = [];
+
+                mailList.forEach(email => {
+                    mailIds.push(email.email_id);
+                });
+                var oldvalue = {
+                    user_id: user_id,
+                    "from_email": from_email,
+                    "is_delete": false
+                };
+                var newvalues = {
+                    $set: {
+                        "labelIds": "TRASH"
+                    }
+                };
+                var upsert = {
+                    upsert: true
+                };
+                email.updateMany(oldvalue, newvalues, upsert, function (err, result) {
+                    if (result) {
+                        console.log(result);
                     }
                 });
+                console.log(mailIds)
+                let allLabels = ["TRASH"];
+                mailIds.forEach(mailid => {
+                    gmail.users.messages.modify({
+                        userId: 'me',
+                        'id': mailid,
+                        resource: {
+                            'addLabelIds': allLabels
+                        }
+                    }, (err, res) => {
+                        if (err) return console.log('The API returned an error: ' + err);
+                        if (res) {
+                            console.log(res.data);
+                        }
+                    });
+                });
             });
-        });
+    }
+
 }
 
 async function deleteAllEmails(user_id, auth, from_email) {
@@ -1172,13 +1221,13 @@ async function deleteAllEmails(user_id, auth, from_email) {
         function (err, mailList) {
             let mailIds = [];
 
-            
             mailList.forEach(email => {
                 mailIds.push(email.email_id);
             });
             var oldvalue = {
                 user_id: user_id,
-                "from_email": from_email
+                "from_email": from_email,
+                "is_delete": false
             };
             var newvalues = {
                 $set: {
@@ -1204,7 +1253,7 @@ async function deleteAllEmails(user_id, auth, from_email) {
                         console.log("deleted email")
                         // console.log(res);
                     }
-                }); 
+                });
             });
         });
 }
@@ -1222,7 +1271,7 @@ router.post('/getDeletedEmailData', async (req, res) => {
                 } else {
                     if (doc) {
                         console.log(doc.user_id);
-                        email.aggregate([{ $match: { "is_deleted": true, "user_id": doc.user_id } }, {
+                        email.aggregate([{ $match: { $text: { $search: "TRASH" }, "is_delete": false, "user_id": doc.user_id } }, {
                             $group: {
                                 _id: { "from_email": "$from_email" }, data: {
                                     $push: {
@@ -1237,34 +1286,17 @@ router.post('/getDeletedEmailData', async (req, res) => {
                             }
                         },
                         { $sort: { "count": -1 } },
-
                         { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }],
                             function (err, emailinfos) {
                                 if (err) {
                                     console.log(err);
                                 } else {
                                     console.log(emailinfos);
-                                    email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_deleted": true, "user_id": doc.user_id } },
-                                    { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
-                                    { $project: { "count": 1 } }],
-                                        function (err, unreademail) {
-                                            let unreadData = {};
-                                            if (unreademail) {
-                                                unreademail.forEach(element => {
-                                                    unreadData[element._id.from_email] = element.count
-                                                });
-                                                email.find({ 'user_id': doc.user_id }, function (err, allEmail) {
-                                                    console.log(allEmail.length);
-                                                    res.status(200).json({
-                                                        error: false,
-                                                        data: emailinfos,
-                                                        unreadData: unreadData,
-                                                        totalEmail: allEmail.length
-                                                    })
-                                                });
+                                    res.status(200).json({
+                                        error: false,
+                                        data: emailinfos
+                                    })
 
-                                            }
-                                        });
                                 }
                             }
                         );
@@ -1328,7 +1360,6 @@ router.post('/setMailForDeleteFromInbox', async (req, res) => {
             }
         );
     } catch (ex) {
-
     }
 });
 

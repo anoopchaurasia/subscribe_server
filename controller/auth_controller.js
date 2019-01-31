@@ -9,7 +9,7 @@ var uniqid = require('uniqid');
 var readline = require('readline');
 var SCOPES = [
     "https://www.googleapis.com/auth/gmail.readonly", 
-    "profile", 
+    "profile",
     "email",
     "https://mail.google.com/",
     "https://www.googleapis.com/auth/gmail.modify",
@@ -36,16 +36,12 @@ router.post('/signin', async (req, res) => {
                         console.log('Error while trying to retrieve access token', err);
                         return;
                     }
-                    console.log("==========================")
-                    console.log(token);
-                    console.log("==========================")
                     const client = new OAuth2(clientId);
                     const ticket = await client.verifyIdToken({
                         idToken: token.id_token,
                         audience: clientId,
                     });
                     const payload = ticket.getPayload();
-                    console.log(payload);
                     var token_uniqueid = uniqid() + uniqid() + uniqid();
                     users.findOne({
                         'email': payload.email
@@ -104,7 +100,7 @@ router.post('/signin', async (req, res) => {
 
 async function extract_token(user, access_token, refresh_token, id_token, expiry_date, scope, token_type) {
 
-    var tokedata ={
+     var tokedata ={
             "access_token": access_token,
             "refresh_token": refresh_token,
             "id_token": id_token,

@@ -507,6 +507,12 @@ let checkEmail = (emailObj, mail, user_id, auth) => {
                                         getListLabel(user_id, auth, mailList)
                                     }
                                 });
+                            email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true },
+                                function (err, mailList) {
+                                    if (mailList) {
+                                        deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
+                                    }
+                                });
                         }
                     });
                 }
@@ -592,11 +598,14 @@ let getListLabel = async (user_id, auth, mailList) => {
 
 
 
+
+
 async function MoveMailFromInBOX(user_id, auth, mailList, label) {
     const gmail = google.gmail({ version: 'v1', auth });
     var oldvalue = {
         user_id: user_id,
-        "from_email": mailList.from_email
+        "from_email": mailList.from_email,
+        "is_moved":false
     };
     var newvalues = {
         $set: {
@@ -616,6 +625,7 @@ async function MoveMailFromInBOX(user_id, auth, mailList, label) {
     labelarry[0] = label;
     console.log(labelarry)
     if (mailList.email_id) {
+        
         gmail.users.messages.modify({
             userId: 'me',
             'id': mailList.email_id,
@@ -631,6 +641,49 @@ async function MoveMailFromInBOX(user_id, auth, mailList, label) {
     }
 }
 
+
+async function deleteEmailsAndMoveToTrash(user_id, auth, from_email) {
+    const gmail = google.gmail({ version: 'v1', auth });
+    email.find({ "from_email": from_email },
+        function (err, mailList) {
+            let mailIds = [];
+
+            mailList.forEach(email => {
+                mailIds.push(email.email_id);
+            });
+            var oldvalue = {
+                user_id: user_id,
+                "from_email": from_email,
+                "is_delete":false
+            };
+            var newvalues = {
+                $set: {
+                    "is_delete": true
+                }
+            };
+            var upsert = {
+                upsert: true
+            };
+            email.updateMany(oldvalue, newvalues, upsert, function (err, result) {
+                if (result) {
+                    console.log(result);
+                }
+            });
+            console.log(mailIds)
+            mailIds.forEach(mailid => {
+                gmail.users.messages.trash({
+                    userId: 'me',
+                    'id': mailid
+                }, (err, res) => {
+                    if (err) return console.log('The API returned an error: ' + err);
+                    if (res) {
+                        console.log("deleted email")
+                        // console.log(res);
+                    }
+                });
+            });
+        });
+}
 
 let historyListapi = async (oauth2Client, historyID) => {
     var options = {
