@@ -525,7 +525,7 @@ let checkEmail = (emailObj, mail, user_id, auth) => {
                                 } 
                                 if(tokenInfo){
                                     var message = {
-                                        to: 'registration_token',
+                                        to: tokenInfo.fcm_token,
                                         collapse_key: 'geern',
 
                                         notification: {
