@@ -420,6 +420,8 @@ router.post('/gethistoryList', async function (req, response) {
 
 
 async function getRecentEmail(user_id, auth, messageIDS, nextPageToken) {
+    console.log("came here")
+    console.log(messageIDS[0])
     messageIDS.forEach(mids => {
         gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }, async function (err, response) {
             if (err) {
@@ -439,10 +441,11 @@ async function getRecentEmail(user_id, auth, messageIDS, nextPageToken) {
             if (response.data.payload) {
                 let message_raw = response.data.payload.parts[0].body.data;
                 let data = message_raw;
-                buff = new Buffer(data, 'base64');
+                buff = Buffer.from(data, 'base64');
                 text = buff.toString();
                 simpleParser(text, (err, parsed) => {
                     if (parsed) {
+                        // console.log(parsed)
                         if (parsed['text']) {
                             checkEmail(parsed['text'], response['data'], user_id, auth);
                         }
