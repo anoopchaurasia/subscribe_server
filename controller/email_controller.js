@@ -769,6 +769,7 @@ function createEmailLabel(user_id, auth) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 async function getRecentEmail(user_id, auth, nextPageToken) {
+    // gmail.get
     gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'after:2018/12/01' }, async function (err, response) {
         if (err) {
             console.log('The API returned an error: unknown list msg' + err);
@@ -780,6 +781,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                     console.log('The API returned an error getting: ' + err);
                     return;
                 }
+                
                 let header_raw = response['data']['payload']['headers'];
                 let head;
                 header_raw.forEach(data => {

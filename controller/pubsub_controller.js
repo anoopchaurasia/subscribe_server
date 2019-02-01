@@ -4,11 +4,17 @@ let auth_token = require('../models/authToken');
 let email = require('../models/email');
 let token_model = require('../models/token');
 let user_model = require('../models/userDetail');
+let fcmToken = require('../models/fcmToken');
 let Request = require("request");
 let router = express.Router();
 var { google } = require('googleapis');
 const cheerio = require('cheerio')
 const simpleParser = require('mailparser').simpleParser;
+var FCM = require('fcm-node');
+var serverKey = 'AAAA12xOmRA:APA91bGDj3guvTDKn6S9yQG3otsv01qEOflCJXiAwM2KgVfN7S6I8hSh0bpggjwpYMoZWuEO6lay6n3_cDldmYPb-ti-oVfexORlG3m2sgisDBCcst4v02ayWdYS6RboVYBCObo0pPL_'; //put your server key here
+var fcm = new FCM(serverKey);
+
+
 
 var gmail = google.gmail('v1');
 
@@ -513,6 +519,24 @@ let checkEmail = (emailObj, mail, user_id, auth) => {
                                         deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
                                     }
                                 });
+                            fcmToken.findOne({"user_id":user_id},function (err,tokenInfo) {
+                                if(err){
+                                    console.log(err)
+                                } 
+                                if(tokenInfo){
+                                    var message = {
+                                        to: 'registration_token',
+                                        collapse_key: 'geern',
+
+                                        notification: {
+                                            title: 'New Email Newsletter',
+                                            body: 'You received new newsletter in you INBOX.'
+                                        }
+                                    };
+                                    sendFcmMessage(message);
+                                }
+                            });
+                            
                         }
                     });
                 }
@@ -706,6 +730,16 @@ let historyListapi = async (oauth2Client, historyID) => {
                     console.log(msg.id)
                 });
             });
+        }
+    });
+}
+
+let sendFcmMessage = (message) => {
+    fcm.send(message, function (err, response) {
+        if (err) {
+            console.log("Something has gone wrong!");
+        } else {
+            console.log("Successfully sent with response: ", response);
         }
     });
 }
