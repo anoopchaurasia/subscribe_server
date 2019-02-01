@@ -475,7 +475,7 @@ let checkEmail = (emailObj, mail, user_id, auth) => {
         let fa = $(this).text();
         if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1) {
             url = $(this).attr().href;
-            // console.log($(this).attr().href)
+            console.log($(this).attr().href)
         }
     })
     if (url != null) {
