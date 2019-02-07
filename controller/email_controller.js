@@ -218,7 +218,7 @@ router.post('/readMailInfo', async (req, res) => {
             console.log(err);
         });
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: { "is_moved": false, "user_id": doc.user_id } }, {
+            let emailinfos = await email.aggregate([{ $match: { "is_moved": false, "is_keeped": false, "user_id": doc.user_id } }, {
                 $group: {
                     _id: { "from_email": "$from_email" }, data: {
                         $push: {
@@ -236,7 +236,7 @@ router.post('/readMailInfo', async (req, res) => {
             });
 
             if (emailinfos) {
-                let unreademail = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_moved": false, "user_id": doc.user_id } },
+                let unreademail = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_keeped": false, "is_moved": false, "user_id": doc.user_id } },
                 { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
                 { $project: { "count": 1 } }]).catch(err => {
                     console.log(err);
@@ -333,7 +333,7 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
             console.log(err);
         });
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: { "is_moved": true, "user_id": doc.user_id } }, {
+            let emailinfos = await email.aggregate([{ $match: { "is_moved": true, "is_keeped": false, "user_id": doc.user_id } }, {
                 $group: {
                     _id: { "from_email": "$from_email" }, data: {
                         $push: {
@@ -352,7 +352,7 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
                 console.log(err);
             });
             if (emailinfos) {
-                let unreademail = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_moved": true, "user_id": doc.user_id } },
+                let unreademail = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_keeped": false, "is_moved": true, "user_id": doc.user_id } },
                 { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
                 { $project: { "count": 1 } }]).catch(err => {
                     console.log(err);
@@ -551,7 +551,8 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
         };
         var newvalues = {
             $set: {
-                "is_moved": true
+                "is_moved": true,
+                "is_keeped": false
             }
         };
         var upsert = {
@@ -618,25 +619,35 @@ async function createEmailLabel(user_id, auth) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 async function getRecentEmail(user_id, auth, nextPageToken) {
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'after:2018/12/01' });
+    // from: notify@* OR notifications@* OR notifier@* AND after: 2018 / 01 / 24 
+    //notify@* OR notifications@* OR notifier@* OR hello@* OR no-replay@* OR start@* OR support@* OR *-noreply@* )
+    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2018/12/01 ' });
     if (responseList) {
+        console.log(responseList['data']['messages'].length)
         responseList['data']['messages'].forEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
             if (response) {
                 let header_raw = response['data']['payload']['headers'];
                 let head;
+                // console.log(header_raw.length)
                 header_raw.forEach(data => {
-                    if (data.name == "Subject") {
+                    if (data.name === "Subject") {
                         head = data.value
+                        // console.log(head)
                     }
                 });
-                if (response.data.payload && response.data.payload['parts']) {
-                    let message_raw = response.data.payload.parts[0].body.data;
+                // console.log(response.data.payload.body)
+                if (response.data.payload || response.data.payload['parts']) {
+                    // console.log(response.data.payload.body.data)
+                    let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
+                        : response.data.payload.parts[0].body.data;
                     let data = message_raw;
-                    buff = new Buffer(data, 'base64');
+                    buff = Buffer.from(data, 'base64');
                     text = buff.toString();
+                    // console.log(text)
                     simpleParser(text, async (err, parsed) => {
                         if (parsed) {
+                            // console.log(parsed)
                             if (parsed['text']) {
                                 await checkEmail(parsed['text'], response['data'], user_id);
                             }
@@ -656,6 +667,54 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
     if (responseList['data'].nextPageToken) {
         await getRecentEmail(user_id, auth, responseList['data'].nextPageToken);
     }
+    // else{
+    //     await getAllMailBasedOnSubject(user_id,auth)
+    // }
+}
+
+async function getAllMailBasedOnSubject(user_id, auth, nextPageToken = null) {
+    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:notify@* AND after:2018/01/24 ' });
+    if (responseList) {
+        console.log(responseList['data']['messages'].length)
+        responseList['data']['messages'].forEach(async element => {
+            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
+            if (response) {
+                let header_raw = response['data']['payload']['headers'];
+                let head;
+                // console.log(header_raw.length)
+                header_raw.forEach(data => {
+                    if (data.name === "Subject") {
+                        head = data.value
+                        console.log(head)
+                    }
+                });
+                if (response.data.payload && response.data.payload['parts']) {
+                    let message_raw = response.data.payload.parts[0].body.data;
+                    let data = message_raw;
+                    buff = Buffer.from(data, 'base64');
+                    text = buff.toString();
+                    simpleParser(text, async (err, parsed) => {
+                        if (parsed) {
+                            // console.log(parsed)
+                            if (parsed['text']) {
+                                await checkEmail(parsed['text'], response['data'], user_id);
+                            }
+                            if (parsed['headerLines']) {
+                                await checkEmail(parsed.headerLines[0].line, response['data'], user_id);
+                            }
+                            if (parsed['textAsHtml']) {
+                                await checkEmail(parsed['textAsHtml'], response['data'], user_id);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+    nextPageToken = responseList['data'].nextPageToken;
+    if (responseList['data'].nextPageToken) {
+        await getAllMailBasedOnSubject(user_id, auth, responseList['data'].nextPageToken);
+    }
 }
 
 
@@ -666,8 +725,17 @@ let checkEmail = async (emailObj, mail, user_id) => {
     let emailInfo = {};
     $('a').each(function (i, elem) {
         let fa = $(this).text();
-        if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1 ||
-            $(this).text().toLowerCase().indexOf("do not wish to receive our mails") != -1) {
+        // console.log($(this))
+        // console.log(fa);
+        if (fa.toLowerCase().indexOf("unsubscribe") != -1 ||
+            fa.toLowerCase().indexOf("preferences") != -1 ||
+            fa.toLowerCase().indexOf("subscription") != -1 ||
+            fa.toLowerCase().indexOf("do not wish to receive our mails") != -1 ||
+            fa.toLowerCase().indexOf("not to receive emails") != -1 ||
+            $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1 ||
+            $(this).parent().text().toLowerCase().indexOf("subscription") != -1 ||
+            $(this).parent().text().toLowerCase().indexOf("preferences") != -1 ||
+            $(this).parent().text().toLowerCase().indexOf("mailing listed") != -1) {
             url = $(this).attr().href;
             console.log(url)
         }
@@ -682,6 +750,7 @@ let checkEmail = async (emailObj, mail, user_id) => {
         emailInfo['main_label'] = mail.labelIds;
         emailInfo['is_moved'] = false;
         emailInfo['is_delete'] = false;
+        emailInfo['is_keeped'] = false;
         header_raw = mail['payload']['headers']
         header_raw.forEach(data => {
             if (data.name == "From") {
@@ -948,9 +1017,9 @@ let getAllEmailIds = async (user_id, token, from_email, emailIDS) => {
 
 async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS) {
     const gmail = google.gmail({ version: 'v1', auth });
-
-    if (emailIDS.length != 0) {
-
+    console.log(emailIDS)
+    console.log(from_email)
+    if (emailIDS && emailIDS.length != 0) {
         var upsert = {
             upsert: true
         };
@@ -980,6 +1049,7 @@ async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS
         });
 
     } else {
+        console.log("move to trash")
         let mailList = await email.find({ "from_email": from_email }).catch(err => {
             console.log(err);
         });
@@ -1004,6 +1074,7 @@ async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS
             let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
                 console.log(err);
             });
+            console.log(result)
             let allLabels = ["TRASH"];
             mailIds.forEach(async mailid => {
                 var res = await gmail.users.messages.modify({
@@ -1065,9 +1136,11 @@ async function deleteAllEmails(user_id, auth, from_email) {
 router.post('/getDeletedEmailData', async (req, res) => {
     try {
         let auth_id = req.body.authID;
+        console.log(auth_id)
         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
             console.log(err);
         });
+        console.log(doc)
         if (doc) {
             let emailinfos = await email.aggregate([{ $match: { $text: { $search: "TRASH" }, "is_delete": false, "user_id": doc.user_id } }, {
                 $group: {
@@ -1087,6 +1160,7 @@ router.post('/getDeletedEmailData', async (req, res) => {
             { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
                 console.log(err);
             });
+            console.log(emailinfos)
             if (emailinfos) {
                 res.status(200).json({
                     error: false,
@@ -1128,6 +1202,93 @@ router.post('/setMailForDeleteFromInbox', async (req, res) => {
     } catch (ex) {
     }
 });
+
+
+router.post('/keepMailInformation', async (req, res) => {
+    try {
+        let auth_id = req.body.authID;
+        let from_email = req.body.from_email;
+        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+            console.log(err);
+        });
+        if (doc) {
+            var oldvalue = {
+                user_id: doc.user_id,
+                "from_email": from_email,
+                "is_keeped": false
+            };
+            var newvalues = {
+                $set: {
+                    "is_keeped": true
+                }
+            };
+            var upsert = {
+                upsert: true
+            };
+            let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
+                console.log(err);
+            });
+        }
+    } catch (ex) {
+    }
+});
+
+
+router.post('/getKeepedMailInfo', async (req, res) => {
+    try {
+        let auth_id = req.body.authID;
+        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+            console.log(err);
+        });
+        if (doc) {
+            let emailinfos = await email.aggregate([{ $match: {  "is_keeped": true, "user_id": doc.user_id } }, {
+                $group: {
+                    _id: { "from_email": "$from_email" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "url": "$unsubscribe",
+                            "email_id": "$email_id",
+                            "history_id": "$historyId",
+                            "from_email_name": "$from_email_name"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
+                console.log(err);
+            });
+            if (emailinfos) {
+                let unreademail = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_keeped": false, "is_moved": true, "user_id": doc.user_id } },
+                { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
+                { $project: { "count": 1 } }]).catch(err => {
+                    console.log(err);
+                });
+                let unreadData = {};
+                if (unreademail) {
+                    unreademail.forEach(element => {
+                        unreadData[element._id.from_email] = element.count
+                    });
+                    let allEmail = await email.find({ 'user_id': doc.user_id }).catch(err => {
+                        console.log(err);
+                    });
+                    if (allEmail) {
+                        res.status(200).json({
+                            error: false,
+                            data: emailinfos,
+                            unreadData: unreadData,
+                            totalEmail: allEmail.length
+                        })
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.log(err)
+    }
+});
+
 
 module.exports = router
 

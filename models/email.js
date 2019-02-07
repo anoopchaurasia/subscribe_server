@@ -53,6 +53,10 @@ var email = new Schema({
     },
     main_label:{
         type:Array
+    },
+    is_keeped:{
+        type:Boolean,
+        default:false
     }
 });
 
