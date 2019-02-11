@@ -57,6 +57,10 @@ var email = new Schema({
     is_keeped:{
         type:Boolean,
         default:false
+    },
+    is_trash:{
+        type:Boolean,
+        default:false
     }
 });
 

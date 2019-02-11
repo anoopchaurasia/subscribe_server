@@ -15,6 +15,8 @@ app.use('/api/v1/mail', require('./routes/router'));
 app.get('/api/v1/setToken', function (req, res) {
     console.log(req)
 })
+
+
 app.get('/', function (req, res) {
     res.send("welcome to express");
 })

@@ -23,7 +23,32 @@ router.post('/deleteMailFromInbox', async (req, res) => {
                 console.log(err);
             });
             if (tokenInfo) {
-                await checkTokenLifetime(doc.user_id, tokenInfo, from_email, emailIDS);
+                await checkTokenLifetime(doc.user_id, tokenInfo, from_email, emailIDS, false);
+                res.status(200).json({
+                    error: false,
+                    data: "moving"
+                })
+            }
+        }
+    } catch (ex) {
+        res.sendStatus(400);
+    }
+});
+
+router.post('/revertTrashMailToInbox', async (req, res) => {
+    try {
+        let auth_id = req.body.authID;
+        let from_email = req.body.from_email;
+        let emailIDS = req.body.emailIDS;
+        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+            console.log(err);
+        });
+        if (doc) {
+            let tokenInfo = await auth_token.findOne({ "user_id": doc.user_id }).catch(err => {
+                console.log(err);
+            });
+            if (tokenInfo) {
+                await checkTokenLifetime(doc.user_id, tokenInfo, from_email, emailIDS, true);
                 res.status(200).json({
                     error: false,
                     data: "moving"
@@ -218,7 +243,7 @@ router.post('/readMailInfo', async (req, res) => {
             console.log(err);
         });
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: { "is_moved": false, "is_keeped": false, "user_id": doc.user_id } }, {
+            let emailinfos = await email.aggregate([{ $match: { "is_trash":false, "is_moved": false, "is_keeped": false, "user_id": doc.user_id } }, {
                 $group: {
                     _id: { "from_email": "$from_email" }, data: {
                         $push: {
@@ -234,9 +259,8 @@ router.post('/readMailInfo', async (req, res) => {
             }, { $sort: { "count": -1 } }, { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
                 console.log(err);
             });
-
             if (emailinfos) {
-                let unreademail = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_keeped": false, "is_moved": false, "user_id": doc.user_id } },
+                let unreademail = await email.aggregate([{ $match: { $text: { $search: "UNREAD" },"is_trash":false, "is_keeped": false, "is_moved": false, "user_id": doc.user_id } },
                 { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
                 { $project: { "count": 1 } }]).catch(err => {
                     console.log(err);
@@ -730,12 +754,14 @@ let checkEmail = async (emailObj, mail, user_id) => {
         if (fa.toLowerCase().indexOf("unsubscribe") != -1 ||
             fa.toLowerCase().indexOf("preferences") != -1 ||
             fa.toLowerCase().indexOf("subscription") != -1 ||
+            fa.toLowerCase().indexOf("visit this link") != -1 ||
             fa.toLowerCase().indexOf("do not wish to receive our mails") != -1 ||
-            fa.toLowerCase().indexOf("not to receive emails") != -1 ||
+            fa.toLowerCase().indexOf("not receiving our emails") != -1 ||
+            $(this).parent().text().toLowerCase().indexOf("not receiving our emails") != -1 ||
             $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1 ||
             $(this).parent().text().toLowerCase().indexOf("subscription") != -1 ||
             $(this).parent().text().toLowerCase().indexOf("preferences") != -1 ||
-            $(this).parent().text().toLowerCase().indexOf("mailing listed") != -1) {
+            $(this).parent().text().toLowerCase().indexOf("mailing list") != -1) {
             url = $(this).attr().href;
             console.log(url)
         }
@@ -751,6 +777,11 @@ let checkEmail = async (emailObj, mail, user_id) => {
         emailInfo['is_moved'] = false;
         emailInfo['is_delete'] = false;
         emailInfo['is_keeped'] = false;
+        if(mail.labelIds.indexOf("TRASH") !=-1){
+            emailInfo['is_trash']= true;
+        }else{
+            emailInfo['is_trash'] = false;
+        }
         header_raw = mail['payload']['headers']
         header_raw.forEach(data => {
             if (data.name == "From") {
@@ -937,9 +968,9 @@ router.post('/unSubscribeMail', async (req, res) => {
 
 
 
-async function checkTokenLifetime(user_id, tokenInfo, from_email, emailIDS) {
+async function checkTokenLifetime(user_id, tokenInfo, from_email, emailIDS, is_revert_from_trash) {
     if (new Date(tokenInfo.expiry_date) >= new Date()) {
-        await getAllEmailIds(user_id, tokenInfo, from_email, emailIDS);
+        await getAllEmailIds(user_id, tokenInfo, from_email, emailIDS, is_revert_from_trash);
     } else {
         let content = await fs.readFileSync('./client_secret.json');
         let cred = JSON.parse(content);
@@ -988,7 +1019,7 @@ async function checkTokenLifetime(user_id, tokenInfo, from_email, emailIDS) {
                     console.log(err);
                 });
                 if (result) {
-                    getAllEmailIds(user_id, tokenInfo, from_email, emailIDS);
+                    getAllEmailIds(user_id, tokenInfo, from_email, emailIDS, is_revert_from_trash);
                 }
             }
         });
@@ -996,7 +1027,7 @@ async function checkTokenLifetime(user_id, tokenInfo, from_email, emailIDS) {
 }
 
 
-let getAllEmailIds = async (user_id, token, from_email, emailIDS) => {
+let getAllEmailIds = async (user_id, token, from_email, emailIDS, is_revert_from_trash) => {
     fs.readFile('./client_secret.json',
         async function processClientSecrets(err, content) {
             if (err) {
@@ -1010,11 +1041,65 @@ let getAllEmailIds = async (user_id, token, from_email, emailIDS) => {
             let OAuth2 = google.auth.OAuth2;
             let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
             oauth2Client.credentials = token;
-            let mail = await deleteAllEmailsAndMoveToTrash(user_id, oauth2Client, from_email, emailIDS);
+            if (is_revert_from_trash) {
+                let mail = await revertMailFromTrash(user_id, oauth2Client, from_email, emailIDS);
+            } else {
+                let mail = await deleteAllEmailsAndMoveToTrash(user_id, oauth2Client, from_email, emailIDS);
+            }
         });
 }
 
 
+async function revertMailFromTrash(user_id, auth, from_email, emailIDS) {
+    const gmail = google.gmail({ version: 'v1', auth });
+    console.log(emailIDS)
+    console.log(from_email)
+
+    console.log("Trash To INBOX")
+    let mailList = await email.find({ "from_email": from_email }).catch(err => {
+        console.log(err);
+    });
+    if (mailList) {
+        let mailIds = [];
+        let newLable =[];
+        let  mailLBL = mailList[0].labelIds.split(",");
+        mailLBL.forEach(lblmail => {
+            if (lblmail != "TRASH") {
+                newLable.push(lblmail);
+            }
+        });
+        mailList.forEach(email => {
+            mailIds.push(email.email_id);
+        });
+        var oldvalue = {
+            user_id: user_id,
+            "from_email": from_email,
+            "is_delete": false
+        };
+        var newvalues = {
+            $set: {
+                "labelIds": newLable,
+                "is_trash": false
+            }
+        };
+        var upsert = {
+            upsert: true
+        };
+        let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
+            console.log(err);
+        });
+        console.log(result)
+        let allLabels = ["TRASH"];
+        mailIds.forEach(async mailid => {
+            var res = await gmail.users.messages.untrash({
+                userId: 'me',
+                'id': mailid
+            }).catch(err => {
+                console.log(err);
+            });
+        });
+    }
+}
 async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS) {
     const gmail = google.gmail({ version: 'v1', auth });
     console.log(emailIDS)
@@ -1055,6 +1140,15 @@ async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS
         });
         if (mailList) {
             let mailIds = [];
+            let newLable = [];
+            let mailLBL = mailList[0].labelIds.split(",");
+            mailLBL.forEach(lblmail => {
+                if (lblmail != "TRASH") {
+                    newLable.push(lblmail);
+                }
+            });
+            newLable.push("TRASH");
+
             mailList.forEach(email => {
                 mailIds.push(email.email_id);
             });
@@ -1065,7 +1159,8 @@ async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS
             };
             var newvalues = {
                 $set: {
-                    "labelIds": "TRASH"
+                    "labelIds": newLable,
+                    "is_trash":true
                 }
             };
             var upsert = {
@@ -1241,7 +1336,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
             console.log(err);
         });
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: {  "is_keeped": true, "user_id": doc.user_id } }, {
+            let emailinfos = await email.aggregate([{ $match: { "is_keeped": true, "user_id": doc.user_id } }, {
                 $group: {
                     _id: { "from_email": "$from_email" }, data: {
                         $push: {
