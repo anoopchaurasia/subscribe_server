@@ -794,17 +794,21 @@ let checkEmail = async (emailObj, mail, user_id) => {
                 emailInfo['subject'] = data.value;
             }
         });
-        try {
-            let doc = await email.findOne({ "email_id": emailInfo.email_id }).catch(err => {
-                console.log(err);
-            });
-            if (!doc) {
-                let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+        if(emailInfo.from_email.toLowerCase().indexOf('@gmail')!=-1){
+            console.log(emailInfo.from_email)
+        }else{
+            try {
+                let doc = await email.findOne({ "email_id": emailInfo.email_id }).catch(err => {
                     console.log(err);
                 });
+                if (!doc) {
+                    let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                        console.log(err);
+                    });
+                }
+            } catch (err) {
+                console.log(err);
             }
-        } catch (err) {
-            console.log(err);
         }
     }
 }
