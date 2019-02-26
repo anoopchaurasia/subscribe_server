@@ -31,6 +31,7 @@ router.post('/getemail', async (req, response) => {
         content = JSON.parse(dataUtf8encoded);
         var email_id = content.emailAddress;
         var historyID = content.historyId;
+        console.log(historyID)
         let doc = await user_model.findOne({ "email": email_id }).catch(err => {
             console.log(err);
         });
@@ -332,6 +333,7 @@ async function getRecentEmail(user_id, auth, messageIDS, nextPageToken) {
             header_raw.forEach(data => {
                 if (data.name == "Subject") {
                     head = data.value
+                    console.log(head)
                 }
             });
             if (response.data.payload) {
@@ -365,10 +367,30 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
     let url = null;
     let emailInfo = {};
 
+    // $('a').each(function (i, elem) {
+    //     let fa = $(this).text();
+    //     if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1) {
+    //         url = $(this).attr().href;
+    //         console.log(url)
+    //     }
+    // })
     $('a').each(function (i, elem) {
         let fa = $(this).text();
-        if (fa.toLowerCase().indexOf("unsubscribe") != -1 || $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1) {
+        // console.log($(this))
+        // console.log(fa);
+        if (fa.toLowerCase().indexOf("unsubscribe") != -1 ||
+            fa.toLowerCase().indexOf("preferences") != -1 ||
+            fa.toLowerCase().indexOf("subscription") != -1 ||
+            fa.toLowerCase().indexOf("visit this link") != -1 ||
+            fa.toLowerCase().indexOf("do not wish to receive our mails") != -1 ||
+            fa.toLowerCase().indexOf("not receiving our emails") != -1 ||
+            $(this).parent().text().toLowerCase().indexOf("not receiving our emails") != -1 ||
+            $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1 ||
+            $(this).parent().text().toLowerCase().indexOf("subscription") != -1 ||
+            $(this).parent().text().toLowerCase().indexOf("preferences") != -1 ||
+            $(this).parent().text().toLowerCase().indexOf("mailing list") != -1) {
             url = $(this).attr().href;
+            console.log(url)
         }
     })
     if (url != null) {

@@ -646,8 +646,8 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
     // from: notify@* OR notifications@* OR notifier@* AND after: 2018 / 01 / 24 
     //notify@* OR notifications@* OR notifier@* OR hello@* OR no-replay@* OR start@* OR support@* OR *-noreply@* )
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2018/12/01 ' });
-    if (responseList) {
-        console.log(responseList['data']['messages'].length)
+    if (responseList && responseList['data']['messages']) {
+        // console.log(responseList['data']['messages'].length)
         responseList['data']['messages'].forEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
             if (response) {
@@ -913,7 +913,7 @@ async function extract_token(user_id, tokenInfo) {
                 console.log(body);
                 let milisec = new Date().getTime();
                 milisec = milisec + (body.expires_in * 1000);
-                tokenInfo.accessToken = body.access_token;
+                tokenInfo.access_token = body.access_token;
                 tokenInfo.expiry_date = new Date(milisec);
                 var oldvalue = {
                     user_id: user_id
