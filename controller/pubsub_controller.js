@@ -109,7 +109,7 @@ router.post('/getemail', async (req, response) => {
                             body = JSON.parse(body);
                             let milisec = new Date().getTime();
                             milisec = milisec + (body.expires_in * 1000);
-                            tokenInfo.accessToken = body.access_token;
+                            tokenInfo.access_token = body.access_token;
                             tokenInfo.expiry_date = new Date(milisec);
                             var oldvalue = {
                                 user_id: doc._id
