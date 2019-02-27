@@ -132,7 +132,9 @@ let watchapi = async (user_id, oauth2Client) => {
             topicName: 'projects/retail-1083/topics/subscribeMail'
         }
     };
+    console.log("watch api called")
     let res = await gmail.users.watch(options);
+    console.log("res")
 }
 
 
@@ -431,6 +433,7 @@ let getMailInfo = async (user_id, token) => {
             }
             oauth2Client.credentials = tokenadd;
             createEmailLabel(user_id, oauth2Client);
+            let watch = await watchapi(user_id, oauth2Client);
             let mailData = await getRecentEmail(user_id, oauth2Client, null);
             if (mailData) {
                 return mailData;
