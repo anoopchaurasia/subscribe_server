@@ -379,9 +379,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
         // console.log($(this))
         // console.log(fa);
         if (fa.toLowerCase().indexOf("unsubscribe") != -1 ||
-            ((fa.toLowerCase().indexOf("here") != -1 || fa.toLowerCase().indexOf("click here") != -1) && $(this).parent.text().toLowerCase().indexOf("unsubscribe") != -1) ||
             fa.toLowerCase().indexOf("preferences") != -1 ||
-            (fa.toLowerCase().indexOf("click here") != -1 && $(this).parent.text().toLowerCase().indexOf("mailing list") != -1) ||
             fa.toLowerCase().indexOf("subscription") != -1 ||
             fa.toLowerCase().indexOf("visit this link") != -1 ||
             fa.toLowerCase().indexOf("do not wish to receive our mails") != -1 ||
@@ -392,6 +390,8 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
             $(this).parent().text().toLowerCase().indexOf("subscription") != -1 ||
             $(this).parent().text().toLowerCase().indexOf("preferences") != -1 ||
             $(this).parent().text().toLowerCase().indexOf("mailing list") != -1 ||
+            (fa.toLowerCase().indexOf("click here") != -1 && $(this).parent().text().toLowerCase().indexOf("mailing list") != -1) ||
+            ((fa.toLowerCase().indexOf("here") != -1 || fa.toLowerCase().indexOf("click here") != -1) && $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1) ||
             $(this).parent().text().toLowerCase().indexOf("Don't want this") != -1) {
             url = $(this).attr().href;
             console.log(url)
