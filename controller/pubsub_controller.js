@@ -78,10 +78,7 @@ router.post('/getemail', async (req, response) => {
 
                 } else {
                     let content = fs.readFileSync('./client_secret.json');
-                    if (err) {
-                        console.log('Error loading client secret file: ' + err);
-                        return;
-                    }
+                   
                     let cred = JSON.parse(content);
                     let clientSecret = cred.installed.client_secret;
                     let clientId = cred.installed.client_id;
