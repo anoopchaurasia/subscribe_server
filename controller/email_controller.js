@@ -700,7 +700,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
 }
 
 async function getAllMailBasedOnSubject(user_id, auth, nextPageToken = null) {
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:notify@* AND after:2018/01/24 ' });
+    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:notify@* AND after:2018/02/01 ' });
     if (responseList) {
         console.log(responseList['data']['messages'].length)
         responseList['data']['messages'].forEach(async element => {
@@ -812,9 +812,92 @@ let checkEmail = async (emailObj, mail, user_id) => {
                     let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
                         console.log(err);
                     });
+                    if (docInfo) {
+                        let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true }).catch(err => {
+                            console.log(err);
+                        });
+                        if (mailList) {
+                            await MoveToMovedLabel(user_id, auth, mailList)
+                        }
+                        // let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true }).catch(err => {
+                        //     console.log(err);
+                        // });
+                        // if (mailInfo) {
+                        //     await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
+                        // }
+                    }
                 }
             } catch (err) {
                 console.log(err);
+            }
+        }
+    }
+}
+
+
+
+let MoveToMovedLabel = async (user_id, auth, mailList) => {
+    const gmail = google.gmail({ version: 'v1', auth });
+    var res = await gmail.users.labels.list({
+        userId: 'me',
+    }).catch(err => {
+        console.log(err);
+    });
+    if (res) {
+        let lbl_id = null;
+        res.data.labels.forEach(lbl => {
+            if (lbl.name === "Unsubscribed Emails") {
+                lbl_id = lbl.id;
+            }
+        });
+        if (lbl_id == null) {
+            var res = gmail.users.labels.create({
+                userId: 'me',
+                resource: {
+                    "labelListVisibility": "labelShow",
+                    "messageListVisibility": "show",
+                    "name": "Unsubscribed Emails"
+                }
+            }).catch(err => {
+                console.log(err);
+            });
+            if (res) {
+                var oldvalue = {
+                    user_id: user_id
+                };
+                var newvalues = {
+                    $set: {
+                        "label_id": res.data.id
+                    }
+                };
+                var upsert = {
+                    upsert: true
+                };
+                var result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+                    console.log(err);
+                });
+                if (result) {
+                    let watch = await watchapi(user_id, auth);
+                    await MoveMailFromInBOX(user_id, auth, mailList, res.data.id);
+                }
+            }
+        } else {
+            var oldvalue = {
+                user_id: user_id
+            };
+            var newvalues = {
+                $set: {
+                    "label_id": lbl_id
+                }
+            };
+            var upsert = {
+                upsert: true
+            };
+            let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+                console.log(err);
+            });
+            if (result) {
+                await MoveMailFromInBOX(user_id, auth, mailList, lbl_id);
             }
         }
     }
