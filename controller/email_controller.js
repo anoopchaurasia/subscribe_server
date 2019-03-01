@@ -700,7 +700,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
 }
 
 async function getAllMailBasedOnSubject(user_id, auth, nextPageToken = null) {
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:notify@* AND after:2019/02/01 ' });
+    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:notify@* AND after:2018/12/01 ' });
     if (responseList) {
         console.log(responseList['data']['messages'].length)
         responseList['data']['messages'].forEach(async element => {
