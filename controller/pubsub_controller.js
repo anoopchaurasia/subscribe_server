@@ -39,8 +39,11 @@ router.post('/getemail', async (req, response) => {
             let tokenInfo = await auth_token.findOne({ "user_id": doc._id }).catch(err => {
                 console.log(err);
             });
+            console.log(email_id)
+            console.log(tokenInfo)
             if (tokenInfo) {
                 if (tokenInfo.expiry_date >= new Date()) {
+                    console.log(email_id)
                     tokenInfo.expiry_date = tokenInfo.expiry_date.getTime();
                     let coontent = fs.readFileSync('./client_secret.json');
                     let credentials = JSON.parse(coontent);
