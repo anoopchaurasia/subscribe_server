@@ -44,7 +44,7 @@ router.post('/getemail', async (req, response) => {
             if (tokenInfo) {
                 if (new Date(tokenInfo.expiry_date) >= new Date()) {
                     console.log(email_id)
-                    tokenInfo.expiry_date = tokenInfo.expiry_date.getTime();
+                    tokenInfo.expiry_date = tokenInfo.expiry_date;
                     let coontent =await fs.readFileSync('./client_secret.json');
                     let credentials = JSON.parse(coontent);
                     let clientSecret = credentials.installed.client_secret;
@@ -54,6 +54,7 @@ router.post('/getemail', async (req, response) => {
                     let OAuth2 = google.auth.OAuth2;
                     let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
                     oauth2Client.credentials = tokenInfo;
+                    console.log(oauth2Client)
                     var options = {
                         userId: 'me',
                         'startHistoryId': historyID,
