@@ -435,6 +435,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
                         console.log(err);
                     });
                     if (mailList) {
+                        console.log("successfully moved to folder ")
                         await getListLabel(user_id, auth, mailList)
                     }
                     let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true }).catch(err => {
