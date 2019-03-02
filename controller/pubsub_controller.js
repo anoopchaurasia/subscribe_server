@@ -29,6 +29,7 @@ router.post('/getemail', async (req, response) => {
     var content;
     try {
         content = JSON.parse(dataUtf8encoded);
+        console.log(content)
         var email_id = content.emailAddress;
         var historyID = content.historyId;
         console.log(historyID)
@@ -157,6 +158,7 @@ router.post('/getemail', async (req, response) => {
                                                 messageIDS.push(msg.id)
                                             });
                                         });
+
                                         await getRecentEmail(doc._id, oauth2Client, messageIDS, null);
                                         response.sendStatus(200);
                                     } else if (data && !data.history) {
