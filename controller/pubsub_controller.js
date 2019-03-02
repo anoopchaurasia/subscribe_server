@@ -60,7 +60,7 @@ router.post('/getemail', async (req, response) => {
                     console.log(oauth2Client)
                     var options = {
                         userId: 'me',
-                        'startHistoryId': historyID-50,
+                        'startHistoryId': historyID-10,
                         auth: oauth2Client
                     };
                     let res = await gmail.users.history.list(options).catch(err => {
@@ -140,7 +140,7 @@ router.post('/getemail', async (req, response) => {
                                 oauth2Client.credentials = tokenInfo;
                                 var options = {
                                     userId: 'me',
-                                    'startHistoryId': historyID-50,
+                                    'startHistoryId': historyID-10,
                                     auth: oauth2Client
 
                                 };
@@ -503,6 +503,7 @@ let getListLabel = async (user_id, auth, mailList) => {
     }).catch(err => {
         console.log(err);
     });
+    
     if (res) {
         let lbl_id = null;
         res.data.labels.forEach(lbl => {
@@ -597,6 +598,7 @@ async function MoveMailFromInBOX(user_id, auth, mailList, label) {
         }).catch(err => {
             console.log(err);
         });
+        
     }
 }
 

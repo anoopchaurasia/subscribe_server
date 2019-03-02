@@ -143,6 +143,7 @@ let getListLabel = async (user_id, auth, from_email, is_unscubscribe, is_remove_
     let res = await gmail.users.labels.list({
         userId: 'me',
     });
+    // console.log(res.data.labels)
     if (res) {
         let lbl_id = null;
         res.data.labels.forEach(lbl => {
@@ -439,6 +440,39 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
 });
 
 
+router.post('/getEmailSubscription', async (req, res) => {
+    try {
+        let auth_id = req.body.authID;
+        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+            console.log(err);
+        });
+        if (doc) {
+            let emailinfos = await email.aggregate([{ $match: { "is_moved": false,"is_delete":false,  "user_id": doc.user_id } }, {
+                $group: {
+                    _id: { "from_email": "$from_email" }, data: {
+                        $push: {
+                            "subject": "$subject"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: {  "count": 1, "subject": 1, data: 1 } }]).catch(err => {
+                console.log(err);
+            });
+            if (emailinfos) {
+                res.status(200).json({
+                    error: false,
+                    data: emailinfos
+                })
+            }
+        }
+    } catch (err) {
+        console.log(err)
+    }
+});
+
+
 
 let getMailInfo = async (user_id, token) => {
     fs.readFile('./client_secret.json',
@@ -529,6 +563,7 @@ async function MoveMailFromExpenseBit(user_id, auth, from_email, label) {
         });
         let labelarry = [];
         labelarry[0] = label;
+        console.log(allLabels)
         console.log(labelarry)
         mailList.forEach(async oneEmail => {
             if (oneEmail.email_id) {
@@ -540,6 +575,15 @@ async function MoveMailFromExpenseBit(user_id, auth, from_email, label) {
                         "removeLabelIds": labelarry
                     }
                 });
+                // if (allLabels.indexOf("INBOX") > -1) {
+                    let result = await gmail.users.messages.modify({
+                        userId: 'me',
+                        'id': oneEmail.email_id,
+                        resource: {
+                            "addLabelIds": ['INBOX']
+                        }
+                    });
+                // }
             }
         });
     }
@@ -576,11 +620,12 @@ async function MoveAllMailFromInBOX(user_id, auth, from_email, label) {
                     'id': oneEmail.email_id,
                     resource: {
                         'addLabelIds': labelarry,
-                        "removeLabelIds": oneEmail.main_label
+                        // "removeLabelIds": oneEmail.main_label
                     }
                 });
                 sleep(2000);
             }
+            
         });
     }
 }
@@ -621,6 +666,7 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
         });
         let labelarry = [];
         labelarry[0] = label;
+        console.log("here got labels",allLabels)
         mailList.forEach(async oneEmail => {
             if (oneEmail.email_id) {
                 let res = await gmail.users.messages.modify({
@@ -631,6 +677,21 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
                         "removeLabelIds": allLabels
                     }
                 });
+                if(allLabels.indexOf("INBOX") > -1){
+                    let result = await gmail.users.messages.modify({
+                        userId: 'me',
+                        'id': oneEmail.email_id,
+                        resource: {
+                            "removeLabelIds": ['INBOX']
+                        }
+                    });
+                }
+                    // var request = await gmail.users.labels.delete({
+                    //     'userId': 'me',
+                    //     'id': labelId
+                    // });
+                    // request.execute(function (resp) { });
+                
             }
         });
     }
@@ -860,9 +921,9 @@ let checkEmail = async (emailObj, mail, user_id) => {
                         });
                         console.log(docInfo)
                     }
-                    let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => {
-                        console.log(err);
-                    });
+                    // let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => {
+                    //     console.log(err);
+                    // });
                     // let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
                     //     console.log(err);
                     // });
