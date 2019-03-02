@@ -9,7 +9,7 @@ router.use('/users', check_auth, require('../controller/user_controller'));
 
 module.exports = router;
 
-function check_auth(req, res, next){
+async function check_auth(req, res, next){
     let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
         console.log(err);
     });
