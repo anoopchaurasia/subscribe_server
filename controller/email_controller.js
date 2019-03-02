@@ -451,13 +451,18 @@ router.post('/getEmailSubscription', async (req, res) => {
                 $group: {
                     _id: { "from_email": "$from_email" }, data: {
                         $push: {
-                            "subject": "$subject"
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "url": "$unsubscribe",
+                            "email_id": "$email_id",
+                            "history_id": "$historyId",
+                            "from_email_name": "$from_email_name"
                         }
                     }, count: { $sum: 1 }
                 }
             },
-            { $sort: { "count": -1 } },
-            { $project: {  "count": 1, "subject": 1, data: 1 } }]).catch(err => {
+                { $sort: { "count": -1 } },
+                { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
                 console.log(err);
             });
             if (emailinfos) {
