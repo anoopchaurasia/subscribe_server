@@ -1,13 +1,13 @@
 var fs            = require('fs');
 let express       = require('express');
 let mongoose      = require("mongoose");
-let users         = mongoose.list.userDetail.model;
-let auth_token    = mongoose.list.authToken.model;
-let token_model   = mongoose.list.token.model;
+let users         = require('../models/userDetail');
+let auth_token    = require('../models/authToken');
+let token_model   = require('../models/token');
 let router        = express.Router();
 var { google }    = require('googleapis');
 var uniqid        = require('uniqid');
-let {client_secret, client_id, redirect_uris} = JSON.parse(fs.readFileSync(process.env.GOOGLE_CLIENT_SECRET_FILE)).installed.client_secret;
+let {client_secret, client_id, redirect_uris} = JSON.parse(fs.readFileSync(process.env.GOOGLE_CLIENT_SECRET_FILE)).installed;
 
 router.post('/signin', async (req, res) => {
     var code         = req.body.code;
