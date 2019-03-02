@@ -430,25 +430,38 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
             });
             console.log(doc)
             if (!doc) {
-                let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
-                    console.log(err);
-                });
-                console.log(docInfo)
-                if (docInfo) {
+                
+                // if (docInfo) {
                     let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true }).catch(err => {
                         console.log(err);
                     });
                     console.log(mailList)
                     if (mailList) {
                         console.log("successfully moved to folder unscribe");
+                        emailInfo.is_moved=true;
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                            console.log(err);
+                        });
+                        console.log(docInfo)
                         await getListLabel(user_id, auth, mailList)
                     }
                     let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true }).catch(err => {
                         console.log(err);
                     });
                     if (mailInfo) {
+                        emailInfo.is_delete=true;
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                            console.log(err);
+                        });
+                        console.log(docInfo)
                         console.log("successfully moved to folder delete");
                         await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
+                    }
+                    if(!mailList && !mailInfo){
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                            console.log(err);
+                        });
+                        console.log(docInfo)
                     }
                     let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => {
                         console.log(err);
@@ -464,7 +477,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
                         };
                         await sendFcmMessage(message);
                     }
-                }
+                // }
             }
         } catch (err) {
             console.log(err)
