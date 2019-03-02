@@ -42,6 +42,8 @@ router.post('/getemail', async (req, response) => {
             console.log(email_id)
             console.log(tokenInfo)
             if (tokenInfo) {
+                console.log(tokenInfo.expiry_date)
+               console.log(new Date(tokenInfo.expiry_date)) 
                 if (new Date(tokenInfo.expiry_date) >= new Date()) {
                     console.log(email_id)
                     tokenInfo.expiry_date = new Date(tokenInfo.expiry_date);
