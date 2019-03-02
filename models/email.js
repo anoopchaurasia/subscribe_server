@@ -6,23 +6,28 @@ var mongoose = require('mongoose')
 var email = new Schema({
     email_id: {
         type: String,
-        es_indexed: false
+        es_indexed: false,
+        index: true
     },
     historyId: {
         type: String,
-        es_indexed: false
+        es_indexed: false,
+        index: true
     },
     labelIds: {
         type: String,
-        es_indexed: true
+        es_indexed: true,
+        index: true
     },
     subject: {
         type: String,
-        es_indexed: false
+        es_indexed: false,
+        index: true
     },
     from_email: {
         type: String,
-        es_indexed: true
+        es_indexed: true,
+        index: true
     },
     from_email_name: {
         type: String,
@@ -38,29 +43,35 @@ var email = new Schema({
     },
     unsubscribe: {
         type: String,
-        es_indexed: false
+        es_indexed: false,
+        index: true
     },
     user_id: {
-        type: String
+        type: String,
+        index: true
     },
     is_moved: {
         type: Boolean,
-        default: false
+        default: false,
+        index: true
     },
     is_delete:{
         type:Boolean,
-        default:false
+        default:false,
+        index: true
     },
     main_label:{
         type:Array
     },
     is_keeped:{
         type:Boolean,
-        default:false
+        default:false,
+        index: true
     },
     is_trash:{
         type:Boolean,
-        default:false
+        default:false,
+        index: true
     }
 });
 

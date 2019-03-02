@@ -4,7 +4,8 @@ var Schema = mongoose.Schema;
 
 var fcmToken = new Schema({
     user_id: {
-        type: String
+        type: String,
+        index:true
     },
     fcm_token: {
         type: String
