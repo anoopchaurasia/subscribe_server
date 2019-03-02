@@ -78,7 +78,7 @@ router.post('/getemail', async (req, response) => {
                             await getRecentEmail(doc._id, oauth2Client, messageIDS, null);
                             response.sendStatus(200);
                         } else if (data && !data.history) {
-                            response.sendStatus(200);
+                            // response.sendStatus(200);
                         }
                     }
 
@@ -159,7 +159,7 @@ router.post('/getemail', async (req, response) => {
                                         await getRecentEmail(doc._id, oauth2Client, messageIDS, null);
                                         response.sendStatus(200);
                                     } else if (data && !data.history) {
-                                        response.sendStatus(200);
+                                        // response.sendStatus(200);
                                     }
                                 }
                             }
