@@ -840,23 +840,46 @@ let checkEmail = async (emailObj, mail, user_id) => {
                     console.log(err);
                 });
                 if (!doc) {
-                    let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                    let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true }).catch(err => {
                         console.log(err);
                     });
-                    if (docInfo) {
-                        let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true }).catch(err => {
+                    console.log(mailList)
+                    if (mailList) {
+                        console.log("successfully moved to folder unscribe");
+                        emailInfo.is_moved = true;
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
                             console.log(err);
                         });
-                        if (mailList) {
-                            await MoveToMovedLabel(user_id, auth, mailList)
-                        }
-                        // let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true }).catch(err => {
-                        //     console.log(err);
-                        // });
-                        // if (mailInfo) {
-                        //     await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
-                        // }
+                        console.log(docInfo)
+                        await getListLabel(user_id, auth, mailList)
                     }
+                    
+                    if (!mailList) {
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                            console.log(err);
+                        });
+                        console.log(docInfo)
+                    }
+                    let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => {
+                        console.log(err);
+                    });
+                    // let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                    //     console.log(err);
+                    // });
+                    // if (docInfo) {
+                    //     let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true }).catch(err => {
+                    //         console.log(err);
+                    //     });
+                    //     if (mailList) {
+                    //         await MoveToMovedLabel(user_id, auth, mailList)
+                    //     }
+                    //     // let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true }).catch(err => {
+                    //     //     console.log(err);
+                    //     // });
+                    //     // if (mailInfo) {
+                    //     //     await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
+                    //     // }
+                    // }
                 }
             } catch (err) {
                 console.log(err);

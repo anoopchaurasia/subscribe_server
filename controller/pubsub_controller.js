@@ -225,10 +225,10 @@ router.post('/gethistoryList', async function (req, response) {
                                 data: messageIDS
                             })
                         } else if (data && !data.history) {
-                            response.status(200).json({
-                                error: false,
-                                data: "no msg ids"
-                            })
+                            // response.status(200).json({
+                            //     error: false,
+                            //     data: "no msg ids"
+                            // })
                         }
                     }
                 } else {
@@ -307,10 +307,10 @@ router.post('/gethistoryList', async function (req, response) {
                                             data: messageIDS
                                         })
                                     } else if (data && !data.history) {
-                                        response.status(200).json({
-                                            error: false,
-                                            data: "no msg ids"
-                                        })
+                                        // response.status(200).json({
+                                        //     error: false,
+                                        //     data: "no msg ids"
+                                        // })
                                     }
                                 }
                             }
