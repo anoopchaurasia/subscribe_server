@@ -44,7 +44,7 @@ router.post('/getemail', async (req, response) => {
             if (tokenInfo) {
                 if (new Date(tokenInfo.expiry_date) >= new Date()) {
                     console.log(email_id)
-                    tokenInfo.expiry_date = tokenInfo.expiry_date;
+                    tokenInfo.expiry_date = new Date(tokenInfo.expiry_date);
                     let coontent =await fs.readFileSync('./client_secret.json');
                     let credentials = JSON.parse(coontent);
                     let clientSecret = credentials.installed.client_secret;

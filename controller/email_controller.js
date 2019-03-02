@@ -337,12 +337,43 @@ router.post('/readProfileInfo', async (req, res) => {
                 { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
                     console.log(err);
                 });
+                
                 if (movedMail) {
-                    res.status(200).json({
-                        error: false,
-                        data: emailinfos,
-                        moveMail: movedMail
-                    })
+                    let totalEmail = await email.find({ "user_id": doc.user_id }).catch(err => {
+                        console.log(err);
+                    });;
+                    if(totalEmail){
+                        let totalUnscribeEmail = await email.find({ "user_id": doc.user_id , "is_moved": true,"is_delete":false,"is_keeped":false }).catch(err => {
+                            console.log(err);
+                        });
+                        console.log(totalUnscribeEmail)
+                        res.status(200).json({
+                            error: false,
+                            data: emailinfos,
+                            moveMail: movedMail,
+                            totalEmail: totalEmail.length,
+                            totalUnscribeEmail: totalUnscribeEmail.length
+                        })
+                    }
+                    // ([{ $match: { "is_moved": true, "user_id": doc.user_id } }, {
+                    //     $group: {
+                    //         _id: { "from_email": "$from_email" }, data: {
+                    //             $push: {
+                    //                 "labelIds": "$labelIds",
+                    //                 "subject": "$subject",
+                    //                 "url": "$unsubscribe",
+                    //                 "email_id": "$email_id",
+                    //                 "history_id": "$historyId",
+                    //                 "from_email_name": "$from_email_name"
+                    //             }
+                    //         }, count: { $sum: 1 }
+                    //     }
+                    // },
+                    // { $sort: { "count": -1 } },
+                    // { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
+                    //     console.log(err);
+                    // });
+                    
                 }
             }
         }
@@ -700,7 +731,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
 }
 
 async function getAllMailBasedOnSubject(user_id, auth, nextPageToken = null) {
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:notify@* AND after:2018/12/01 ' });
+    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:notify@* AND after:2019/02/01 ' });
     if (responseList) {
         console.log(responseList['data']['messages'].length)
         responseList['data']['messages'].forEach(async element => {
