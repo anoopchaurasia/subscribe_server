@@ -403,6 +403,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
         }
     })
     if (url != null) {
+        console.log("came here")
         emailInfo['user_id'] = user_id;
         emailInfo['mail_data'] = mail
         emailInfo['email_id'] = mail.id;
@@ -427,14 +428,17 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
             let doc = await email.findOne({ "email_id": emailInfo.email_id }).catch(err => {
                 console.log(err);
             });
+            console.log(doc)
             if (!doc) {
                 let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
                     console.log(err);
                 });
+                console.log(docInfo)
                 if (docInfo) {
                     let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true }).catch(err => {
                         console.log(err);
                     });
+                    console.log(mailList)
                     if (mailList) {
                         console.log("successfully moved to folder unscribe");
                         await getListLabel(user_id, auth, mailList)
