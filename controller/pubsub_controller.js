@@ -412,6 +412,13 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
         emailInfo['labelIds'] = mail.labelIds;
         emailInfo['unsubscribe'] = url;
         emailInfo['is_moved'] = false;
+        emailInfo['is_delete'] = false;
+        emailInfo['is_keeped'] = false;
+        if (mail.labelIds.indexOf("TRASH") != -1) {
+            emailInfo['is_trash'] = true;
+        } else {
+            emailInfo['is_trash'] = false;
+        }
         header_raw = mail['payload']['headers']
         header_raw.forEach(data => {
             if (data.name == "From") {
