@@ -4,7 +4,8 @@ var Schema = mongoose.Schema;
 
 var token = new Schema({
     user_id: {
-        type: String
+        type: String,
+        index: true
     },
     token: {
         type: String

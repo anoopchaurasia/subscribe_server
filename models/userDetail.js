@@ -4,14 +4,15 @@ var Schema = mongoose.Schema;
 
 var userDetail = new Schema({
     name: {
-        type: String
+        type: String,
     },
     email: {
         type: String,
         unique: true
     },
     user_id: {
-        type: String
+        type: String,
+        index: true
     },
     image_url: {
         type: String
