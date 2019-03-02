@@ -5,7 +5,7 @@ const app = express();
 const bodyParser = require('body-parser');
 // var callIndex = require('./index.js');
 let mongoose = require('mongoose');
-mongoose.connect("mongodb://localhost:27017/subscribe_development");
+mongoose.connect(process.env.MONGOOSE_SERVER_URL);
 mongoose.connection.once('connected', function () {
     console.log("Connected to database")
 });
