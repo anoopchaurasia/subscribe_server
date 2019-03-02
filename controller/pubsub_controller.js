@@ -406,6 +406,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
         emailInfo['user_id'] = user_id;
         emailInfo['mail_data'] = mail
         emailInfo['email_id'] = mail.id;
+        console.log(mail.id)
         emailInfo['historyId'] = mail.historyId;
         emailInfo['labelIds'] = mail.labelIds;
         emailInfo['unsubscribe'] = url;
@@ -435,13 +436,14 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
                         console.log(err);
                     });
                     if (mailList) {
-                        console.log("successfully moved to folder ")
+                        console.log("successfully moved to folder unscribe");
                         await getListLabel(user_id, auth, mailList)
                     }
                     let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true }).catch(err => {
                         console.log(err);
                     });
                     if (mailInfo) {
+                        console.log("successfully moved to folder delete");
                         await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
                     }
                     let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => {
