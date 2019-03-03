@@ -391,7 +391,7 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
             console.log(err);
         });
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: { "is_moved": true, "is_keeped": false, "user_id": doc.user_id } }, {
+            let emailinfos = await email.aggregate([{ $match: { "is_moved": false, "is_keeped": false,"is_delete":false, "user_id": doc.user_id } }, {
                 $group: {
                     _id: { "from_email": "$from_email" }, data: {
                         $push: {
