@@ -1,6 +1,7 @@
 var fs = require('fs');
 let express = require('express');
 let auth_token = require('../models/authToken');
+let TokenHandler = require("../helper/token")
 let email = require('../models/email');
 let token_model = require('../models/token');
 let Request = require("request");
@@ -12,24 +13,14 @@ var gmail = google.gmail('v1');
 
 router.post('/deleteMailFromInbox', async (req, res) => {
     try {
-        let auth_id = req.body.authID;
         let from_email = req.body.from_email;
         let emailIDS = req.body.emailIDS;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.log(err);
-        });
-        if (doc) {
-            let tokenInfo = await auth_token.findOne({ "user_id": doc.user_id }).catch(err => {
-                console.log(err);
-            });
-            if (tokenInfo) {
-                await checkTokenLifetime(doc.user_id, tokenInfo, from_email, emailIDS, false);
-                res.status(200).json({
-                    error: false,
-                    data: "moving"
-                })
-            }
-        }
+        await checkTokenLifetime(req.token, from_email, emailIDS, false);
+        res.status(200).json({
+            error: false,
+            data: "moving"
+        })
+          
     } catch (ex) {
         res.sendStatus(400);
     }
@@ -37,24 +28,14 @@ router.post('/deleteMailFromInbox', async (req, res) => {
 
 router.post('/revertTrashMailToInbox', async (req, res) => {
     try {
-        let auth_id = req.body.authID;
         let from_email = req.body.from_email;
         let emailIDS = req.body.emailIDS;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.log(err);
-        });
-        if (doc) {
-            let tokenInfo = await auth_token.findOne({ "user_id": doc.user_id }).catch(err => {
-                console.log(err);
-            });
-            if (tokenInfo) {
-                await checkTokenLifetime(doc.user_id, tokenInfo, from_email, emailIDS, true);
-                res.status(200).json({
-                    error: false,
-                    data: "moving"
-                })
-            }
-        }
+        await checkTokenLifetime(req.token, from_email, emailIDS, true);
+        res.status(200).json({
+            error: false,
+            data: "moving"
+        })
+           
     } catch (ex) {
         res.sendStatus(400);
     }
@@ -791,57 +772,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
     if (responseList['data'].nextPageToken) {
         await getRecentEmail(user_id, auth, responseList['data'].nextPageToken);
     }
-    // else{
-    //     await getAllMailBasedOnSubject(user_id,auth)
-    // }
 }
-
-async function getAllMailBasedOnSubject(user_id, auth, nextPageToken = null) {
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:notify@* AND after:2019/02/01 ' });
-    if (responseList) {
-        console.log(responseList['data']['messages'].length)
-        responseList['data']['messages'].forEach(async element => {
-            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
-            if (response) {
-                let header_raw = response['data']['payload']['headers'];
-                let head;
-                // console.log(header_raw.length)
-                header_raw.forEach(data => {
-                    if (data.name === "Subject") {
-                        head = data.value
-                        console.log(head)
-                    }
-                });
-                if (response.data.payload && response.data.payload['parts']) {
-                    let message_raw = response.data.payload.parts[0].body.data;
-                    let data = message_raw;
-                    buff = Buffer.from(data, 'base64');
-                    text = buff.toString();
-                    simpleParser(text, async (err, parsed) => {
-                        if (parsed) {
-                            // console.log(parsed)
-                            if (parsed['text']) {
-                                await checkEmail(parsed['text'], response['data'], user_id);
-                            }
-                            if (parsed['headerLines']) {
-                                await checkEmail(parsed.headerLines[0].line, response['data'], user_id);
-                            }
-                            if (parsed['textAsHtml']) {
-                                await checkEmail(parsed['textAsHtml'], response['data'], user_id);
-                            }
-                        }
-                    });
-                }
-            }
-        });
-    }
-    nextPageToken = responseList['data'].nextPageToken;
-    if (responseList['data'].nextPageToken) {
-        await getAllMailBasedOnSubject(user_id, auth, responseList['data'].nextPageToken);
-    }
-}
-
-
 
 let checkEmail = async (emailObj, mail, user_id) => {
     $ = cheerio.load(emailObj);
@@ -1182,87 +1113,15 @@ router.post('/unSubscribeMail', async (req, res) => {
 
 
 
-async function checkTokenLifetime(user_id, tokenInfo, from_email, emailIDS, is_revert_from_trash) {
-    if (new Date(tokenInfo.expiry_date) >= new Date()) {
-        await getAllEmailIds(user_id, tokenInfo, from_email, emailIDS, is_revert_from_trash);
+async function checkTokenLifetime(deviceToken, from_email, emailIDS, is_revert_from_trash) {
+    let authToken = await TokenHandler.getAccessToken({userId: deviceToken.userId}).catch(e=> console.error(e));
+    let oauth2Client = await TokenHandler.createAuthCleint(authToken);
+    if (is_revert_from_trash) {
+        let mail = await revertMailFromTrash(user_id, oauth2Client, from_email, emailIDS);
     } else {
-        let content = await fs.readFileSync('./client_secret.json');
-        let cred = JSON.parse(content);
-        let clientSecret = cred.installed.client_secret;
-        let clientId = cred.installed.client_id;
-        var body = JSON.stringify({
-            "client_id": clientId,
-            "client_secret": clientSecret,
-            "refresh_token": tokenInfo.refresh_token,
-            "grant_type": 'refresh_token'
-        });
-
-
-        var settings = {
-            "url": "https://www.googleapis.com/oauth2/v4/token",
-            "method": "POST",
-            body: body,
-            "headers": {
-                'Content-Type': 'application/json',
-            }
-        }
-
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                return console.log(error);
-            }
-            if (body) {
-                body = JSON.parse(body);
-                let milisec = new Date().getTime();
-                milisec = milisec + (body.expires_in * 1000);
-                tokenInfo.accessToken = body.access_token;
-                tokenInfo.expiry_date = new Date(milisec);
-                var oldvalue = {
-                    user_id: user_id
-                };
-                var newvalues = {
-                    $set: {
-                        access_token: body.access_token,
-                        expiry_date: new Date(milisec)
-                    }
-                };
-                var upsert = {
-                    upsert: true
-                };
-                let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                    console.log(err);
-                });
-                if (result) {
-                    getAllEmailIds(user_id, tokenInfo, from_email, emailIDS, is_revert_from_trash);
-                }
-            }
-        });
+        let mail = await deleteAllEmailsAndMoveToTrash(user_id, oauth2Client, from_email, emailIDS);
     }
 }
-
-
-let getAllEmailIds = async (user_id, token, from_email, emailIDS, is_revert_from_trash) => {
-    fs.readFile('./client_secret.json',
-        async function processClientSecrets(err, content) {
-            if (err) {
-                console.log('Error loading client secret file: ' + err);
-                return;
-            }
-            let credentials = JSON.parse(content);
-            let clientSecret = credentials.installed.client_secret;
-            let clientId = credentials.installed.client_id;
-            let redirectUrl = credentials.installed.redirect_uris[0];
-            let OAuth2 = google.auth.OAuth2;
-            let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
-            oauth2Client.credentials = token;
-            if (is_revert_from_trash) {
-                let mail = await revertMailFromTrash(user_id, oauth2Client, from_email, emailIDS);
-            } else {
-                let mail = await deleteAllEmailsAndMoveToTrash(user_id, oauth2Client, from_email, emailIDS);
-            }
-        });
-}
-
 
 async function revertMailFromTrash(user_id, auth, from_email, emailIDS) {
     const gmail = google.gmail({ version: 'v1', auth });

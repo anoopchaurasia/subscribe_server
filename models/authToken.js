@@ -33,6 +33,10 @@ var authToken = new Schema({
     }
 });
 
+authToken.virtual('isExpired').get(function() {  
+    return Date.now() > new Date(this.expiry_date).getTime();
+});
+
 
 var tokendata = mongoose.model('authToken', authToken);
 module.exports = tokendata;
