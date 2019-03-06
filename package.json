@@ -9,6 +9,7 @@
   "author": "jitendra virani",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.18.0",
     "cheerio": "^1.0.0-rc.2",
     "elasticsearch": "^15.2.0",
     "express": "^4.16.3",

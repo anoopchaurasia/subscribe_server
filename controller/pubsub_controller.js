@@ -29,10 +29,8 @@ router.post('/getemail', async (req, response) => {
     var content;
     try {
         content = JSON.parse(dataUtf8encoded);
-        console.log(content)
         var email_id = content.emailAddress;
         var historyID = content.historyId;
-        console.log(historyID)
         let doc = await user_model.findOne({ "email": email_id }).catch(err => {
             console.log(err);
         });
@@ -175,7 +173,7 @@ router.post('/getemail', async (req, response) => {
             response.sendStatus(400);
         }
     } catch (ex) {
-        console.log(ex)
+        console.error(ex)
         response.sendStatus(400);
     }
 });
