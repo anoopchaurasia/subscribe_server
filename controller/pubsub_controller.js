@@ -376,20 +376,20 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
     let emailInfo = {};
     $('a').each(function (i, elem) {
         let fa = $(this).text();
-        // console.log($(this))
-        // console.log(fa);
         let anchortext = fa.toLowerCase();
+        let anchorParentText = $(this).parent().text().toLowerCase();
         if (anchortext.indexOf("unsubscribe") != -1 ||
             anchortext.indexOf("preferences") != -1 ||
             anchortext.indexOf("subscription") != -1 ||
             anchortext.indexOf("visit this link") != -1 ||
             anchortext.indexOf("do not wish to receive our mails") != -1 ||
-            anchortext.indexOf("not receiving our emails") != -1
-        ){
-            return url = $(this).attr().href;
-        }
-        let anchorParentText = $(this).parent().text().toLowerCase();
-        if(anchorParentText.indexOf("not receiving our emails") != -1 ||
+            anchortext.indexOf("not receiving our emails") != -1)
+        {
+            
+                url = $(this).attr().href;
+                console.log(url);
+
+        }else if(anchorParentText.indexOf("not receiving our emails") != -1 ||
             anchorParentText.indexOf("stop receiving emails") != -1 ||
             anchorParentText.indexOf("unsubscribe") != -1 ||
             anchorParentText.indexOf("subscription") != -1 ||
@@ -536,7 +536,7 @@ let getListLabel = async (user_id, auth, mailList) => {
                     console.log(err);
                 });
                 if (result) {
-                    let watch = await watchapi(user_id, auth);
+                    await watchapi(user_id, auth);
                     await MoveMailFromInBOX(user_id, auth, mailList, res.data.id);
                 }
             }
@@ -581,13 +581,13 @@ async function MoveMailFromInBOX(user_id, auth, mailList, label) {
     var upsert = {
         upsert: true
     };
-    let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
+    await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
         console.log(err);
     });;
     let labelarry = [];
     labelarry[0] = label;
     if (mailList.email_id) {
-        let res = await gmail.users.messages.modify({
+        await gmail.users.messages.modify({
             userId: 'me',
             'id': mailList.email_id,
             resource: {
@@ -624,11 +624,11 @@ async function deleteEmailsAndMoveToTrash(user_id, auth, from_email) {
         var upsert = {
             upsert: true
         };
-        let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
+        await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
             console.log(err);
         });
         mailIds.forEach(async mailid => {
-            let res = await gmail.users.messages.trash({
+            await gmail.users.messages.trash({
                 userId: 'me',
                 'id': mailid
             }).catch(err => {

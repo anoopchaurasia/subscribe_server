@@ -83,6 +83,7 @@ router.post('/moveEmailToExpbit', async (req, res) => {
             }
         }
     } catch (ex) {
+        res.sendStatus(400);
     }
 });
 
@@ -98,10 +99,11 @@ router.post('/checkLabelInformation', async (req, res) => {
                 console.log(err);
             });
             if (tokenInfo) {
-                let labelInfo = await getLabelFromEmail(doc.user_id, tokenInfo, tokenInfo.label_id)
+                await getLabelFromEmail(doc.user_id, tokenInfo, tokenInfo.label_id)
             }
         }
     } catch (ex) {
+        res.sendStatus(400);
     }
 })
 
@@ -119,7 +121,7 @@ let getLabelFromEmail = async (user_id, token, from_email, label_id, is_unscubsc
             let OAuth2 = google.auth.OAuth2;
             let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
             oauth2Client.credentials = token;
-            let labelInfo = await getListLabel(user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
+            await getListLabel(user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
         });
 }
 
@@ -133,8 +135,7 @@ let watchapi = async (user_id, oauth2Client) => {
         }
     };
     console.log("watch api called")
-    let res = await gmail.users.watch(options);
-    console.log("res")
+    await gmail.users.watch(options);
 }
 
 
@@ -143,7 +144,6 @@ let getListLabel = async (user_id, auth, from_email, is_unscubscribe, is_remove_
     let res = await gmail.users.labels.list({
         userId: 'me',
     });
-    // console.log(res.data.labels)
     if (res) {
         let lbl_id = null;
         res.data.labels.forEach(lbl => {
@@ -176,7 +176,7 @@ let getListLabel = async (user_id, auth, from_email, is_unscubscribe, is_remove_
                     console.log(err);
                 });
                 if (result) {
-                    let watch = await watchapi(user_id, auth);
+                    // let watch = await watchapi(user_id, auth);
                     if (is_remove_all) {
                         await MoveAllMailFromInBOX(user_id, auth, from_email, res.data.id);
                     } else if (is_unscubscribe) {
@@ -226,7 +226,7 @@ router.post('/getMailInfo', async (req, res) => {
                 console.log(err);
             });
             if (tokenInfo) {
-                let mailData = await extract_token(doc.user_id, tokenInfo);
+                await extract_token(doc.user_id, tokenInfo);
                 res.status(200).json({
                     error: false,
                     data: "scrape"
@@ -234,6 +234,7 @@ router.post('/getMailInfo', async (req, res) => {
             }
         }
     } catch (ex) {
+        res.sendStatus(400);
     }
 });
 
@@ -289,6 +290,7 @@ router.post('/readMailInfo', async (req, res) => {
         }
     } catch (err) {
         console.log(err);
+        res.sendStatus(400);
     }
 });
 
@@ -356,25 +358,6 @@ router.post('/readProfileInfo', async (req, res) => {
                             totalUnscribeEmail: totalUnscribeEmail.length
                         })
                     }
-                    // ([{ $match: { "is_moved": true, "user_id": doc.user_id } }, {
-                    //     $group: {
-                    //         _id: { "from_email": "$from_email" }, data: {
-                    //             $push: {
-                    //                 "labelIds": "$labelIds",
-                    //                 "subject": "$subject",
-                    //                 "url": "$unsubscribe",
-                    //                 "email_id": "$email_id",
-                    //                 "history_id": "$historyId",
-                    //                 "from_email_name": "$from_email_name"
-                    //             }
-                    //         }, count: { $sum: 1 }
-                    //     }
-                    // },
-                    // { $sort: { "count": -1 } },
-                    // { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
-                    //     console.log(err);
-                    // });
-                    
                 }
             }
         }
@@ -503,31 +486,11 @@ let getMailInfo = async (user_id, token) => {
             }
             oauth2Client.credentials = tokenadd;
             createEmailLabel(user_id, oauth2Client);
-            let watch = await watchapi(user_id, oauth2Client);
+            await watchapi(user_id, oauth2Client);
             let mailData = await getRecentEmail(user_id, oauth2Client, null);
             if (mailData) {
                 return mailData;
             }
-        }
-    );
-}
-
-
-let moveToExpensebit = (user_id, token, from_email, label) => {
-    fs.readFile('./client_secret.json',
-        async function processClientSecrets(err, content) {
-            if (err) {
-                console.log('Error loading client secret file: ' + err);
-                return;
-            }
-            let credentials = JSON.parse(content);
-            let clientSecret = credentials.installed.client_secret;
-            let clientId = credentials.installed.client_id;
-            let redirectUrl = credentials.installed.redirect_uris[0];
-            let OAuth2 = google.auth.OAuth2;
-            let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
-            oauth2Client.credentials = token;
-            MoveMailFromInBOX(user_id, oauth2Client, from_email, label);
         }
     );
 }
@@ -563,7 +526,7 @@ async function MoveMailFromExpenseBit(user_id, auth, from_email, label) {
         var upsert = {
             upsert: true
         };
-        let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
+        await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
             console.log(err);
         });
         let labelarry = [];
@@ -580,15 +543,13 @@ async function MoveMailFromExpenseBit(user_id, auth, from_email, label) {
                         "removeLabelIds": labelarry
                     }
                 });
-                // if (allLabels.indexOf("INBOX") > -1) {
-                    let result = await gmail.users.messages.modify({
+                await gmail.users.messages.modify({
                         userId: 'me',
                         'id': oneEmail.email_id,
                         resource: {
                             "addLabelIds": ['INBOX']
                         }
                     });
-                // }
             }
         });
     }
@@ -613,14 +574,14 @@ async function MoveAllMailFromInBOX(user_id, auth, from_email, label) {
         var upsert = {
             upsert: true
         };
-        let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
+        await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
             console.log(err);
         });
         let labelarry = [];
         labelarry[0] = label;
         mailList.forEach(async oneEmail => {
             if (oneEmail.email_id) {
-                let res = await gmail.users.messages.modify({
+                await gmail.users.messages.modify({
                     userId: 'me',
                     'id': oneEmail.email_id,
                     resource: {
@@ -630,7 +591,6 @@ async function MoveAllMailFromInBOX(user_id, auth, from_email, label) {
                 });
                 sleep(2000);
             }
-            
         });
     }
 }
@@ -666,7 +626,7 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
         var upsert = {
             upsert: true
         };
-        let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
+        await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
             console.log(err);
         });
         let labelarry = [];
@@ -674,7 +634,7 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
         console.log("here got labels",allLabels)
         mailList.forEach(async oneEmail => {
             if (oneEmail.email_id) {
-                let res = await gmail.users.messages.modify({
+                await gmail.users.messages.modify({
                     userId: 'me',
                     'id': oneEmail.email_id,
                     resource: {
@@ -683,7 +643,7 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
                     }
                 });
                 if(allLabels.indexOf("INBOX") > -1){
-                    let result = await gmail.users.messages.modify({
+                    await gmail.users.messages.modify({
                         userId: 'me',
                         'id': oneEmail.email_id,
                         resource: {
@@ -691,23 +651,12 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
                         }
                     });
                 }
-                    // var request = await gmail.users.labels.delete({
-                    //     'userId': 'me',
-                    //     'id': labelId
-                    // });
-                    // request.execute(function (resp) { });
                 
             }
         });
     }
 }
 
-
-// /**
-//  * Get the recent email from your Gmail account
-//  *
-//  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
-//  */
 
 async function createEmailLabel(user_id, auth) {
     const gmail = google.gmail({ version: 'v1', auth })
@@ -731,7 +680,7 @@ async function createEmailLabel(user_id, auth) {
         var upsert = {
             upsert: true
         };
-        let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+        await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
             console.log(err);
         });
     }
@@ -747,31 +696,24 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
     //notify@* OR notifications@* OR notifier@* OR hello@* OR no-replay@* OR start@* OR support@* OR *-noreply@* )
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2018/12/01 ' });
     if (responseList && responseList['data']['messages']) {
-        // console.log(responseList['data']['messages'].length)
         responseList['data']['messages'].forEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
             if (response) {
                 let header_raw = response['data']['payload']['headers'];
                 let head;
-                // console.log(header_raw.length)
                 header_raw.forEach(data => {
                     if (data.name === "Subject") {
                         head = data.value
-                        // console.log(head)
                     }
                 });
-                // console.log(response.data.payload.body)
                 if (response.data.payload || response.data.payload['parts']) {
-                    // console.log(response.data.payload.body.data)
                     let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
                         : response.data.payload.parts[0].body.data;
                     let data = message_raw;
                     buff = Buffer.from(data, 'base64');
                     text = buff.toString();
-                    // console.log(text)
                     simpleParser(text, async (err, parsed) => {
                         if (parsed) {
-                            // console.log(parsed)
                             if (parsed['text']) {
                                 await checkEmail(parsed['text'], response['data'], user_id);
                             }
@@ -791,57 +733,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
     if (responseList['data'].nextPageToken) {
         await getRecentEmail(user_id, auth, responseList['data'].nextPageToken);
     }
-    // else{
-    //     await getAllMailBasedOnSubject(user_id,auth)
-    // }
 }
-
-async function getAllMailBasedOnSubject(user_id, auth, nextPageToken = null) {
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:notify@* AND after:2019/02/01 ' });
-    if (responseList) {
-        console.log(responseList['data']['messages'].length)
-        responseList['data']['messages'].forEach(async element => {
-            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
-            if (response) {
-                let header_raw = response['data']['payload']['headers'];
-                let head;
-                // console.log(header_raw.length)
-                header_raw.forEach(data => {
-                    if (data.name === "Subject") {
-                        head = data.value
-                        console.log(head)
-                    }
-                });
-                if (response.data.payload && response.data.payload['parts']) {
-                    let message_raw = response.data.payload.parts[0].body.data;
-                    let data = message_raw;
-                    buff = Buffer.from(data, 'base64');
-                    text = buff.toString();
-                    simpleParser(text, async (err, parsed) => {
-                        if (parsed) {
-                            // console.log(parsed)
-                            if (parsed['text']) {
-                                await checkEmail(parsed['text'], response['data'], user_id);
-                            }
-                            if (parsed['headerLines']) {
-                                await checkEmail(parsed.headerLines[0].line, response['data'], user_id);
-                            }
-                            if (parsed['textAsHtml']) {
-                                await checkEmail(parsed['textAsHtml'], response['data'], user_id);
-                            }
-                        }
-                    });
-                }
-            }
-        });
-    }
-    nextPageToken = responseList['data'].nextPageToken;
-    if (responseList['data'].nextPageToken) {
-        await getAllMailBasedOnSubject(user_id, auth, responseList['data'].nextPageToken);
-    }
-}
-
-
 
 let checkEmail = async (emailObj, mail, user_id) => {
     $ = cheerio.load(emailObj);
@@ -849,23 +741,29 @@ let checkEmail = async (emailObj, mail, user_id) => {
     let emailInfo = {};
     $('a').each(function (i, elem) {
         let fa = $(this).text();
-        // console.log($(this))
-        // console.log(fa);
-        if (fa.toLowerCase().indexOf("unsubscribe") != -1 ||
-        fa.toLowerCase().indexOf("preferences") != -1 ||
-        fa.toLowerCase().indexOf("subscription") != -1 ||
-        fa.toLowerCase().indexOf("visit this link") != -1 ||
-        fa.toLowerCase().indexOf("do not wish to receive our mails") != -1 ||
-        fa.toLowerCase().indexOf("not receiving our emails") != -1 ||
-        $(this).parent().text().toLowerCase().indexOf("not receiving our emails") != -1 ||
-        $(this).parent().text().toLowerCase().indexOf("stop receiving emails") != -1 ||
-        $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1 ||
-        $(this).parent().text().toLowerCase().indexOf("subscription") != -1 ||
-        $(this).parent().text().toLowerCase().indexOf("preferences") != -1 ||
-        $(this).parent().text().toLowerCase().indexOf("mailing list") != -1 ||
-        (fa.toLowerCase().indexOf("click here") != -1 && $(this).parent().text().toLowerCase().indexOf("mailing list") != -1) ||
-        ((fa.toLowerCase().indexOf("here") != -1 || fa.toLowerCase().indexOf("click here") != -1) && $(this).parent().text().toLowerCase().indexOf("unsubscribe") != -1) ||
-        $(this).parent().text().toLowerCase().indexOf("Don't want this") != -1) {
+        let anchortext = fa.toLowerCase();
+        let anchorParentText = $(this).parent().text().toLowerCase();
+        if (anchortext.indexOf("unsubscribe") != -1 ||
+            anchortext.indexOf("preferences") != -1 ||
+            anchortext.indexOf("subscription") != -1 ||
+            anchortext.indexOf("visit this link") != -1 ||
+            anchortext.indexOf("do not wish to receive our mails") != -1 ||
+            anchortext.indexOf("not receiving our emails") != -1)
+        {
+            
+                url = $(this).attr().href;
+                console.log(url);
+
+        }else if(anchorParentText.indexOf("not receiving our emails") != -1 ||
+            anchorParentText.indexOf("stop receiving emails") != -1 ||
+            anchorParentText.indexOf("unsubscribe") != -1 ||
+            anchorParentText.indexOf("subscription") != -1 ||
+            anchorParentText.indexOf("preferences") != -1 ||
+            anchorParentText.indexOf("mailing list") != -1 ||
+            (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
+            ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
+            anchorParentText.indexOf("Don't want this") != -1) 
+        {
             url = $(this).attr().href;
             console.log(url)
         }
@@ -926,26 +824,6 @@ let checkEmail = async (emailObj, mail, user_id) => {
                         });
                         console.log(docInfo)
                     }
-                    // let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => {
-                    //     console.log(err);
-                    // });
-                    // let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
-                    //     console.log(err);
-                    // });
-                    // if (docInfo) {
-                    //     let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true }).catch(err => {
-                    //         console.log(err);
-                    //     });
-                    //     if (mailList) {
-                    //         await MoveToMovedLabel(user_id, auth, mailList)
-                    //     }
-                    //     // let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true }).catch(err => {
-                    //     //     console.log(err);
-                    //     // });
-                    //     // if (mailInfo) {
-                    //     //     await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
-                    //     // }
-                    // }
                 }
             } catch (err) {
                 console.log(err);
@@ -954,74 +832,6 @@ let checkEmail = async (emailObj, mail, user_id) => {
     }
 }
 
-
-
-let MoveToMovedLabel = async (user_id, auth, mailList) => {
-    const gmail = google.gmail({ version: 'v1', auth });
-    var res = await gmail.users.labels.list({
-        userId: 'me',
-    }).catch(err => {
-        console.log(err);
-    });
-    if (res) {
-        let lbl_id = null;
-        res.data.labels.forEach(lbl => {
-            if (lbl.name === "Unsubscribed Emails") {
-                lbl_id = lbl.id;
-            }
-        });
-        if (lbl_id == null) {
-            var res = gmail.users.labels.create({
-                userId: 'me',
-                resource: {
-                    "labelListVisibility": "labelShow",
-                    "messageListVisibility": "show",
-                    "name": "Unsubscribed Emails"
-                }
-            }).catch(err => {
-                console.log(err);
-            });
-            if (res) {
-                var oldvalue = {
-                    user_id: user_id
-                };
-                var newvalues = {
-                    $set: {
-                        "label_id": res.data.id
-                    }
-                };
-                var upsert = {
-                    upsert: true
-                };
-                var result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                    console.log(err);
-                });
-                if (result) {
-                    let watch = await watchapi(user_id, auth);
-                    await MoveMailFromInBOX(user_id, auth, mailList, res.data.id);
-                }
-            }
-        } else {
-            var oldvalue = {
-                user_id: user_id
-            };
-            var newvalues = {
-                $set: {
-                    "label_id": lbl_id
-                }
-            };
-            var upsert = {
-                upsert: true
-            };
-            let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                console.log(err);
-            });
-            if (result) {
-                await MoveMailFromInBOX(user_id, auth, mailList, lbl_id);
-            }
-        }
-    }
-}
 
 
 
@@ -1177,6 +987,7 @@ router.post('/unSubscribeMail', async (req, res) => {
             });
         }
     } catch (ex) {
+        res.sendStatus(400);
     }
 });
 
@@ -1256,9 +1067,9 @@ let getAllEmailIds = async (user_id, token, from_email, emailIDS, is_revert_from
             let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
             oauth2Client.credentials = token;
             if (is_revert_from_trash) {
-                let mail = await revertMailFromTrash(user_id, oauth2Client, from_email, emailIDS);
+                await revertMailFromTrash(user_id, oauth2Client, from_email, emailIDS);
             } else {
-                let mail = await deleteAllEmailsAndMoveToTrash(user_id, oauth2Client, from_email, emailIDS);
+                await deleteAllEmailsAndMoveToTrash(user_id, oauth2Client, from_email, emailIDS);
             }
         });
 }
@@ -1266,9 +1077,6 @@ let getAllEmailIds = async (user_id, token, from_email, emailIDS, is_revert_from
 
 async function revertMailFromTrash(user_id, auth, from_email, emailIDS) {
     const gmail = google.gmail({ version: 'v1', auth });
-    console.log(emailIDS)
-    console.log(from_email)
-
     console.log("Trash To INBOX")
     let mailList = await email.find({ "from_email": from_email }).catch(err => {
         console.log(err);
@@ -1333,13 +1141,13 @@ async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS
                     "is_delete": true
                 }
             };
-            let result = await email.updateOne(oldvalue, newvalues, upsert).catch(err => {
+            await email.updateOne(oldvalue, newvalues, upsert).catch(err => {
                 console.log(err);
             });
         });
 
         emailIDS.forEach(async email_singleid => {
-            var res = await gmail.users.messages.delete({
+            await gmail.users.messages.delete({
                 userId: 'me',
                 'id': email_singleid
             }).catch(err => {
@@ -1386,7 +1194,7 @@ async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS
             console.log(result)
             let allLabels = ["TRASH"];
             mailIds.forEach(async mailid => {
-                var res = await gmail.users.messages.modify({
+                await gmail.users.messages.modify({
                     userId: 'me',
                     'id': mailid,
                     resource: {
@@ -1397,46 +1205,6 @@ async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS
                 });
             });
         }
-    }
-}
-
-async function deleteAllEmails(user_id, auth, from_email) {
-    const gmail = google.gmail({ version: 'v1', auth });
-    let mailList = await email.find({ "from_email": from_email }).catch(err => {
-        console.log(err);
-    });
-    if (mailList) {
-
-        let mailIds = [];
-
-        mailList.forEach(email => {
-            mailIds.push(email.email_id);
-        });
-        var oldvalue = {
-            user_id: user_id,
-            "from_email": from_email,
-            "is_delete": false
-        };
-        var newvalues = {
-            $set: {
-                "is_delete": true
-            }
-        };
-        var upsert = {
-            upsert: true
-        };
-        let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
-            console.log(err);
-        });
-        mailIds.forEach(async mailid => {
-            var res = await gmail.users.messages.delete({
-                userId: 'me',
-                'id': mailid
-            }).catch(err => {
-                console.log(err);
-            });
-
-        });
     }
 }
 
@@ -1483,7 +1251,7 @@ router.post('/getDeletedEmailData', async (req, res) => {
 });
 
 
-
+//implementation in app remaining
 router.post('/setMailForDeleteFromInbox', async (req, res) => {
     try {
         let auth_id = req.body.authID;
@@ -1504,7 +1272,7 @@ router.post('/setMailForDeleteFromInbox', async (req, res) => {
             var upsert = {
                 upsert: true
             };
-            let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
+            await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
                 console.log(err);
             });
         }
@@ -1534,11 +1302,12 @@ router.post('/keepMailInformation', async (req, res) => {
             var upsert = {
                 upsert: true
             };
-            let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
+            await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
                 console.log(err);
             });
         }
     } catch (ex) {
+        res.sendStatus(400);
     }
 });
 
