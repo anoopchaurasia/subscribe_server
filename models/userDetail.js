@@ -16,9 +16,22 @@ var userDetail = new Schema({
     },
     image_url: {
         type: String
+    },
+    given_name:{
+        type:String
+    },
+    family_name:{
+        type:String
+    },
+    gender:{
+        type:String
+    },
+    birth_date:{
+        type:Date
     }
 });
 
 
 var userdata = mongoose.model('userDetail', userDetail);
 module.exports = userdata;
+
