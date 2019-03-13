@@ -431,32 +431,32 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
             }
         });
         try {
-            let doc = await email.findOne({ "email_id": emailInfo.email_id }).catch(err => {
+            let doc = await email.findOne({ "email_id": emailInfo.email_id, "user_id": user_id }).catch(err => {
                 console.log(err);
             });
             console.log(doc)
             if (!doc) {
                 
                 // if (docInfo) {
-                    let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true }).catch(err => {
+                let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true, "user_id": user_id }).catch(err => {
                         console.log(err);
                     });
                     console.log(mailList)
                     if (mailList) {
                         console.log("successfully mo to folder unscribe");
                         emailInfo.is_moved=true;
-                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
                             console.log(err);
                         });
                         console.log(docInfo)
                         await getListLabel(user_id, auth, mailList)
                     }
-                    let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true }).catch(err => {
+                let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true, "user_id": user_id }).catch(err => {
                         console.log(err);
                     });
                     if (mailInfo) {
                         emailInfo.is_delete=true;
-                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
                             console.log(err);
                         });
                         console.log(docInfo)
@@ -464,7 +464,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
                         await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
                     }
                     if(!mailList && !mailInfo){
-                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
                             console.log(err);
                         });
                         console.log(docInfo)

@@ -781,18 +781,18 @@ let checkEmail = async (emailObj, mail, user_id,auth) => {
             console.log(emailInfo.from_email)
         }else{
             try {
-                let doc = await email.findOne({ "email_id": emailInfo.email_id }).catch(err => {
+                let doc = await email.findOne({ "email_id": emailInfo.email_id, "user_id": user_id }).catch(err => {
                     console.log(err);
                 });
                 if (!doc) {
-                    let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true }).catch(err => {
+                    let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true, "user_id":user_id }).catch(err => {
                         console.log(err);
                     });
                     console.log(mailList)
                     if (mailList && mailList.is_moved) {
                         console.log("successfully moved to folder unscribe");
                         emailInfo.is_moved = true;
-                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id, "user_id":user_id }, emailInfo, { upsert: true }).catch(err => {
                             console.log(err);
                         });
                         console.log(docInfo)
@@ -801,7 +801,7 @@ let checkEmail = async (emailObj, mail, user_id,auth) => {
                     
                     if (!mailList) {
                         emailInfo.is_moved = false;
-                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
                             console.log(err);
                         });
                         console.log(docInfo)
