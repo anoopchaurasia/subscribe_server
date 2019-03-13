@@ -696,13 +696,13 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                     simpleParser(text, async (err, parsed) => {
                         if (parsed) {
                             if (parsed['text']) {
-                                await checkEmail(parsed['text'], response['data'], user_id);
+                                await checkEmail(parsed['text'], response['data'], user_id,auth);
                             }
                             if (parsed['headerLines']) {
-                                await checkEmail(parsed.headerLines[0].line, response['data'], user_id);
+                                await checkEmail(parsed.headerLines[0].line, response['data'], user_id,auth);
                             }
                             if (parsed['textAsHtml']) {
-                                await checkEmail(parsed['textAsHtml'], response['data'], user_id);
+                                await checkEmail(parsed['textAsHtml'], response['data'], user_id,auth);
                             }
                         }
                     });
@@ -716,7 +716,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
     }
 }
 
-let checkEmail = async (emailObj, mail, user_id) => {
+let checkEmail = async (emailObj, mail, user_id,auth) => {
     $ = cheerio.load(emailObj);
     let url = null;
     let emailInfo = {};
@@ -789,7 +789,7 @@ let checkEmail = async (emailObj, mail, user_id) => {
                         console.log(err);
                     });
                     console.log(mailList)
-                    if (mailList) {
+                    if (mailList && mailList.is_moved) {
                         console.log("successfully moved to folder unscribe");
                         emailInfo.is_moved = true;
                         let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
@@ -800,6 +800,7 @@ let checkEmail = async (emailObj, mail, user_id) => {
                     }
                     
                     if (!mailList) {
+                        emailInfo.is_moved = false;
                         let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
                             console.log(err);
                         });
