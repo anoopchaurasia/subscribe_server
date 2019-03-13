@@ -443,7 +443,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
                     });
                     console.log(mailList)
                     if (mailList) {
-                        console.log("successfully moved to folder unscribe");
+                        console.log("successfully mo to folder unscribe");
                         emailInfo.is_moved=true;
                         let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
                             console.log(err);
