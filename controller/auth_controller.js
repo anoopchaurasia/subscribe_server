@@ -30,14 +30,12 @@ router.post('/signin', async (req, res) => {
                         return;
                     }
                     if (token) {
-                        console.log(token.access_token)
-                        const client = new OAuth2(clientId);
+                       const client = new OAuth2(clientId);
                         const ticket = await client.verifyIdToken({
                             idToken: token.id_token,
                             audience: clientId,
                         });
                         const payload = ticket.getPayload();
-                        console.log(payload)
                         var token_uniqueid = uniqid() + uniqid() + uniqid();
                         let user = await users.findOne({ 'email': payload.email }).catch(err => {
                             console.log(err);
@@ -55,8 +53,6 @@ router.post('/signin', async (req, res) => {
                                     return console.log(error);
                                 }
                                 if (body) {
-                                    console.log("profile data")
-                                    console.log(JSON.parse(body));
                                     let userInfoData = JSON.parse(body);
                                     var newUser = new users({
                                         "email": userInfoData.email||payload.email,
@@ -67,59 +63,33 @@ router.post('/signin', async (req, res) => {
                                         "gender": userInfoData['gender'] ? userInfoData.gender : "",
                                         "birth_date": userInfoData['birth_date'] ? userInfoData.birth_date : "",
                                     });
-                                    console.log(newUser)
                                     let userdata = await newUser.save().catch(err => {
                                         console.log(err);
                                     });
+                                    if (userdata) {
+                                        await extract_token(userdata, token.access_token, token.refresh_token, token.id_token, token.expiry_date, token.scope, token.token_type).catch(err => {
+                                            console.log(err);
+                                        });
+                                        var tokmodel = new token_model({
+                                            "user_id": userdata._id,
+                                            "token": token_uniqueid,
+                                            "created_at": new Date()
+                                        });
+                                        let tokenid = await tokmodel.save().catch(err => {
+                                            console.log(err);
+                                        });
+                                        if (tokenid) {
+                                            var jsondata = { "tokenid": token_uniqueid, "user": userdata };
+                                            res.status(200).json({
+                                                error: false,
+                                                data: jsondata
+                                            })
+                                        }
+                                    }
                                    
                                 }
                             });
                             
-                            // oauth2Client.setCredentials(token);
-                            // const service = google.people({ version: 'v1', auth:oauth2Client });
-                            // service.people.get({
-                            //     resourceName: 'people/me',
-                            //     personFields: 'names,emailAddresses,birthdays,genders',
-                            // }, (err, res) => {
-                            //     if (err) return console.error('The API returned an error: ' + err);
-                            //     console.log("people info",res)
-                            //     console.log(res.data.birthdays[0].date)
-                            // });
-                            // // var oauth2 = google.oauth2({
-                            //     auth: oauth2Client,
-                            //     version: 'v1'
-                            // });
-                            // oauth2.userinfo.get(
-                            //     function (err, res) {
-                            //         if (err) {
-                            //             console.log(err);
-                            //         } else {
-                            //             console.log(res);
-                            //         }
-                            //     });
-                            
-                            console.log("chek here", userdata)
-                            if (userdata) {
-                                await extract_token(userdata, token.access_token, token.refresh_token, token.id_token, token.expiry_date, token.scope, token.token_type).catch(err => {
-                                    console.log(err);
-                                });
-                                var tokmodel = new token_model({
-                                    "user_id": userdata._id,
-                                    "token": token_uniqueid,
-                                    "created_at": new Date()
-                                });
-                                let tokenid = await tokmodel.save().catch(err => {
-                                    console.log(err);
-                                });
-                                if (tokenid) {
-                                    var jsondata = { "tokenid": token_uniqueid, "user": userdata };
-                                    console.log(jsondata)
-                                    res.status(200).json({
-                                        error: false,
-                                        data: jsondata
-                                    })
-                                }
-                            }
                         } else {
                             await extract_token(user, token.access_token, token.refresh_token, token.id_token, token.expiry_date, token.scope, token.token_type).catch(err => {
                                 console.log(err);
@@ -134,7 +104,6 @@ router.post('/signin', async (req, res) => {
                             });
                             if (tokenid) {
                                 var jsondata = { "tokenid": token_uniqueid, "user": user };
-                                console.log(jsondata)
                                 res.status(200).json({
                                     error: false,
                                     data: jsondata

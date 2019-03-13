@@ -675,7 +675,7 @@ async function createEmailLabel(user_id, auth) {
 async function getRecentEmail(user_id, auth, nextPageToken) {
     // from: notify@* OR notifications@* OR notifier@* AND after: 2018 / 01 / 24 
     //notify@* OR notifications@* OR notifier@* OR hello@* OR no-replay@* OR start@* OR support@* OR *-noreply@* )
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2018/12/01 ' });
+    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2019/02/01 ' });
     if (responseList && responseList['data']['messages']) {
         responseList['data']['messages'].forEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
