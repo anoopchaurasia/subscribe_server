@@ -303,7 +303,7 @@ router.post('/readProfileInfo', async (req, res) => {
                 console.log(err);
             });
             if (emailinfos) {
-                let movedMail = await email.aggregate([{ $match: { "is_moved": true, "user_id": doc.user_id } }, {
+                let movedMail = await email.aggregate([{ $match: { "is_moved": true, "is_delete": false, "is_keeped": false, "user_id": doc.user_id } }, {
                     $group: {
                         _id: { "from_email": "$from_email" }, data: {
                             $push: {
