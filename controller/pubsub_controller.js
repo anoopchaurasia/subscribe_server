@@ -564,28 +564,29 @@ let getListLabel = async (user_id, auth, mailList) => {
 
 
 
+
+
 async function MoveMailFromInBOX(user_id, auth, mailList, label) {
     const gmail = google.gmail({ version: 'v1', auth });
-    var oldvalue = {
-        user_id: user_id,
-        "from_email": mailList.from_email,
-        "is_moved": false
-    };
-    var newvalues = {
-        $set: {
-            "is_moved": true
-        }
-    };
-    var upsert = {
-        upsert: true
-    };
-    await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
-        console.log(err);
-    });;
+
     let labelarry = [];
     labelarry[0] = label;
     if (mailList.email_id) {
-        await gmail.users.messages.modify({
+        var oldvalue = {
+            "email_id": mailList.email_id
+        };
+        var newvalues = {
+            $set: {
+                "is_moved": true
+            }
+        };
+        var upsert = {
+            upsert: true
+        };
+        let result = await email.findOneAndUpdate(oldvalue, newvalues, upsert).catch(err => {
+            console.log(err);
+        });;
+        let res = await gmail.users.messages.modify({
             userId: 'me',
             'id': mailList.email_id,
             resource: {
@@ -594,7 +595,14 @@ async function MoveMailFromInBOX(user_id, auth, mailList, label) {
         }).catch(err => {
             console.log(err);
         });
-        
+        let resp = await gmail.users.messages.modify({
+            userId: 'me',
+            'id': oneEmail.email_id,
+            resource: {
+                "removeLabelIds": ['INBOX']
+            }
+        });
+
     }
 }
 
@@ -607,35 +615,39 @@ async function deleteEmailsAndMoveToTrash(user_id, auth, from_email) {
     if (mailList) {
         let mailIds = [];
         mailList.forEach(email => {
-            mailIds.push(email.email_id);
-        });
-        var oldvalue = {
-            user_id: user_id,
-            "from_email": from_email,
-            "is_delete": false
-        };
-        var newvalues = {
-            $set: {
-                "is_delete": true
-            }
-        };
-        var upsert = {
-            upsert: true
-        };
-        await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
-            console.log(err);
-        });
-        mailIds.forEach(async mailid => {
-            await gmail.users.messages.trash({
+            // mailIds.push(email.email_id);
+            var oldvalue = {
+                email_id: email.email_id
+            };
+            var newvalues = {
+                $set: {
+                    "is_delete": true
+                }
+            };
+            var upsert = {
+                upsert: true
+            };
+            let result = await email.findOneAndUpdate(oldvalue, newvalues, upsert).catch(err => {
+                console.log(err);
+            });
+            let res = await gmail.users.messages.trash({
                 userId: 'me',
-                'id': mailid
+                'id': email.email_id
             }).catch(err => {
                 console.log(err);
             });
         });
+
+        // mailIds.forEach(async mailid => {
+        //     let res = await gmail.users.messages.trash({
+        //         userId: 'me',
+        //         'id': mailid
+        //     }).catch(err => {
+        //         console.log(err);
+        //     });
+        // });
     }
 }
-
 let historyListapi = async (oauth2Client, historyID) => {
     var options = {
         userId: 'me',
