@@ -582,7 +582,7 @@ const sleep = (milliseconds) => {
 
 async function MoveMailFromInBOX(user_id, auth, from_email, label) {
     const gmail = google.gmail({ version: 'v1', auth });
-    let mailList = await email.find({ "from_email": from_email }).catch(err => {
+    let mailList = await email.find({ "from_email": from_email, "user_id": user_id }).catch(err => {
         console.log(err);
     });
     if (mailList) {
@@ -593,51 +593,92 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
                 allLabels.push(lblmail);
             }
         });
-        var oldvalue = {
-            user_id: user_id,
-            "from_email": from_email,
-            "is_moved": false
-        };
-        var newvalues = {
-            $set: {
-                "is_moved": true,
-                "is_keeped": false
-            }
-        };
-        var upsert = {
-            upsert: true
-        };
-        await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
-            console.log(err);
-        });
+
         let labelarry = [];
         labelarry[0] = label;
-        console.log("here got labels",allLabels)
-        mailList.forEach(async oneEmail => {
-            if (oneEmail.email_id) {
-                await gmail.users.messages.modify({
+        console.log("here got labels", allLabels)
+        let mailIDSARRAY = [];
+        for (let i = 0; i < mailList.length; i++) {
+            var oldvalue = {
+                "email_id": mailList[i].email_id
+            };
+            var newvalues = {
+                $set: {
+                    "is_moved": true,
+                    "is_keeped": false
+                }
+            };
+            var upsert = {
+                upsert: true
+            };
+            email.findOneAndUpdate(oldvalue, newvalues, upsert).catch(err => {
+                console.log(err);
+            });
+            mailIDSARRAY.push(mailList[i].email_id);
+        }
+        console.log(mailIDSARRAY)
+        if (mailIDSARRAY.length != 0) {
+            if (allLabels.indexOf("INBOX") > -1) {
+                await gmail.users.messages.batchModify({
                     userId: 'me',
-                    'id': oneEmail.email_id,
                     resource: {
+                        'ids': mailIDSARRAY,
+                        'addLabelIds': labelarry,
+                        "removeLabelIds": ['INBOX']
+                    }
+                });
+            } else {
+                await gmail.users.messages.batchModify({
+                    userId: 'me',
+                    resource: {
+                        'ids': mailIDSARRAY,
                         'addLabelIds': labelarry,
                         "removeLabelIds": allLabels
                     }
                 });
-                if(allLabels.indexOf("INBOX") > -1){
-                    await gmail.users.messages.modify({
-                        userId: 'me',
-                        'id': oneEmail.email_id,
-                        resource: {
-                            "removeLabelIds": ['INBOX']
-                        }
-                    });
-                }
-                
             }
-        });
+        }
+        // mailList.forEach(async oneEmail => {
+        //     var oldvalue = {
+        //     "email_id": oneEmail.email_id
+        //       };
+        //         var newvalues = {
+        //             $set: {
+        //                 "is_moved": true,
+        //                 "is_keeped": false
+        //             }
+        //         };
+        //         var upsert = {
+        //             upsert: true
+        //         };
+        //         let data = await email.findOneAndUpdate(oldvalue, newvalues, upsert).catch(err => {
+        //             console.log(err);
+        //         });
+        //             if (oneEmail.email_id) {
+        //                 if(allLabels.indexOf("INBOX") > -1){
+        //                     await gmail.users.messages.batchModify({
+        //                         userId: 'me',
+        //                         'id': oneEmail.email_id,
+        //                         resource: {
+        //                             'addLabelIds': labelarry,
+        //                             "removeLabelIds": ['INBOX']
+        //                         }
+        //                     });
+        //                 }else{
+        //                     await gmail.users.messages.batchModify({
+        //                         userId: 'me',
+        //                         'id': oneEmail.email_id,
+        //                         resource: {
+        //                             'addLabelIds': labelarry,
+        //                             "removeLabelIds": allLabels
+        //                         }
+        //                     });
+        //                 }
+
+        //             }
+        // });
     }
 }
-
 
 async function createEmailLabel(user_id, auth) {
     const gmail = google.gmail({ version: 'v1', auth })
