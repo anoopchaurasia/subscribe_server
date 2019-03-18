@@ -614,7 +614,7 @@ async function deleteEmailsAndMoveToTrash(user_id, auth, from_email) {
     });
     if (mailList) {
         let mailIds = [];
-        mailList.forEach(email => {
+        mailList.forEach(async email => {
             // mailIds.push(email.email_id);
             var oldvalue = {
                 email_id: email.email_id
