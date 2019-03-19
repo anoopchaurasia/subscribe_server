@@ -1,5 +1,5 @@
-const fs = require("fs");
-let {client_secret, client_id,redirect_uris} = JSON.parse(fs.readFileSync('./client_secret.json')).installed;
+sconst fs = require("fs");
+let {client_secret, client_id} = JSON.parse(fs.readFileSync(process.env.CLIENT_CONFIG)).installed;
 let axios = require("axios");
 let auth_token_model  = require('../models/authToken');
 var { google } = require('googleapis');
