@@ -1017,7 +1017,7 @@ router.post('/unSubscribeMail', async (req, res) => {
 
 
 async function checkTokenLifetime(deviceToken, from_email, emailIDS, is_revert_from_trash) {
-    let authToken = await TokenHandler.getAccessToken({userId: deviceToken.userId}).catch(e=> console.error(e));
+    let authToken = await TokenHandler.getAccessToken(deviceToken.userId).catch(e=> console.error(e));
     let oauth2Client = await TokenHandler.createAuthCleint(authToken);
     if (is_revert_from_trash) {
         let mail = await revertMailFromTrash(user_id, oauth2Client, from_email, emailIDS);
