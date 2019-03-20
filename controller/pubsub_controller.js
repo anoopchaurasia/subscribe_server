@@ -3,6 +3,7 @@ let express = require('express');
 let auth_token = require('../models/authToken');
 let email = require('../models/email');
 let user_model = require('../models/userDetail');
+let TokenHandler = require("../helper/TokenHandler").TokenHandler;
 let fcmToken = require('../models/fcmToken');
 let Request = require("request");
 let router = express.Router();
@@ -12,161 +13,42 @@ const simpleParser = require('mailparser').simpleParser;
 var FCM = require('fcm-node');
 var serverKey = process.env.SERVER_KEY; //put your server key here
 var fcm = new FCM(serverKey);
-
 var gmail = google.gmail('v1');
-
-router.get('/testingpubsub', function (req, res) {
-    res.send("In pubsub CONTROLLER");
-});
 
 
 router.post('/getemail', async (req, response) => {
     if (!req.body || !req.body.message || !req.body.message.data) {
         return res.sendStatus(400);
     }
-    const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64')
-        .toString('utf8');
+    const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64').toString('utf8');
     var content;
     try {
         content = JSON.parse(dataUtf8encoded);
         var email_id = content.emailAddress;
         var historyID = content.historyId;
-        let doc = await user_model.findOne({ "email": email_id }).catch(err => {
-            console.log(err);
-        });
-        if (doc) {
-            let tokenInfo = await auth_token.findOne({ "user_id": doc._id }).catch(err => {
-                console.log(err);
-            });
-            console.log(email_id)
-            console.log(tokenInfo)
-            if (tokenInfo) {
-                console.log(tokenInfo.expiry_date)
-               console.log(new Date(tokenInfo.expiry_date)) 
-                if (new Date(tokenInfo.expiry_date) >= new Date()) {
-                    console.log(email_id)
-                    tokenInfo.expiry_date = new Date(tokenInfo.expiry_date);
-                    let coontent =await fs.readFileSync('./client_secret.json');
-                    let credentials = JSON.parse(coontent);
-                    let clientSecret = credentials.installed.client_secret;
-                    let clientId = credentials.installed.client_id;
-                    let redirectUrl = credentials.installed.redirect_uris[0];
-
-                    let OAuth2 = google.auth.OAuth2;
-                    let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
-                    oauth2Client.credentials = tokenInfo;
-                    console.log(oauth2Client)
-                    var options = {
-                        userId: 'me',
-                        'startHistoryId': historyID-10,
-                        auth: oauth2Client
-                    };
-                    let res = await gmail.users.history.list(options).catch(err => {
-                        console.log(err);
+        let userInfo = await user_model.findOne({ "email": email_id }).catch(err => { console.log(err); });
+        if (userInfo) {
+            let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
+            let oauth2Client = await TokenHandler.createAuthCleint();
+            oauth2Client.credentials = authToken;
+            var options = {
+                userId: 'me',
+                'startHistoryId': historyID - 10,
+                auth: oauth2Client
+            };
+            let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
+            if (res) {
+                let data = res.data;
+                if (data && data.history) {
+                    let history = data.history;
+                    let messageIDS = [];
+                    history.forEach(his => {
+                        his.messages.forEach(msg => {
+                            messageIDS.push(msg.id)
+                        });
                     });
-
-                    if (res) {
-                        let data = res.data;
-                        if (data && data.history) {
-                            let history = data.history;
-                            let messageIDS = [];
-                            history.forEach(his => {
-                                his.messages.forEach(msg => {
-                                    messageIDS.push(msg.id)
-                                });
-                            });
-                            await getRecentEmail(doc._id, oauth2Client, messageIDS, null);
-                            response.sendStatus(200);
-                        } else if (data && !data.history) {
-                            // response.sendStatus(200);
-                        }
-                    }
-
-                } else {
-                    let content = fs.readFileSync('./client_secret.json');
-                   
-                    let cred = JSON.parse(content);
-                    let clientSecret = cred.installed.client_secret;
-                    let clientId = cred.installed.client_id;
-                    var body = JSON.stringify({
-                        "client_id": clientId,
-                        "client_secret": clientSecret,
-                        "refresh_token": tokenInfo.refresh_token,
-                        "grant_type": 'refresh_token',
-                    });
-                    var settings = {
-                        "url": "https://www.googleapis.com/oauth2/v4/token",
-                        "method": "POST",
-                        body: body,
-                        "headers": {
-                            'Content-Type': 'application/json',
-                            "access_type": 'offline'
-                        }
-                    }
-
-                    Request(settings, async (error, resp, body) => {
-                        if (error) {
-                            return console.log(error);
-                        }
-                        if (body) {
-                            console.log("came here")
-                            body = JSON.parse(body);
-                            let milisec = new Date().getTime();
-                            milisec = milisec + (body.expires_in * 1000);
-                            tokenInfo.access_token = body.access_token;
-                            tokenInfo.expiry_date = new Date(milisec);
-                            console.log(tokenInfo.expiry_date)
-                            var oldvalue = {
-                                user_id: doc._id
-                            };
-                            var newvalues = {
-                                $set: {
-                                    access_token: body.access_token,
-                                    expiry_date: new Date(milisec)
-                                }
-                            };
-                            var upsert = {
-                                upsert: true
-                            };
-                            let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                                console.log(err);
-                            });
-                            if (result) {
-                                let redirectUrl = cred.installed.redirect_uris[0];
-                                let OAuth2 = google.auth.OAuth2;
-                                let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
-                                oauth2Client.credentials = tokenInfo;
-                                var options = {
-                                    userId: 'me',
-                                    'startHistoryId': historyID-10,
-                                    auth: oauth2Client
-
-                                };
-
-                                let res = await gmail.users.history.list(options).catch(err => {
-                                    console.log(err);
-                                });
-                                if (res) {
-                                    let data = res.data;
-                                    if (data && data.history) {
-                                        let history = data.history;
-                                        let messageIDS = [];
-                                        history.forEach(his => {
-                                            his.messages.forEach(msg => {
-                                                messageIDS.push(msg.id)
-                                            });
-                                        });
-
-                                        await getRecentEmail(doc._id, oauth2Client, messageIDS, null);
-                                        response.sendStatus(200);
-                                    } else if (data && !data.history) {
-                                        // response.sendStatus(200);
-                                    }
-                                }
-                            }
-                        }
-                    });
-
+                    await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
+                    response.sendStatus(200);
                 }
             }
         } else {
@@ -178,157 +60,7 @@ router.post('/getemail', async (req, response) => {
     }
 });
 
-
-router.post('/gethistoryList', async function (req, response) {
-    try {
-        let email_id = req.body.email_id;
-        let doc = await user_model.findOne({ "email": email_id }).catch(err => {
-            console.log(err);
-        });
-        if (doc) {
-            let tokenInfo = await auth_token.findOne({ "user_id": doc._id }).catch(err => {
-                console.log(err);
-            });
-            if (tokenInfo) {
-                let historyID = req.body.historyID;
-                if (tokenInfo.expiry_date >= new Date()) {
-                    tokenInfo.expiry_date = tokenInfo.expiry_date.getTime();
-                    let coontent = fs.readFileSync('./client_secret.json');
-                    let credentials = JSON.parse(coontent);
-                    let clientSecret = credentials.installed.client_secret;
-                    let clientId = credentials.installed.client_id;
-                    let redirectUrl = credentials.installed.redirect_uris[0];
-                    let OAuth2 = google.auth.OAuth2;
-                    let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
-                    oauth2Client.credentials = tokenInfo;
-                    var options = {
-                        userId: 'me',
-                        'startHistoryId': historyID,
-                        auth: oauth2Client
-                    };
-
-                    let res = await gmail.users.history.list(options).catch(err => {
-                        console.log(err);
-                    });
-                    if (res) {
-                        let data = res.data;
-                        if (data && data.history) {
-                            let history = data.history;
-                            let messageIDS = [];
-                            history.forEach(his => {
-                                his.messages.forEach(msg => {
-                                    messageIDS.push(msg.id)
-                                });
-                            });
-                            await getRecentEmail(doc._id, oauth2Client, messageIDS, null);
-                            response.status(200).json({
-                                error: false,
-                                data: messageIDS
-                            })
-                        } else if (data && !data.history) {
-                            // response.status(200).json({
-                            //     error: false,
-                            //     data: "no msg ids"
-                            // })
-                        }
-                    }
-                } else {
-                    let content = fs.readFileSync('./client_secret.json');
-                    let cred = JSON.parse(content);
-                    let clientSecret = cred.installed.client_secret;
-                    let clientId = cred.installed.client_id;
-                    var body = JSON.stringify({
-                        "client_id": clientId,
-                        "client_secret": clientSecret,
-                        "refresh_token": tokenInfo.refresh_token,
-                        "grant_type": 'refresh_token',
-                    });
-
-                    var settings = {
-                        "url": "https://www.googleapis.com/oauth2/v4/token",
-                        "method": "POST",
-                        body: body,
-                        "headers": {
-                            'Content-Type': 'application/json',
-                            "access_type": 'offline'
-                        }
-                    }
-
-                    Request(settings, async (error, resp, body) => {
-                        if (error) {
-                            return console.log(error);
-                        }
-                        if (body) {
-                            body = JSON.parse(body);
-                            let milisec = new Date().getTime();
-                            milisec = milisec + (body.expires_in * 1000);
-                            tokenInfo.accessToken = body.access_token;
-                            tokenInfo.expiry_date = new Date(milisec);
-                            var oldvalue = {
-                                user_id: doc._id
-                            };
-                            var newvalues = {
-                                $set: {
-                                    access_token: body.access_token,
-                                    expiry_date: new Date(milisec)
-                                }
-                            };
-                            var upsert = {
-                                upsert: true
-                            };
-                            let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                                console.log(err);
-                            });
-                            if (result) {
-                                let redirectUrl = cred.installed.redirect_uris[0];
-                                let OAuth2 = google.auth.OAuth2;
-                                let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
-                                oauth2Client.credentials = tokenInfo;
-                                var options = {
-                                    userId: 'me',
-                                    'startHistoryId': historyID,
-                                    auth: oauth2Client
-                                };
-                                let res = await gmail.users.history.list(options).catch(err => {
-                                    console.log(err);
-                                });
-                                if (res) {
-                                    let data = res.data;
-                                    if (data && data.history) {
-                                        let history = data.history;
-                                        let messageIDS = [];
-                                        history.forEach(his => {
-                                            his.messages.forEach(msg => {
-                                                messageIDS.push(msg.id)
-                                            });
-                                        });
-                                        await getRecentEmail(doc._id, oauth2Client, messageIDS, null);
-                                        response.status(200).json({
-                                            error: false,
-                                            data: messageIDS
-                                        })
-                                    } else if (data && !data.history) {
-                                        // response.status(200).json({
-                                        //     error: false,
-                                        //     data: "no msg ids"
-                                        // })
-                                    }
-                                }
-                            }
-                        }
-                    });
-
-                }
-            }
-        }
-    } catch (ex) {
-
-    }
-
-});
-
-
-async function getRecentEmail(user_id, auth, messageIDS, nextPageToken) {
+async function getRecentEmail(user_id, auth, messageIDS) {
     messageIDS.forEach(async mids => {
         let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
             console.log(err);
@@ -339,7 +71,6 @@ async function getRecentEmail(user_id, auth, messageIDS, nextPageToken) {
             header_raw.forEach(data => {
                 if (data.name == "Subject") {
                     head = data.value
-                    console.log(head)
                 }
             });
             if (response.data.payload) {
@@ -361,7 +92,6 @@ async function getRecentEmail(user_id, auth, messageIDS, nextPageToken) {
                     }
                 });
             }
-
         }
     });
 }
@@ -381,13 +111,9 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
             anchortext.indexOf("subscription") != -1 ||
             anchortext.indexOf("visit this link") != -1 ||
             anchortext.indexOf("do not wish to receive our mails") != -1 ||
-            anchortext.indexOf("not receiving our emails") != -1)
-        {
-            
-                url = $(this).attr().href;
-                console.log(url);
-
-        }else if(anchorParentText.indexOf("not receiving our emails") != -1 ||
+            anchortext.indexOf("not receiving our emails") != -1) {
+            url = $(this).attr().href;
+        } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
             anchorParentText.indexOf("stop receiving emails") != -1 ||
             anchorParentText.indexOf("unsubscribe") != -1 ||
             anchorParentText.indexOf("subscription") != -1 ||
@@ -395,18 +121,15 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
             anchorParentText.indexOf("mailing list") != -1 ||
             (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
             ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
-            anchorParentText.indexOf("Don't want this") != -1) 
-        {
+            anchorParentText.indexOf("Don't want this") != -1) {
             url = $(this).attr().href;
-            console.log(url)
         }
     })
     if (url != null) {
-        console.log("came here")
+        console.log(url);
         emailInfo['user_id'] = user_id;
-        emailInfo['mail_data'] = mail
+        emailInfo['mail_data'] = null;
         emailInfo['email_id'] = mail.id;
-        console.log(mail.id)
         emailInfo['historyId'] = mail.historyId;
         emailInfo['labelIds'] = mail.labelIds;
         emailInfo['unsubscribe'] = url;
@@ -431,59 +154,37 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
             }
         });
         try {
-            let doc = await email.findOne({ "email_id": emailInfo.email_id, "user_id": user_id }).catch(err => {
-                console.log(err);
-            });
-            console.log(doc)
+            let doc = await email.findOne({ "email_id": emailInfo.email_id, "user_id": user_id }).catch(err => { console.log(err); });
             if (!doc) {
-                
-                // if (docInfo) {
-                let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true, "user_id": user_id }).catch(err => {
-                        console.log(err);
-                    });
-                    console.log(mailList)
-                    if (mailList) {
-                        console.log("successfully mo to folder unscribe");
-                        emailInfo.is_moved=true;
-                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
-                            console.log(err);
-                        });
-                        console.log(docInfo)
-                        await getListLabel(user_id, auth, mailList)
-                    }
-                let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true, "user_id": user_id }).catch(err => {
-                        console.log(err);
-                    });
-                    if (mailInfo) {
-                        emailInfo.is_delete=true;
-                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
-                            console.log(err);
-                        });
-                        console.log(docInfo)
-                        console.log("successfully moved to folder delete");
-                        await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
-                    }
-                    if(!mailList && !mailInfo){
-                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
-                            console.log(err);
-                        });
-                        console.log(docInfo)
-                    }
-                    let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => {
-                        console.log(err);
-                    });
-                    if (tokenInfo) {
-                        var message = {
-                            to: tokenInfo.fcm_token,
-                            collapse_key: 'geern',
-                            notification: {
-                                title: 'New Email Newsletter',
-                                body: 'You received new newsletter in you INBOX.'
-                            }
-                        };
-                        await sendFcmMessage(message);
-                    }
-                // }
+                let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true, "user_id": user_id }).catch(err => { console.log(err); });
+                if (mailList) {
+                    console.log("successfully moved to folder unscribe");
+                    emailInfo.is_moved = true;
+                    await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
+                    await getListLabel(user_id, auth, mailList)
+                }
+                let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true, "user_id": user_id }).catch(err => { console.log(err); });
+                if (mailInfo) {
+                    emailInfo.is_delete = true;
+                    await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
+                    console.log("successfully moved to folder delete");
+                    await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
+                }
+                if (!mailList && !mailInfo) {
+                    await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
+                }
+                let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
+                if (tokenInfo) {
+                    var message = {
+                        to: tokenInfo.fcm_token,
+                        collapse_key: 'geern',
+                        notification: {
+                            title: 'New Email Newsletter',
+                            body: 'You received new newsletter in you INBOX.'
+                        }
+                    };
+                    await sendFcmMessage(message);
+                }
             }
         } catch (err) {
             console.log(err)
@@ -499,7 +200,7 @@ let getListLabel = async (user_id, auth, mailList) => {
     }).catch(err => {
         console.log(err);
     });
-    
+
     if (res) {
         let lbl_id = null;
         res.data.labels.forEach(lbl => {
@@ -519,40 +220,13 @@ let getListLabel = async (user_id, auth, mailList) => {
                 console.log(err);
             });
             if (res) {
-                var oldvalue = {
-                    user_id: user_id
-                };
-                var newvalues = {
-                    $set: {
-                        "label_id": res.data.id
-                    }
-                };
-                var upsert = {
-                    upsert: true
-                };
-                var result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                    console.log(err);
-                });
+                var result = await auth_token.updateOne({ user_id: user_id }, { $set: { "label_id": res.data.id } }, { upsert: true }).catch(err => { console.log(err); });
                 if (result) {
-                    await watchapi(user_id, auth);
                     await MoveMailFromInBOX(user_id, auth, mailList, res.data.id);
                 }
             }
         } else {
-            var oldvalue = {
-                user_id: user_id
-            };
-            var newvalues = {
-                $set: {
-                    "label_id": lbl_id
-                }
-            };
-            var upsert = {
-                upsert: true
-            };
-            let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                console.log(err);
-            });
+            let result = await auth_token.updateOne({ user_id: user_id }, { $set: { "label_id": lbl_id } }, { upsert: true }).catch(err => { console.log(err); });
             if (result) {
                 await MoveMailFromInBOX(user_id, auth, mailList, lbl_id);
             }
@@ -562,13 +236,8 @@ let getListLabel = async (user_id, auth, mailList) => {
 
 
 
-
-
-
-
 async function MoveMailFromInBOX(user_id, auth, mailList, label) {
     const gmail = google.gmail({ version: 'v1', auth });
-
     let labelarry = [];
     labelarry[0] = label;
     if (mailList.email_id) {
@@ -583,10 +252,10 @@ async function MoveMailFromInBOX(user_id, auth, mailList, label) {
         var upsert = {
             upsert: true
         };
-        let result = await email.findOneAndUpdate(oldvalue, newvalues, upsert).catch(err => {
+        await email.findOneAndUpdate(oldvalue, newvalues, upsert).catch(err => {
             console.log(err);
         });;
-        let res = await gmail.users.messages.modify({
+        await gmail.users.messages.modify({
             userId: 'me',
             'id': mailList.email_id,
             resource: {
@@ -595,27 +264,22 @@ async function MoveMailFromInBOX(user_id, auth, mailList, label) {
         }).catch(err => {
             console.log(err);
         });
-        let resp = await gmail.users.messages.modify({
+        await gmail.users.messages.modify({
             userId: 'me',
             'id': oneEmail.email_id,
             resource: {
                 "removeLabelIds": ['INBOX']
             }
         });
-
     }
 }
 
 
 async function deleteEmailsAndMoveToTrash(user_id, auth, from_email) {
     const gmail = google.gmail({ version: 'v1', auth });
-    let mailList = await email.find({ "from_email": from_email }).catch(err => {
-        console.log(err);
-    });
+    let mailList = await email.find({ "from_email": from_email, "user_id": user_id }).catch(err => { console.log(err); });
     if (mailList) {
-        let mailIds = [];
         mailList.forEach(async email => {
-            // mailIds.push(email.email_id);
             var oldvalue = {
                 email_id: email.email_id
             };
@@ -627,46 +291,12 @@ async function deleteEmailsAndMoveToTrash(user_id, auth, from_email) {
             var upsert = {
                 upsert: true
             };
-            let result = await email.findOneAndUpdate(oldvalue, newvalues, upsert).catch(err => {
-                console.log(err);
-            });
-            let res = await gmail.users.messages.trash({
+            await email.findOneAndUpdate(oldvalue, newvalues, upsert).catch(err => { console.log(err); });
+            await gmail.users.messages.trash({
                 userId: 'me',
                 'id': email.email_id
-            }).catch(err => {
-                console.log(err);
-            });
+            }).catch(err => { console.log(err); });
         });
-
-        // mailIds.forEach(async mailid => {
-        //     let res = await gmail.users.messages.trash({
-        //         userId: 'me',
-        //         'id': mailid
-        //     }).catch(err => {
-        //         console.log(err);
-        //     });
-        // });
-    }
-}
-let historyListapi = async (oauth2Client, historyID) => {
-    var options = {
-        userId: 'me',
-        'startHistoryId': historyID,
-        auth: oauth2Client
-    };
-    let res = await gmail.users.history.list(options).catch(err => {
-        console.log(err);
-    });
-    if (res) {
-        let data = res.data;
-        if (data && data.history) {
-            let history = data.history;
-            history.forEach(his => {
-                his.messages.forEach(msg => {
-                    console.log(msg.id)
-                });
-            });
-        }
     }
 }
 

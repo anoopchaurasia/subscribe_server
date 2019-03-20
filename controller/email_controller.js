@@ -618,51 +618,11 @@ async function MoveMailFromInBOX(user_id, auth, from_email, label) {
                     userId: 'me',
                     resource: {
                         'ids': mailIDSARRAY,
-                        'addLabelIds': labelarry,
-                        "removeLabelIds": allLabels
+                        'addLabelIds': labelarry
                     }
                 });
             }
         }
-        // mailList.forEach(async oneEmail => {
-        //     var oldvalue = {
-        //     "email_id": oneEmail.email_id
-        //       };
-        //         var newvalues = {
-        //             $set: {
-        //                 "is_moved": true,
-        //                 "is_keeped": false
-        //             }
-        //         };
-        //         var upsert = {
-        //             upsert: true
-        //         };
-        //         let data = await email.findOneAndUpdate(oldvalue, newvalues, upsert).catch(err => {
-        //             console.log(err);
-        //         });
-        //             if (oneEmail.email_id) {
-        //                 if(allLabels.indexOf("INBOX") > -1){
-        //                     await gmail.users.messages.batchModify({
-        //                         userId: 'me',
-        //                         'id': oneEmail.email_id,
-        //                         resource: {
-        //                             'addLabelIds': labelarry,
-        //                             "removeLabelIds": ['INBOX']
-        //                         }
-        //                     });
-        //                 }else{
-        //                     await gmail.users.messages.batchModify({
-        //                         userId: 'me',
-        //                         'id': oneEmail.email_id,
-        //                         resource: {
-        //                             'addLabelIds': labelarry,
-        //                             "removeLabelIds": allLabels
-        //                         }
-        //                     });
-        //                 }
-
-        //             }
-        // });
     }
 }
 

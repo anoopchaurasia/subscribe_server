@@ -48,7 +48,7 @@ router.post('/signin', async (req, res) => {
     }
 });
 
-async function create_token (user) {
+async function create_token(user) {
     var token_uniqueid = uniqid() + uniqid() + uniqid();
     var tokmodel = new token_model({
         "user_id": user._id,

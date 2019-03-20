@@ -22,7 +22,6 @@ class TokenHandler {
         }else{
             console.log("token not expire", authToken)
             return authToken;
-
         }
     }
 
@@ -87,7 +86,6 @@ class TokenHandler {
             "user_id": user._id,
             "created_at": new Date()
         };
-        console.log(tokedata)
         await auth_token_model.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
             console.log(err);
         });
