@@ -1,4 +1,5 @@
 var mongoose = require('mongoose');
+let TokenHandler = require("../helper/TokenHandler");
 var Schema = mongoose.Schema;
 
 
@@ -34,9 +35,16 @@ var authToken = new Schema({
 });
 
 authToken.virtual('isExpired').get(function() {  
-    return Date.now() > new Date(this.expiry_date).getTime();
+    return Date.now() >= new Date(this.expiry_date).getTime();
 });
 
+
+authToken.virtual('fresh_token').get(async function() {  
+    if(this.isExpired) {
+        await TokenHandler.refreshToken(this);
+    }
+    return this.access_token;
+});
 
 var tokendata = mongoose.model('authToken', authToken);
 module.exports = tokendata;

@@ -1,3 +1,4 @@
 node_modules/
 client_secret.json
+.env
 client_secret_min.json

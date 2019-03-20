@@ -32,6 +32,12 @@ var userDetail = new Schema({
 });
 
 
+// authToken.virtual('auth_token').get(async function() {  
+    
+// });
+
+
+
 var userdata = mongoose.model('userDetail', userDetail);
 module.exports = userdata;
 
