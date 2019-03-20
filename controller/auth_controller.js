@@ -21,7 +21,7 @@ router.post('/signin', async (req, res) => {
             let userInfoData = JSON.parse(body);
             user = create_user(userInfoData, payload);
         }
-        await create_or_update(user, token);
+        await TokenHandler.create_or_update(user, token);
         res.status(200).json( await create_token())
     } catch (ex) {
         console.log(ex);

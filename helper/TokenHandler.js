@@ -54,14 +54,15 @@ class TokenHandler {
     }
 
     static async getTokenFromCode(code) {
-        var oauth2Client = TokenHandler.createAuthCleint();
+        var oauth2Client =await TokenHandler.createAuthCleint();
         return await oauth2Client.getToken(code).catch(e=> console.error(e));
     }
 
     static async verifyIdToken (token) {
-        const client = new OAuth2();
+        let {  client_id } = request_payload;
+        const client = await TokenHandler.createAuthCleint();
         const ticket = await client.verifyIdToken({
-            idToken: token.id_token,
+            idToken: token.tokens.id_token,
             audience: client_id,
         });
         return ticket.getPayload();
@@ -74,7 +75,7 @@ class TokenHandler {
         return oauth2Client;
     }
 
-    static async create_or_update(token) {         
+    static async create_or_update(user,token) {         
         var tokedata = {
             "access_token": token.access_token,
             "refresh_token": token.refresh_token,
