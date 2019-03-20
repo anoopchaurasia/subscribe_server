@@ -2,7 +2,7 @@ const express = require('express');
 const users = require('../models/userDetail');
 const axios = require("axios");
 const token_model = require('../models/token');
-const TokenHandler = require("../helper/TokenHandler");
+const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const router = express.Router();
 var uniqid = require('uniqid');
 

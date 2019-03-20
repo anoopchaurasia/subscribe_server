@@ -10,7 +10,7 @@ var { google } = require('googleapis');
 const cheerio = require('cheerio')
 const simpleParser = require('mailparser').simpleParser;
 var FCM = require('fcm-node');
-var serverKey = 'AAAA12xOmRA:APA91bGDj3guvTDKn6S9yQG3otsv01qEOflCJXiAwM2KgVfN7S6I8hSh0bpggjwpYMoZWuEO6lay6n3_cDldmYPb-ti-oVfexORlG3m2sgisDBCcst4v02ayWdYS6RboVYBCObo0pPL_'; //put your server key here
+var serverKey = process.env.SERVER_KEY; //put your server key here
 var fcm = new FCM(serverKey);
 
 var gmail = google.gmail('v1');
