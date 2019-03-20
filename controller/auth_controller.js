@@ -1,125 +1,38 @@
-var fs = require('fs');
-let express = require('express');
-let users = require('../models/userDetail');
-let auth_token = require('../models/authToken');
-let token_model = require('../models/token');
-let router = express.Router();
-var { google } = require('googleapis');
+const express = require('express');
+const users = require('../models/userDetail');
+const axios = require("axios");
+const token_model = require('../models/token');
+const TokenHandler = require("../helper/TokenHandler");
+const router = express.Router();
 var uniqid = require('uniqid');
-var readline = require('readline');
-var SCOPES = [
-    "https://www.googleapis.com/auth/gmail.readonly",
-    "profile",
-    "email",
-    "https://mail.google.com/",
-    "https://www.googleapis.com/auth/gmail.modify",
-    "https://www.googleapis.com/auth/gmail.labels"
-];
-
 router.post('/signin', async (req, res) => {
     try {
-        console.log("login api")
-        fs.readFile('./client_secret.json',
-            async function processClientSecrets(err, content) {
-                if (err) {
-                    console.log('Error loading client secret file: ' + err);
-                    return;
-                }
-                var code = req.body.code;
-                let credentials = JSON.parse(content);
-                var clientSecret = credentials.installed.client_secret;
-                var clientId = credentials.installed.client_id;
-                var redirectUrl = credentials.installed.redirect_uris[0];
-                var OAuth2 = google.auth.OAuth2;
-                var oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
-                oauth2Client.getToken(code, async function (err, token) {
-                    if (err) {
-                        console.log('Error while trying to retrieve access token', err);
-                        return;
-                    }
-                    if (token) {
-                        const client = new OAuth2(clientId);
-                        const ticket = await client.verifyIdToken({
-                            idToken: token.id_token,
-                            audience: clientId,
-                        });
-                        const payload = ticket.getPayload();
-                        var token_uniqueid = uniqid() + uniqid() + uniqid();
-                        let user = await users.findOne({ 'email': payload.email }).catch(err => {
-                            console.log(err);
-                        })
-                        if (!user) {
-                            var newUser = new users({
-                                "email": payload.email,
-                                "name": payload.name,
-                                "image_url": payload.picture
-                            });
-                            let userdata = await newUser.save().catch(err => {
-                                console.log(err);
-                            });
-                            console.log("chek here", userdata)
-                            if (userdata) {
-                                var check = await extract_token(userdata, token.access_token, token.refresh_token, token.id_token, token.expiry_date, token.scope, token.token_type).catch(err => {
-                                    console.log(err);
-                                });
-                                var tokmodel = new token_model({
-                                    "user_id": userdata._id,
-                                    "token": token_uniqueid,
-                                    "created_at": new Date()
-                                });
-                                let tokenid = await tokmodel.save().catch(err => {
-                                    console.log(err);
-                                });
-                                if (tokenid) {
-                                    var jsondata = { "tokenid": token_uniqueid, "user": userdata };
-                                    console.log(jsondata)
-                                    res.status(200).json({
-                                        error: false,
-                                        data: jsondata
-                                    })
-                                }
-                            }
-                        } else {
-                            var check = await extract_token(user, token.access_token, token.refresh_token, token.id_token, token.expiry_date, token.scope, token.token_type).catch(err => {
-                                console.log(err);
-                            });
-                            var tokmodel = new token_model({
-                                "user_id": user._id,
-                                "token": token_uniqueid,
-                                "created_at": new Date()
-                            });
-                            let tokenid = await tokmodel.save().catch(err => {
-                                console.log(err);
-                            });
-                            if (tokenid) {
-                                var jsondata = { "tokenid": token_uniqueid, "user": user };
-                                console.log(jsondata)
-                                res.status(200).json({
-                                    error: false,
-                                    data: jsondata
-                                })
-                            }
-                        }
-                    }
-                });
-            });
+        const token = await TokenHandler.getTokenFromCode(req.body.code);
+        const payload = await TokenHandler.verifyIdToken(token);
+        let user = await users.findOne({
+            'email': payload.email
+        }).catch(err => {
+            console.log(err);
+        })
+        if (!user) {
+            let body = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo?alt=json&access_token=" + token.access_token);
+            let userInfoData = JSON.parse(body);
+            user = create_user(userInfoData, payload);
+        }
+        await create_or_update(user, token);
+        res.status(200).json( await create_token())
     } catch (ex) {
         console.log(ex);
     }
 });
 
-async function extract_token(user, access_token, refresh_token, id_token, expiry_date, scope, token_type) {
-    console.log(user)
-    console.log(user._id)
-    var tokedata = {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "id_token": id_token,
-        "scope": scope,
-        "token_type": token_type,
-        "expiry_date": expiry_date,
+async function create_token (user) {
+    var token_uniqueid = uniqid() + uniqid() + uniqid();
+    var tokmodel = new token_model({
         "user_id": user._id,
+        "token": token_uniqueid,
         "created_at": new Date()
+<<<<<<< Updated upstream
     };
     let tokens = await auth_token.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
         console.log(err);
@@ -174,3 +87,30 @@ module.exports = router
 
 
 
+=======
+    });
+    await tokmodel.save().catch(err => {
+        console.log(err);
+    });
+    return {
+        "tokenid": token_uniqueid,
+        "user": user
+    };
+}
+
+async function create_user(userInfoData, payload) {
+    var newUser = new users({
+        "email": userInfoData.email || payload.email,
+        "name": userInfoData.name || payload.name,
+        "image_url": userInfoData.picture || payload.picture,
+        "given_name": userInfoData['given_name'] ? userInfoData.given_name : "",
+        "family_name": userInfoData['family_name'] ? userInfoData.family_name : "",
+        "gender": userInfoData['gender'] ? userInfoData.gender : "",
+        "birth_date": userInfoData['birth_date'] ? userInfoData.birth_date : "",
+    });
+    return await newUser.save().catch(err => {
+        console.log(err);
+    });
+}
+module.exports = router
+>>>>>>> Stashed changes
