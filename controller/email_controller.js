@@ -10,17 +10,18 @@ const cheerio = require('cheerio');
 const simpleParser = require('mailparser').simpleParser;
 var gmail = google.gmail('v1');
 let DeleteEmail = require("../helper/deleteEmail").default;
+let TrashEmail = require("../helper/trashEmail").default;
 
 router.post('/deleteMailFromInbox', async (req, res) => {
     await DeleteEmail.deleteEmails(req.token, {emailIDS}=req.body);
-    res.status(200).json({
+    res.json({
         error: false,
         data: "moving"
     })
 });
 
 router.post('/inboxToTrash', async (req, res) => {
-    await checkTokenLifetime(req.token, {from_email, emailIDS}=req.body, false);
+    await TrashEmail.inboxToTrash(req.token, {from_email}=req.body);
     res.status(200).json({
         error: false,
         data: "moving"
@@ -28,19 +29,11 @@ router.post('/inboxToTrash', async (req, res) => {
 });
 
 router.post('/trashToInbox', async (req, res) => {
-    await checkTokenLifetime(req.token, {from_email, emailIDS}=req.body, false);
+    await TrashEmail.revertMailFromTrash(req.token, {from_email}=req.body);
     res.status(200).json({
         error: false,
         data: "moving"
     })
-});
-
-router.post('/revertTrashMailToInbox', async (req, res) => {
-    await checkTokenLifetime(req.token,{from_email, emailIDS}=req.body, true);
-    res.status(200).json({
-        error: false,
-        data: "moving"
-    })     
 });
 
 
