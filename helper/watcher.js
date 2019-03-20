@@ -1,4 +1,4 @@
-let TokenHandler = require("./TokenHandler").TokenHandler;
+let TokenHandler = require("./token").TokenHandler;
 let user_model = require('../models/userDetail');
 var { google } = require('googleapis');
 var gmail = google.gmail('v1');

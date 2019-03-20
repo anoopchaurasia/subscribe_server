@@ -32,62 +32,6 @@ async function create_token (user) {
         "user_id": user._id,
         "token": token_uniqueid,
         "created_at": new Date()
-<<<<<<< Updated upstream
-    };
-    let tokens = await auth_token.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
-        console.log(err);
-    });
-    // console.log(tokens);
-}
-
-
-router.get('/signin_token', async (req, res) => {
-    try {
-        fs.readFile('./client_secret.json', function processClientSecrets(err, content) {
-            if (err) {
-                console.log('Error loading client secret file: ' + err);
-                return;
-            }
-            let credentials = JSON.parse(content);
-            var clientSecret = credentials.installed.client_secret;
-            var clientId = credentials.installed.client_id;
-            var redirectUrl = credentials.installed.redirect_uris[0];
-            var OAuth2 = google.auth.OAuth2;
-            var oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
-            var flag = true;
-            if (flag) {
-                getNewToken(oauth2Client);
-            } else {
-                oauth2Client.credentials = JSON.parse(token);
-            }
-        });
-    } catch (ex) {
-
-    }
-});
-
-/**
- * Get and store new token after prompting for user authorization, and then
- * execute the given callback with the authorized OAuth2 client.
- *
- * @param {google.auth.OAuth2} oauth2Client The OAuth2 client to get token for.
- * @param {getEventsCallback} callback The callback to call with the authorized
- *     client.
- */
-function getNewToken(oauth2Client) {
-    var authUrl = oauth2Client.generateAuthUrl({ access_type: 'offline', scope: SCOPES });
-    console.log('Authorize this app by visiting this url: ', authUrl);
-    var rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-}
-
-module.exports = router
-
-
-
-=======
     });
     await tokmodel.save().catch(err => {
         console.log(err);
@@ -113,4 +57,3 @@ async function create_user(userInfoData, payload) {
     });
 }
 module.exports = router
->>>>>>> Stashed changes
