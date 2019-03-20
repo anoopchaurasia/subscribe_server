@@ -1,6 +1,7 @@
 const fs = require("fs");
 let {client_secret, client_id, redirect_uris} = JSON.parse(fs.readFileSync(process.env.CLIENT_CONFIG)).installed;
 var { google } = require('googleapis');
+let auth_token_model  = require('../models/authToken');
 let Request = require('request');
 let request_payload = {
     "client_id": client_id,
@@ -86,7 +87,8 @@ class TokenHandler {
             "user_id": user._id,
             "created_at": new Date()
         };
-        await auth_token.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
+        console.log(tokedata)
+        await auth_token_model.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
             console.log(err);
         });
     }

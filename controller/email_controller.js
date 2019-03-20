@@ -20,7 +20,6 @@ router.post('/deleteMailFromInbox', async (req, res) => {
             error: false,
             data: "moving"
         })
-          
     } catch (ex) {
         res.sendStatus(400);
     }
@@ -35,7 +34,6 @@ router.post('/revertTrashMailToInbox', async (req, res) => {
             error: false,
             data: "moving"
         })
-           
     } catch (ex) {
         res.sendStatus(400);
     }
@@ -223,10 +221,7 @@ router.post('/getMailInfo', async (req, res) => {
 
 router.post('/readMailInfo', async (req, res) => {
     try {
-        let auth_id = req.body.authID;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.log(err);
-        });
+        let doc = req.token;
         if (doc) {
             let emailinfos = await email.aggregate([{ $match: { "is_trash":false, "is_moved": false, "is_keeped": false,"is_delete":false, "user_id": doc.user_id } }, {
                 $group: {

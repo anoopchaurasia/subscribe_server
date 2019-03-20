@@ -9,7 +9,7 @@ let router = express.Router();
 
 router.post('/savefcmToken', async (req, res) => {
     let token = req.token;
-    let tokenInfo = { "user_id": token.user_id, "fcm_token": token };
+    let tokenInfo = { "user_id": token.user_id, "fcm_token": req.body.fcmToken };
     await fcmToken.findOneAndUpdate({ "user_id": token.user_id }, tokenInfo, { upsert: true }).catch(err => {
         console.log(err);
     });
