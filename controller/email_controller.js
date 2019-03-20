@@ -787,7 +787,7 @@ let checkEmail = async (emailObj, mail, user_id,auth) => {
     })
     if (url != null) {
         emailInfo['user_id'] = user_id;
-        emailInfo['mail_data'] = mail
+        emailInfo['mail_data'] = null;
         emailInfo['email_id'] = mail.id;
         emailInfo['historyId'] = mail.historyId;
         emailInfo['labelIds'] = mail.labelIds;
