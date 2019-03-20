@@ -9,8 +9,6 @@ let request_payload = {
     "grant_type": 'refresh_token'
 };
 
-
-
 class TokenHandler {
     static  async getAccessToken(authToken){
         let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
