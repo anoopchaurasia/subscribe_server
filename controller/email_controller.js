@@ -1,7 +1,6 @@
 var fs = require('fs');
 let express = require('express');
 let auth_token = require('../models/authToken');
-let TokenHandler = require("../helper/TokenHandler").TokenHandler;
 let email = require('../models/email');
 let token_model = require('../models/token');
 let Request = require("request");
@@ -10,33 +9,31 @@ var { google } = require('googleapis');
 const cheerio = require('cheerio');
 const simpleParser = require('mailparser').simpleParser;
 var gmail = google.gmail('v1');
+let DeleteEmail = require("../helper/deleteEmail").default;
+let TrashEmail = require("../helper/trashEmail").default;
 
 router.post('/deleteMailFromInbox', async (req, res) => {
-    try {
-        let from_email = req.body.from_email;
-        let emailIDS = req.body.emailIDS;
-        await checkTokenLifetime(req.token, from_email, emailIDS, false);
-        res.status(200).json({
-            error: false,
-            data: "moving"
-        })
-    } catch (ex) {
-        res.sendStatus(400);
-    }
+    await DeleteEmail.deleteEmails(req.token, {emailIDS}=req.body);
+    res.json({
+        error: false,
+        data: "moving"
+    })
 });
 
-router.post('/revertTrashMailToInbox', async (req, res) => {
-    try {
-        let from_email = req.body.from_email;
-        let emailIDS = req.body.emailIDS;
-        await checkTokenLifetime(req.token, from_email, emailIDS, true);
-        res.status(200).json({
-            error: false,
-            data: "moving"
-        })
-    } catch (ex) {
-        res.sendStatus(400);
-    }
+router.post('/inboxToTrash', async (req, res) => {
+    await TrashEmail.inboxToTrash(req.token, {from_email}=req.body);
+    res.status(200).json({
+        error: false,
+        data: "moving"
+    })
+});
+
+router.post('/trashToInbox', async (req, res) => {
+    await TrashEmail.revertMailFromTrash(req.token, {from_email}=req.body);
+    res.status(200).json({
+        error: false,
+        data: "moving"
+    })
 });
 
 
@@ -960,149 +957,8 @@ router.post('/unSubscribeMail', async (req, res) => {
     }
 });
 
-async function checkTokenLifetime(deviceToken, from_email, emailIDS, is_revert_from_trash) {
-    let authToken = await TokenHandler.getAccessToken(deviceToken.userId).catch(e=> console.error(e));
-    let oauth2Client = await TokenHandler.createAuthCleint();
-    oauth2Client.credentials = authToken;
-    if (is_revert_from_trash) {
-        let mail = await revertMailFromTrash(user_id, oauth2Client, from_email, emailIDS);
-    } else {
-        let mail = await deleteAllEmailsAndMoveToTrash(user_id, oauth2Client, from_email, emailIDS);
-    }
-}
 
-async function revertMailFromTrash(user_id, auth, from_email, emailIDS) {
-    const gmail = google.gmail({ version: 'v1', auth });
-    console.log("Trash To INBOX")
-    let mailList = await email.find({ "from_email": from_email }).catch(err => {
-        console.log(err);
-    });
-    if (mailList) {
-        let mailIds = [];
-        let newLable =[];
-        let  mailLBL = mailList[0].labelIds.split(",");
-        mailLBL.forEach(lblmail => {
-            if (lblmail != "TRASH") {
-                newLable.push(lblmail);
-            }
-        });
-        mailList.forEach(email => {
-            mailIds.push(email.email_id);
-        });
-        var oldvalue = {
-            user_id: user_id,
-            "from_email": from_email,
-            "is_delete": false
-        };
-        var newvalues = {
-            $set: {
-                "labelIds": newLable,
-                "is_trash": false
-            }
-        };
-        var upsert = {
-            upsert: true
-        };
-        let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
-            console.log(err);
-        });
-        console.log(result)
-        let allLabels = ["TRASH"];
-        mailIds.forEach(async mailid => {
-            var res = await gmail.users.messages.untrash({
-                userId: 'me',
-                'id': mailid
-            }).catch(err => {
-                console.log(err);
-            });
-        });
-    }
-}
-async function deleteAllEmailsAndMoveToTrash(user_id, auth, from_email, emailIDS) {
-    const gmail = google.gmail({ version: 'v1', auth });
-    console.log(emailIDS)
-    console.log(from_email)
-    if (emailIDS && emailIDS.length != 0) {
-        var upsert = {
-            upsert: true
-        };
-        emailIDS.forEach(async emid => {
-            var oldvalue = {
-                user_id: user_id,
-                "email_id": emid,
-                "is_delete": false
-            };
-            var newvalues = {
-                $set: {
-                    "is_delete": true
-                }
-            };
-            await email.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                console.log(err);
-            });
-        });
 
-        emailIDS.forEach(async email_singleid => {
-            await gmail.users.messages.delete({
-                userId: 'me',
-                'id': email_singleid
-            }).catch(err => {
-                console.log(err);
-            });
-        });
-
-    } else {
-        console.log("move to trash")
-        let mailList = await email.find({ "from_email": from_email }).catch(err => {
-            console.log(err);
-        });
-        if (mailList) {
-            let mailIds = [];
-            let newLable = [];
-            let mailLBL = mailList[0].labelIds.split(",");
-            mailLBL.forEach(lblmail => {
-                if (lblmail != "TRASH") {
-                    newLable.push(lblmail);
-                }
-            });
-            newLable.push("TRASH");
-
-            mailList.forEach(email => {
-                mailIds.push(email.email_id);
-            });
-            var oldvalue = {
-                user_id: user_id,
-                "from_email": from_email,
-                "is_delete": false
-            };
-            var newvalues = {
-                $set: {
-                    "labelIds": newLable,
-                    "is_trash":true
-                }
-            };
-            var upsert = {
-                upsert: true
-            };
-            let result = await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
-                console.log(err);
-            });
-            console.log(result)
-            let allLabels = ["TRASH"];
-            mailIds.forEach(async mailid => {
-                await gmail.users.messages.modify({
-                    userId: 'me',
-                    'id': mailid,
-                    resource: {
-                        'addLabelIds': allLabels
-                    }
-                }).catch(err => {
-                    console.log(err);
-                });
-            });
-        }
-    }
-}
 
 
 
