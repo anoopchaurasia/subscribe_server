@@ -404,7 +404,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
     if (url != null) {
         console.log("came here")
         emailInfo['user_id'] = user_id;
-        emailInfo['mail_data'] = mail
+        emailInfo['mail_data'] = null;
         emailInfo['email_id'] = mail.id;
         console.log(mail.id)
         emailInfo['historyId'] = mail.historyId;
