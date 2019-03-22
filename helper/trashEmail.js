@@ -1,4 +1,4 @@
-export default class TrashEmail {
+class TrashEmail {
 
     static async getGmailInstance(auth) {
         let authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
@@ -35,7 +35,7 @@ export default class TrashEmail {
             console.log(err);
         });
         const gmail = getGmailInstance(authToken);
-        mailList.forEach(email=> {
+        mailList.forEach(async email=> {
             await gmail.users.messages.modify({
                 userId: 'me',
                 'id': email.email_id,
@@ -63,12 +63,14 @@ export default class TrashEmail {
         mailList.forEach(async mailid => {
             var res = await gmail.users.messages.untrash({
                 userId: 'me',
-                'id': mailid
+                'id': mailid.email_id
             }).catch(err => {
                 console.log(err);
             });
-            TrashEmail.addTrashFromLabel(email, false);
+            TrashEmail.addTrashFromLabel(mailid, false);
         });
     }
 
 }
+
+exports.TrashEmail = TrashEmail;

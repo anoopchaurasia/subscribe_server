@@ -11,7 +11,7 @@ let request_payload = {
 };
 
 class TokenHandler {
-    static  async getAccessToken(authToken){
+    static  async getAccessToken(user_id){
         let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
             console.error(err);
         });

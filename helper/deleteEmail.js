@@ -1,4 +1,4 @@
-export default class DeleteEmail {
+class DeleteEmail {
 
     static async deleteEmails(authToken, emailIDS) {
         let gmail = DeleteEmail.getGmailInstance(authToken);
@@ -39,3 +39,6 @@ export default class DeleteEmail {
         });
     }
 }
+
+
+exports.DeleteEmail = DeleteEmail;
