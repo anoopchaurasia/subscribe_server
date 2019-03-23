@@ -1,8 +1,17 @@
+
+let email = require('../models/email');
+const TokenHandler = require("../helper/TokenHandler").TokenHandler;
+var { google } = require('googleapis');
+
+
+
 class DeleteEmail {
 
-    static async deleteEmails(authToken, emailIDS) {
+    static async deleteEmails(authToken, from_email) {
+        console.log(from_email)
+        let emails = await email.find({user_id:authToken.user_id,"fromw_email":from_email})
         let gmail = DeleteEmail.getGmailInstance(authToken);
-        emailIDS.forEach(async email_id => {
+        emails.forEach(async email_id => {
             await gmail.users.messages.delete({
                 userId: 'me',
                 'id': email_id

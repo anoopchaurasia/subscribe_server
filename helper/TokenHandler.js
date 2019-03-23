@@ -15,13 +15,15 @@ class TokenHandler {
         let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
             console.error(err);
         });
-        if(authToken.isExpired()) {
+        if(authToken.expiry_date < new Date())
+         {
             let authTokenInfo =  await TokenHandler.refreshToken(authToken)
             console.log("token", authTokenInfo)
             return authTokenInfo;
         }else{
             console.log("token not expire", authToken)
             return authToken;
+
         }
     }
 
@@ -53,6 +55,13 @@ class TokenHandler {
         });
     }
 
+    static async createAuthCleint(token){
+        let {client_secret, client_id, redirect_uris} = request_payload;
+        let OAuth2 = google.auth.OAuth2;
+        let oauth2Client = new OAuth2(client_id, client_secret, redirect_uris[0]);
+        oauth2Client.credentials = token;
+        return oauth2Client;
+    }
     static async getTokenFromCode(code) {
         var oauth2Client =await TokenHandler.createAuthCleint();
         return await oauth2Client.getToken(code).catch(e=> console.error(e));
@@ -68,12 +77,6 @@ class TokenHandler {
         return ticket.getPayload();
     }
 
-    static async createAuthCleint(){
-        let {client_secret, client_id, redirect_uris} = request_payload;
-        let OAuth2 = google.auth.OAuth2;
-        let oauth2Client = new OAuth2(client_id, client_secret, redirect_uris[0]);
-        return oauth2Client;
-    }
 
     static async create_or_update(user,token) {         
         var tokedata = {

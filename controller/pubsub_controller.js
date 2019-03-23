@@ -4,6 +4,7 @@ let auth_token = require('../models/authToken');
 let email = require('../models/email');
 let user_model = require('../models/userDetail');
 let TokenHandler = require("../helper/TokenHandler").TokenHandler;
+const Expensebit = require("../helper/expenseBit").ExpenseBit;
 let fcmToken = require('../models/fcmToken');
 let Request = require("request");
 let router = express.Router();
@@ -81,13 +82,13 @@ async function getRecentEmail(user_id, auth, messageIDS) {
                 simpleParser(text, async (err, parsed) => {
                     if (parsed) {
                         if (parsed['text']) {
-                            await checkEmail(parsed['text'], response['data'], user_id, auth);
+                            await Expensebit.checkEmail(parsed['text'], response['data'], user_id, auth);
                         }
                         if (parsed['headerLines']) {
-                            await checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
+                            await Expensebit.checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
                         }
                         if (parsed['textAsHtml']) {
-                            await checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
+                            await Expensebit.checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
                         }
                     }
                 });

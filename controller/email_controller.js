@@ -5,16 +5,18 @@ let email = require('../models/email');
 let token_model = require('../models/token');
 let Request = require("request");
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
+const Expensebit = require("../helper/expenseBit").ExpenseBit;
 let router = express.Router();
 var { google } = require('googleapis');
 const cheerio = require('cheerio');
 const simpleParser = require('mailparser').simpleParser;
 var gmail = google.gmail('v1');
-let DeleteEmail = require("../helper/deleteEmail").default;
+let DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 let TrashEmail = require("../helper/trashEmail").default;
 
 router.post('/deleteMailFromInbox', async (req, res) => {
-    await DeleteEmail.deleteEmails(req.token, {emailIDS}=req.body);
+    console.log(req.body);
+    await DeleteEmail.deleteEmails(req.token, { from_email}=req.body);
     res.json({
         error: false,
         data: "moving"
@@ -46,9 +48,9 @@ router.post('/moveEmailToExpbit', async (req, res) => {
         let tokenInfo = req.token;
         if (tokenInfo) {
                 let authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e));
-                let oauth2Client = await TokenHandler.createAuthCleint();
+                let oauth2Client = await TokenHandler.createAuthCleint(authToken);
                 oauth2Client.credentials = authToken;
-                await TokenHandler.getListLabel(tokenInfo.user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
+                await Expensebit.getListLabel(tokenInfo.user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
                 res.status(200).json({
                     error: false,
                     data: "moving"
@@ -59,7 +61,7 @@ router.post('/moveEmailToExpbit', async (req, res) => {
     }
 });
 
-let watchapi = async (oauth2Client) => {
+let watchapi = async(oauth2Client) => {
     var options = {
         userId: 'me',
         auth: oauth2Client,
@@ -83,12 +85,12 @@ router.post('/getMailInfo', async (req, res) => {
             console.log(token.user_id)
             let authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e));
             console.log(authToken)
-            let oauth2Client = await TokenHandler.createAuthCleint();
-            oauth2Client.credentials = authToken;
+            let oauth2Client = await TokenHandler.createAuthCleint(authToken);
+            // oauth2Client.credentials = authToken;
             console.log(oauth2Client)
-            await createEmailLabel(user_id, oauth2Client);
-            await watchapi(oauth2Client);
-            let mailData = await getRecentEmail(user_id, oauth2Client, null);
+            createEmailLabel(token.user_id, oauth2Client);
+            watchapi(oauth2Client);
+            let mailData = await getRecentEmail(token.user_id, oauth2Client, null);
             res.status(200).json({
                     error: false,
                     data: "scrape"
@@ -304,6 +306,7 @@ router.post('/getEmailSubscription', async (req, res) => {
 });
 
 async function createEmailLabel(user_id, auth) {
+    console.log("label clalled")
     const gmail = google.gmail({ version: 'v1', auth })
     let res = await gmail.users.labels.create({
         userId: 'me',
@@ -332,6 +335,7 @@ async function createEmailLabel(user_id, auth) {
 }
 
 async function getRecentEmail(user_id, auth, nextPageToken) {
+    console.log("recent mail scrape")
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2019/02/01 ' });
     if (responseList && responseList['data']['messages']) {
         responseList['data']['messages'].forEach(async element => {
@@ -353,13 +357,13 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                     simpleParser(text, async (err, parsed) => {
                         if (parsed) {
                             if (parsed['text']) {
-                                await TokenHandler.checkEmail(parsed['text'], response['data'], user_id,auth);
+                                await Expensebit.checkEmail(parsed['text'], response['data'], user_id,auth);
                             }
                             if (parsed['headerLines']) {
-                                await TokenHandler.checkEmail(parsed.headerLines[0].line, response['data'], user_id,auth);
+                                await Expensebit.checkEmail(parsed.headerLines[0].line, response['data'], user_id,auth);
                             }
                             if (parsed['textAsHtml']) {
-                                await TokenHandler.checkEmail(parsed['textAsHtml'], response['data'], user_id,auth);
+                                await Expensebit.checkEmail(parsed['textAsHtml'], response['data'], user_id,auth);
                             }
                         }
                     });

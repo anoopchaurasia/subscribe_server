@@ -1,3 +1,10 @@
+
+let auth_token = require('../models/authToken');
+let email = require('../models/email');
+const TokenHandler = require("../helper/TokenHandler").TokenHandler;
+var { google } = require('googleapis');
+const cheerio = require('cheerio');
+
 class ExpenseBit {
     static async getGmailInstance(auth) {
         let authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
@@ -157,7 +164,7 @@ class ExpenseBit {
                             'addLabelIds': labelarry,
                         }
                     });
-                    TokenHandler.sleep(2000);
+                    ExpenseBit.sleep(2000);
                 }
             });
         }
@@ -167,83 +174,8 @@ class ExpenseBit {
         return new Promise(resolve => setTimeout(resolve, milliseconds))
     }
 
-
-    static async getListLabel(user_id, auth, from_email, is_unscubscribe, is_remove_all) {
-        const gmail = google.gmail({ version: 'v1', auth });
-        let res = await gmail.users.labels.list({
-            userId: 'me',
-        });
-        if (res) {
-            let lbl_id = null;
-            res.data.labels.forEach(lbl => {
-                if (lbl.name === "Unsubscribed Emails") {
-                    lbl_id = lbl.id;
-                }
-            });
-            if (lbl_id == null) {
-                let res = await gmail.users.labels.create({
-                    userId: 'me',
-                    resource: {
-                        "labelListVisibility": "labelShow",
-                        "messageListVisibility": "show",
-                        "name": "Unsubscribed Emails"
-                    }
-                });
-                if (res) {
-                    var oldvalue = {
-                        user_id: user_id
-                    };
-                    var newvalues = {
-                        $set: {
-                            "label_id": res.data.id
-                        }
-                    };
-                    var upsert = {
-                        upsert: true
-                    };
-                    let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                        console.log(err);
-                    });
-                    if (result) {
-                        if (is_remove_all) {
-                            await TokenHandler.MoveAllMailFromInBOX(user_id, auth, from_email, res.data.id);
-                        } else if (is_unscubscribe) {
-                            await TokenHandler.MoveMailFromExpenseBit(user_id, auth, from_email, res.data.id);
-                        } else {
-                            await TokenHandler.MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
-                        }
-                    }
-                }
-            } else {
-                var oldvalue = {
-                    user_id: user_id
-                };
-                var newvalues = {
-                    $set: {
-                        "label_id": lbl_id
-                    }
-                };
-                var upsert = {
-                    upsert: true
-                };
-                let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                    console.log(err);
-                })
-                if (result) {
-                    if (is_remove_all) {
-                        await TokenHandler.MoveAllMailFromInBOX(user_id, auth, from_email, lbl_id);
-                    } else if (is_unscubscribe) {
-                        await TokenHandler.MoveMailFromExpenseBit(user_id, auth, from_email, lbl_id);
-                    } else {
-                        await TokenHandler.MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
-                    }
-                }
-            }
-        }
-    }
-
     static async checkEmail(emailObj, mail, user_id, auth) {
-        $ = cheerio.load(emailObj);
+        let $ = cheerio.load(emailObj);
         let url = null;
         let emailInfo = {};
         $('a').each(function (i, elem) {
@@ -289,7 +221,7 @@ class ExpenseBit {
             } else {
                 emailInfo['is_trash'] = false;
             }
-            header_raw = mail['payload']['headers']
+            let header_raw = mail['payload']['headers']
             header_raw.forEach(data => {
                 if (data.name == "From") {
                     let from_data = data.value.indexOf("<") != -1 ? data.value.split("<")[1].replace(">", "") : data.value;
@@ -317,7 +249,7 @@ class ExpenseBit {
                             console.log("successfully moved to folder unscribe");
                             emailInfo.is_moved = true;
                             await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
-                            await TokenHandler.getListLabel(user_id, auth, mailList)
+                            await ExpenseBit.getListLabel(user_id, auth, mailList)
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true, "user_id": user_id }).catch(err => { console.log(err); });
                         if (mailInfo) {
@@ -336,6 +268,80 @@ class ExpenseBit {
             }
         }
     }
+    static async getListLabel(user_id, auth, from_email, is_unscubscribe, is_remove_all) {
+        const gmail = google.gmail({ version: 'v1', auth });
+        let res = await gmail.users.labels.list({
+            userId: 'me',
+        });
+        if (res) {
+            let lbl_id = null;
+            res.data.labels.forEach(lbl => {
+                if (lbl.name === "Unsubscribed Emails") {
+                    lbl_id = lbl.id;
+                }
+            });
+            if (lbl_id == null) {
+                let res = await gmail.users.labels.create({
+                    userId: 'me',
+                    resource: {
+                        "labelListVisibility": "labelShow",
+                        "messageListVisibility": "show",
+                        "name": "Unsubscribed Emails"
+                    }
+                });
+                if (res) {
+                    var oldvalue = {
+                        user_id: user_id
+                    };
+                    var newvalues = {
+                        $set: {
+                            "label_id": res.data.id
+                        }
+                    };
+                    var upsert = {
+                        upsert: true
+                    };
+                    let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+                        console.log(err);
+                    });
+                    if (result) {
+                        if (is_remove_all) {
+                            await ExpenseBit.MoveAllMailFromInBOX(user_id, auth, from_email, res.data.id);
+                        } else if (is_unscubscribe) {
+                            await ExpenseBit.MoveMailFromExpenseBit(user_id, auth, from_email, res.data.id);
+                        } else {
+                            await ExpenseBit.MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
+                        }
+                    }
+                }
+            } else {
+                var oldvalue = {
+                    user_id: user_id
+                };
+                var newvalues = {
+                    $set: {
+                        "label_id": lbl_id
+                    }
+                };
+                var upsert = {
+                    upsert: true
+                };
+                let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+                    console.log(err);
+                })
+                if (result) {
+                    if (is_remove_all) {
+                        await ExpenseBit.MoveAllMailFromInBOX(user_id, auth, from_email, lbl_id);
+                    } else if (is_unscubscribe) {
+                        await ExpenseBit.MoveMailFromExpenseBit(user_id, auth, from_email, lbl_id);
+                    } else {
+                        await ExpenseBit.MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
+                    }
+                }
+            }
+        }
+    }
+    
 }
 
 exports.ExpenseBit = ExpenseBit;
