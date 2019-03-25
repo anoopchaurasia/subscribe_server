@@ -7,18 +7,17 @@ var { google } = require('googleapis');
 
 class DeleteEmail {
 
-    static async deleteEmails(authToken, from_email) {
-        console.log(from_email)
-        let emails = await email.find({user_id:authToken.user_id,"fromw_email":from_email})
-        let gmail = DeleteEmail.getGmailInstance(authToken);
-        emails.forEach(async email_id => {
+    static async deleteEmails(authToken, bodyData) {
+        let emails = await email.find({ user_id: authToken.user_id, "from_email": bodyData.from_email })
+        let gmail = await DeleteEmail.getGmailInstance(authToken);
+        emails.forEach(async emailInfo => {
             await gmail.users.messages.delete({
                 userId: 'me',
-                'id': email_id
+                'id': emailInfo.email_id
             }).catch(err => {
                 console.log(err);
             });
-            DeleteEmail.update_delete_status(email_id, authToken.user_id)
+            await DeleteEmail.update_delete_status(emailInfo, authToken.user_id)
         });
     }
 
@@ -28,24 +27,23 @@ class DeleteEmail {
         oauth2Client.credentials = authToken;
         return google.gmail({
             version: 'v1',
-            oauth2Client
+            auth: oauth2Client
         });
     }
 
-    static async update_delete_status(email_id, user_id){
+    static async update_delete_status(emailInfo, user_id) {
         let oldvalue = {
-            user_id: user_id,
-            "email_id": email_id,
-            "is_delete": false
+            "email_id": emailInfo.email_id
         };
         let newvalues = {
             $set: {
                 "is_delete": true
             }
         };
-        await email.updateOne(oldvalue, newvalues, {upsert:true}).catch(err => {
+        let resp = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
             console.log(err);
         });
+
     }
 }
 

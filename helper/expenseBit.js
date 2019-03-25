@@ -32,7 +32,6 @@ class ExpenseBit {
 
             let labelarry = [];
             labelarry[0] = label;
-            console.log("here got labels", allLabels)
             let mailIDSARRAY = [];
             for (let i = 0; i < mailList.length; i++) {
                 var oldvalue = {
@@ -52,7 +51,6 @@ class ExpenseBit {
                 });
                 mailIDSARRAY.push(mailList[i].email_id);
             }
-            console.log(mailIDSARRAY)
             if (mailIDSARRAY.length != 0) {
                 if (allLabels.indexOf("INBOX") > -1) {
                     await gmail.users.messages.batchModify({
@@ -78,7 +76,7 @@ class ExpenseBit {
 
     static async  MoveMailFromExpenseBit(user_id, auth, from_email, label) {
         const gmail = google.gmail({ version: 'v1', auth });
-        let mailList = await email.find({ "from_email": from_email }).catch(err => {
+        let mailList = await email.find({"user_id":user_id, "from_email": from_email }).catch(err => {
             console.log(err);
         });
         if (mailList) {
@@ -164,7 +162,7 @@ class ExpenseBit {
                             'addLabelIds': labelarry,
                         }
                     });
-                    ExpenseBit.sleep(2000);
+                   await ExpenseBit.sleep(2000);
                 }
             });
         }
@@ -190,7 +188,6 @@ class ExpenseBit {
                 anchortext.indexOf("not receiving our emails") != -1) {
 
                 url = $(this).attr().href;
-                console.log(url);
 
             } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
                 anchorParentText.indexOf("stop receiving emails") != -1 ||
@@ -202,10 +199,10 @@ class ExpenseBit {
                 ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
                 anchorParentText.indexOf("Don't want this") != -1) {
                 url = $(this).attr().href;
-                console.log(url)
             }
         })
         if (url != null) {
+            console.log(url)
             emailInfo['user_id'] = user_id;
             emailInfo['mail_data'] = null;
             emailInfo['email_id'] = mail.id;
@@ -244,9 +241,7 @@ class ExpenseBit {
                         let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true, "user_id": user_id }).catch(err => {
                             console.log(err);
                         });
-                        console.log(mailList)
                         if (mailList) {
-                            console.log("successfully moved to folder unscribe");
                             emailInfo.is_moved = true;
                             await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
                             await ExpenseBit.getListLabel(user_id, auth, mailList)
@@ -255,7 +250,6 @@ class ExpenseBit {
                         if (mailInfo) {
                             emailInfo.is_delete = true;
                             await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
-                            console.log("successfully moved to folder delete");
                             await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
                         }
                         if (!mailList && !mailInfo) {

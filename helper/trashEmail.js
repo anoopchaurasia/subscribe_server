@@ -1,3 +1,7 @@
+
+let email = require('../models/email');
+const TokenHandler = require("../helper/TokenHandler").TokenHandler;
+var { google } = require('googleapis');
 class TrashEmail {
 
     static async getGmailInstance(auth) {
@@ -6,36 +10,32 @@ class TrashEmail {
         oauth2Client.credentials = authToken;
         return google.gmail({
             version: 'v1',
-            oauth2Client
+            auth: oauth2Client
         });
     }
 
-    static async addTrashFromLabel(email, trash_value= true) {
+    static async addTrashFromLabel(emailInfo, trash_value = true) {
         var oldvalue = {
-            user_id: user_id,
-            "from_email": email.from_email
+            email_id: emailInfo.email_id
         };
         var newvalues = {
             $set: {
                 "is_trash": trash_value
             }
         };
-        await email.updateOne({_id: email._id}, newvalues, { upsert: true }).catch(err => {
+        let response = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
             console.log(err);
         });
     }
 
-    static async inboxToTrash(authToken, from_email) {
+    static async inboxToTrash(authToken, bodyData) {
         let mailList = await email.find({
-            from_email: from_email,
-            user_id: authToken.user_id,
-            is_trash: false,
-            is_delete: false
+            from_email: bodyData.from_email
         }).catch(err => {
             console.log(err);
         });
-        const gmail = getGmailInstance(authToken);
-        mailList.forEach(async email=> {
+        const gmail = await TrashEmail.getGmailInstance(authToken);
+        mailList.forEach(async email => {
             await gmail.users.messages.modify({
                 userId: 'me',
                 'id': email.email_id,
@@ -49,17 +49,16 @@ class TrashEmail {
         })
     }
 
-    static async revertMailFromTrash(authToken, from_email) {
-        const gmail = TrashEmail.getGmailInstance(authToken);
+    static async revertMailFromTrash(authToken, bodyData) {
+        const gmail = await TrashEmail.getGmailInstance(authToken);
         let mailList = await email.find({
-            from_email: from_email,
+            from_email: bodyData.from_email,
             user_id: authToken.user_id,
             is_trash: true,
             is_delete: false
         }).catch(err => {
             console.log(err);
         });
-           
         mailList.forEach(async mailid => {
             var res = await gmail.users.messages.untrash({
                 userId: 'me',
@@ -67,7 +66,7 @@ class TrashEmail {
             }).catch(err => {
                 console.log(err);
             });
-            TrashEmail.addTrashFromLabel(mailid, false);
+            await TrashEmail.addTrashFromLabel(mailid, false);
         });
     }
 

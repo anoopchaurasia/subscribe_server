@@ -82,13 +82,13 @@ async function getRecentEmail(user_id, auth, messageIDS) {
                 simpleParser(text, async (err, parsed) => {
                     if (parsed) {
                         if (parsed['text']) {
-                            await Expensebit.checkEmail(parsed['text'], response['data'], user_id, auth);
+                            await checkEmail(parsed['text'], response['data'], user_id, auth);
                         }
                         if (parsed['headerLines']) {
-                            await Expensebit.checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
+                            await checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
                         }
                         if (parsed['textAsHtml']) {
-                            await Expensebit.checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
+                            await checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
                         }
                     }
                 });
@@ -267,7 +267,7 @@ async function MoveMailFromInBOX(user_id, auth, mailList, label) {
         });
         await gmail.users.messages.modify({
             userId: 'me',
-            'id': oneEmail.email_id,
+            'id': mailList.email_id,
             resource: {
                 "removeLabelIds": ['INBOX']
             }
