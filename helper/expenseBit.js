@@ -108,25 +108,25 @@ class ExpenseBit {
             });
             let labelarry = [];
             labelarry[0] = label;
-            mailList.forEach(async oneEmail => {
-                if (oneEmail.email_id) {
-                    let res = await gmail.users.messages.modify({
-                        userId: 'me',
-                        'id': oneEmail.email_id,
-                        resource: {
-                            'addLabelIds': allLabels,
-                            "removeLabelIds": labelarry
-                        }
-                    });
-                    await gmail.users.messages.modify({
-                        userId: 'me',
-                        'id': oneEmail.email_id,
-                        resource: {
-                            "addLabelIds": ['INBOX']
-                        }
-                    });
+            let emailIdList = mailList.map(x=>x.email_id);
+                if (emailIdList) {
+                        let res = await gmail.users.messages.batchModify({
+                            userId: 'me',
+                            resource: {
+                                'ids': emailIdList,
+                                'addLabelIds': allLabels,
+                                "removeLabelIds": labelarry
+                            }
+                        });
+                        await gmail.users.messages.batchModify({
+                            userId: 'me',
+                            resource: {
+                                'ids': emailIdList,
+                                "addLabelIds": ['INBOX']
+                            }
+                        });
+                    
                 }
-            });
         }
     }
 
@@ -153,18 +153,18 @@ class ExpenseBit {
             });
             let labelarry = [];
             labelarry[0] = label;
-            mailList.forEach(async oneEmail => {
-                if (oneEmail.email_id) {
-                    await gmail.users.messages.modify({
+            let mailIdList = mailList.map(x=>x.email_id);
+                if (mailIdList) {
+                    await gmail.users.messages.batchModify({
                         userId: 'me',
-                        'id': oneEmail.email_id,
                         resource: {
+                            'ids': mailIdList,
                             'addLabelIds': labelarry,
                         }
                     });
                    await ExpenseBit.sleep(2000);
                 }
-            });
+            
         }
     }
 

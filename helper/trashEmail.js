@@ -15,17 +15,33 @@ class TrashEmail {
     }
 
     static async addTrashFromLabel(emailInfo, trash_value = true) {
-        var oldvalue = {
-            email_id: emailInfo.email_id
-        };
-        var newvalues = {
-            $set: {
-                "is_trash": trash_value
-            }
-        };
-        let response = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
-            console.log(err);
+        emailInfo.forEach(async email_id => {
+            var oldvalue = {
+                email_id: email_id
+            };
+            var newvalues = {
+                $set: {
+                    "is_trash": trash_value
+                }
+            };
+            let response = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+                console.log(err);
+            });    
         });
+    }
+
+    static async removeTrashFromLabel(emailInfo, trash_value = true) {
+            var oldvalue = {
+                email_id: emailInfo.email_id
+            };
+            var newvalues = {
+                $set: {
+                    "is_trash": trash_value
+                }
+            };
+            let response = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+                console.log(err);
+            });
     }
 
     static async inboxToTrash(authToken, bodyData) {
@@ -35,18 +51,19 @@ class TrashEmail {
             console.log(err);
         });
         const gmail = await TrashEmail.getGmailInstance(authToken);
-        mailList.forEach(async email => {
-            await gmail.users.messages.modify({
-                userId: 'me',
-                'id': email.email_id,
-                resource: {
-                    'addLabelIds': ["TRASH"]
-                }
-            }).catch(err => {
-                console.log(err);
-            });
-            TrashEmail.addTrashFromLabel(email);
-        })
+        let mailIdList = mailList.map(x=>x.email_id);
+            if(mailIdList){
+                await gmail.users.messages.batchModify({
+                    userId: 'me',
+                    resource: {
+                        'ids': mailIdList,
+                        'addLabelIds': ["TRASH"]
+                    }
+                }).catch(err => {
+                    console.log(err);
+                });
+                await TrashEmail.addTrashFromLabel(mailIdList);
+            }
     }
 
     static async revertMailFromTrash(authToken, bodyData) {
@@ -66,7 +83,7 @@ class TrashEmail {
             }).catch(err => {
                 console.log(err);
             });
-            await TrashEmail.addTrashFromLabel(mailid, false);
+            await TrashEmail.removeTrashFromLabel(mailid, false);
         });
     }
 

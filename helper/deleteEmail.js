@@ -10,15 +10,18 @@ class DeleteEmail {
     static async deleteEmails(authToken, bodyData) {
         let emails = await email.find({ user_id: authToken.user_id, "from_email": bodyData.from_email })
         let gmail = await DeleteEmail.getGmailInstance(authToken);
-        emails.forEach(async emailInfo => {
-            await gmail.users.messages.delete({
-                userId: 'me',
-                'id': emailInfo.email_id
-            }).catch(err => {
-                console.log(err);
-            });
-            await DeleteEmail.update_delete_status(emailInfo, authToken.user_id)
-        });
+        let emailIdList = emails.map(x=>x.email_id);
+            if(emailIdList){
+                await gmail.users.messages.batchDelete({
+                    userId: 'me',
+                    resource: {
+                        'ids': emailIdList
+                    }
+                }).catch(err => {
+                    console.log(err);
+                });
+                await DeleteEmail.update_delete_status(emailIdList, authToken.user_id)
+            }
     }
 
     static async getGmailInstance(auth) {
@@ -32,18 +35,21 @@ class DeleteEmail {
     }
 
     static async update_delete_status(emailInfo, user_id) {
-        let oldvalue = {
-            "email_id": emailInfo.email_id
-        };
-        let newvalues = {
-            $set: {
-                "is_delete": true
-            }
-        };
-        let resp = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
-            console.log(err);
+        emailInfo.forEach(async email_id => {
+            let oldvalue = {
+                "email_id": email_id
+            };
+            let newvalues = {
+                $set: {
+                    "is_delete": true
+                }
+            };
+            let resp = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+                console.log(err);
+            });
+    
         });
-
+        
     }
 }
 

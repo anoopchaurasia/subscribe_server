@@ -3,6 +3,7 @@ let {client_secret, client_id, redirect_uris} = JSON.parse(fs.readFileSync(proce
 var { google } = require('googleapis');
 let auth_token_model  = require('../models/authToken');
 let Request = require('request');
+let axios = require('axios')
 let request_payload = {
     "client_id": client_id,
     "client_secret": client_secret,
@@ -17,8 +18,8 @@ class TokenHandler {
         });
         if(authToken.expiry_date < new Date())
          {
-            let authTokenInfo =  await TokenHandler.refreshToken(authToken)
-            console.log("token", authTokenInfo)
+            let authTokenInfo = await TokenHandler.refreshToken(authToken);
+            // console.log("token", authTokenInfo)
             return authTokenInfo;
         }else{
             console.log("token not expire", authToken)
@@ -28,31 +29,28 @@ class TokenHandler {
     }
 
     static async refreshToken(authToken){
+        console.log("came here");
         let body = {...request_payload};
         body.refresh_token = authToken.refresh_token;
         body = JSON.stringify(body);
         let settings = {
             "url": "https://www.googleapis.com/oauth2/v4/token",
             "method": "POST",
-            body:body,
+            data:body,
             "headers": {
                 'Content-Type': 'application/json',
                 "access_type": 'offline'
             }
         }
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                return console.log(error);
-            }
-            if (body) {
-                body = JSON.parse(body);
-                authToken.access_token = body.access_token;
-                authToken.expiry_date = new Date(new Date().getTime() + body.expires_in * 1000);
-                await auth_token_model.updateOne({ user_id: authToken.user_id }, { $set: authToken }, { upsert: 1 });
-                authToken.access_token = body.access_token;
-                return authToken;
-            }
-        });
+        let response = await axios(settings);
+        if(response.data){
+            body = response.data;
+            authToken.access_token = body.access_token;
+            authToken.expiry_date = new Date(new Date().getTime() + body.expires_in * 1000);
+            await auth_token_model.updateOne({ user_id: authToken.user_id }, { $set: authToken }, { upsert: 1 });
+            authToken.access_token = body.access_token;
+            return authToken;
+        }
     }
 
     static async createAuthCleint(token){
