@@ -32,8 +32,8 @@ router.post('/getemail', async (req, response) => {
         let userInfo = await user_model.findOne({ "email": email_id }).catch(err => { console.log(err); });
         if (userInfo) {
             let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
-            let oauth2Client = await TokenHandler.createAuthCleint();
-            oauth2Client.credentials = authToken;
+            let oauth2Client = await TokenHandler.createAuthCleint(authToken);
+            // oauth2Client.credentials = authToken;
             var options = {
                 userId: 'me',
                 'startHistoryId': historyID - 10,

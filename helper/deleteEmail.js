@@ -10,18 +10,18 @@ class DeleteEmail {
     static async deleteEmails(authToken, bodyData) {
         let emails = await email.find({ user_id: authToken.user_id, "from_email": bodyData.from_email })
         let gmail = await DeleteEmail.getGmailInstance(authToken);
-        let emailIdList = emails.map(x=>x.email_id);
-            if(emailIdList){
-                await gmail.users.messages.batchDelete({
-                    userId: 'me',
-                    resource: {
-                        'ids': emailIdList
-                    }
-                }).catch(err => {
-                    console.log(err);
-                });
-                await DeleteEmail.update_delete_status(emailIdList, authToken.user_id)
-            }
+        let emailIdList = emails.map(x => x.email_id);
+        if (emailIdList) {
+            await gmail.users.messages.batchDelete({
+                userId: 'me',
+                resource: {
+                    'ids': emailIdList
+                }
+            }).catch(err => {
+                console.log(err);
+            });
+            await DeleteEmail.update_delete_status(emailIdList, authToken.user_id)
+        }
     }
 
     static async getGmailInstance(auth) {
@@ -47,9 +47,7 @@ class DeleteEmail {
             let resp = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
                 console.log(err);
             });
-    
         });
-        
     }
 }
 

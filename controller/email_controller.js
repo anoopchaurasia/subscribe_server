@@ -4,6 +4,7 @@ let email = require('../models/email');
 let Request = require("request");
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
+const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 let router = express.Router();
 var { google } = require('googleapis');
 const simpleParser = require('mailparser').simpleParser;
@@ -83,45 +84,21 @@ router.post('/readMailInfo', async (req, res) => {
     try {
         let doc = req.token;
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: { "is_trash": false, "is_moved": false, "is_keeped": false, "is_delete": false, "user_id": doc.user_id } }, {
-                $group: {
-                    _id: { "from_email": "$from_email" }, data: {
-                        $push: {
-                            "labelIds": "$labelIds",
-                            "subject": "$subject",
-                            "url": "$unsubscribe",
-                            "email_id": "$email_id",
-                            "history_id": "$historyId",
-                            "from_email_name": "$from_email_name"
-                        }
-                    }, count: { $sum: 1 }
-                }
-            }, { $sort: { "count": -1 } }, { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
-                console.log(err);
-            });
-            if (emailinfos) {
-                let unreademail = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_trash": false, "is_keeped": false, "is_moved": false, "user_id": doc.user_id } },
-                { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
-                { $project: { "count": 1 } }]).catch(err => {
-                    console.log(err);
+            let emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
+            let unreademail = await GetEmailQuery.getUnreadEmail(doc.user_id);
+            let unreadData = {};
+            if (unreademail) {
+                unreademail.forEach(async element => {
+                    unreadData[element._id.from_email] = element.count
                 });
-                let unreadData = {};
-                if (unreademail) {
-                    unreademail.forEach(element => {
-                        unreadData[element._id.from_email] = element.count
-                    });
-                    let allEmail = await email.find({ 'user_id': doc.user_id }).catch(err => {
-                        console.log(err);
-                    });
-                    if (allEmail) {
-                        res.status(200).json({
-                            error: false,
-                            data: emailinfos,
-                            unreadData: unreadData,
-                            totalEmail: allEmail.length
-                        })
-                    }
-                }
+                let total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+                console.log(emailinfos, unreademail, total)
+                res.status(200).json({
+                    error: false,
+                    data: emailinfos,
+                    unreadData: unreadData,
+                    totalEmail: total
+                })
             }
         }
     } catch (err) {
@@ -134,62 +111,17 @@ router.post('/readProfileInfo', async (req, res) => {
     try {
         let doc = req.token;
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: { "user_id": doc.user_id } }, {
-                $group: {
-                    _id: { "from_email": "$from_email" }, data: {
-                        $push: {
-                            "labelIds": "$labelIds",
-                            "subject": "$subject",
-                            "url": "$unsubscribe",
-                            "email_id": "$email_id",
-                            "history_id": "$historyId",
-                            "from_email_name": "$from_email_name"
-                        }
-                    }, count: { $sum: 1 }
-                }
-            },
-            { $sort: { "count": -1 } },
-            { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
-                console.log(err);
-            });
-            if (emailinfos) {
-                let movedMail = await email.aggregate([{ $match: { "is_moved": true, "is_delete": false, "is_keeped": false, "user_id": doc.user_id } }, {
-                    $group: {
-                        _id: { "from_email": "$from_email" }, data: {
-                            $push: {
-                                "labelIds": "$labelIds",
-                                "subject": "$subject",
-                                "url": "$unsubscribe",
-                                "email_id": "$email_id",
-                                "history_id": "$historyId",
-                                "from_email_name": "$from_email_name"
-                            }
-                        }, count: { $sum: 1 }
-                    }
-                },
-                { $sort: { "count": -1 } },
-                { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
-                    console.log(err);
-                });
-
-                if (movedMail) {
-                    let totalEmail = await email.find({ "user_id": doc.user_id }).catch(err => {
-                        console.log(err);
-                    });;
-                    if (totalEmail) {
-                        let totalUnscribeEmail = await email.find({ "user_id": doc.user_id, "is_moved": true, "is_delete": false, "is_keeped": false }).catch(err => {
-                            console.log(err);
-                        });
-                        res.status(200).json({
-                            error: false,
-                            data: emailinfos,
-                            moveMail: movedMail,
-                            totalEmail: totalEmail.length,
-                            totalUnscribeEmail: totalUnscribeEmail.length
-                        })
-                    }
-                }
-            }
+            let emailinfos = await GetEmailQuery.getAllSubscription(doc.user_id);
+            let movedMail = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
+            let totalEmail = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+            let totalUnscribeEmail = await GetEmailQuery.getTotalUnsubscribeEmailCount(doc.user_id);
+            res.status(200).json({
+                error: false,
+                data: emailinfos,
+                moveMail: movedMail,
+                totalEmail: totalEmail,
+                totalUnscribeEmail: totalUnscribeEmail
+            })
         }
     } catch (err) {
         console.log(err);
@@ -200,47 +132,20 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
     try {
         let doc = req.token;
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: { "is_moved": true, "is_keeped": false, "user_id": doc.user_id } }, {
-                $group: {
-                    _id: { "from_email": "$from_email" }, data: {
-                        $push: {
-                            "labelIds": "$labelIds",
-                            "subject": "$subject",
-                            "url": "$unsubscribe",
-                            "email_id": "$email_id",
-                            "history_id": "$historyId",
-                            "from_email_name": "$from_email_name"
-                        }
-                    }, count: { $sum: 1 }
-                }
-            },
-            { $sort: { "count": -1 } },
-            { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
-                console.log(err);
-            });
-            if (emailinfos) {
-                let unreademail = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_keeped": false, "is_moved": true, "user_id": doc.user_id } },
-                { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
-                { $project: { "count": 1 } }]).catch(err => {
-                    console.log(err);
+            let emailinfos = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
+            let unreademail = await GetEmailQuery.getUnreadMovedEmail(doc.user_id);
+            let unreadData = {};
+            if (unreademail) {
+                unreademail.forEach(async element => {
+                    unreadData[element._id.from_email] = element.count
                 });
-                let unreadData = {};
-                if (unreademail) {
-                    unreademail.forEach(element => {
-                        unreadData[element._id.from_email] = element.count
-                    });
-                    let allEmail = await email.find({ 'user_id': doc.user_id }).catch(err => {
-                        console.log(err);
-                    });
-                    if (allEmail) {
-                        res.status(200).json({
-                            error: false,
-                            data: emailinfos,
-                            unreadData: unreadData,
-                            totalEmail: allEmail.length
-                        })
-                    }
-                }
+                let total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+                res.status(200).json({
+                    error: false,
+                    data: emailinfos,
+                    unreadData: unreadData,
+                    totalEmail: total
+                })
             }
         }
     } catch (err) {
@@ -252,30 +157,11 @@ router.post('/getEmailSubscription', async (req, res) => {
     try {
         let doc = req.token;
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: { "is_trash": false, "is_moved": false, "is_delete": false, "is_keeped": false, "user_id": doc.user_id } }, {
-                $group: {
-                    _id: { "from_email": "$from_email" }, data: {
-                        $push: {
-                            "labelIds": "$labelIds",
-                            "subject": "$subject",
-                            "url": "$unsubscribe",
-                            "email_id": "$email_id",
-                            "history_id": "$historyId",
-                            "from_email_name": "$from_email_name"
-                        }
-                    }, count: { $sum: 1 }
-                }
-            },
-            { $sort: { "count": -1 } },
-            { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
-                console.log(err);
-            });
-            if (emailinfos) {
-                res.status(200).json({
-                    error: false,
-                    data: emailinfos
-                })
-            }
+            let emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
+            res.status(200).json({
+                error: false,
+                data: emailinfos
+            })
         }
     } catch (err) {
         console.log(err)
@@ -289,13 +175,6 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
         responseList['data']['messages'].forEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
             if (response) {
-                // let header_raw = response['data']['payload']['headers'];
-                // let head;
-                // // header_raw.forEach(data => {
-                // //     if (data.name === "Subject") {
-                // //         head = data.value
-                // //     }
-                // // });
                 if (response.data.payload || response.data.payload['parts']) {
                     let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
                         : response.data.payload.parts[0].body.data;
@@ -353,33 +232,14 @@ router.post('/getDeletedEmailData', async (req, res) => {
     try {
         let doc = req.token;
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: { "is_trash": true, "is_delete": false, "user_id": doc.user_id } }, {
-                $group: {
-                    _id: { "from_email": "$from_email" }, data: {
-                        $push: {
-                            "labelIds": "$labelIds",
-                            "subject": "$subject",
-                            "url": "$unsubscribe",
-                            "email_id": "$email_id",
-                            "history_id": "$historyId",
-                            "from_email_name": "$from_email_name"
-                        }
-                    }, count: { $sum: 1 }
-                }
-            },
-            { $sort: { "count": -1 } },
-            { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
-                console.log(err);
-            });
-            if (emailinfos) {
-                res.status(200).json({
-                    error: false,
-                    data: emailinfos
-                })
-            }
+            let emailinfos = await GetEmailQuery.getAllTrashSubscription(doc.user_id);
+            res.status(200).json({
+                error: false,
+                data: emailinfos
+            })
         }
     } catch (err) {
-        console.log(err)
+        console.log(err);
     }
 });
 
@@ -413,51 +273,24 @@ router.post('/getKeepedMailInfo', async (req, res) => {
     try {
         let doc = req.token;
         if (doc) {
-            let emailinfos = await email.aggregate([{ $match: { "is_keeped": true, "user_id": doc.user_id } }, {
-                $group: {
-                    _id: { "from_email": "$from_email" }, data: {
-                        $push: {
-                            "labelIds": "$labelIds",
-                            "subject": "$subject",
-                            "url": "$unsubscribe",
-                            "email_id": "$email_id",
-                            "history_id": "$historyId",
-                            "from_email_name": "$from_email_name"
-                        }
-                    }, count: { $sum: 1 }
-                }
-            },
-            { $sort: { "count": -1 } },
-            { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
-                console.log(err);
-            });
-            if (emailinfos) {
-                let unreademail = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_keeped": false, "is_moved": true, "user_id": doc.user_id } },
-                { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
-                { $project: { "count": 1 } }]).catch(err => {
-                    console.log(err);
+            let emailinfos = await GetEmailQuery.getAllKeepedSubscription(doc.user_id);
+            let unreademail = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
+            let unreadData = {};
+            if (unreademail) {
+                unreademail.forEach(async element => {
+                    unreadData[element._id.from_email] = element.count
                 });
-                let unreadData = {};
-                if (unreademail) {
-                    unreademail.forEach(element => {
-                        unreadData[element._id.from_email] = element.count
-                    });
-                    let allEmail = await email.find({ 'user_id': doc.user_id }).catch(err => {
-                        console.log(err);
-                    });
-                    if (allEmail) {
-                        res.status(200).json({
-                            error: false,
-                            data: emailinfos,
-                            unreadData: unreadData,
-                            totalEmail: allEmail.length
-                        })
-                    }
-                }
+                let total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+                res.status(200).json({
+                    error: false,
+                    data: emailinfos,
+                    unreadData: unreadData,
+                    totalEmail: total
+                })
             }
         }
     } catch (err) {
-        console.log(err)
+        console.log(err);
     }
 });
 

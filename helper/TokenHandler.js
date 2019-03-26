@@ -19,12 +19,10 @@ class TokenHandler {
         if(authToken.expiry_date < new Date())
          {
             let authTokenInfo = await TokenHandler.refreshToken(authToken);
-            // console.log("token", authTokenInfo)
             return authTokenInfo;
         }else{
             console.log("token not expire", authToken)
             return authToken;
-
         }
     }
 
