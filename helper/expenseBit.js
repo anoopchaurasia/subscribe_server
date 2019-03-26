@@ -4,7 +4,7 @@ let email = require('../models/email');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 var { google } = require('googleapis');
 const cheerio = require('cheerio');
-
+let TrashEmail = require("../helper/trashEmail").TrashEmail;
 class ExpenseBit {
     static async getGmailInstance(auth) {
         let authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
@@ -14,6 +14,37 @@ class ExpenseBit {
             version: 'v1',
             oauth2Client
         });
+    }
+
+
+    static async watchapi(oauth2Client) {
+        const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
+        var options = {
+            userId: 'me',
+            auth: oauth2Client,
+            resource: {
+                labelIds: ["INBOX", "CATEGORY_PROMOTIONS", "UNREAD"],
+                topicName: 'projects/retail-1083/topics/subscribeMail'
+            }
+        };
+        console.log("watch called")
+        await gmail.users.watch(options);
+    }
+
+    static async createEmailLabel(user_id, auth) {
+        const gmail = google.gmail({ version: 'v1', auth })
+        let res = await gmail.users.labels.create({
+            userId: 'me',
+            resource: {
+                "labelListVisibility": "labelShow",
+                "messageListVisibility": "show",
+                "name": "Unsubscribed Emails"
+            }
+        });
+        if (res) {
+            let result = await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
+            console.log(result);
+        }
     }
 
     static async MoveMailFromInBOX(user_id, auth, from_email, label) {
@@ -76,7 +107,7 @@ class ExpenseBit {
 
     static async  MoveMailFromExpenseBit(user_id, auth, from_email, label) {
         const gmail = google.gmail({ version: 'v1', auth });
-        let mailList = await email.find({"user_id":user_id, "from_email": from_email }).catch(err => {
+        let mailList = await email.find({ "user_id": user_id, "from_email": from_email }).catch(err => {
             console.log(err);
         });
         if (mailList) {
@@ -100,34 +131,35 @@ class ExpenseBit {
                     "is_moved": false
                 }
             };
-            var upsert = {
-                upsert: true
-            };
-            await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
-                console.log(err);
-            });
+            await ExpenseBit.UpdateBatchEmail(oldvalue, newvalues);
             let labelarry = [];
             labelarry[0] = label;
-            let emailIdList = mailList.map(x=>x.email_id);
-                if (emailIdList) {
-                        let res = await gmail.users.messages.batchModify({
-                            userId: 'me',
-                            resource: {
-                                'ids': emailIdList,
-                                'addLabelIds': allLabels,
-                                "removeLabelIds": labelarry
-                            }
-                        });
-                        await gmail.users.messages.batchModify({
-                            userId: 'me',
-                            resource: {
-                                'ids': emailIdList,
-                                "addLabelIds": ['INBOX']
-                            }
-                        });
-                    
-                }
+            let emailIdList = mailList.map(x => x.email_id);
+            if (emailIdList) {
+                await gmail.users.messages.batchModify({
+                    userId: 'me',
+                    resource: {
+                        'ids': emailIdList,
+                        'addLabelIds': allLabels,
+                        "removeLabelIds": labelarry
+                    }
+                });
+                await gmail.users.messages.batchModify({
+                    userId: 'me',
+                    resource: {
+                        'ids': emailIdList,
+                        "addLabelIds": ['INBOX']
+                    }
+                });
+
+            }
         }
+    }
+
+    static async UpdateBatchEmail(oldvalue, newvalues) {
+        await email.updateMany(oldvalue, newvalues, { upsert: true }).catch(err => {
+            console.log(err);
+        });
     }
 
     static async  MoveAllMailFromInBOX(user_id, auth, from_email, label) {
@@ -145,26 +177,21 @@ class ExpenseBit {
                     "is_moved": true
                 }
             };
-            var upsert = {
-                upsert: true
-            };
-            await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
-                console.log(err);
-            });
+            await ExpenseBit.UpdateBatchEmail(oldvalue, newvalues);
             let labelarry = [];
             labelarry[0] = label;
-            let mailIdList = mailList.map(x=>x.email_id);
-                if (mailIdList) {
-                    await gmail.users.messages.batchModify({
-                        userId: 'me',
-                        resource: {
-                            'ids': mailIdList,
-                            'addLabelIds': labelarry,
-                        }
-                    });
-                   await ExpenseBit.sleep(2000);
-                }
-            
+            let mailIdList = mailList.map(x => x.email_id);
+            if (mailIdList) {
+                await gmail.users.messages.batchModify({
+                    userId: 'me',
+                    resource: {
+                        'ids': mailIdList,
+                        'addLabelIds': labelarry,
+                    }
+                });
+                await ExpenseBit.sleep(2000);
+            }
+
         }
     }
 
@@ -243,17 +270,17 @@ class ExpenseBit {
                         });
                         if (mailList) {
                             emailInfo.is_moved = true;
-                            await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
-                            await ExpenseBit.getListLabel(user_id, auth, mailList)
+                            await ExpenseBit.UpdateEmailInformation(emailInfo);
+                            await ExpenseBit.getListLabel(user_id, auth, mailList);
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true, "user_id": user_id }).catch(err => { console.log(err); });
                         if (mailInfo) {
                             emailInfo.is_delete = true;
-                            await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
-                            await deleteEmailsAndMoveToTrash(user_id, auth, mailList.from_email)
+                            await ExpenseBit.UpdateEmailInformation(emailInfo);
+                            await TrashEmail.inboxToTrash(auth, mailList.from_email);
                         }
                         if (!mailList && !mailInfo) {
-                            await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
+                            await ExpenseBit.UpdateEmailInformation(emailInfo);
                         }
                     }
                 } catch (err) {
@@ -284,20 +311,7 @@ class ExpenseBit {
                     }
                 });
                 if (res) {
-                    var oldvalue = {
-                        user_id: user_id
-                    };
-                    var newvalues = {
-                        $set: {
-                            "label_id": res.data.id
-                        }
-                    };
-                    var upsert = {
-                        upsert: true
-                    };
-                    let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                        console.log(err);
-                    });
+                    let result = await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
                     if (result) {
                         if (is_remove_all) {
                             await ExpenseBit.MoveAllMailFromInBOX(user_id, auth, from_email, res.data.id);
@@ -309,20 +323,7 @@ class ExpenseBit {
                     }
                 }
             } else {
-                var oldvalue = {
-                    user_id: user_id
-                };
-                var newvalues = {
-                    $set: {
-                        "label_id": lbl_id
-                    }
-                };
-                var upsert = {
-                    upsert: true
-                };
-                let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                    console.log(err);
-                })
+                let result = await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
                 if (result) {
                     if (is_remove_all) {
                         await ExpenseBit.MoveAllMailFromInBOX(user_id, auth, from_email, lbl_id);
@@ -335,7 +336,17 @@ class ExpenseBit {
             }
         }
     }
-    
+
+    static async UpdateLableInsideToken(user_id, label) {
+        var result = await auth_token.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.log(err); });
+        return result;
+    }
+
+    static async UpdateEmailInformation(emailInfo) {
+        await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
+            console.log(err);
+        });
+    }
 }
 
 exports.ExpenseBit = ExpenseBit;

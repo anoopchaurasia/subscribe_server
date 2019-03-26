@@ -46,7 +46,8 @@ class TrashEmail {
 
     static async inboxToTrash(authToken, bodyData) {
         let mailList = await email.find({
-            from_email: bodyData.from_email
+            from_email: bodyData.from_email,
+            user_id:authToken.user_id
         }).catch(err => {
             console.log(err);
         });

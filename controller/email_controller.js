@@ -58,18 +58,6 @@ router.post('/moveEmailToExpbit', async (req, res) => {
     }
 });
 
-let watchapi = async (oauth2Client) => {
-    var options = {
-        userId: 'me',
-        auth: oauth2Client,
-        resource: {
-            labelIds: ["INBOX", "CATEGORY_PROMOTIONS", "UNREAD"],
-            topicName: 'projects/retail-1083/topics/subscribeMail'
-        }
-    };
-    await gmail.users.watch(options);
-}
-
 
 
 router.post('/getMailInfo', async (req, res) => {
@@ -78,8 +66,8 @@ router.post('/getMailInfo', async (req, res) => {
         if (token) {
             let authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e));
             let oauth2Client = await TokenHandler.createAuthCleint(authToken);
-            createEmailLabel(token.user_id, oauth2Client);
-            watchapi(oauth2Client);
+            Expensebit.createEmailLabel(token.user_id, oauth2Client);
+            Expensebit.watchapi(oauth2Client);
             await getRecentEmail(token.user_id, oauth2Client, null);
             res.status(200).json({
                 error: false,
@@ -294,33 +282,6 @@ router.post('/getEmailSubscription', async (req, res) => {
     }
 });
 
-async function createEmailLabel(user_id, auth) {
-    const gmail = google.gmail({ version: 'v1', auth })
-    let res = await gmail.users.labels.create({
-        userId: 'me',
-        resource: {
-            "labelListVisibility": "labelShow",
-            "messageListVisibility": "show",
-            "name": "Unsubscribed Emails"
-        }
-    });
-    if (res) {
-        var oldvalue = {
-            user_id: user_id
-        };
-        var newvalues = {
-            $set: {
-                "label_id": res.data.id
-            }
-        };
-        var upsert = {
-            upsert: true
-        };
-        await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-            console.log(err);
-        });
-    }
-}
 
 async function getRecentEmail(user_id, auth, nextPageToken) {
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2019/02/01 ' });
@@ -328,13 +289,13 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
         responseList['data']['messages'].forEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
             if (response) {
-                let header_raw = response['data']['payload']['headers'];
-                let head;
-                header_raw.forEach(data => {
-                    if (data.name === "Subject") {
-                        head = data.value
-                    }
-                });
+                // let header_raw = response['data']['payload']['headers'];
+                // let head;
+                // // header_raw.forEach(data => {
+                // //     if (data.name === "Subject") {
+                // //         head = data.value
+                // //     }
+                // // });
                 if (response.data.payload || response.data.payload['parts']) {
                     let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
                         : response.data.payload.parts[0].body.data;
