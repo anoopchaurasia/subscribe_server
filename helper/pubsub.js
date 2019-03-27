@@ -7,8 +7,8 @@ const simpleParser = require('mailparser').simpleParser;
 let fcmToken = require('../models/fcmToken');
 let TrashEmail = require("../helper/trashEmail").TrashEmail;
 var FCM = require('fcm-node');
-// var serverKey = process.env.SERVER_KEY; //put your server key here
-// var fcm = new FCM(serverKey);
+var serverKey = "AAAA12xOmRA:APA91bGDj3guvTDKn6S9yQG3otsv01qEOflCJXiAwM2KgVfN7S6I8hSh0bpggjwpYMoZWuEO6lay6n3_cDldmYPb-ti-oVfexORlG3m2sgisDBCcst4v02ayWdYS6RboVYBCObo0pPL_"; //put your server key here
+var fcm = new FCM(serverKey);
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
 
 
@@ -72,19 +72,20 @@ class Pubsub {
                         }
                         if (!mailList && !mailInfo) {
                             await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
+                            let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
+                            if (tokenInfo) {
+                                var message = {
+                                    to: tokenInfo.fcm_token,
+                                    collapse_key: 'geern',
+                                    notification: {
+                                        title: 'New Email Newsletter',
+                                        body: 'You received new newsletter in you INBOX.'
+                                    }
+                                };
+                                await Pubsub.sendFcmMessage(message);
+                            }
                         }
-                        let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
-                        if (tokenInfo) {
-                            var message = {
-                                to: tokenInfo.fcm_token,
-                                collapse_key: 'geern',
-                                notification: {
-                                    title: 'New Email Newsletter',
-                                    body: 'You received new newsletter in you INBOX.'
-                                }
-                            };
-                            await Pubsub.sendFcmMessage(message);
-                        }
+                        
                     }
                 } catch (err) {
                     console.log(err);
@@ -94,8 +95,8 @@ class Pubsub {
     }
 
     static async sendFcmMessage(message) {
-        var serverKey = process.env.SERVER_KEY; //put your server key here
-        var fcm = new FCM(serverKey);
+        // var serverKey = process.env.SERVER_KEY; //put your server key here
+        // var fcm = new FCM(serverKey);
         fcm.send(message, async function (err, response) {
             if (err) {
                 console.log("Something has gone wrong!");
@@ -184,6 +185,18 @@ class Pubsub {
                     "removeLabelIds": ['INBOX']
                 }
             });
+            let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
+            if (tokenInfo) {
+                var message = {
+                    to: tokenInfo.fcm_token,
+                    collapse_key: 'geern',
+                    notification: {
+                        title: 'New Email Newsletter',
+                        body: 'You received new newsletter in you INBOX.'
+                    }
+                };
+                await Pubsub.sendFcmMessage(message);
+            }
         }
     }
 
@@ -203,6 +216,18 @@ class Pubsub {
                     'id': email.email_id
                 }).catch(err => { console.log(err); });
             });
+        }
+        let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
+        if (tokenInfo) {
+            var message = {
+                to: tokenInfo.fcm_token,
+                collapse_key: 'geern',
+                notification: {
+                    title: 'New Email Newsletter',
+                    body: 'You received new newsletter in you INBOX.'
+                }
+            };
+            await Pubsub.sendFcmMessage(message);
         }
     }
 
