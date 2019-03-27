@@ -13,7 +13,6 @@ const Expensebit = require("../helper/expenseBit").ExpenseBit;
 
 class Pubsub {
     static async getRecentEmail(user_id, auth, messageIDS) {
-        console.log("server key",process.env.SERVER_KEY)
         let gmail = await Pubsub.getGoogleInstance(auth);
         messageIDS.forEach(async mids => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
@@ -75,7 +74,6 @@ class Pubsub {
                         }
                         let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
                         if (tokenInfo) {
-                            console.log(tokenInfo);
                             var message = {
                                 to: tokenInfo.fcm_token,
                                 collapse_key: 'geern',
@@ -114,7 +112,7 @@ class Pubsub {
 
         if (res) {
             let lbl_id = null;
-            res.data.labels.forEach(async lbl => {
+            res.data.labels.forEach(lbl => {
                 if (lbl.name === "Unsubscribed Emails") {
                     lbl_id = lbl.id;
                 }
