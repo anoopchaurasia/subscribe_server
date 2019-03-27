@@ -15,33 +15,36 @@ const Expensebit = require("../helper/expenseBit").ExpenseBit;
 class Pubsub {
     static async getRecentEmail(user_id, auth, messageIDS) {
         let gmail = await Pubsub.getGoogleInstance(auth);
-        messageIDS.forEach(async mids => {
-            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
-                // console.log(err);
-                console.log("no msg")
-            });
-            if (response) {
-                if (response.data.payload) {
-                    let message_raw = response.data.payload.parts[0].body.data;
-                    let data = message_raw;
-                    let buff = Buffer.from(data, 'base64');
-                    let text = buff.toString();
-                    simpleParser(text, async (err, parsed) => {
-                        if (parsed) {
-                            if (parsed['text']) {
-                                await Pubsub.checkEmail(parsed['text'], response['data'], user_id, auth);
+        if (messageIDS.length != 0) {
+            messageIDS.forEach(async mids => {
+                let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
+                    // console.log(err);
+                    console.log("no msg")
+                });
+                if (response) {
+                    if (response.data.payload) {
+                        let message_raw = response.data.payload.parts[0].body.data;
+                        let data = message_raw;
+                        let buff = Buffer.from(data, 'base64');
+                        let text = buff.toString();
+                        simpleParser(text, async (err, parsed) => {
+                            if (parsed) {
+                                if (parsed['text']) {
+                                    await Pubsub.checkEmail(parsed['text'], response['data'], user_id, auth);
+                                }
+                                if (parsed['headerLines']) {
+                                    await Pubsub.checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
+                                }
+                                if (parsed['textAsHtml']) {
+                                    await Pubsub.checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
+                                }
                             }
-                            if (parsed['headerLines']) {
-                                await Pubsub.checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
-                            }
-                            if (parsed['textAsHtml']) {
-                                await Pubsub.checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
-                            }
-                        }
-                    });
+                        });
+                    }
                 }
-            }
-        });
+            });
+        }
+
     }
 
     static async checkEmail(emailObj, mail, user_id, auth) {
