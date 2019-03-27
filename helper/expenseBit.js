@@ -199,6 +199,9 @@ class ExpenseBit {
     }
 
     static async getUrlFromEmail(emailObj) {
+        if(!emailObj){
+            return null;
+        }
         let $ = cheerio.load(emailObj);
         let url = null;
         $('a').each(async function (i, elem) {
