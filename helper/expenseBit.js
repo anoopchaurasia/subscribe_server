@@ -4,6 +4,7 @@ let email = require('../models/email');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 var { google } = require('googleapis');
 const cheerio = require('cheerio');
+const Pubsub = require("../helper/pubsub").Pubsub;
 let TrashEmail = require("../helper/trashEmail").TrashEmail;
 class ExpenseBit {
     static async getGmailInstance(auth) {
@@ -279,7 +280,7 @@ class ExpenseBit {
                         if (mailList) {
                             emailInfo.is_moved = true;
                             await ExpenseBit.UpdateEmailInformation(emailInfo);
-                            await ExpenseBit.getListLabel(user_id, auth, mailList);
+                            await Pubsub.getListLabel(user_id, auth, mailList);
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true, "user_id": user_id }).catch(err => { console.log(err); });
                         if (mailInfo) {

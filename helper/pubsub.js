@@ -17,7 +17,8 @@ class Pubsub {
         let gmail = await Pubsub.getGoogleInstance(auth);
         messageIDS.forEach(async mids => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
-                console.log("no msg");
+                // console.log(err);
+                console.log("no msg")
             });
             if (response) {
                 if (response.data.payload) {
@@ -72,20 +73,19 @@ class Pubsub {
                         }
                         if (!mailList && !mailInfo) {
                             await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
-                            let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
-                            if (tokenInfo) {
-                                var message = {
-                                    to: tokenInfo.fcm_token,
-                                    collapse_key: 'geern',
-                                    notification: {
-                                        title: 'New Email Newsletter',
-                                        body: 'You received new newsletter in you INBOX.'
-                                    }
-                                };
-                                await Pubsub.sendFcmMessage(message);
-                            }
                         }
-                        
+                        let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
+                        if (tokenInfo) {
+                            var message = {
+                                to: tokenInfo.fcm_token,
+                                collapse_key: 'geern',
+                                notification: {
+                                    title: 'New Email Newsletter',
+                                    body: 'You received new newsletter in you INBOX.'
+                                }
+                            };
+                            await Pubsub.sendFcmMessage(message);
+                        }
                     }
                 } catch (err) {
                     console.log(err);
@@ -185,18 +185,6 @@ class Pubsub {
                     "removeLabelIds": ['INBOX']
                 }
             });
-            let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
-            if (tokenInfo) {
-                var message = {
-                    to: tokenInfo.fcm_token,
-                    collapse_key: 'geern',
-                    notification: {
-                        title: 'New Email Newsletter',
-                        body: 'You received new newsletter in you INBOX.'
-                    }
-                };
-                await Pubsub.sendFcmMessage(message);
-            }
         }
     }
 
@@ -216,18 +204,6 @@ class Pubsub {
                     'id': email.email_id
                 }).catch(err => { console.log(err); });
             });
-        }
-        let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
-        if (tokenInfo) {
-            var message = {
-                to: tokenInfo.fcm_token,
-                collapse_key: 'geern',
-                notification: {
-                    title: 'New Email Newsletter',
-                    body: 'You received new newsletter in you INBOX.'
-                }
-            };
-            await Pubsub.sendFcmMessage(message);
         }
     }
 
