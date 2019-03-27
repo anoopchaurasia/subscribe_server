@@ -36,7 +36,7 @@ router.post('/getemail', async (req, response) => {
             // oauth2Client.credentials = authToken;
             var options = {
                 userId: 'me',
-                'startHistoryId': historyID - 10,
+                'startHistoryId': historyID - 5,
                 auth: oauth2Client
             };
             let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
@@ -53,6 +53,8 @@ router.post('/getemail', async (req, response) => {
                     if(messageIDS.length!=0){
                         await Pubsub.getRecentEmail(userInfo._id, oauth2Client, messageIDS);
                     }
+                    response.sendStatus(200);
+                }else{
                     response.sendStatus(200);
                 }
             }

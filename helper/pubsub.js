@@ -6,8 +6,8 @@ const cheerio = require('cheerio');
 let fcmToken = require('../models/fcmToken');
 let TrashEmail = require("../helper/trashEmail").TrashEmail;
 var FCM = require('fcm-node');
-var serverKey = process.env.SERVER_KEY; //put your server key here
-var fcm = new FCM(serverKey);
+// var serverKey = process.env.SERVER_KEY; //put your server key here
+// var fcm = new FCM(serverKey);
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
 
 
@@ -93,6 +93,8 @@ class Pubsub {
     }
 
     static async sendFcmMessage(message) {
+        var serverKey = process.env.SERVER_KEY; //put your server key here
+        var fcm = new FCM(serverKey);
         fcm.send(message, async function (err, response) {
             if (err) {
                 console.log("Something has gone wrong!");
