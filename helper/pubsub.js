@@ -3,6 +3,7 @@ let email = require('../models/email');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 var { google } = require('googleapis');
 const cheerio = require('cheerio');
+const simpleParser = require('mailparser').simpleParser;
 let fcmToken = require('../models/fcmToken');
 let TrashEmail = require("../helper/trashEmail").TrashEmail;
 var FCM = require('fcm-node');
