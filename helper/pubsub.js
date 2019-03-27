@@ -22,8 +22,10 @@ class Pubsub {
                     console.log("no msg")
                 });
                 if (response) {
-                    if (response.data.payload) {
-                        let message_raw = response.data.payload.parts[0].body.data;
+                    if (response.data.payload || response.data.payload['parts']) {
+                            let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
+                                : response.data.payload.parts[0].body.data;
+                        // let message_raw = response.data.payload.parts[0].body.data;
                         let data = message_raw;
                         let buff = Buffer.from(data, 'base64');
                         let text = buff.toString();
