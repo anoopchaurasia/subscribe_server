@@ -1,10 +1,11 @@
+'use strict'
 const fs = require("fs");
-let {client_secret, client_id, redirect_uris} = JSON.parse(fs.readFileSync(process.env.CLIENT_CONFIG)).installed;
-var { google } = require('googleapis');
-let auth_token_model  = require('../models/authToken');
-let Request = require('request');
-let axios = require('axios')
-let request_payload = {
+const {client_secret, client_id, redirect_uris} = JSON.parse(fs.readFileSync(process.env.CLIENT_CONFIG)).installed;
+const { google } = require('googleapis');
+const auth_token_model  = require('../models/authToken');
+const Request = require('request');
+const axios = require('axios')
+const request_payload = {
     "client_id": client_id,
     "client_secret": client_secret,
     "redirect_uris":redirect_uris,
@@ -13,18 +14,16 @@ let request_payload = {
 
 class TokenHandler {
     static  async getAccessToken(user_id){
-        let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
+        const authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
             console.error(err);
         });
         if(authToken.expiry_date < new Date())
          {
-            let authTokenInfo = await TokenHandler.refreshToken(authToken);
-            // console.log("token", authTokenInfo)
+            const authTokenInfo = await TokenHandler.refreshToken(authToken);
             return authTokenInfo;
         }else{
             console.log("token not expire", authToken)
             return authToken;
-
         }
     }
 
@@ -33,7 +32,7 @@ class TokenHandler {
         let body = {...request_payload};
         body.refresh_token = authToken.refresh_token;
         body = JSON.stringify(body);
-        let settings = {
+        const settings = {
             "url": "https://www.googleapis.com/oauth2/v4/token",
             "method": "POST",
             data:body,
@@ -77,7 +76,7 @@ class TokenHandler {
 
 
     static async create_or_update(user,token) {         
-        var tokedata = {
+        const tokedata = {
             "access_token": token.access_token,
             "refresh_token": token.refresh_token,
             "id_token": token.id_token,

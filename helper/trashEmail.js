@@ -1,11 +1,11 @@
-
-let email = require('../models/email');
+'use strict'
+const email = require('../models/email');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
-var { google } = require('googleapis');
+const { google } = require('googleapis');
 class TrashEmail {
 
     static async getGmailInstance(auth) {
-        let authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
+        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = authToken;
         return google.gmail({
@@ -24,7 +24,7 @@ class TrashEmail {
                     "is_trash": trash_value
                 }
             };
-            let response = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+            await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
                 console.log(err);
             });    
         });
@@ -39,7 +39,7 @@ class TrashEmail {
                     "is_trash": trash_value
                 }
             };
-            let response = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+            await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
                 console.log(err);
             });
     }
@@ -54,7 +54,7 @@ class TrashEmail {
         const gmail = await TrashEmail.getGmailInstance(authToken);
         let mailIdList = mailList.map(x=>x.email_id);
             if(mailIdList){
-                await gmail.users.messages.batchModify({
+               let modifying =  await gmail.users.messages.batchModify({
                     userId: 'me',
                     resource: {
                         'ids': mailIdList,
@@ -63,7 +63,9 @@ class TrashEmail {
                 }).catch(err => {
                     console.log(err);
                 });
-                await TrashEmail.addTrashFromLabel(mailIdList);
+                if(modifying.status==200){
+                    await TrashEmail.addTrashFromLabel(mailIdList);
+                }
             }
     }
 
@@ -84,7 +86,9 @@ class TrashEmail {
             }).catch(err => {
                 console.log(err);
             });
-            await TrashEmail.removeTrashFromLabel(mailid, false);
+            if(res.status==200){
+                await TrashEmail.removeTrashFromLabel(mailid, false);
+            }
         });
     }
 

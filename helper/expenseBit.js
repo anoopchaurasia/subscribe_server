@@ -1,13 +1,14 @@
-
-let auth_token = require('../models/authToken');
-let email = require('../models/email');
+'use strict'
+const auth_token = require('../models/authToken');
+const email = require('../models/email');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
-var { google } = require('googleapis');
+const { google } = require('googleapis');
 const cheerio = require('cheerio');
-let TrashEmail = require("../helper/trashEmail").TrashEmail;
+const Pubsub = require("../helper/pubsub").Pubsub;
+const TrashEmail = require("../helper/trashEmail").TrashEmail;
 class ExpenseBit {
     static async getGmailInstance(auth) {
-        let authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
+        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = authToken;
         return google.gmail({
@@ -19,21 +20,23 @@ class ExpenseBit {
 
     static async watchapi(oauth2Client) {
         const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
-        var options = {
+        const options = {
             userId: 'me',
             auth: oauth2Client,
             resource: {
-                labelIds: ["INBOX", "CATEGORY_PROMOTIONS", "UNREAD"],
+                labelIds: ["INBOX", "CATEGORY_PROMOTIONS","CATEGORY_PERSONAL","UNREAD"],
                 topicName: 'projects/retail-1083/topics/subscribeMail'
             }
         };
         console.log("watch called")
-        await gmail.users.watch(options);
+        let response = await gmail.users.watch(options);
+        console.log(response.status,response.data)
+        return 
     }
 
     static async createEmailLabel(user_id, auth) {
         const gmail = google.gmail({ version: 'v1', auth })
-        let res = await gmail.users.labels.create({
+        const res = await gmail.users.labels.create({
             userId: 'me',
             resource: {
                 "labelListVisibility": "labelShow",
@@ -42,7 +45,7 @@ class ExpenseBit {
             }
         });
         if (res) {
-            let result = await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
+            const result = await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
             console.log(result);
         }
     }
@@ -83,8 +86,8 @@ class ExpenseBit {
                 mailIDSARRAY.push(mailList[i].email_id);
             }
             if (mailIDSARRAY.length != 0) {
-                if (allLabels.indexOf("INBOX") > -1) {
-                    await gmail.users.messages.batchModify({
+                if (allLabels.indexOf("INBOX") > -1 || allLabels.indexOf("CATEGORY_PERSONAL") > -1) {
+                   await gmail.users.messages.batchModify({
                         userId: 'me',
                         resource: {
                             'ids': mailIDSARRAY,
@@ -151,7 +154,6 @@ class ExpenseBit {
                         "addLabelIds": ['INBOX']
                     }
                 });
-
             }
         }
     }
@@ -191,7 +193,6 @@ class ExpenseBit {
                 });
                 await ExpenseBit.sleep(2000);
             }
-
         }
     }
 
@@ -199,11 +200,13 @@ class ExpenseBit {
         return new Promise(resolve => setTimeout(resolve, milliseconds))
     }
 
-    static async checkEmail(emailObj, mail, user_id, auth) {
+    static async getUrlFromEmail(emailObj) {
+        if(!emailObj){
+            return null;
+        }
         let $ = cheerio.load(emailObj);
         let url = null;
-        let emailInfo = {};
-        $('a').each(function (i, elem) {
+        $('a').each(async function (i, elem) {
             let fa = $(this).text();
             let anchortext = fa.toLowerCase();
             let anchorParentText = $(this).parent().text().toLowerCase();
@@ -213,9 +216,8 @@ class ExpenseBit {
                 anchortext.indexOf("visit this link") != -1 ||
                 anchortext.indexOf("do not wish to receive our mails") != -1 ||
                 anchortext.indexOf("not receiving our emails") != -1) {
-
                 url = $(this).attr().href;
-
+                return url;
             } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
                 anchorParentText.indexOf("stop receiving emails") != -1 ||
                 anchorParentText.indexOf("unsubscribe") != -1 ||
@@ -226,37 +228,49 @@ class ExpenseBit {
                 ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
                 anchorParentText.indexOf("Don't want this") != -1) {
                 url = $(this).attr().href;
+                return url;
             }
         })
+        return url;
+    }
+
+    static async createEmailInfo(user_id, url, mail) {
+        let emailInfo = {};
+        emailInfo['user_id'] = user_id;
+        emailInfo['mail_data'] = null;
+        emailInfo['email_id'] = mail.id;
+        emailInfo['historyId'] = mail.historyId;
+        emailInfo['labelIds'] = mail.labelIds;
+        emailInfo['unsubscribe'] = url;
+        emailInfo['main_label'] = mail.labelIds;
+        emailInfo['is_moved'] = false;
+        emailInfo['is_delete'] = false;
+        emailInfo['is_keeped'] = false;
+        if (mail.labelIds.indexOf("TRASH") != -1) {
+            emailInfo['is_trash'] = true;
+        } else {
+            emailInfo['is_trash'] = false;
+        }
+        let header_raw = mail['payload']['headers']
+        header_raw.forEach(async data => {
+            if (data.name == "From") {
+                let from_data = data.value.indexOf("<") != -1 ? data.value.split("<")[1].replace(">", "") : data.value;
+                emailInfo['from_email_name'] = data.value;
+                emailInfo['from_email'] = from_data;
+            } else if (data.name == "To") {
+                emailInfo['to_email'] = data.value;
+            } else if (data.name == "Subject") {
+                emailInfo['subject'] = data.value;
+            }
+        });
+        return emailInfo;
+    }
+
+    static async checkEmail(emailObj, mail, user_id, auth) {
+        let url = await ExpenseBit.getUrlFromEmail(emailObj);
         if (url != null) {
             console.log(url)
-            emailInfo['user_id'] = user_id;
-            emailInfo['mail_data'] = null;
-            emailInfo['email_id'] = mail.id;
-            emailInfo['historyId'] = mail.historyId;
-            emailInfo['labelIds'] = mail.labelIds;
-            emailInfo['unsubscribe'] = url;
-            emailInfo['main_label'] = mail.labelIds;
-            emailInfo['is_moved'] = false;
-            emailInfo['is_delete'] = false;
-            emailInfo['is_keeped'] = false;
-            if (mail.labelIds.indexOf("TRASH") != -1) {
-                emailInfo['is_trash'] = true;
-            } else {
-                emailInfo['is_trash'] = false;
-            }
-            let header_raw = mail['payload']['headers']
-            header_raw.forEach(data => {
-                if (data.name == "From") {
-                    let from_data = data.value.indexOf("<") != -1 ? data.value.split("<")[1].replace(">", "") : data.value;
-                    emailInfo['from_email_name'] = data.value;
-                    emailInfo['from_email'] = from_data;
-                } else if (data.name == "To") {
-                    emailInfo['to_email'] = data.value;
-                } else if (data.name == "Subject") {
-                    emailInfo['subject'] = data.value;
-                }
-            });
+            let emailInfo = await ExpenseBit.createEmailInfo(user_id, url, mail);
             if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
                 console.log(emailInfo.from_email)
             } else {
@@ -269,13 +283,12 @@ class ExpenseBit {
                             console.log(err);
                         });
                         if (mailList) {
-                            emailInfo.is_moved = true;
+                            console.log(mailList)
                             await ExpenseBit.UpdateEmailInformation(emailInfo);
-                            await ExpenseBit.getListLabel(user_id, auth, mailList);
+                            await Pubsub.getListLabel(user_id, auth, emailInfo);
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true, "user_id": user_id }).catch(err => { console.log(err); });
                         if (mailInfo) {
-                            emailInfo.is_delete = true;
                             await ExpenseBit.UpdateEmailInformation(emailInfo);
                             await TrashEmail.inboxToTrash(auth, mailList.from_email);
                         }
@@ -289,9 +302,51 @@ class ExpenseBit {
             }
         }
     }
+
+    static async getListLabelForMail(user_id, auth, mailList) {
+        const gmail = google.gmail({ version: 'v1', auth });
+        var res = await gmail.users.labels.list({
+            userId: 'me',
+        }).catch(err => {
+            console.log(err);
+        });
+
+        if (res) {
+            let lbl_id = null;
+            res.data.labels.forEach(lbl => {
+                if (lbl.name === "Unsubscribed Emails") {
+                    lbl_id = lbl.id;
+                }
+            });
+            if (lbl_id == null) {
+                var res = gmail.users.labels.create({
+                    userId: 'me',
+                    resource: {
+                        "labelListVisibility": "labelShow",
+                        "messageListVisibility": "show",
+                        "name": "Unsubscribed Emails"
+                    }
+                }).catch(err => {
+                    console.log(err);
+                });
+                if (res) {
+                    var result = await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
+                    if (result) {
+                        await ExpenseBit.MoveMailFromInBOX(user_id, auth, mailList, res.data.id);
+                    }
+                }
+            } else {
+                var result = await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
+                if (result) {
+                    await ExpenseBit.MoveMailFromInBOX(user_id, auth, mailList, lbl_id);
+                }
+            }
+        }
+    }
+
     static async getListLabel(user_id, auth, from_email, is_unscubscribe, is_remove_all) {
         const gmail = google.gmail({ version: 'v1', auth });
-        let res = await gmail.users.labels.list({
+        const res = await gmail.users.labels.list({
             userId: 'me',
         });
         if (res) {
@@ -302,7 +357,7 @@ class ExpenseBit {
                 }
             });
             if (lbl_id == null) {
-                let res = await gmail.users.labels.create({
+                const response = await gmail.users.labels.create({
                     userId: 'me',
                     resource: {
                         "labelListVisibility": "labelShow",
@@ -310,8 +365,8 @@ class ExpenseBit {
                         "name": "Unsubscribed Emails"
                     }
                 });
-                if (res) {
-                    let result = await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
+                if (response) {
+                    const result = await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
                     if (result) {
                         if (is_remove_all) {
                             await ExpenseBit.MoveAllMailFromInBOX(user_id, auth, from_email, res.data.id);
@@ -323,8 +378,8 @@ class ExpenseBit {
                     }
                 }
             } else {
-                let result = await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
-                if (result) {
+                const resp = await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
+                if (resp) {
                     if (is_remove_all) {
                         await ExpenseBit.MoveAllMailFromInBOX(user_id, auth, from_email, lbl_id);
                     } else if (is_unscubscribe) {
@@ -338,7 +393,7 @@ class ExpenseBit {
     }
 
     static async UpdateLableInsideToken(user_id, label) {
-        var result = await auth_token.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.log(err); });
+        const result = await auth_token.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.log(err); });
         return result;
     }
 

@@ -1,31 +1,34 @@
 
-let email = require('../models/email');
+'use strict'
+const email = require('../models/email');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
-var { google } = require('googleapis');
+const { google } = require('googleapis');
 
 
 
 class DeleteEmail {
 
     static async deleteEmails(authToken, bodyData) {
-        let emails = await email.find({ user_id: authToken.user_id, "from_email": bodyData.from_email })
-        let gmail = await DeleteEmail.getGmailInstance(authToken);
-        let emailIdList = emails.map(x=>x.email_id);
-            if(emailIdList){
-                await gmail.users.messages.batchDelete({
-                    userId: 'me',
-                    resource: {
-                        'ids': emailIdList
-                    }
-                }).catch(err => {
-                    console.log(err);
-                });
+        const emails = await email.find({ user_id: authToken.user_id, "from_email": bodyData.from_email })
+        const gmail = await DeleteEmail.getGmailInstance(authToken);
+        const emailIdList = emails.map(x => x.email_id);
+        if (emailIdList) {
+         const  response =  await gmail.users.messages.batchDelete({
+                userId: 'me',
+                resource: {
+                    'ids': emailIdList
+                }
+            }).catch(err => {
+                console.log(err);
+            });
+            if(response.status==200){
                 await DeleteEmail.update_delete_status(emailIdList, authToken.user_id)
             }
+        }
     }
 
     static async getGmailInstance(auth) {
-        let authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
+        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = authToken;
         return google.gmail({
@@ -44,12 +47,10 @@ class DeleteEmail {
                     "is_delete": true
                 }
             };
-            let resp = await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+            await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
                 console.log(err);
             });
-    
         });
-        
     }
 }
 
