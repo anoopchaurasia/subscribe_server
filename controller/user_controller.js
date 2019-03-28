@@ -1,11 +1,12 @@
-let express = require('express');
-let fcmToken = require('../models/fcmToken');
-let token_model = require('../models/token');
-let auth_token = require('../models/authToken');
-let email = require('../models/email');
-let userDetails = require('../models/userDetail');
-let deviceInfo = require('../models/deviceInfo');
-let router = express.Router();
+'use strict'
+const express = require('express');
+const fcmToken = require('../models/fcmToken');
+const token_model = require('../models/token');
+const auth_token = require('../models/authToken');
+const email = require('../models/email');
+const userDetails = require('../models/userDetail');
+const deviceInfo = require('../models/deviceInfo');
+const router = express.Router();
 
 router.post('/savefcmToken', async (req, res) => {
     let token = req.token;

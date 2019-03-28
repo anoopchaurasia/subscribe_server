@@ -1,22 +1,11 @@
-var fs = require('fs');
-let express = require('express');
-let auth_token = require('../models/authToken');
-let email = require('../models/email');
-let user_model = require('../models/userDetail');
-let TokenHandler = require("../helper/TokenHandler").TokenHandler;
-const Expensebit = require("../helper/expenseBit").ExpenseBit;
+'use strict'
+const express = require('express');
+const user_model = require('../models/userDetail');
+const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const Pubsub = require("../helper/pubsub").Pubsub;
-
-let fcmToken = require('../models/fcmToken');
-let Request = require("request");
-let router = express.Router();
-var { google } = require('googleapis');
-const cheerio = require('cheerio')
-const simpleParser = require('mailparser').simpleParser;
-var FCM = require('fcm-node');
-var serverKey = process.env.SERVER_KEY; //put your server key here
-var fcm = new FCM(serverKey);
-var gmail = google.gmail('v1');
+const router = express.Router();
+const { google } = require('googleapis');
+const gmail = google.gmail('v1');
 
 
 router.post('/getemail', async (req, response) => {
@@ -33,7 +22,6 @@ router.post('/getemail', async (req, response) => {
         if (userInfo) {
             let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
             let oauth2Client = await TokenHandler.createAuthCleint(authToken);
-            // oauth2Client.credentials = authToken;
             var options = {
                 userId: 'me',
                 'startHistoryId': historyID - 5,
@@ -54,9 +42,10 @@ router.post('/getemail', async (req, response) => {
                         await Pubsub.getRecentEmail(userInfo._id, oauth2Client, messageIDS);
                     }
                     response.sendStatus(200);
-                }else{
-                    response.sendStatus(200);
                 }
+                // else{
+                //     response.sendStatus(200);
+                // }
             }
         } else {
             response.sendStatus(400);

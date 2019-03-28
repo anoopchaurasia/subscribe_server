@@ -1,9 +1,10 @@
-let email = require('../models/email');
+'use strict'
+const email = require('../models/email');
 
 class GetEmailQuery {
 
     static async getAllFilteredSubscription(user_id) {
-        let emails = await email.aggregate([{ $match: { "is_trash": false, "is_moved": false, "is_keeped": false, "is_delete": false, "user_id": user_id } }, {
+        const emails = await email.aggregate([{ $match: { "is_trash": false, "is_moved": false, "is_keeped": false, "is_delete": false, "user_id": user_id } }, {
             $group: {
                 _id: { "from_email": "$from_email" }, data: {
                     $push: {
@@ -23,7 +24,7 @@ class GetEmailQuery {
     }
 
     static async getUnreadEmail(user_id) {
-        let emails = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_trash": false, "is_keeped": false, "is_moved": false, "user_id": user_id } },
+        const emails = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_trash": false, "is_keeped": false, "is_moved": false, "user_id": user_id } },
         { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
         { $project: { "count": 1 } }]).catch(err => {
             console.log(err);
@@ -32,7 +33,7 @@ class GetEmailQuery {
     }
 
     static async getUnreadMovedEmail(user_id) {
-        let emails = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_keeped": false, "is_moved": true, "user_id": user_id } },
+        const emails = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_keeped": false, "is_moved": true, "user_id": user_id } },
         { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
         { $project: { "count": 1 } }]).catch(err => {
             console.log(err);
@@ -41,21 +42,21 @@ class GetEmailQuery {
     }
 
     static async getTotalEmailCount(user_id) {
-        let total = await email.count({ 'user_id': user_id }).catch(err => {
+        const total = await email.countDocuments({ 'user_id': user_id }).catch(err => {
             console.log(err);
         });
         return total;
     }
 
     static async getTotalUnsubscribeEmailCount(user_id) {
-        let total = await email.count({ "user_id": user_id, "is_moved": true, "is_delete": false, "is_keeped": false }).catch(err => {
+        const total = await email.countDocuments({ "user_id": user_id, "is_moved": true, "is_delete": false, "is_keeped": false }).catch(err => {
             console.log(err);
         });
         return total;
     }
 
     static async getAllSubscription(user_id) {
-        let emails = await email.aggregate([{ $match: { "user_id": user_id } }, {
+        const emails = await email.aggregate([{ $match: { "user_id": user_id } }, {
             $group: {
                 _id: { "from_email": "$from_email" }, data: {
                     $push: {
@@ -77,7 +78,7 @@ class GetEmailQuery {
     }
 
     static async getAllMovedSubscription(user_id) {
-        let emails = await email.aggregate([{ $match: { "is_moved": true, "is_delete": false, "is_keeped": false, "user_id": user_id } }, {
+        const emails = await email.aggregate([{ $match: { "is_moved": true, "is_delete": false, "is_keeped": false, "user_id": user_id } }, {
             $group: {
                 _id: { "from_email": "$from_email" }, data: {
                     $push: {
@@ -99,7 +100,7 @@ class GetEmailQuery {
     }
 
     static async getAllKeepedSubscription(user_id) {
-        let emails = await email.aggregate([{ $match: { "is_keeped": true, "user_id": user_id } }, {
+        const emails = await email.aggregate([{ $match: { "is_keeped": true, "user_id": user_id } }, {
             $group: {
                 _id: { "from_email": "$from_email" }, data: {
                     $push: {
@@ -121,7 +122,7 @@ class GetEmailQuery {
     }
 
     static async getUnreadKeepedEmail(user_id) {
-        let emails = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_keeped": true, "is_moved": false, "user_id": user_id } },
+        const emails = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "is_keeped": true, "is_moved": false, "user_id": user_id } },
         { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
         { $project: { "count": 1 } }]).catch(err => {
             console.log(err);
@@ -130,7 +131,7 @@ class GetEmailQuery {
     }
 
     static async getAllTrashSubscription(user_id) {
-        let emails = await email.aggregate([{ $match: { "is_trash": true, "is_delete": false, "user_id": user_id } }, {
+        const emails = await email.aggregate([{ $match: { "is_trash": true, "is_delete": false, "user_id": user_id } }, {
             $group: {
                 _id: { "from_email": "$from_email" }, data: {
                     $push: {

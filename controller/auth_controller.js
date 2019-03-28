@@ -1,10 +1,12 @@
+'use strict'
 const express = require('express');
 const users = require('../models/userDetail');
 const axios = require("axios");
 const token_model = require('../models/token');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
+const Expensebit = require("../helper/expenseBit").ExpenseBit;
 const router = express.Router();
-var uniqid = require('uniqid');
+const uniqid = require('uniqid');
 
 
 router.post('/signin', async (req, res) => {
@@ -17,6 +19,11 @@ router.post('/signin', async (req, res) => {
             console.log(err);
         })
         let access_token = token.tokens.access_token;
+        let authToken = token.tokens;
+        let oauth2Client = await TokenHandler.createAuthCleint();
+        oauth2Client.credentials = authToken;
+        console.log("calling watch api from signin")
+        await Expensebit.watchapi(oauth2Client);
         if (!user) {
             let body = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo?alt=json&access_token=" + access_token);
             let userInfoData = body.data;
