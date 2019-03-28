@@ -325,6 +325,232 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
     }
 }
 
+let checkEmail = async (emailObj, mail, user_id,auth) => {
+    $ = cheerio.load(emailObj);
+    let url = null;
+    let emailInfo = {};
+    $('a').each(function (i, elem) {
+        let fa = $(this).text();
+        let anchortext = fa.toLowerCase();
+        let anchorParentText = $(this).parent().text().toLowerCase();
+        if (anchortext.indexOf("unsubscribe") != -1 ||
+            anchortext.indexOf("preferences") != -1 ||
+            anchortext.indexOf("subscription") != -1 ||
+            anchortext.indexOf("visit this link") != -1 ||
+            anchortext.indexOf("do not wish to receive our mails") != -1 ||
+            anchortext.indexOf("not receiving our emails") != -1)
+        {
+            
+                url = $(this).attr().href;
+                console.log(url);
+
+        }else if(anchorParentText.indexOf("not receiving our emails") != -1 ||
+            anchorParentText.indexOf("stop receiving emails") != -1 ||
+            anchorParentText.indexOf("unsubscribe") != -1 ||
+            anchorParentText.indexOf("subscription") != -1 ||
+            anchorParentText.indexOf("preferences") != -1 ||
+            anchorParentText.indexOf("mailing list") != -1 ||
+            (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
+            ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
+            anchorParentText.indexOf("Don't want this") != -1) 
+        {
+            url = $(this).attr().href;
+            console.log(url)
+        }
+    })
+    if (url != null) {
+        emailInfo['user_id'] = user_id;
+        emailInfo['mail_data'] = null;
+        emailInfo['email_id'] = mail.id;
+        emailInfo['historyId'] = mail.historyId;
+        emailInfo['labelIds'] = mail.labelIds;
+        emailInfo['unsubscribe'] = url;
+        emailInfo['main_label'] = mail.labelIds;
+        emailInfo['is_moved'] = false;
+        emailInfo['is_delete'] = false;
+        emailInfo['is_keeped'] = false;
+        if(mail.labelIds.indexOf("TRASH") !=-1){
+            emailInfo['is_trash']= true;
+        }else{
+            emailInfo['is_trash'] = false;
+        }
+        header_raw = mail['payload']['headers']
+        header_raw.forEach(data => {
+            if (data.name == "From") {
+                let from_data = data.value.indexOf("<") != -1 ? data.value.split("<")[1].replace(">", "") : data.value;
+                emailInfo['from_email_name'] = data.value;
+                emailInfo['from_email'] = from_data;
+            } else if (data.name == "To") {
+                emailInfo['to_email'] = data.value;
+            } else if (data.name == "Subject") {
+                emailInfo['subject'] = data.value;
+            }
+        });
+        if(emailInfo.from_email.toLowerCase().indexOf('@gmail')!=-1){
+            console.log(emailInfo.from_email)
+        }else{
+            try {
+                let doc = await email.findOne({ "email_id": emailInfo.email_id, "user_id": user_id }).catch(err => {
+                    console.log(err);
+                });
+                if (!doc) {
+                    let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true, "user_id":user_id }).catch(err => {
+                        console.log(err);
+                    });
+                    console.log(mailList)
+                    if (mailList && mailList.is_moved) {
+                        console.log("successfully moved to folder unscribe");
+                        emailInfo.is_moved = true;
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id, "user_id":user_id }, emailInfo, { upsert: true }).catch(err => {
+                            console.log(err);
+                        });
+                        console.log(docInfo)
+                        await getListLabel(user_id, auth, mailList)
+                    }
+                    
+                    if (!mailList) {
+                        emailInfo.is_moved = false;
+                        let docInfo = await email.findOneAndUpdate({ "email_id": emailInfo.email_id, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
+                            console.log(err);
+                        });
+                        console.log(docInfo)
+                    }
+                }
+            } catch (err) {
+                console.log(err);
+            }
+        }
+    }
+}
+
+
+
+
+async function check_Token_info(user_id, tokenInfo, from_email, label, is_unscubscribe, is_remove_all) {
+    if (new Date(tokenInfo.expiry_date) >= new Date()) {
+        await getLabelFromEmail(user_id, tokenInfo, from_email, label, is_unscubscribe, is_remove_all);
+    } else {
+        let content = await fs.readFileSync('./client_secret.json');
+        let cred = JSON.parse(content);
+        let clientSecret = cred.installed.client_secret;
+        let clientId = cred.installed.client_id;
+        var body = JSON.stringify({
+            "client_id": clientId,
+            "client_secret": clientSecret,
+            "refresh_token": tokenInfo.refresh_token,
+            "grant_type": 'refresh_token'
+        });
+        var settings = {
+            "url": "https://www.googleapis.com/oauth2/v4/token",
+            "method": "POST",
+            body: body,
+            "headers": {
+                'Content-Type': 'application/json',
+            }
+        }
+
+        Request(settings, async (error, response, body) => {
+            if (error) {
+                return console.log(error);
+            }
+            if (body) {
+                body = JSON.parse(body);
+                let milisec = new Date().getTime();
+                milisec = milisec + (body.expires_in * 1000);
+                tokenInfo.accessToken = body.access_token;
+                tokenInfo.expiry_date = new Date(milisec);
+                var oldvalue = {
+                    user_id: user_id
+                };
+                var newvalues = {
+                    $set: {
+                        access_token: body.access_token,
+                        expiry_date: new Date(milisec)
+                    }
+                };
+                var upsert = {
+                    upsert: true
+                };
+                let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+                    console.log(err);
+                });
+                if (result) {
+                    await getLabelFromEmail(user_id, tokenInfo, from_email, label, is_unscubscribe, is_remove_all);
+                }
+            }
+        });
+    }
+}
+
+async function extract_token(user_id, tokenInfo) {
+    if (tokenInfo.expiry_date >= new Date()) {
+        tokenInfo.expiry_date = tokenInfo.expiry_date.getTime();
+        let mailData = await getMailInfo(user_id, tokenInfo).catch(err => {
+            console.log(err);
+        });
+        if (mailData) {
+            return mailData;
+        }
+    } else {
+        console.log("expire")
+        let content = await fs.readFileSync('./client_secret.json');
+        let cred = JSON.parse(content);
+        let clientSecret = cred.installed.client_secret;
+        let clientId = cred.installed.client_id;
+        var body = JSON.stringify({
+            "client_id": clientId,
+            "client_secret": clientSecret,
+            "refresh_token": tokenInfo.refresh_token,
+            "grant_type": 'refresh_token',
+        });
+
+
+        var settings = {
+            "url": "https://www.googleapis.com/oauth2/v4/token",
+            "method": "POST",
+            body: body,
+            "headers": {
+                'Content-Type': 'application/json',
+                "access_type": 'offline'
+            }
+        }
+
+        Request(settings, async (error, response, body) => {
+            if (error) {
+                return console.log(error);
+            }
+            if (body) {
+                body = JSON.parse(body);
+                console.log(body);
+                let milisec = new Date().getTime();
+                milisec = milisec + (body.expires_in * 1000);
+                tokenInfo.access_token = body.access_token;
+                tokenInfo.expiry_date = new Date(milisec);
+                var oldvalue = {
+                    user_id: user_id
+                };
+                var newvalues = {
+                    $set: {
+                        access_token: body.access_token,
+                        expiry_date: new Date(milisec)
+                    }
+                };
+                var upsert = {
+                    upsert: true
+                };
+                let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+                    console.log(err);
+                });
+                if (result) {
+                    let mailData = await getMailInfo(user_id, tokenInfo);
+                    if (mailData) {
+                        return mailData;
+                    }
+                }
+            }
+        });
+    }
+}
 
 
 router.post('/unSubscribeMail', async (req, res) => {
