@@ -15,8 +15,8 @@ const Expensebit = require("../helper/expenseBit").ExpenseBit;
 
 class Pubsub {
     static async getRecentEmail(user_id, auth, messageIDS) {
-        console.log(user_id,messageIDS)
-        let gmail = await Pubsub.getGoogleInstance(auth);
+        // console.log(user_id,messageIDS)
+        let gmail =await google.gmail('v1');
         if (messageIDS.length != 0) {
             messageIDS.forEach(async mids => {
                 let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
