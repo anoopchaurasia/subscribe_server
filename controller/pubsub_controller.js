@@ -37,14 +37,14 @@ router.post('/getemail', async (req, response) => {
                 if (data && data.history) {
                     let history = data.history;
                     let messageIDS = [];
-                    console.log(history)
+                    // console.log(history)
                     history.forEach(async his => {
                         his.messages.forEach(async msg => {
                             messageIDS.push(msg.id)
                         });
                     });
                     if(messageIDS.length!=0){
-                        console.log(messageIDS)
+                        // console.log(messageIDS)
                         await Pubsub.getRecentEmail(userInfo._id, oauth2Client, messageIDS);
                     }
                     response.sendStatus(200);
