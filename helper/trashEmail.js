@@ -15,6 +15,7 @@ class TrashEmail {
     }
 
     static async addTrashFromLabel(emailInfo, trash_value = true) {
+        console.log(emailInfo)
         emailInfo.forEach(async email_id => {
             console.log(email_id)
             var oldvalue = {
@@ -65,7 +66,8 @@ class TrashEmail {
                 }).catch(err => {
                     console.log(err);
                 });
-                if( modifying&&modifying.status==200){
+                // console.log(modifying)
+                if(modifying){
                     await TrashEmail.addTrashFromLabel(mailIdList);
                 }
                 // await gmail.users.messages.batchModify({
