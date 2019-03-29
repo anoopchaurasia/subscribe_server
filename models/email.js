@@ -44,7 +44,7 @@ var email = new Schema({
     unsubscribe: {
         type: String,
         es_indexed: false,
-        index: true
+        // index: true
     },
     user_id: {
         type: String,

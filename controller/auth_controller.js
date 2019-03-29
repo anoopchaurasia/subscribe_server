@@ -28,23 +28,16 @@ router.post('/signin', async (req, res) => {
             let body = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo?alt=json&access_token=" + access_token);
             let userInfoData = body.data;
             user =await create_user(userInfoData, payload);
-            await TokenHandler.create_or_update(user, token.tokens);
-            let response = await create_token(user);
-            if (response) {
-                res.status(200).json({
-                    error: false,
-                    data: response
-                })
-            }
+        }
+        await TokenHandler.create_or_update(user, token.tokens);
+        let response = await create_token(user);
+        if (response) {
+            res.status(200).json({
+                error: false,
+                data: response
+            })
         }else{
-            await TokenHandler.create_or_update(user, token.tokens);
-            let response = await create_token(user);
-            if (response) {
-                res.status(200).json({
-                    error: false,
-                    data: response
-                })
-            }
+            res.sendStatus(404);
         }
     } catch (ex) {
         console.log(ex);

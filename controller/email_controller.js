@@ -90,7 +90,7 @@ router.post('/readMailInfo', async (req, res) => {
                     unreadData[element._id.from_email] = element.count
                 });
                 const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-                console.log(emailinfos, unreademail, total)
+                // console.log(emailinfos, unreademail, total)
                 res.status(200).json({
                     error: false,
                     data: emailinfos,

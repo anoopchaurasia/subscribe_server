@@ -65,18 +65,19 @@ class Pubsub {
                         let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true, "user_id": user_id }).catch(err => {
                             console.log(err);
                         });
+                        await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
                         if (mailList) {
-                            await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
                             await Pubsub.getListLabel(user_id, auth, emailInfo)
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true, "user_id": user_id }).catch(err => { console.log(err); });
                         if (mailInfo) {
-                            await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
-                            await Pubsub.deleteEmailsAndMoveToTrash(auth, mailList.from_email)
+                            // await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
+                            // await Pubsub.deleteEmailsAndMoveToTrash(user_id,auth, mailList.from_email)
+                            await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfo);
                         }
-                        if (!mailList && !mailInfo) {
-                            await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
-                        }
+                        // if (!mailList && !mailInfo) {
+                        //     await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
+                        // }
                         let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
                         if (tokenInfo) {
                             var message = {
@@ -156,9 +157,10 @@ class Pubsub {
     }
 
     static async UpdateNewEmail(email_id, newvalues) {
-        await email.findOneAndUpdate({ "email_id": email_id }, newvalues, { upsert: true }).catch(err => {
+       let resp= await email.updateOne({ "email_id": email_id }, newvalues, { upsert: true }).catch(err => {
             console.log(err);
         });;
+        return resp;
     }
 
     static async  MoveMailFromInBOX(user_id, auth, mailList, label) {
@@ -183,15 +185,17 @@ class Pubsub {
                     }
                 };
                 console.log(mailList)
-                await Pubsub.UpdateNewEmail(mailList.email_id, newvalues);
+                let checkhere = await Pubsub.UpdateNewEmail(mailList.email_id, newvalues);
+                console.log("data",checkhere);
             }
-            await gmail.users.messages.modify({
+            let datab = await gmail.users.messages.modify({
                 userId: 'me',
                 'id': mailList.email_id,
                 resource: {
                     "removeLabelIds": ['INBOX']
                 }
             });
+            console.log(datab.status)
         }
     }
 

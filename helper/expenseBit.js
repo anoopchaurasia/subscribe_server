@@ -273,7 +273,7 @@ class ExpenseBit {
             let emailInfo = await ExpenseBit.createEmailInfo(user_id, url, mail);
             if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
                 console.log(emailInfo.from_email)
-            } else {
+            } else if(emailInfo){
                 try {
                     let doc = await email.findOne({ "email_id": emailInfo.email_id, "user_id": user_id }).catch(err => {
                         console.log(err);
@@ -282,19 +282,19 @@ class ExpenseBit {
                         let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true, "user_id": user_id }).catch(err => {
                             console.log(err);
                         });
+                        await ExpenseBit.UpdateEmailInformation(emailInfo);
                         if (mailList) {
                             console.log(mailList)
-                            await ExpenseBit.UpdateEmailInformation(emailInfo);
                             await Pubsub.getListLabel(user_id, auth, emailInfo);
                         }
-                        let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_delete": true, "user_id": user_id }).catch(err => { console.log(err); });
+                        let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_trash": true, "user_id": user_id }).catch(err => { console.log(err); });
                         if (mailInfo) {
-                            await ExpenseBit.UpdateEmailInformation(emailInfo);
-                            await TrashEmail.inboxToTrash(auth, mailList.from_email);
+                                // await ExpenseBit.UpdateEmailInformation(emailInfo);
+                            await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfo);
                         }
-                        if (!mailList && !mailInfo) {
-                            await ExpenseBit.UpdateEmailInformation(emailInfo);
-                        }
+                        // if (!mailList && !mailInfo) {
+                        //     await ExpenseBit.UpdateEmailInformation(emailInfo);
+                        // }
                     }
                 } catch (err) {
                     console.log(err);

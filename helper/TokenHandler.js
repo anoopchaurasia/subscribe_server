@@ -14,15 +14,16 @@ const request_payload = {
 
 class TokenHandler {
     static  async getAccessToken(user_id){
-        const authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
+        let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
             console.error(err);
         });
         if(authToken.expiry_date < new Date())
          {
-            const authTokenInfo = await TokenHandler.refreshToken(authToken);
+            console.log("token expire")
+            let authTokenInfo = await TokenHandler.refreshToken(authToken);
             return authTokenInfo;
         }else{
-            console.log("token not expire", authToken)
+            console.log("token not expire")
             return authToken;
         }
     }
