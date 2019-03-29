@@ -16,6 +16,7 @@ class TrashEmail {
 
     static async addTrashFromLabel(emailInfo, trash_value = true) {
         emailInfo.forEach(async email_id => {
+            console.log(email_id)
             var oldvalue = {
                 email_id: email_id
             };
@@ -24,9 +25,10 @@ class TrashEmail {
                     "is_trash": trash_value
                 }
             };
-            await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+           let check= await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
                 console.log(err);
             });    
+            console.log(check);
         });
     }
 
