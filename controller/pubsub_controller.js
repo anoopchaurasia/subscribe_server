@@ -27,7 +27,7 @@ router.post('/getemail', async (req, response) => {
             
             var options = {
                 userId: 'me',
-                'startHistoryId': historyID-2,
+                'startHistoryId': historyID,
                 auth: oauth2Client
             };
             // console.log(options)
