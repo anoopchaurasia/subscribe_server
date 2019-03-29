@@ -51,7 +51,7 @@ class TrashEmail {
         }).catch(err => {
             console.log(err);
         });
-        const gmail = google.gmail({ version: 'v1', auth:authToken });
+        const gmail = await TrashEmail.getGmailInstance(authToken);
         let mailIdList = mailList.map(x=>x.email_id);
             if(mailIdList){
                let modifying =  await gmail.users.messages.batchModify({

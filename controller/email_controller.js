@@ -12,7 +12,7 @@ const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 
-router.post('/deleteMailFromInbox', async (req, res) => {
+router.post('/deleteMailFromInboxx', async (req, res) => {
     await DeleteEmail.deleteEmails(req.token, req.body);
     res.json({
         error: false,
@@ -20,7 +20,7 @@ router.post('/deleteMailFromInbox', async (req, res) => {
     })
 });
 
-router.post('/inboxToTrash', async (req, res) => {
+router.post('/deleteMailFromInbox', async (req, res) => {
     await TrashEmail.inboxToTrash(req.token, req.body);
     res.status(200).json({
         error: false,
