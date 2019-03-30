@@ -62,7 +62,7 @@ router.post('/getemail', async (req, response) => {
 });
 
 
-async function getRecentEmail(user_id, auth, messageIDS, nextPageToken) {
+async function getRecentEmail(user_id, auth, messageIDS) {
     messageIDS.forEach(async mids => {
         let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
             console.log(err);
