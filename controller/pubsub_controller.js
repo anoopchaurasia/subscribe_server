@@ -96,7 +96,7 @@ async function getRecentEmail(user_id, auth, messageIDS, nextPageToken) {
 
 
 let checkEmail = async (emailObj, mail, user_id, auth) => {
-    $ = cheerio.load(emailObj)
+    let $ = cheerio.load(emailObj)
     let url = null;
     let emailInfo = {};
     $('a').each(function (i, elem) {
