@@ -563,7 +563,7 @@ async function MoveMailFromInBOX(user_id, auth, mailList, label) {
 }
 
 
-async function deleteEmailsAndMoveToTrash(user_id, auth, from_email) {
+async function deleteEmailsAndMoveToTrash(user_id, auth, emailInfo) {
     const gmail = google.gmail({ version: 'v1', auth });
     if (emailInfo.email_id) {
         let modifying = await gmail.users.messages.modify({
