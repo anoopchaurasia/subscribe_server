@@ -140,7 +140,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
         } else {
             emailInfo['is_trash'] = false;
         }
-        header_raw = mail['payload']['headers']
+        let header_raw = mail['payload']['headers']
         header_raw.forEach(data => {
             if (data.name == "From") {
                 let from_data = data.value.indexOf("<") != -1 ? data.value.split("<")[1].replace(">", "") : data.value;
