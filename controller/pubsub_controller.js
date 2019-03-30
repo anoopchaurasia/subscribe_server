@@ -5,6 +5,7 @@ let email = require('../models/email');
 let user_model = require('../models/userDetail');
 let fcmToken = require('../models/fcmToken');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
+const Pubsub = require("../helper/pubsub").Pubsub;
 let router = express.Router();
 var { google } = require('googleapis');
 const cheerio = require('cheerio')
@@ -273,7 +274,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
         }
     })
     if (url != null) {
-        console.log("came here")
+        console.log(url)
         emailInfo['user_id'] = user_id;
         emailInfo['mail_data'] = null;
         emailInfo['email_id'] = mail.id;
@@ -332,7 +333,6 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
                         };
                         await sendFcmMessage(message);
                     }
-                // }
             }
         } catch (err) {
             console.log(err)
@@ -368,39 +368,13 @@ let getListLabel = async (user_id, auth, mailList) => {
                 console.log(err);
             });
             if (res) {
-                var oldvalue = {
-                    user_id: user_id
-                };
-                var newvalues = {
-                    $set: {
-                        "label_id": res.data.id
-                    }
-                };
-                var upsert = {
-                    upsert: true
-                };
-                var result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                    console.log(err);
-                });
+                var result = await Pubsub.UpdateLableInsideToken(user_id, res.data.id);
                 if (result) {
                     await MoveMailFromInBOX(user_id, auth, mailList, res.data.id);
                 }
             }
         } else {
-            var oldvalue = {
-                user_id: user_id
-            };
-            var newvalues = {
-                $set: {
-                    "label_id": lbl_id
-                }
-            };
-            var upsert = {
-                upsert: true
-            };
-            let result = await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                console.log(err);
-            });
+            var result = await Pubsub.UpdateLableInsideToken(user_id, lbl_id);
             if (result) {
                 await MoveMailFromInBOX(user_id, auth, mailList, lbl_id);
             }
