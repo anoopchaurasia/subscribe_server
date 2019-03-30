@@ -421,8 +421,9 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
                     console.log(mailList)
                     await getListLabel(user_id, auth, emailInfo);
                 }
-                let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_trash": true, "user_id": user_id }).catch(err => { console.log(err); });
-                if (mailInfo) {
+                let mailDetails = await email.findOne({ "from_email": emailInfo['from_email'], "is_trash": true, "user_id": user_id }).catch(err => { console.log(err); });
+                if (mailDetails) {
+                    console.log(mailDetails)
                     await deleteEmailsAndMoveToTrash(auth, emailInfo);
                 }
                     let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => {
