@@ -550,9 +550,9 @@ async function MoveMailFromInBOX(user_id, auth, mailList, label) {
         }).catch(err => {
             console.log(err);
         });
-        let resp = await gmail.users.messages.modify({
+        await gmail.users.messages.modify({
             userId: 'me',
-            'id': oneEmail.email_id,
+            'id': mailList.email_id,
             resource: {
                 "removeLabelIds": ['INBOX']
             }
