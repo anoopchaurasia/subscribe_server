@@ -72,8 +72,8 @@ async function getRecentEmail(user_id, auth, messageIDS, nextPageToken) {
                 let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
                     : response.data.payload.parts[0].body.data;
                 let data = message_raw;
-                buff = Buffer.from(data, 'base64');
-                text = buff.toString();
+                let buff = Buffer.from(data, 'base64');
+                let text = buff.toString();
                 simpleParser(text, async (err, parsed) => {
                     if (parsed) {
                         if (parsed['text']) {
