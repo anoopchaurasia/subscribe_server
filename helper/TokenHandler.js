@@ -18,6 +18,9 @@ class TokenHandler {
         let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
             console.error(err);
         });
+        if (!authToken){
+            return true;
+        }
         if (authToken.expiry_date < new Date()) {
             console.log("token expire")
             let authTokenInfo = await TokenHandler.refreshTokenExpiry(authToken);
