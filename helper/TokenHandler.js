@@ -13,11 +13,54 @@ const request_payload = {
 };
 
 class TokenHandler {
+
+    static async checkTokenExpiry(user_id) {
+        let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
+            console.error(err);
+        });
+        if (authToken.expiry_date < new Date()) {
+            console.log("token expire")
+            let authTokenInfo = await TokenHandler.refreshTokenExpiry(authToken);
+            console.log("cchecking here for token",authTokenInfo)
+            return authTokenInfo;
+        }
+        return false
+    }
+
+    static async refreshTokenExpiry(authToken) {
+        console.log("came here");
+        let body = { ...request_payload };
+        body.refresh_token = authToken.refresh_token;
+        body = JSON.stringify(body);
+        const settings = {
+            "url": "https://www.googleapis.com/oauth2/v4/token",
+            "method": "POST",
+            data: body,
+            "headers": {
+                'Content-Type': 'application/json',
+                "access_type": 'offline'
+            }
+        }
+        let response = await axios(settings);
+        if (response.status == 400 && response.data.error== "invalid_grant"){
+            return true;
+        }
+        if (response.data && response.data['access_token']) {
+            body = response.data;
+            authToken.access_token = body.access_token;
+            authToken.expiry_date = new Date(new Date().getTime() + body.expires_in * 1000);
+            await auth_token_model.updateOne({ user_id: authToken.user_id }, { $set: authToken }, { upsert: 1 });
+            authToken.access_token = body.access_token;
+            return authToken;
+        }
+    }
+
+
     static  async getAccessToken(user_id){
         let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
             console.error(err);
         });
-        if(authToken.expiry_date < new Date())
+        if(authToken && authToken.expiry_date < new Date())
          {
             console.log("token expire")
             let authTokenInfo = await TokenHandler.refreshToken(authToken);
@@ -43,7 +86,7 @@ class TokenHandler {
             }
         }
         let response = await axios(settings);
-        console.log(reponse.status,response.data)
+        
         if(response.data && response.data['access_token']){
             body = response.data;
             authToken.access_token = body.access_token;

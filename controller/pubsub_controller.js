@@ -26,32 +26,62 @@ router.post('/getemail', async (req, response) => {
         var email_id = content.emailAddress;
         var historyID = content.historyId;
         let userInfo = await user_model.findOne({ "email": email_id }).catch(err => { console.log(err); });
+        
         if (userInfo) {
-            let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
-            let oauth2Client = await TokenHandler.createAuthCleint(authToken);
-
-            var options = {
-                userId: 'me',
-                'startHistoryId': historyID-1,
-                auth: oauth2Client
-            };
-            let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
-            if (res) {
-                let data = res.data;
-                if (data && data.history) {
-                    let history = data.history;
-                    let messageIDS = [];
-                    history.forEach(async his => {
-                        his.messages.forEach(async msg => {
-                            messageIDS.push(msg.id)
+            let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
+            if (is_expire) {
+                console.log("came here for user logout")
+            } else {
+                let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
+                let oauth2Client = await TokenHandler.createAuthCleint(authToken);
+                var options = {
+                    userId: 'me',
+                    'startHistoryId': historyID - 1,
+                    auth: oauth2Client
+                };
+                let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
+                if (res) {
+                    let data = res.data;
+                    if (data && data.history) {
+                        let history = data.history;
+                        let messageIDS = [];
+                        history.forEach(async his => {
+                            his.messages.forEach(async msg => {
+                                messageIDS.push(msg.id)
+                            });
                         });
-                    });
-                    if (messageIDS.length != 0) {
-                        await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
+                        if (messageIDS.length != 0) {
+                            await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
+                        }
+                        response.sendStatus(200);
                     }
-                    response.sendStatus(200);
                 }
+
             }
+            // let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
+            // let oauth2Client = await TokenHandler.createAuthCleint(authToken);
+            // var options = {
+            //     userId: 'me',
+            //     'startHistoryId': historyID-1,
+            //     auth: oauth2Client
+            // };
+            // let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
+            // if (res) {
+            //     let data = res.data;
+            //     if (data && data.history) {
+            //         let history = data.history;
+            //         let messageIDS = [];
+            //         history.forEach(async his => {
+            //             his.messages.forEach(async msg => {
+            //                 messageIDS.push(msg.id)
+            //             });
+            //         });
+            //         if (messageIDS.length != 0) {
+            //             await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
+            //         }
+            //         response.sendStatus(200);
+            //     }
+            // }
         } else {
             response.sendStatus(400);
         }
