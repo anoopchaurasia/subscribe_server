@@ -30,7 +30,8 @@ router.post('/getemail', async (req, response) => {
         if (userInfo) {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
             if (is_expire) {
-                console.log("came here for user logout")
+                console.log("end history")
+                response.sendStatus(200)
             } else {
                 let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
                 let oauth2Client = await TokenHandler.createAuthCleint(authToken);

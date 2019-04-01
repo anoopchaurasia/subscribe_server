@@ -21,14 +21,13 @@ class TokenHandler {
         if (authToken.expiry_date < new Date()) {
             console.log("token expire")
             let authTokenInfo = await TokenHandler.refreshTokenExpiry(authToken);
-            console.log("cchecking here for token",authTokenInfo)
-            return authTokenInfo;
+            console.log("cchecking here for token",authTokenInfo==undefined)
+            return authTokenInfo==undefined;
         }
         return false
     }
 
     static async refreshTokenExpiry(authToken) {
-        console.log("came here");
         let body = { ...request_payload };
         body.refresh_token = authToken.refresh_token;
         body = JSON.stringify(body);
@@ -41,16 +40,17 @@ class TokenHandler {
                 "access_type": 'offline'
             }
         }
-        let response = await axios(settings);
-        if (response.status == 400 && response.data.error== "invalid_grant"){
-            return true;
-        }else if(response.data && response.data['access_token']) {
+        let response = await axios(settings).catch(e=>{
+            console.log("invalid grant")
+            return true
+        });
+        if(response.data && response.data['access_token']) {
             body = response.data;
             authToken.access_token = body.access_token;
             authToken.expiry_date = new Date(new Date().getTime() + body.expires_in * 1000);
             await auth_token_model.updateOne({ user_id: authToken.user_id }, { $set: authToken }, { upsert: 1 });
             authToken.access_token = body.access_token;
-            return false;
+            return authToken;
         }
     }
 
@@ -84,7 +84,7 @@ class TokenHandler {
                 "access_type": 'offline'
             }
         }
-        let response = await axios(settings);
+        let response = await axios(settings).catch(e=>console.log(e));
         
         if(response.data && response.data['access_token']){
             body = response.data;
