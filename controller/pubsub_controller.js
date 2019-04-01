@@ -39,7 +39,7 @@ router.post('/getemail', async (req, response) => {
                 let oauth2Client = await TokenHandler.createAuthCleint(authToken);
                 var options = {
                     userId: 'me',
-                    'startHistoryId': historyID - 1,
+                    'startHistoryId': historyID,
                     auth: oauth2Client
                 };
                 let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
