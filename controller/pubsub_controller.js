@@ -27,7 +27,7 @@ router.post('/getemail', async (req, response) => {
         var historyID = content.historyId;
         let userInfo = await user_model.findOne({ "email": email_id }).catch(err => { console.log(err); });
         
-        if (userInfo) {
+        if (userInfo && userInfo.is_logout) {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
             if (is_expire) {
                 console.log("end history")

@@ -28,6 +28,9 @@ var userDetail = new Schema({
     },
     birth_date:{
         type:Date
+    },
+    is_logout:{
+        type:Boolean
     }
 });
 

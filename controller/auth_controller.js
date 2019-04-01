@@ -24,6 +24,14 @@ router.post('/signin', async (req, res) => {
         oauth2Client.credentials = authToken;
         console.log("calling watch api from signin")
         await Expensebit.watchapi(oauth2Client);
+        let newvalues = {
+            $set: {
+                "is_logout": false
+            }
+        };
+        await users.findOneAndUpdate({ "user_id": req.token.user_id }, newvalues, { upsert: true }).catch(err => {
+            console.log(err);
+        });
         if (!user) {
             let body = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo?alt=json&access_token=" + access_token);
             let userInfoData = body.data;
@@ -69,6 +77,7 @@ async function create_user(userInfoData, payload) {
         "family_name": userInfoData['family_name'] ? userInfoData.family_name : "",
         "gender": userInfoData['gender'] ? userInfoData.gender : "",
         "birth_date": userInfoData['birth_date'] ? userInfoData.birth_date : "",
+        "is_logout": false
     });
     return await newUser.save().catch(err => {
         console.log(err);
