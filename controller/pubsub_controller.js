@@ -29,38 +29,37 @@ router.post('/getemail', async (req, response) => {
         
         if (userInfo) {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
-            // response.sendStatus(200);
-            // return;
-            if (is_expire != false) {
-                // console.log("end history")
-                return response.sendStatus(200);
-            } else {
-                let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
-                let oauth2Client = await TokenHandler.createAuthCleint(authToken);
-                var options = {
-                    userId: 'me',
-                    'startHistoryId': historyID,
-                    auth: oauth2Client
-                };
-                let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
-                if (res) {
-                    let data = res.data;
-                    if (data && data.history) {
-                        let history = data.history;
-                        let messageIDS = [];
-                        history.forEach(async his => {
-                            his.messages.forEach(async msg => {
-                                messageIDS.push(msg.id)
-                            });
-                        });
-                        if (messageIDS.length != 0) {
-                            await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
-                        }
-                        return response.sendStatus(200);
-                    }
-                }
+            return response.sendStatus(200);
+            // if (is_expire != false) {
+            //     // console.log("end history")
+            //     return response.sendStatus(200);
+            // } else {
+            //     let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
+            //     let oauth2Client = await TokenHandler.createAuthCleint(authToken);
+            //     var options = {
+            //         userId: 'me',
+            //         'startHistoryId': historyID,
+            //         auth: oauth2Client
+            //     };
+            //     let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
+            //     if (res) {
+            //         let data = res.data;
+            //         if (data && data.history) {
+            //             let history = data.history;
+            //             let messageIDS = [];
+            //             history.forEach(async his => {
+            //                 his.messages.forEach(async msg => {
+            //                     messageIDS.push(msg.id)
+            //                 });
+            //             });
+            //             if (messageIDS.length != 0) {
+            //                 await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
+            //             }
+            //             return response.sendStatus(200);
+            //         }
+            //     }
 
-            }
+            // }
         } else {
            return response.sendStatus(400);
         }
