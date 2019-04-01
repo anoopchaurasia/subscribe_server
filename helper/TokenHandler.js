@@ -44,14 +44,13 @@ class TokenHandler {
         let response = await axios(settings);
         if (response.status == 400 && response.data.error== "invalid_grant"){
             return true;
-        }
-        if (response.data && response.data['access_token']) {
+        }else if(response.data && response.data['access_token']) {
             body = response.data;
             authToken.access_token = body.access_token;
             authToken.expiry_date = new Date(new Date().getTime() + body.expires_in * 1000);
             await auth_token_model.updateOne({ user_id: authToken.user_id }, { $set: authToken }, { upsert: 1 });
             authToken.access_token = body.access_token;
-            return authToken;
+            return false;
         }
     }
 
