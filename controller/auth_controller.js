@@ -29,7 +29,7 @@ router.post('/signin', async (req, res) => {
                 "is_logout": false
             }
         };
-        await users.findOneAndUpdate({ "user_id": req.token.user_id }, newvalues, { upsert: true }).catch(err => {
+        await users.findOneAndUpdate({ "user_id": user.user_id }, newvalues, { upsert: true }).catch(err => {
             console.log(err);
         });
         if (!user) {
