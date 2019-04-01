@@ -31,7 +31,7 @@ router.post('/getemail', async (req, response) => {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
             // response.sendStatus(200);
             // return;
-            if (is_expire) {
+            if (is_expire != false) {
                 console.log("end history")
                 response.sendStatus(200);
             } else {

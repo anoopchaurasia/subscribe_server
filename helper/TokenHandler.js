@@ -22,9 +22,9 @@ class TokenHandler {
             return true;
         }
         if (authToken.expiry_date < new Date()) {
-            console.log("token expire")
+            // console.log("token expire")
             let authTokenInfo = await TokenHandler.refreshTokenExpiry(authToken);
-            console.log("cchecking here for token",authTokenInfo==undefined)
+            // console.log("cchecking here for token",authTokenInfo==undefined)
             return authTokenInfo==undefined;
         }
         return false
@@ -44,7 +44,7 @@ class TokenHandler {
             }
         }
         let response = await axios(settings).catch(e=>{
-            console.log("invalid grant")
+            // console.log("invalid grant")
             return true
         });
         if(response.data && response.data['access_token']) {
