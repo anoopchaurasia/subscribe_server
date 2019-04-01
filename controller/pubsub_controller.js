@@ -21,56 +21,56 @@ router.post('/getemail', async (req, response) => {
     }
     const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64').toString('utf8');
     var content;
-    content = JSON.parse(dataUtf8encoded);
-    var email_id = content.emailAddress;
-    var historyID = content.historyId;
-    console.log(email_id,historyID)
-    return response.sendStatus(200);
-    // try {
-    //     content = JSON.parse(dataUtf8encoded);
-    //     var email_id = content.emailAddress;
-    //     var historyID = content.historyId;
-    //     let userInfo = await user_model.findOne({ "email": email_id }).catch(err => { console.log(err); });
+    // content = JSON.parse(dataUtf8encoded);
+    // var email_id = content.emailAddress;
+    // var historyID = content.historyId;
+    // console.log(email_id,historyID)
+    // return response.sendStatus(200);
+    try {
+        content = JSON.parse(dataUtf8encoded);
+        var email_id = content.emailAddress;
+        var historyID = content.historyId;
+        let userInfo = await user_model.findOne({ "email": email_id }).catch(err => { console.log(err); });
         
-    //     if (userInfo) {
-    //         let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
-    //         if (is_expire != false) {
-    //             // console.log("end history")
-    //             return response.sendStatus(200);
-    //         } else {
-    //             let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
-    //             let oauth2Client = await TokenHandler.createAuthCleint(authToken);
-    //             var options = {
-    //                 userId: 'me',
-    //                 'startHistoryId': historyID,
-    //                 auth: oauth2Client
-    //             };
-    //             let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
-    //             if (res) {
-    //                 let data = res.data;
-    //                 if (data && data.history) {
-    //                     let history = data.history;
-    //                     let messageIDS = [];
-    //                     history.forEach(async his => {
-    //                         his.messages.forEach(async msg => {
-    //                             messageIDS.push(msg.id)
-    //                         });
-    //                     });
-    //                     if (messageIDS.length != 0) {
-    //                         await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
-    //                     }
-    //                     return response.sendStatus(200);
-    //                 }
-    //             }
+        if (userInfo) {
+            let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
+            if (is_expire != false) {
+                // console.log("end history")
+                return response.sendStatus(200);
+            } else {
+                let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
+                let oauth2Client = await TokenHandler.createAuthCleint(authToken);
+                var options = {
+                    userId: 'me',
+                    'startHistoryId': historyID,
+                    auth: oauth2Client
+                };
+                let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
+                if (res) {
+                    let data = res.data;
+                    if (data && data.history) {
+                        let history = data.history;
+                        let messageIDS = [];
+                        history.forEach(async his => {
+                            his.messages.forEach(async msg => {
+                                messageIDS.push(msg.id)
+                            });
+                        });
+                        if (messageIDS.length != 0) {
+                            await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
+                        }
+                        return response.sendStatus(200);
+                    }
+                }
 
-    //         }
-    //     } else {
-    //        return response.sendStatus(400);
-    //     }
-    // } catch (ex) {
-    //     console.error(ex)
-    //     return response.sendStatus(400);
-    // }
+            }
+        } else {
+           return response.sendStatus(400);
+        }
+    } catch (ex) {
+        console.error(ex)
+        return response.sendStatus(400);
+    }
 });
 
 
