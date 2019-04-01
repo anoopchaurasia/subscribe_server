@@ -68,7 +68,7 @@ class TokenHandler {
             let authTokenInfo = await TokenHandler.refreshToken(authToken);
             return authTokenInfo;
         }else{
-            console.log("token not expire")
+            // console.log("token not expire")
             return authToken;
         }
     }

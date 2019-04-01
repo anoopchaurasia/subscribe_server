@@ -17,7 +17,7 @@ const gmail = google.gmail('v1');
 
 router.post('/getemail', async (req, response) => {
     if (!req.body || !req.body.message || !req.body.message.data) {
-        return res.sendStatus(400);
+        return response.sendStatus(400);
     }
     const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64').toString('utf8');
     var content;
@@ -32,8 +32,8 @@ router.post('/getemail', async (req, response) => {
             // response.sendStatus(200);
             // return;
             if (is_expire != false) {
-                console.log("end history")
-                response.sendStatus(200);
+                // console.log("end history")
+                return response.sendStatus(200);
             } else {
                 let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
                 let oauth2Client = await TokenHandler.createAuthCleint(authToken);
@@ -56,17 +56,17 @@ router.post('/getemail', async (req, response) => {
                         if (messageIDS.length != 0) {
                             await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
                         }
-                        response.sendStatus(200);
+                        return response.sendStatus(200);
                     }
                 }
 
             }
         } else {
-            response.sendStatus(400);
+           return response.sendStatus(400);
         }
     } catch (ex) {
         console.error(ex)
-        response.sendStatus(400);
+        return response.sendStatus(400);
     }
 });
 
