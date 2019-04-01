@@ -31,7 +31,7 @@ router.post('/getemail', async (req, response) => {
         var email_id = content.emailAddress;
         var historyID = content.historyId;
         let userInfo = await user_model.findOne({ "email": email_id }).catch(err => { console.log(err); });
-        
+        console.log(email_id,historyID)
         if (userInfo) {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
             if (is_expire != false) {
