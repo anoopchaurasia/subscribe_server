@@ -21,6 +21,10 @@ router.post('/getemail', async (req, response) => {
     }
     const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64').toString('utf8');
     var content;
+    content = JSON.parse(dataUtf8encoded);
+    var email_id = content.emailAddress;
+    var historyID = content.historyId;
+    console.log(email_id,historyID)
     return response.sendStatus(200);
     // try {
     //     content = JSON.parse(dataUtf8encoded);
