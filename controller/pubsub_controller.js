@@ -200,7 +200,7 @@ let checkEmail = async (emailObj, mail, user_id, auth) => {
                                 body: 'You received new newsletter in you INBOX.'
                             }
                         };
-                        await sendFcmMessage(message);
+                        // await sendFcmMessage(message);
                     }
             }
         } catch (err) {
