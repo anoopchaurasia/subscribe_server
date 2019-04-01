@@ -21,13 +21,13 @@ router.post('/getemail', async (req, response) => {
     }
     const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64').toString('utf8');
     var content;
-    // return response.sendStatus(200);
     try {
         content = JSON.parse(dataUtf8encoded);
         var email_id = content.emailAddress;
         var historyID = content.historyId;
         let userInfo = await user_model.findOne({ "email": email_id }).catch(err => { console.log(err); });
         
+        // return response.sendStatus(200);
         if (userInfo) {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
             if (is_expire != false) {
