@@ -38,11 +38,11 @@ router.post('/getemail', async (req, response) => {
             let tokenInfo = await auth_token.findOne({ "user_id": doc._id }).catch(err => {
                 console.log(err);
             });
-            console.log(email_id)
-            console.log(tokenInfo)
+            // console.log(email_id)
+            // console.log(tokenInfo)
             if (tokenInfo) {
-                console.log(tokenInfo.expiry_date)
-               console.log(new Date(tokenInfo.expiry_date)) 
+                // console.log(tokenInfo.expiry_date)
+            //    console.log(new Date(tokenInfo.expiry_date)) 
                 if (new Date(tokenInfo.expiry_date) >= new Date()) {
                     console.log(email_id)
                     tokenInfo.expiry_date = new Date(tokenInfo.expiry_date);
@@ -55,7 +55,7 @@ router.post('/getemail', async (req, response) => {
                     let OAuth2 = google.auth.OAuth2;
                     let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
                     oauth2Client.credentials = tokenInfo;
-                    console.log(oauth2Client)
+                    // console.log(oauth2Client)
                     var options = {
                         userId: 'me',
                         'startHistoryId': historyID-10,
@@ -109,13 +109,13 @@ router.post('/getemail', async (req, response) => {
                             return console.log(error);
                         }
                         if (body) {
-                            console.log("came here")
+                            // console.log("came here")
                             body = JSON.parse(body);
                             let milisec = new Date().getTime();
                             milisec = milisec + (body.expires_in * 1000);
                             tokenInfo.access_token = body.access_token;
                             tokenInfo.expiry_date = new Date(milisec);
-                            console.log(tokenInfo.expiry_date)
+                            // console.log(tokenInfo.expiry_date)
                             var oldvalue = {
                                 user_id: doc._id
                             };
