@@ -43,6 +43,7 @@ class TokenHandler {
             }
         }
         let response = await axios(settings);
+        console.log(reponse.status,response.data)
         if(response.data && response.data['access_token']){
             body = response.data;
             authToken.access_token = body.access_token;
