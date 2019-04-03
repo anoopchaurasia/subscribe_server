@@ -262,6 +262,20 @@ class Pubsub {
                     "removeLabelIds": ['INBOX']
                 }
             });
+            await gmail.users.messages.modify({
+                userId: 'me',
+                'id': mailList.email_id,
+                resource: {
+                    "removeLabelIds": ['CATEGORY_PROMOTIONS']
+                }
+            });
+            await gmail.users.messages.modify({
+                userId: 'me',
+                'id': mailList.email_id,
+                resource: {
+                    "removeLabelIds": ['CATEGORY_PERSONAL']
+                }
+            });
             console.log(datab.status)
         }
     }
@@ -275,6 +289,7 @@ class Pubsub {
                     userId: 'me',
                     'id': email.email_id
                 }).catch(err => { console.log(err); });
+                
                 if (modifying.status == 200) {
                     console.log(modifying.status, "moved mail")
                     var newvalues = {
