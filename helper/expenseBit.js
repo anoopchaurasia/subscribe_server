@@ -86,24 +86,37 @@ class ExpenseBit {
                 mailIDSARRAY.push(mailList[i].email_id);
             }
             if (mailIDSARRAY.length != 0) {
-                if (allLabels.indexOf("INBOX") > -1 || allLabels.indexOf("CATEGORY_PERSONAL") > -1) {
-                   await gmail.users.messages.batchModify({
-                        userId: 'me',
-                        resource: {
-                            'ids': mailIDSARRAY,
-                            'addLabelIds': labelarry,
-                            "removeLabelIds": ['INBOX']
-                        }
-                    });
-                } else {
-                    await gmail.users.messages.batchModify({
+                   
+                let modify = await gmail.users.messages.batchModify({
                         userId: 'me',
                         resource: {
                             'ids': mailIDSARRAY,
                             'addLabelIds': labelarry
                         }
                     });
-                }
+                await gmail.users.messages.batchModify({
+                    userId: 'me',
+                    resource: {
+                        'ids': mailIDSARRAY,
+                        "removeLabelIds": ['INBOX']
+                    }
+                });
+                await gmail.users.messages.modify({
+                    userId: 'me',
+                    'id': mailList.email_id,
+                    resource: {
+                        "removeLabelIds": ['CATEGORY_PROMOTIONS']
+                    }
+                });
+                await gmail.users.messages.modify({
+                    userId: 'me',
+                    'id': mailList.email_id,
+                    resource: {
+                        "removeLabelIds": ['CATEGORY_PERSONAL']
+                    }
+                });
+                console.log(modify.status)
+            
             }
         }
     }
