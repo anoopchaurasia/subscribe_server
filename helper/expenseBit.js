@@ -94,6 +94,7 @@ class ExpenseBit {
                             'addLabelIds': labelarry
                         }
                     });
+                console.log(modify.status)
                 await gmail.users.messages.batchModify({
                     userId: 'me',
                     resource: {
@@ -101,21 +102,20 @@ class ExpenseBit {
                         "removeLabelIds": ['INBOX']
                     }
                 });
-                await gmail.users.messages.modify({
+                await gmail.users.messages.batchModify({
                     userId: 'me',
-                    'id': mailIDSARRAY,
                     resource: {
+                        'ids': mailIDSARRAY,
                         "removeLabelIds": ['CATEGORY_PROMOTIONS']
                     }
                 });
-                await gmail.users.messages.modify({
+                await gmail.users.messages.batchModify({
                     userId: 'me',
-                    'id': mailIDSARRAY,
                     resource: {
+                        'ids': mailIDSARRAY,
                         "removeLabelIds": ['CATEGORY_PERSONAL']
                     }
                 });
-                console.log(modify.status)
             
             }
         }
