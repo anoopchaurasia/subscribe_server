@@ -103,14 +103,14 @@ class ExpenseBit {
                 });
                 await gmail.users.messages.modify({
                     userId: 'me',
-                    'id': mailList.email_id,
+                    'id': mailIDSARRAY,
                     resource: {
                         "removeLabelIds": ['CATEGORY_PROMOTIONS']
                     }
                 });
                 await gmail.users.messages.modify({
                     userId: 'me',
-                    'id': mailList.email_id,
+                    'id': mailIDSARRAY,
                     resource: {
                         "removeLabelIds": ['CATEGORY_PERSONAL']
                     }
