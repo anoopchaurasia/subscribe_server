@@ -7,6 +7,11 @@ const cheerio = require('cheerio');
 const Pubsub = require("../helper/pubsub").Pubsub;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 class ExpenseBit {
+
+    /*
+    This function for getting Gmail Instance for another api/function.
+    Using Accesstoken Infor and Credential Gmail Instance will be created.
+    */
     static async getGmailInstance(auth) {
         const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
         let oauth2Client = await TokenHandler.createAuthCleint();
@@ -17,23 +22,28 @@ class ExpenseBit {
         });
     }
 
-
+    /*
+        This function for calling Watch Api for User.
+        this will call gmail watch api for particular topic with given labels
+    */
     static async watchapi(oauth2Client) {
         const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
         const options = {
             userId: 'me',
             auth: oauth2Client,
             resource: {
-                labelIds: ["INBOX", "CATEGORY_PROMOTIONS","CATEGORY_PERSONAL","UNREAD"],
+                labelIds: ["INBOX", "CATEGORY_PROMOTIONS", "CATEGORY_PERSONAL", "UNREAD"],
                 topicName: 'projects/retail-1083/topics/subscribeMail'
             }
         };
         console.log("watch called")
         let response = await gmail.users.watch(options);
-        console.log(response.status,response.data)
-        return 
+        return
     }
 
+    /*
+        This function will create Unsubscribed Emails label in to gmail account and update labelId into database.
+    */
     static async createEmailLabel(user_id, auth) {
         const gmail = google.gmail({ version: 'v1', auth })
         const res = await gmail.users.labels.create({
@@ -50,11 +60,55 @@ class ExpenseBit {
         }
     }
 
-    static async MoveMailFromInBOX(user_id, auth, from_email, label) {
+    /*
+        This function will modify Remove Labels Mail in Batch with given Parameters
+    */
+    static async batchModifyRemoveLabels(auth, mailIds, labels) {
         const gmail = google.gmail({ version: 'v1', auth });
-        let mailList = await email.find({ "from_email": from_email, "user_id": user_id }).catch(err => {
-            console.log(err);
+        await gmail.users.messages.batchModify({
+            userId: 'me',
+            resource: {
+                'ids': mailIds,
+                "removeLabelIds": labels
+            }
         });
+    }
+
+    /*
+        This function will modify Add labels Mail in Batch with given Parameters
+    */
+    static async batchModifyAddLabels(auth, mailIds, labels) {
+        const gmail = google.gmail({ version: 'v1', auth });
+        let modify = await gmail.users.messages.batchModify({
+            userId: 'me',
+            resource: {
+                'ids': mailIds,
+                'addLabelIds': labels
+            }
+        });
+        console.log(modify.status)
+    }
+
+    /*
+        This function will modify Add and remove labels Mail in Batch with given Parameters
+    */
+    static async batchModifyAddAndRemoveLabels(auth, mailIds, addLabels, removeLabels) {
+        const gmail = google.gmail({ version: 'v1', auth });
+        await gmail.users.messages.batchModify({
+            userId: 'me',
+            resource: {
+                'ids': mailIds,
+                'addLabelIds': addLabels,
+                "removeLabelIds": removeLabels
+            }
+        });
+    }
+
+    /*
+        This function will move Email from Inbox to Unsubscribed Folder.
+    */
+    static async MoveMailFromInBOX(user_id, auth, from_email, label) {
+        let mailList = await email.find({ "from_email": from_email, "user_id": user_id }).catch(err => { console.log(err); });
         if (mailList) {
             let allLabels = [];
             let mailLBL = mailList[0].labelIds.split(",");
@@ -63,7 +117,6 @@ class ExpenseBit {
                     allLabels.push(lblmail);
                 }
             });
-
             let labelarry = [];
             labelarry[0] = label;
             let mailIDSARRAY = [];
@@ -77,55 +130,25 @@ class ExpenseBit {
                         "is_keeped": false
                     }
                 };
-                var upsert = {
-                    upsert: true
-                };
-                email.findOneAndUpdate(oldvalue, newvalues, upsert).catch(err => {
+                email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
                     console.log(err);
                 });
                 mailIDSARRAY.push(mailList[i].email_id);
             }
             if (mailIDSARRAY.length != 0) {
-                   
-                let modify = await gmail.users.messages.batchModify({
-                        userId: 'me',
-                        resource: {
-                            'ids': mailIDSARRAY,
-                            'addLabelIds': labelarry
-                        }
-                    });
-                console.log(modify.status)
-                await gmail.users.messages.batchModify({
-                    userId: 'me',
-                    resource: {
-                        'ids': mailIDSARRAY,
-                        "removeLabelIds": ['INBOX']
-                    }
-                });
-                await gmail.users.messages.batchModify({
-                    userId: 'me',
-                    resource: {
-                        'ids': mailIDSARRAY,
-                        "removeLabelIds": ['CATEGORY_PROMOTIONS']
-                    }
-                });
-                await gmail.users.messages.batchModify({
-                    userId: 'me',
-                    resource: {
-                        'ids': mailIDSARRAY,
-                        "removeLabelIds": ['CATEGORY_PERSONAL']
-                    }
-                });
-            
+                await batchModifyAddLabels(auth, mailIDSARRAY, labelarry);
+                await batchModifyRemoveLabels(auth, mailIDSARRAY, ['Inbox']);
+                await batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PROMOTIONS']);
+                await batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PERSONAL']);
             }
         }
     }
 
+    /*
+        This function will revet back Moved Email to INBOX folder.
+    */
     static async  MoveMailFromExpenseBit(user_id, auth, from_email, label) {
-        const gmail = google.gmail({ version: 'v1', auth });
-        let mailList = await email.find({ "user_id": user_id, "from_email": from_email }).catch(err => {
-            console.log(err);
-        });
+        let mailList = await email.find({ "user_id": user_id, "from_email": from_email }).catch(err => { console.log(err); });
         if (mailList) {
             let allLabels = [];
             let mailLBL = [];
@@ -152,36 +175,27 @@ class ExpenseBit {
             labelarry[0] = label;
             let emailIdList = mailList.map(x => x.email_id);
             if (emailIdList) {
-                await gmail.users.messages.batchModify({
-                    userId: 'me',
-                    resource: {
-                        'ids': emailIdList,
-                        'addLabelIds': allLabels,
-                        "removeLabelIds": labelarry
-                    }
-                });
-                await gmail.users.messages.batchModify({
-                    userId: 'me',
-                    resource: {
-                        'ids': emailIdList,
-                        "addLabelIds": ['INBOX']
-                    }
-                });
+                await batchModifyAddAndRemoveLabels(auth, emailIdList, allLabels, labelarry);
+                await batchModifyAddLabels(auth, emailIdList, ['INBOX']);
+
             }
         }
     }
 
+    /*
+        This function will update batch email with give information
+    */
     static async UpdateBatchEmail(oldvalue, newvalues) {
         await email.updateMany(oldvalue, newvalues, { upsert: true }).catch(err => {
             console.log(err);
         });
     }
 
+    /*
+        This Function Will Moved All Emails To Unsubscribed Folder from Inbox
+    */
     static async  MoveAllMailFromInBOX(user_id, auth, from_email, label) {
-        const gmail = google.gmail({ version: 'v1', auth });
-        let mailList = await email.find({ "user_id": user_id, "is_moved": false }).catch(err => {
-            console.log(err);
-        });
+        let mailList = await email.find({ "user_id": user_id, "is_moved": false, "is_trash": false, "is_delete": false }).catch(err => { console.log(err); });
         if (mailList) {
             var oldvalue = {
                 user_id: user_id,
@@ -197,24 +211,26 @@ class ExpenseBit {
             labelarry[0] = label;
             let mailIdList = mailList.map(x => x.email_id);
             if (mailIdList) {
-                await gmail.users.messages.batchModify({
-                    userId: 'me',
-                    resource: {
-                        'ids': mailIdList,
-                        'addLabelIds': labelarry,
-                    }
-                });
+                await batchModifyAddLabels(auth, mailIdList, labelarry);
                 await ExpenseBit.sleep(2000);
             }
         }
     }
 
+    /*
+        This function will wait for Given Time/sleep.
+    */
     static async sleep(milliseconds) {
         return new Promise(resolve => setTimeout(resolve, milliseconds))
     }
 
+
+    /*
+        This Function Will return Url from Email/parsed Data.
+        Base On given Keyword Email subscribe link will be extracted and returning to calling function.
+    */
     static async getUrlFromEmail(emailObj) {
-        if(!emailObj){
+        if (!emailObj) {
             return null;
         }
         let $ = cheerio.load(emailObj);
@@ -247,6 +263,10 @@ class ExpenseBit {
         return url;
     }
 
+    /*
+        This function will create Json Object from Email data for storing into database.
+        based on given information email object will be created.
+    */
     static async createEmailInfo(user_id, url, mail) {
         let emailInfo = {};
         emailInfo['user_id'] = user_id;
@@ -279,6 +299,11 @@ class ExpenseBit {
         return emailInfo;
     }
 
+    /*
+        This Function will get url and email object.
+        using that if email is present into dtabase then doing nothing else creating new email in database.
+        checking if from_email present and email moved/trash then based on that new email will be moved/trashed.
+    */
     static async checkEmail(emailObj, mail, user_id, auth) {
         let url = await ExpenseBit.getUrlFromEmail(emailObj);
         if (url != null) {
@@ -286,7 +311,7 @@ class ExpenseBit {
             let emailInfo = await ExpenseBit.createEmailInfo(user_id, url, mail);
             if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
                 console.log(emailInfo.from_email)
-            } else if(emailInfo){
+            } else if (emailInfo) {
                 try {
                     let doc = await email.findOne({ "email_id": emailInfo.email_id, "user_id": user_id }).catch(err => {
                         console.log(err);
@@ -297,17 +322,12 @@ class ExpenseBit {
                         });
                         await ExpenseBit.UpdateEmailInformation(emailInfo);
                         if (mailList) {
-                            console.log(mailList)
                             await Pubsub.getListLabel(user_id, auth, emailInfo);
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_trash": true, "user_id": user_id }).catch(err => { console.log(err); });
                         if (mailInfo) {
-                                // await ExpenseBit.UpdateEmailInformation(emailInfo);
                             await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfo);
                         }
-                        // if (!mailList && !mailInfo) {
-                        //     await ExpenseBit.UpdateEmailInformation(emailInfo);
-                        // }
                     }
                 } catch (err) {
                     console.log(err);
@@ -316,51 +336,18 @@ class ExpenseBit {
         }
     }
 
-    static async getListLabelForMail(user_id, auth, mailList) {
-        const gmail = google.gmail({ version: 'v1', auth });
-        var res = await gmail.users.labels.list({
-            userId: 'me',
-        }).catch(err => {
-            console.log(err);
-        });
 
-        if (res) {
-            let lbl_id = null;
-            res.data.labels.forEach(lbl => {
-                if (lbl.name === "Unsubscribed Emails") {
-                    lbl_id = lbl.id;
-                }
-            });
-            if (lbl_id == null) {
-                var res = gmail.users.labels.create({
-                    userId: 'me',
-                    resource: {
-                        "labelListVisibility": "labelShow",
-                        "messageListVisibility": "show",
-                        "name": "Unsubscribed Emails"
-                    }
-                }).catch(err => {
-                    console.log(err);
-                });
-                if (res) {
-                    var result = await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
-                    if (result) {
-                        await ExpenseBit.MoveMailFromInBOX(user_id, auth, mailList, res.data.id);
-                    }
-                }
-            } else {
-                var result = await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
-                if (result) {
-                    await ExpenseBit.MoveMailFromInBOX(user_id, auth, mailList, lbl_id);
-                }
-            }
-        }
-    }
-
+    /*
+        This function will check if lable or unsubscribed email folder created or not.
+        if not then it will create new folder.
+        and update that label id into database. using that label id moveEmail function will be called for moving mail fom Inbox.
+    */
     static async getListLabel(user_id, auth, from_email, is_unscubscribe, is_remove_all) {
         const gmail = google.gmail({ version: 'v1', auth });
         const res = await gmail.users.labels.list({
             userId: 'me',
+        }).catch(err => {
+            console.log(err);
         });
         if (res) {
             let lbl_id = null;
@@ -370,46 +357,49 @@ class ExpenseBit {
                 }
             });
             if (lbl_id == null) {
-                const response = await gmail.users.labels.create({
-                    userId: 'me',
-                    resource: {
-                        "labelListVisibility": "labelShow",
-                        "messageListVisibility": "show",
-                        "name": "Unsubscribed Emails"
-                    }
-                });
-                if (response) {
-                    const result = await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
-                    if (result) {
-                        if (is_remove_all) {
-                            await ExpenseBit.MoveAllMailFromInBOX(user_id, auth, from_email, res.data.id);
-                        } else if (is_unscubscribe) {
-                            await ExpenseBit.MoveMailFromExpenseBit(user_id, auth, from_email, res.data.id);
-                        } else {
-                            await ExpenseBit.MoveMailFromInBOX(user_id, auth, from_email, res.data.id);
-                        }
-                    }
-                }
+                const response = await createAndUpdateEmailLabel(user_id, auth);
+                lbl_id = response.data.id;
             } else {
-                const resp = await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
-                if (resp) {
-                    if (is_remove_all) {
-                        await ExpenseBit.MoveAllMailFromInBOX(user_id, auth, from_email, lbl_id);
-                    } else if (is_unscubscribe) {
-                        await ExpenseBit.MoveMailFromExpenseBit(user_id, auth, from_email, lbl_id);
-                    } else {
-                        await ExpenseBit.MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
-                    }
-                }
+                await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
+            }
+            if (is_remove_all) {
+                await ExpenseBit.MoveAllMailFromInBOX(user_id, auth, from_email, lbl_id);
+            } else if (is_unscubscribe) {
+                await ExpenseBit.MoveMailFromExpenseBit(user_id, auth, from_email, lbl_id);
+            } else {
+                await ExpenseBit.MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
             }
         }
     }
 
+    /*
+        This function will create Unsubscribed Emails label in to gmail account and update labelId into database.
+    */
+    static async createAndUpdateEmailLabel(user_id, auth) {
+        const gmail = google.gmail({ version: 'v1', auth })
+        const res = await gmail.users.labels.create({
+            userId: 'me',
+            resource: {
+                "labelListVisibility": "labelShow",
+                "messageListVisibility": "show",
+                "name": "Unsubscribed Emails"
+            }
+        });
+        await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
+        return res;
+    }
+
+    /*
+    This function Updating Label id into database.(for newly created label)
+    */
     static async UpdateLableInsideToken(user_id, label) {
         const result = await auth_token.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.log(err); });
         return result;
     }
 
+    /*
+        This function will update email information into database.
+    */
     static async UpdateEmailInformation(emailInfo) {
         await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => {
             console.log(err);

@@ -4,10 +4,14 @@ const email = require('../models/email');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const { google } = require('googleapis');
 
-
-
 class DeleteEmail {
 
+
+    /*
+        This function Will be called from delete Email api.
+        Function will find emails list and getting emailIDlist. using that emailId list deleting all Email
+        in Batch.
+    */
     static async deleteEmails(authToken, bodyData) {
         const emails = await email.find({ user_id: authToken.user_id, "from_email": bodyData.from_email })
         const gmail = await DeleteEmail.getGmailInstance(authToken);
@@ -27,6 +31,11 @@ class DeleteEmail {
         }
     }
 
+
+    /*
+        This function for getting Gmail Instance for another api/function.
+        Using Accesstoken Infor and Credential Gmail Instance will be created.
+    */
     static async getGmailInstance(auth) {
         const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
         let oauth2Client = await TokenHandler.createAuthCleint();
@@ -37,6 +46,10 @@ class DeleteEmail {
         });
     }
 
+    /*
+        This function for Updating Is_delete Label for database.
+        this will update email object with is_delete=true for Deleted email data/list.
+    */
     static async update_delete_status(emailInfo, user_id) {
         emailInfo.forEach(async email_id => {
             let oldvalue = {

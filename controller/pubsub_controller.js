@@ -15,17 +15,18 @@ const fcm = new FCM(serverKey);
 
 const gmail = google.gmail('v1');
 
+
+/*
+This Api for Listening Pubsub Push-Notification.
+We will get base64 data for request and after parsing that data we will get Emailaddress and historyid.
+Using that history id getting message information using google api.
+*/
 router.post('/getemail', async (req, response) => {
     if (!req.body || !req.body.message || !req.body.message.data) {
         return response.sendStatus(400);
     }
     const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64').toString('utf8');
     var content;
-    // content = JSON.parse(dataUtf8encoded);
-    // var email_id = content.emailAddress;
-    // var historyID = content.historyId;
-    // console.log(email_id,historyID)
-    // return response.sendStatus(200);
     try {
         content = JSON.parse(dataUtf8encoded);
         var email_id = content.emailAddress;
@@ -35,7 +36,6 @@ router.post('/getemail', async (req, response) => {
         if (userInfo) {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
             if (is_expire != false) {
-                // console.log("end history")
                 return response.sendStatus(200);
             } else {
                 let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
@@ -62,32 +62,26 @@ router.post('/getemail', async (req, response) => {
                         return response.sendStatus(200);
                     }
                 }
-
             }
         } else {
            return response.sendStatus(400);
         }
     } catch (ex) {
-        console.error(ex)
         return response.sendStatus(400);
     }
 });
 
-
+/*
+This function is geting messageid list as parameters and getting message from gmail api and parsing that email.
+*/
 async function getRecentEmail(user_id, auth, messageIDS) {
     messageIDS.forEach(async mids => {
-        let doc = await email.findOne({ "email_id": mids, "user_id": user_id }).catch(err => {
-            console.log(err);
-        });
+        let doc = await email.findOne({ "email_id": mids, "user_id": user_id }).catch(err => {console.log(err);});
         if(!doc){
-            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
-                // console.log(err);
-                console.log("no msg")
-            });
+            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {console.log("no msg")});
             if (response) {
                 if (response.data.payload || response.data.payload['parts']) {
-                    let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
-                        : response.data.payload.parts[0].body.data;
+                    let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data : response.data.payload.parts[0].body.data;
                     let data = message_raw;
                     let buff = Buffer.from(data, 'base64');
                     let text = buff.toString();
@@ -105,14 +99,14 @@ async function getRecentEmail(user_id, auth, messageIDS) {
                         }
                     });
                 }
-
             }
         }
     });
 }
 
+/*
 
-
+*/
 let checkEmail = async (emailObj, mail, user_id, auth) => {
     let $ = cheerio.load(emailObj)
     let url = null;

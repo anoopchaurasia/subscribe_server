@@ -4,6 +4,10 @@ const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const { google } = require('googleapis');
 class TrashEmail {
 
+    /*
+    This function for getting Gmail Instance for another api/function.
+    Using Accesstoken Infor and Credential Gmail Instance will be created.
+    */
     static async getGmailInstance(auth) {
         const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
         let oauth2Client = await TokenHandler.createAuthCleint();
@@ -14,8 +18,11 @@ class TrashEmail {
         });
     }
 
+    /*
+        This function for Updating Is_trash Label for database.
+        thsi will update email object with is_trash value based on parameters for trashe email data/list.
+    */
     static async addTrashFromLabel(emailInfo, trash_value = true) {
-        console.log(emailInfo)
         emailInfo.forEach(async email_id => {
             console.log(email_id)
             var oldvalue = {
@@ -26,13 +33,16 @@ class TrashEmail {
                     "is_trash": trash_value
                 }
             };
-           let check= await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+           await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
                 console.log(err);
             });    
-            console.log(check);
         });
     }
 
+    /*
+        This function for Updating Is_trash Label for database.
+        thsi will update email object with is_trash=false for untrash email done by one.
+    */
     static async removeTrashFromLabel(emailInfo, trash_value = true) {
             var oldvalue = {
                 email_id: emailInfo.email_id
@@ -47,6 +57,12 @@ class TrashEmail {
             });
     }
 
+
+    /*
+        This function for Moving Mail form INbox To trash Folder.
+        Using From_email getting all Emails and Getting EmailID list from Emails.
+        Using That EmailId List Changing Trash Lable for all mail in Batch.
+    */
     static async inboxToTrash(authToken, bodyData) {
         let mailList = await email.find({
             from_email: bodyData.from_email,
@@ -66,40 +82,17 @@ class TrashEmail {
                 }).catch(err => {
                     console.log(err);
                 });
-                // console.log(modifying)
                 if(modifying){
                     await TrashEmail.addTrashFromLabel(mailIdList);
                 }
-                // await gmail.users.messages.batchModify({
-                //     userId: 'me',
-                //     resource: {
-                //         'ids': mailIdList,
-                //         "removeLabelIds": ['INBOX']
-                //     }
-                // }).catch(err => {
-                //     console.log(err);
-                // });
-                // await gmail.users.messages.batchModify({
-                //     userId: 'me',
-                //     resource: {
-                //         'ids': mailIdList,
-                //         'removeLabelIds': ["CATEGORY_PERSONAL"]
-                //     }
-                // }).catch(err => {
-                //     console.log(err);
-                // });
-                // await gmail.users.messages.batchModify({
-                //     userId: 'me',
-                //     resource: {
-                //         'ids': mailIdList,
-                //         'removeLabelIds': ["CATEGORY_PROMOTIONS"]
-                //     }
-                // }).catch(err => {
-                //     console.log(err);
-                // });
             }
     }
 
+
+    /*
+        This Function For Moving Mail from inbox to Trash folder.
+        This will move one email at a time. and changed is_trash value into database same time.
+    */
     static async inboxToTrashFromExpenseBit(authToken,emailInfo) {
         const gmail = google.gmail({ version: 'v1', auth: authToken }); 
         if (emailInfo.email_id) {
@@ -112,7 +105,7 @@ class TrashEmail {
             }).catch(err => {
                 console.log(err);
             });
-            if (modifying && modifying.status == 200) {
+            if (modifying) {
                 var oldvalue = {
                     email_id: emailInfo.email_id
                 };
@@ -128,6 +121,12 @@ class TrashEmail {
         }
     }
 
+
+    /*
+        This function Will moved/revert Mail from Trash folder.
+        Based On from_email Untrashing email list from trash folder.
+        and updating is_trash value to false into database.
+    */
     static async revertMailFromTrash(authToken, bodyData) {
         const gmail = await TrashEmail.getGmailInstance(authToken);
         let mailList = await email.find({

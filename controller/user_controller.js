@@ -2,12 +2,13 @@
 const express = require('express');
 const fcmToken = require('../models/fcmToken');
 const token_model = require('../models/token');
-const auth_token = require('../models/authToken');
-const email = require('../models/email');
-const userDetails = require('../models/userDetail');
 const deviceInfo = require('../models/deviceInfo');
 const router = express.Router();
 
+
+/* 
+This Api for storing FCM Token Into database for firebase notification.
+*/
 router.post('/savefcmToken', async (req, res) => {
     let token = req.token;
     let tokenInfo = { "user_id": token.user_id, "fcm_token": req.body.fcmToken };
@@ -19,6 +20,10 @@ router.post('/savefcmToken', async (req, res) => {
     });
 });
 
+
+/*
+This Api for storing Device Inforamtion into Database.
+*/
 router.post('/saveDeviceInfo', async (req, res) => {
     let deviceData = req.body.data;
     deviceData['user_id']=req.token.user_id;
@@ -30,6 +35,10 @@ router.post('/saveDeviceInfo', async (req, res) => {
     });
 });
 
+
+/*
+This api for Logout/deleting whole data for particular User.
+*/
 router.post('/disconnectGdprAccount', async (req, res) => {
     try {
         let auth_id = req.body.authID;

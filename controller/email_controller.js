@@ -12,6 +12,10 @@ const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 
+
+/*
+This api for deleting mail from Inbox or Trash folder.
+*/
 router.post('/deleteMailFromInboxx', async (req, res) => {
     await DeleteEmail.deleteEmails(req.token, req.body);
     res.json({
@@ -20,6 +24,11 @@ router.post('/deleteMailFromInboxx', async (req, res) => {
     })
 });
 
+
+/*
+This api for moving Mail from Inbox to Trash Folder.(When swipe Upper)
+here We will get Fromemail/sender so using that we are moving all coresponding mail to Trash Folder.
+*/
 router.post('/deleteMailFromInbox', async (req, res) => {
     await TrashEmail.inboxToTrash(req.token, req.body);
     res.status(200).json({
@@ -28,6 +37,10 @@ router.post('/deleteMailFromInbox', async (req, res) => {
     })
 });
 
+
+/*
+Thsi api for Reverting Back Trash Email from Trash folder to Inbox.
+*/
 router.post('/revertTrashMailToInbox', async (req, res) => {
     await TrashEmail.revertMailFromTrash(req.token, req.body);
     res.status(200).json({
@@ -37,6 +50,9 @@ router.post('/revertTrashMailToInbox', async (req, res) => {
 });
 
 
+/*
+This api for Moving Email From INbox to SUbscribed Folder.(Whne swipe Left)
+*/
 router.post('/moveEmailToExpbit', async (req, res) => {
     try {
         const from_email = req.body.from_email;
@@ -58,7 +74,10 @@ router.post('/moveEmailToExpbit', async (req, res) => {
 });
 
 
-
+/*
+This Api for Scrapping Mail from INbox.
+Based on user Information Email Inbox will be scrape
+*/
 router.post('/getMailInfo', async (req, res) => {
     try {
         const token = req.token;
@@ -66,7 +85,6 @@ router.post('/getMailInfo', async (req, res) => {
             const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e));
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
-            // Expensebit.watchapi(oauth2Client);
             await getRecentEmail(token.user_id, oauth2Client, null);
             res.status(200).json({
                 error: false,
@@ -78,6 +96,10 @@ router.post('/getMailInfo', async (req, res) => {
     }
 });
 
+/*
+This Api for Getting all Mail Subscription for Home screen for App.
+This will get Filter subcription(new subscription only), unread Mail Info and total Count
+*/
 router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
@@ -90,7 +112,6 @@ router.post('/readMailInfo', async (req, res) => {
                     unreadData[element._id.from_email] = element.count
                 });
                 const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-                // console.log(emailinfos, unreademail, total)
                 res.status(200).json({
                     error: false,
                     data: emailinfos,
@@ -105,6 +126,11 @@ router.post('/readMailInfo', async (req, res) => {
     }
 });
 
+
+/*
+This Api will get Profile/statistic Inforamtion for Subcription.
+This will get all the subscription,Moved subscription,total email and total ubsubscribe email count.
+*/
 router.post('/readProfileInfo', async (req, res) => {
     try {
         const doc = req.token;
@@ -126,6 +152,9 @@ router.post('/readProfileInfo', async (req, res) => {
     }
 });
 
+/*
+This api will get All unsubscribe Subscription Related Information.
+*/
 router.post('/getUnsubscribeMailInfo', async (req, res) => {
     try {
         const doc = req.token;
@@ -151,6 +180,10 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
     }
 });
 
+
+/*
+This api will get Filer subsciption(new only).
+*/
 router.post('/getEmailSubscription', async (req, res) => {
     try {
         const doc = req.token;
@@ -167,6 +200,10 @@ router.post('/getEmailSubscription', async (req, res) => {
 });
 
 
+/*
+This for function for scrapping Inbox for particular user.
+This will Get List of email in Batch of 100 for given Time period and will parsed mail.
+*/
 async function getRecentEmail(user_id, auth, nextPageToken) {
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2019/02/01 ' });
     if (responseList && responseList['data']['messages']) {
@@ -203,7 +240,10 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
 }
 
 
-
+/*
+This api for unsubscribing mail from Inbox.
+This api Currently not using Its under development.
+*/
 router.post('/unSubscribeMail', async (req, res) => {
     try {
         const from_email = req.body.from_email;
@@ -226,6 +266,10 @@ router.post('/unSubscribeMail', async (req, res) => {
     }
 });
 
+
+/*
+This api for getting only trash suscription information.
+*/
 router.post('/getDeletedEmailData', async (req, res) => {
     try {
         const doc = req.token;
@@ -241,6 +285,11 @@ router.post('/getDeletedEmailData', async (req, res) => {
     }
 });
 
+
+/*
+This api for changing keeped subscription.(when swipe right)
+this will changed changed is_keeped value in database for keped subscription
+*/
 router.post('/keepMailInformation', async (req, res) => {
     try {
         const from_email = req.body.from_email;
@@ -255,10 +304,7 @@ router.post('/keepMailInformation', async (req, res) => {
                     "is_keeped": true
                 }
             };
-            var upsert = {
-                upsert: true
-            };
-            await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
+            await email.updateMany(oldvalue, newvalues, { upsert: true }).catch(err => {
                 console.log(err);
             });
         }
@@ -267,6 +313,10 @@ router.post('/keepMailInformation', async (req, res) => {
     }
 });
 
+
+/*
+This Api for getting only keeped subscription Information.
+*/
 router.post('/getKeepedMailInfo', async (req, res) => {
     try {
         const doc = req.token;

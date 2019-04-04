@@ -9,6 +9,13 @@ const router = express.Router();
 const uniqid = require('uniqid');
 
 
+/*
+This is the Login api. 
+Using This api use can logged-in into system.
+====
+This api will get code/authentication code from application and using that application
+code extracting token and user data. and saving and updating into database.
+*/
 router.post('/signin', async (req, res) => {
     try {
         const token = await TokenHandler.getTokenFromCode(req.body.code);
@@ -52,6 +59,11 @@ router.post('/signin', async (req, res) => {
     }
 });
 
+
+/*
+This function will create authentication token for user for Authenticating api.
+For every Login api call token will bew created and storing into database.
+*/
 async function create_token(user) {
     var token_uniqueid = uniqid() + uniqid() + uniqid();
     var tokmodel = new token_model({
@@ -68,6 +80,11 @@ async function create_token(user) {
     };
 }
 
+
+/*
+This function will create user with user information passed into parameters.
+when login api called and user is not present then new user will be created.
+*/
 async function create_user(userInfoData, payload) {
     var newUser = new users({
         "email": userInfoData.email || payload.email,

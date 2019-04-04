@@ -14,8 +14,11 @@ const Expensebit = require("../helper/expenseBit").ExpenseBit;
 
 
 class Pubsub {
+
+    /*
+    This function is geting messageid list as parameters and getting message from gmail api and parsing that email.
+    */
     static async getRecentEmail(user_id, auth, messageIDS) {
-        // console.log(user_id,messageIDS)
         let gmail =await google.gmail('v1');
         if (messageIDS.length != 0) {
             messageIDS.forEach(async mids => {
@@ -26,7 +29,6 @@ class Pubsub {
                     if (response.data.payload || response.data.payload['parts']) {
                         let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
                                 : response.data.payload.parts[0].body.data;
-                        // let message_raw = response.data.payload.parts[0].body.data;
                         let data = message_raw;
                         let buff = Buffer.from(data, 'base64');
                         let text = buff.toString();
@@ -47,9 +49,13 @@ class Pubsub {
                 }
             });
         }
-
     }
 
+
+    /*
+        This Function Will return Url from Email/parsed Data.
+        Base On given Keyword Email subscribe link will be extracted and returning to calling function.
+    */
     static async getUrlFromEmail(emailObj) {
         if (!emailObj) {
             return null;
@@ -84,6 +90,11 @@ class Pubsub {
         return url;
     }
 
+
+    /*
+        This function will create Json Object from Email data for storing into database.
+        based on given information email object will be created.
+    */
     static async createEmailInfo(user_id, url, mail) {
         let emailInfo = {};
         emailInfo['user_id'] = user_id;
@@ -116,6 +127,11 @@ class Pubsub {
         return emailInfo;
     }
 
+    /*
+        This Function will get url and email object. 
+        using that if email is present into dtabase then doing nothing else creating new email in database.
+        checking if from_email present and email moved/trash then based on that new email will be moved/trashed.
+    */
     static async checkEmail(emailObj, mail, user_id, auth) {
         let url = await Pubsub.getUrlFromEmail(emailObj);
         if (url != null) {
@@ -138,14 +154,9 @@ class Pubsub {
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_trash": true, "user_id": user_id }).catch(err => { console.log(err); });
                         if (mailInfo) {
-                            // await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
-                            // await Pubsub.deleteEmailsAndMoveToTrash(user_id,auth, mailList.from_email)
                             await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfo);
                         }
-                        // if (!mailList && !mailInfo) {
-                        //     await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
-                        // }
-                        let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
+                         let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
                         if (tokenInfo) {
                             var message = {
                                 to: tokenInfo.fcm_token,
@@ -165,9 +176,10 @@ class Pubsub {
         }
     }
 
+    /*
+        This function for sending Firebase Notification to user.
+    */
     static async sendFcmMessage(message) {
-        // var serverKey = process.env.SERVER_KEY; //put your server key here
-        // var fcm = new FCM(serverKey);
         fcm.send(message, async function (err, response) {
             if (err) {
                 console.log("Something has gone wrong!");
@@ -177,6 +189,12 @@ class Pubsub {
         });
     }
 
+
+    /*
+        This function will check if lable or unsubscribed email folder created or not.
+        if not then it will create new folder.
+        and update that label id into database. using that label id moveEmail function will be called for moving mail fom Inbox.
+    */
     static async getListLabel(user_id, auth, mailList) {
         const gmail = google.gmail({ version: 'v1', auth });
         var res = await gmail.users.labels.list({
@@ -218,11 +236,18 @@ class Pubsub {
         }
     }
 
+
+    /*
+        This function Updating Label id into database.(for newly created label)
+    */
     static async UpdateLableInsideToken(user_id, label) {
         const result = await auth_token.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.log(err); });
         return result;
     }
 
+    /*
+        This function will update email information into database.
+    */    
     static async UpdateNewEmail(email_id, newvalues) {
        let resp= await email.updateOne({ "email_id": email_id }, newvalues, { upsert: true }).catch(err => {
             console.log(err);
@@ -230,6 +255,9 @@ class Pubsub {
         return resp;
     }
 
+    /*
+        This function will move mail from Inbox.
+    */
     static async  MoveMailFromInBOX(user_id, auth, mailList, label) {
         const gmail = google.gmail({ version: 'v1', auth });
         let labelarry = [];
@@ -245,15 +273,12 @@ class Pubsub {
                 console.log(err);
             });
             if(modifying.status==200){
-                console.log(modifying.status,"moved mail")
                 var newvalues = {
                     $set: {
                         "is_moved": true
                     }
                 };
-                console.log(mailList)
                 let checkhere = await Pubsub.UpdateNewEmail(mailList.email_id, newvalues);
-                console.log("data",checkhere);
             }
             let datab = await gmail.users.messages.modify({
                 userId: 'me',
@@ -280,6 +305,9 @@ class Pubsub {
         }
     }
 
+    /*
+
+    */
     static async  deleteEmailsAndMoveToTrash(user_id, auth, from_email) {
         const gmail = google.gmail({ version: 'v1', auth });
         let mailList = await email.find({ "from_email": from_email, "user_id": user_id }).catch(err => { console.log(err); });
@@ -290,7 +318,7 @@ class Pubsub {
                     'id': email.email_id
                 }).catch(err => { console.log(err); });
                 
-                if (modifying.status == 200) {
+                if (modifying) {
                     console.log(modifying.status, "moved mail")
                     var newvalues = {
                         $set: {
@@ -303,6 +331,11 @@ class Pubsub {
         }
     }
 
+
+    /*
+    This function for getting Gmail Instance for another api/function.
+    Using Accesstoken Infor and Credential Gmail Instance will be created.
+    */
     static async getGmailInstance(auth) {
         const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
         let oauth2Client = await TokenHandler.createAuthCleint();
@@ -313,6 +346,9 @@ class Pubsub {
         });
     }
 
+    /*  
+        this function will return google instance for give auth information.
+    */
     static async getGoogleInstance(auth) {
         return google.gmail({
             version: 'v1',

@@ -3,7 +3,6 @@ const fs = require("fs");
 const {client_secret, client_id, redirect_uris} = JSON.parse(fs.readFileSync(process.env.CLIENT_CONFIG)).installed;
 const { google } = require('googleapis');
 const auth_token_model  = require('../models/authToken');
-const Request = require('request');
 const axios = require('axios')
 const request_payload = {
     "client_id": client_id,
