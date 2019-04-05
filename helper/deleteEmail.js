@@ -21,6 +21,7 @@ class DeleteEmail {
             }).catch(err => {
                 console.log(err);
             });
+            //TODO: what if some emails dont get deleted
             if(response.status==200){
                 await DeleteEmail.update_delete_status(emailIdList, authToken.user_id)
             }
@@ -38,6 +39,7 @@ class DeleteEmail {
     }
 
     static async update_delete_status(emailInfo, user_id) {
+        //TODO: update all at one go 
         emailInfo.forEach(async email_id => {
             let oldvalue = {
                 "email_id": email_id
