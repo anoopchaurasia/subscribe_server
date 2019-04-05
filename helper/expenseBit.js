@@ -177,7 +177,6 @@ class ExpenseBit {
             if (emailIdList) {
                 await batchModifyAddAndRemoveLabels(auth, emailIdList, allLabels, labelarry);
                 await batchModifyAddLabels(auth, emailIdList, ['INBOX']);
-
             }
         }
     }
@@ -194,7 +193,7 @@ class ExpenseBit {
     /*
         This Function Will Moved All Emails To Unsubscribed Folder from Inbox
     */
-    static async  MoveAllMailFromInBOX(user_id, auth, from_email, label) {
+    static async  MoveAllMailFromInBOX(user_id, auth, label) {
         let mailList = await email.find({ "user_id": user_id, "is_moved": false, "is_trash": false, "is_delete": false }).catch(err => { console.log(err); });
         if (mailList) {
             var oldvalue = {
@@ -363,7 +362,7 @@ class ExpenseBit {
                 await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
             }
             if (is_remove_all) {
-                await ExpenseBit.MoveAllMailFromInBOX(user_id, auth, from_email, lbl_id);
+                await ExpenseBit.MoveAllMailFromInBOX(user_id, auth,lbl_id);
             } else if (is_unscubscribe) {
                 await ExpenseBit.MoveMailFromExpenseBit(user_id, auth, from_email, lbl_id);
             } else {
