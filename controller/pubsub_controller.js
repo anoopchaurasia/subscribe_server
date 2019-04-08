@@ -48,17 +48,14 @@ router.post('/getemail', async (req, response) => {
                 let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
                 if (res) {
                     let data = res.data;
-                    if (data && data.history) {
+                     if (data && data.history) {
                         let history = data.history;
                         let messageIDS = [];
                         history.forEach(async his => {
                             his.messages.forEach(async msg => {
-                                messageIDS.push(msg.id)
+                                await getRecentEmail(userInfo._id, oauth2Client, msg.id);
                             });
                         });
-                        if (messageIDS.length != 0) {
-                            await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
-                        }
                         return response.sendStatus(200);
                     }
                 }
@@ -74,8 +71,7 @@ router.post('/getemail', async (req, response) => {
 });
 
 
-async function getRecentEmail(user_id, auth, messageIDS) {
-    messageIDS.forEach(async mids => {
+async function getRecentEmail(user_id, auth, mids) {
         let doc = await email.findOne({ "email_id": mids, "user_id": user_id }).catch(err => {
             console.log(err);
         });
@@ -108,7 +104,6 @@ async function getRecentEmail(user_id, auth, messageIDS) {
 
             }
         }
-    });
 }
 
 
