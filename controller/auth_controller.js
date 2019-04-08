@@ -4,7 +4,7 @@ const users = require('../models/userDetail');
 const axios = require("axios");
 const token_model = require('../models/token');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
-const Expensebit = require("../helper/expenseBit").ExpenseBit;
+const GmailApi = require("../helper/gmailApis").GmailApis;
 const router = express.Router();
 const uniqid = require('uniqid');
 
@@ -30,7 +30,7 @@ router.post('/signin', async (req, res) => {
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = authToken;
         console.log("calling watch api from signin")
-        await Expensebit.watchapi(oauth2Client);
+        await GmailApi.watchapi(oauth2Client);
         // let newvalues = {
         //     $set: {
         //         "is_logout": false

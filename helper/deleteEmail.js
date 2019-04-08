@@ -3,6 +3,7 @@
 const email = require('../models/email');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const { google } = require('googleapis');
+const GmaiilApi = require("../helper/gmailApis").GmailApis;
 
 class DeleteEmail {
 
@@ -14,17 +15,9 @@ class DeleteEmail {
     */
     static async deleteEmails(authToken, bodyData) {
         const emails = await email.find({ user_id: authToken.user_id, "from_email": bodyData.from_email })
-        const gmail = await DeleteEmail.getGmailInstance(authToken);
         const emailIdList = emails.map(x => x.email_id);
         if (emailIdList) {
-         const  response =  await gmail.users.messages.batchDelete({
-                userId: 'me',
-                resource: {
-                    'ids': emailIdList
-                }
-            }).catch(err => {
-                console.log(err);
-            });
+            let response = await GmaiilApi.deleteEmailApi(authToken,emailIdList);
             if(response.status==200){
                 await DeleteEmail.update_delete_status(emailIdList, authToken.user_id)
             }

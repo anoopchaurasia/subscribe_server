@@ -6,6 +6,7 @@ const { google } = require('googleapis');
 const cheerio = require('cheerio');
 const Pubsub = require("../helper/pubsub").Pubsub;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
+const GmailApi = require("../helper/gmailApis").GmailApis;
 class ExpenseBit {
 
     /*
@@ -22,87 +23,19 @@ class ExpenseBit {
         });
     }
 
-    /*
-        This function for calling Watch Api for User.
-        this will call gmail watch api for particular topic with given labels
-    */
-    static async watchapi(oauth2Client) {
-        const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
-        const options = {
-            userId: 'me',
-            auth: oauth2Client,
-            resource: {
-                labelIds: ["INBOX", "CATEGORY_PROMOTIONS", "CATEGORY_PERSONAL", "UNREAD"],
-                topicName: 'projects/retail-1083/topics/subscribeMail'
-            }
-        };
-        console.log("watch called")
-        let response = await gmail.users.watch(options);
-        return
-    }
+   
 
     /*
         This function will create Unsubscribed Emails label in to gmail account and update labelId into database.
     */
     static async createEmailLabel(user_id, auth) {
-        const gmail = google.gmail({ version: 'v1', auth })
-        const res = await gmail.users.labels.create({
-            userId: 'me',
-            resource: {
-                "labelListVisibility": "labelShow",
-                "messageListVisibility": "show",
-                "name": "Unsubscribed Emails"
-            }
-        });
+        const res = await GmailApi.createLabelGmailApi(auth);
         if (res) {
             const result = await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
             console.log(result);
         }
     }
 
-    /*
-        This function will modify Remove Labels Mail in Batch with given Parameters
-    */
-    static async batchModifyRemoveLabels(auth, mailIds, labels) {
-        const gmail = google.gmail({ version: 'v1', auth });
-        await gmail.users.messages.batchModify({
-            userId: 'me',
-            resource: {
-                'ids': mailIds,
-                "removeLabelIds": labels
-            }
-        });
-    }
-
-    /*
-        This function will modify Add labels Mail in Batch with given Parameters
-    */
-    static async batchModifyAddLabels(auth, mailIds, labels) {
-        const gmail = google.gmail({ version: 'v1', auth });
-        let modify = await gmail.users.messages.batchModify({
-            userId: 'me',
-            resource: {
-                'ids': mailIds,
-                'addLabelIds': labels
-            }
-        });
-        console.log(modify.status)
-    }
-
-    /*
-        This function will modify Add and remove labels Mail in Batch with given Parameters
-    */
-    static async batchModifyAddAndRemoveLabels(auth, mailIds, addLabels, removeLabels) {
-        const gmail = google.gmail({ version: 'v1', auth });
-        await gmail.users.messages.batchModify({
-            userId: 'me',
-            resource: {
-                'ids': mailIds,
-                'addLabelIds': addLabels,
-                "removeLabelIds": removeLabels
-            }
-        });
-    }
 
     /*
         This function will move Email from Inbox to Unsubscribed Folder.
@@ -136,10 +69,10 @@ class ExpenseBit {
                 mailIDSARRAY.push(mailList[i].email_id);
             }
             if (mailIDSARRAY.length != 0) {
-                await batchModifyAddLabels(auth, mailIDSARRAY, labelarry);
-                await batchModifyRemoveLabels(auth, mailIDSARRAY, ['Inbox']);
-                await batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PROMOTIONS']);
-                await batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PERSONAL']);
+                await GmailApi.batchModifyAddLabels(auth, mailIDSARRAY, labelarry);
+                await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['Inbox']);
+                await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PROMOTIONS']);
+                await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PERSONAL']);
             }
         }
     }
@@ -175,8 +108,8 @@ class ExpenseBit {
             labelarry[0] = label;
             let emailIdList = mailList.map(x => x.email_id);
             if (emailIdList) {
-                await batchModifyAddAndRemoveLabels(auth, emailIdList, allLabels, labelarry);
-                await batchModifyAddLabels(auth, emailIdList, ['INBOX']);
+                await GmailApi.batchModifyAddAndRemoveLabels(auth, emailIdList, allLabels, labelarry);
+                await GmailApi.batchModifyAddLabels(auth, emailIdList, ['INBOX']);
             }
         }
     }
@@ -210,7 +143,7 @@ class ExpenseBit {
             labelarry[0] = label;
             let mailIdList = mailList.map(x => x.email_id);
             if (mailIdList) {
-                await batchModifyAddLabels(auth, mailIdList, labelarry);
+                await GmailApi.batchModifyAddLabels(auth, mailIdList, labelarry);
                 await ExpenseBit.sleep(2000);
             }
         }
@@ -321,10 +254,12 @@ class ExpenseBit {
                         });
                         await ExpenseBit.UpdateEmailInformation(emailInfo);
                         if (mailList) {
+                            console.log("moved find")
                             await Pubsub.getListLabel(user_id, auth, emailInfo);
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_trash": true, "user_id": user_id }).catch(err => { console.log(err); });
                         if (mailInfo) {
+                            console.log("trashed find")
                             await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfo);
                         }
                     }
@@ -342,12 +277,7 @@ class ExpenseBit {
         and update that label id into database. using that label id moveEmail function will be called for moving mail fom Inbox.
     */
     static async getListLabel(user_id, auth, from_email, is_unscubscribe, is_remove_all) {
-        const gmail = google.gmail({ version: 'v1', auth });
-        const res = await gmail.users.labels.list({
-            userId: 'me',
-        }).catch(err => {
-            console.log(err);
-        });
+        const res = await GmailApi.getLabelListGmailAPi(auth);
         if (res) {
             let lbl_id = null;
             res.data.labels.forEach(lbl => {
@@ -356,7 +286,7 @@ class ExpenseBit {
                 }
             });
             if (lbl_id == null) {
-                const response = await createAndUpdateEmailLabel(user_id, auth);
+                const response = await ExpenseBit.createAndUpdateEmailLabel(user_id, auth);
                 lbl_id = response.data.id;
             } else {
                 await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
@@ -375,15 +305,7 @@ class ExpenseBit {
         This function will create Unsubscribed Emails label in to gmail account and update labelId into database.
     */
     static async createAndUpdateEmailLabel(user_id, auth) {
-        const gmail = google.gmail({ version: 'v1', auth })
-        const res = await gmail.users.labels.create({
-            userId: 'me',
-            resource: {
-                "labelListVisibility": "labelShow",
-                "messageListVisibility": "show",
-                "name": "Unsubscribed Emails"
-            }
-        });
+        const res = await GmailApi.createLabelGmailApi(auth);
         await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
         return res;
     }
