@@ -4,7 +4,7 @@ var Schema = mongoose.Schema;
 
 
 var AuthToken = new Schema({
-    user_id: { type: Schema.Types.ObjectId, ref: 'UserDetail', index: true },
+    user_id: { type: Schema.Types.ObjectId, ref: 'User', index: true },
     access_token: {
         type: String
     },

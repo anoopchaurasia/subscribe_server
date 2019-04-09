@@ -44,3 +44,32 @@ db.deviceinfos.find().snapshot().forEach(
         );
     }
 );
+db.fcmtokens.find().snapshot().forEach(
+    function (doc) {
+        db.fcmtokens.update(
+            {
+                _id: doc._id
+            },
+            {
+                $set: {
+                    user_id: db.userdetails.findOne({_id:doc.user_id})._id
+                }
+            }
+        );
+    }
+);
+
+db.tokens.find().snapshot().forEach(
+    function (doc) {
+        db.tokens.update(
+            {
+                _id: doc._id
+            },
+            {
+                $set: {
+                    user_id: db.userdetails.findOne({_id:doc.user_id})._id
+                }
+            }
+        );
+    }
+);

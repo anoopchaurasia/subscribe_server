@@ -12,7 +12,6 @@ const simpleParser = require('mailparser').simpleParser;
 const FCM = require('fcm-node');
 const serverKey = 'AAAA12xOmRA:APA91bGDj3guvTDKn6S9yQG3otsv01qEOflCJXiAwM2KgVfN7S6I8hSh0bpggjwpYMoZWuEO6lay6n3_cDldmYPb-ti-oVfexORlG3m2sgisDBCcst4v02ayWdYS6RboVYBCObo0pPL_'; //put your server key here
 const fcm = new FCM(serverKey);
-
 const gmail = google.gmail('v1');
 
 
@@ -31,12 +30,9 @@ router.post('/getemail', async (req, response) => {
         content = JSON.parse(dataUtf8encoded);
         var email_id = content.emailAddress;
         var historyID = content.historyId;
-        console.log(email_id,historyID)
         let userInfo = await UserModel.findOne({ "email": email_id }).catch(err => { console.log(err); });
-        console.log(email_id,historyID)
         if (userInfo) {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
-            console.log(is_expire)
             if (is_expire != false) {
                 return response.sendStatus(200);
             } else {
@@ -55,12 +51,9 @@ router.post('/getemail', async (req, response) => {
                     let data = res.data;
                     if (data && data.history) {
                         let history = data.history;
-                        let messageIDS = [];
                         history.forEach(async his => {
                             his.messages.forEach(async msg => {
-                                // messageIDS.push(msg.id)
                                 await getRecentEmail(userInfo._id, oauth2Client, msg.id);
-                                // console.log(messageIDS)
                             });
                         });
                         return response.sendStatus(200);
