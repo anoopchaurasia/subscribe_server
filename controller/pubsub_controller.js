@@ -63,10 +63,6 @@ router.post('/getemail', async (req, response) => {
                                 // console.log(messageIDS)
                             });
                         });
-                        // if (messageIDS.length != 0) {
-                            // await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
-                        // }
-                        console.log("hdsgafsdg")
                         return response.sendStatus(200);
                     }
                 }
