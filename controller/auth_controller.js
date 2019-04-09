@@ -1,6 +1,6 @@
 'use strict'
 const express = require('express');
-const users = require('../models/userDetail');
+const UserModel = require('../models/User');
 const axios = require("axios");
 const token_model = require('../models/token');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
@@ -20,7 +20,7 @@ router.post('/signin', async (req, res) => {
     try {
         const token = await TokenHandler.getTokenFromCode(req.body.code);
         const payload = await TokenHandler.verifyIdToken(token);
-        let user = await users.findOne({
+        let user = await UserModel.findOne({
             'email': payload.email
         }).catch(err => {
             console.log(err);
@@ -35,7 +35,7 @@ router.post('/signin', async (req, res) => {
         //         "is_logout": false
         //     }
         // };
-        // await users.findOneAndUpdate({ "user_id": user.user_id }, newvalues, { upsert: true }).catch(err => {
+        // await UserModel.findOneAndUpdate({ "user_id": user.user_id }, newvalues, { upsert: true }).catch(err => {
         //     console.log(err);
         // });
         if (!user) {
@@ -85,7 +85,7 @@ This function will create user with user information passed into parameters.
 when login api called and user is not present then new user will be created.
 */
 async function create_user(userInfoData, payload) {
-    var newUser = new users({
+    var newUser = new UserModel({
         "email": userInfoData.email || payload.email,
         "name": userInfoData.name || payload.name,
         "image_url": userInfoData.picture || payload.picture,

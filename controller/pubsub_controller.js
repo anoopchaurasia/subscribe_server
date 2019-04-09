@@ -1,7 +1,7 @@
 'use strict'
 const express = require('express');
 const email = require('../models/email');
-const user_model = require('../models/userDetail');
+const UserModel = require('../models/User');
 const fcmToken = require('../models/fcmToken');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const Pubsub = require("../helper/pubsub").Pubsub;
@@ -32,7 +32,7 @@ router.post('/getemail', async (req, response) => {
         var email_id = content.emailAddress;
         var historyID = content.historyId;
         console.log(email_id,historyID)
-        let userInfo = await user_model.findOne({ "email": email_id }).catch(err => { console.log(err); });
+        let userInfo = await UserModel.findOne({ "email": email_id }).catch(err => { console.log(err); });
         console.log(email_id,historyID)
         if (userInfo) {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);

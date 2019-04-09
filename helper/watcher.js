@@ -1,6 +1,6 @@
 'use strict'
 const TokenHandler = require("./TokenHandler").TokenHandler;
-const user_model = require('../models/userDetail');
+const UserModel = require('../models/User');
 const { google } = require('googleapis');
 const gmail = google.gmail('v1');
 const schedule = require('node-schedule');
@@ -11,7 +11,7 @@ const schedule = require('node-schedule');
 */
 schedule.scheduleJob('0 0 * * *',async () => { 
     console.log("scheduler called for watch api...");
-    const users = await user_model.find().catch(e => console.error(e));
+    const users = await UserModel.find().catch(e => console.error(e));
     users.forEach(async user => {
         const authToken = await TokenHandler.getAccessToken(user._id).catch(e => console.error(e));
         let oauth2Client = await TokenHandler.createAuthCleint(authToken);
