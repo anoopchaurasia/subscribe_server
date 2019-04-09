@@ -1,0 +1,28 @@
+db.emaildatas.find().snapshot().forEach(
+    function (doc) {
+        db.email.save(doc);
+    }
+);
+
+db.userdetails.find().snapshot().forEach(
+    function (doc) {
+        db.user.save(doc);
+    }
+);
+
+
+
+
+db.emaildatas.find().snapshot().forEach(
+    function (doc) {
+        db.emailInfo.save(
+            {
+                "user_id":doc.user_id,
+                "email_id":doc.email_id,
+                "subject":doc.subject,
+                "unsubscribe":doc.unsubscribe,
+                "historyId":doc.historyId
+            }
+        );
+    }
+);

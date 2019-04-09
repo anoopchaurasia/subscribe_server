@@ -1,0 +1,17 @@
+db.emaildatas.find().snapshot().forEach(
+    function (doc) {
+        db.emaildatas.update(
+            {
+                _id: doc._id
+            },
+            {
+                $set: {
+                    main_label: doc.labelIds.split(',')
+                }
+            }
+        );
+    }
+);
+
+
+

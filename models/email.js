@@ -43,10 +43,9 @@ var email = new Schema({
     },
     unsubscribe: {
         type: String,
-        es_indexed: false,
-        // index: true
+        es_indexed: false
     },
-    user_id: { type: Schema.Types.ObjectId, ref: 'UserDetail', index: true },
+    user_id: { type: Schema.Types.ObjectId, ref: 'User', index: true },
     is_moved: {
         type: Boolean,
         default: false,

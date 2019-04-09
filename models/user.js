@@ -28,16 +28,9 @@ var UserSchema = new Schema({
     },
     birth_date:{
         type:Date
-    },
-    // is_logout:{
-    //     type:Boolean
-    // }
+    }
 });
 
-
-// authToken.virtual('auth_token').get(async function() {  
-    
-// });
 
 module.exports = mongoose.model('User', UserSchema);
 
