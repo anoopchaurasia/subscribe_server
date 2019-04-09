@@ -1,5 +1,5 @@
 'use strict'
-const auth_token = require('../models/authToken');
+const AuthToken = require('../models/authToken');
 const email = require('../models/email');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const { google } = require('googleapis');
@@ -314,7 +314,7 @@ class ExpenseBit {
     This function Updating Label id into database.(for newly created label)
     */
     static async UpdateLableInsideToken(user_id, label) {
-        const result = await auth_token.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.log(err); });
+        const result = await AuthToken.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.log(err); });
         return result;
     }
 

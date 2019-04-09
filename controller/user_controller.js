@@ -2,7 +2,7 @@
 const express = require('express');
 const fcmToken = require('../models/fcmToken');
 const token_model = require('../models/token');
-const deviceInfo = require('../models/deviceInfo');
+const DeviceInfo = require('../models/deviceInfo');
 const router = express.Router();
 
 
@@ -27,7 +27,7 @@ This Api for storing Device Inforamtion into Database.
 router.post('/saveDeviceInfo', async (req, res) => {
     let deviceData = req.body.data;
     deviceData['user_id']=req.token.user_id;
-    await deviceInfo.findOneAndUpdate({ "user_id": req.token.user_id }, deviceData, { upsert: true }).catch(err => {
+    await DeviceInfo.findOneAndUpdate({ "user_id": req.token.user_id }, deviceData, { upsert: true }).catch(err => {
         console.log(err);
     });
     res.json({

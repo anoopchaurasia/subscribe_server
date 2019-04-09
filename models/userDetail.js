@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 
-var userDetail = new Schema({
+var UserDetail = new Schema({
     name: {
         type: String,
     },
@@ -41,6 +41,6 @@ var userDetail = new Schema({
 
 
 
-var userdata = mongoose.model('userDetail', userDetail);
+var userdata = mongoose.model('UserDetail', UserDetail);
 module.exports = userdata;
 

@@ -2,7 +2,7 @@
 const fs = require("fs");
 const {client_secret, client_id, redirect_uris} = JSON.parse(fs.readFileSync(process.env.CLIENT_CONFIG)).installed;
 const { google } = require('googleapis');
-const auth_token_model  = require('../models/authToken');
+const AuthToken  = require('../models/authToken');
 const axios = require('axios')
 const request_payload = {
     "client_id": client_id,
@@ -18,7 +18,7 @@ class TokenHandler {
         if token is ok then it will generate new one.
     */
     static async checkTokenExpiry(user_id) {
-        let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
+        let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
             console.error(err);
         });
         if (!authToken){
@@ -59,7 +59,7 @@ class TokenHandler {
             body = response.data;
             authToken.access_token = body.access_token;
             authToken.expiry_date = new Date(new Date().getTime() + body.expires_in * 1000);
-            await auth_token_model.updateOne({ user_id: authToken.user_id }, { $set: authToken }, { upsert: 1 });
+            await AuthToken.updateOne({ user_id: authToken.user_id }, { $set: authToken }, { upsert: 1 });
             authToken.access_token = body.access_token;
             return authToken;
         }
@@ -70,7 +70,7 @@ class TokenHandler {
         Also check if token expire or not. based on that it will refresh the new token.
     */
     static  async getAccessToken(user_id){
-        let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
+        let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
             console.error(err);
         });
         if(authToken && authToken.expiry_date < new Date())
@@ -109,7 +109,7 @@ class TokenHandler {
             body = response.data;
             authToken.access_token = body.access_token;
             authToken.expiry_date = new Date(new Date().getTime() + body.expires_in * 1000);
-            await auth_token_model.updateOne({ user_id: authToken.user_id }, { $set: authToken }, { upsert: 1 });
+            await AuthToken.updateOne({ user_id: authToken.user_id }, { $set: authToken }, { upsert: 1 });
             authToken.access_token = body.access_token;
             return authToken;
         }else{
@@ -162,7 +162,7 @@ class TokenHandler {
             "user_id": user._id,
             "created_at": new Date()
         };
-        await auth_token_model.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
+        await AuthToken.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
             console.log(err);
         });
     }

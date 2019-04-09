@@ -13,15 +13,15 @@ class GmailApis {
     */
     static async deleteEmailApi(authToken,emailIdList){
         const gmail = await GmailApis.getGmailInstance(authToken);
-            const response = await gmail.users.messages.batchDelete({
-                userId: 'me',
-                resource: {
-                    'ids': emailIdList
-                }
-            }).catch(err => {
-                console.log(err);
-            });
-            return response;
+        const response = await gmail.users.messages.batchDelete({
+            userId: 'me',
+            resource: {
+                'ids': emailIdList
+            }
+        }).catch(err => {
+            console.log(err);
+        });
+        return response;
     }
 
     /*
@@ -30,16 +30,16 @@ class GmailApis {
     */
     static async trashEmailBatchAPi(authToken, mailIdList) {
         const gmail = await GmailApis.getGmailInstance(authToken);
-            let response = await gmail.users.messages.batchModify({
-                userId: 'me',
-                resource: {
-                    'ids': mailIdList,
-                    'addLabelIds': ["TRASH"]
-                }
-            }).catch(err => {
-                console.log(err);
-            });
-            return response;
+        let response = await gmail.users.messages.batchModify({
+            userId: 'me',
+            resource: {
+                'ids': mailIdList,
+                'addLabelIds': ["TRASH"]
+            }
+        }).catch(err => {
+            console.log(err);
+        });
+        return response;
     }
 
     /*

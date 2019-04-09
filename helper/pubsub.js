@@ -1,5 +1,5 @@
 'use strict'
-const auth_token = require('../models/authToken');
+const AuthToken = require('../models/authToken');
 const email = require('../models/email');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const { google } = require('googleapis');
@@ -8,7 +8,7 @@ const simpleParser = require('mailparser').simpleParser;
 const fcmToken = require('../models/fcmToken');
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const FCM = require('fcm-node');
-const serverKey = "AAAA12xOmRA:APA91bGDj3guvTDKn6S9yQG3otsv01qEOflCJXiAwM2KgVfN7S6I8hSh0bpggjwpYMoZWuEO6lay6n3_cDldmYPb-ti-oVfexORlG3m2sgisDBCcst4v02ayWdYS6RboVYBCObo0pPL_"; //put your server key here
+const serverKey = process.env.FCM_SERVER_KEY; //put your server key here
 const fcm = new FCM(serverKey);
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
 
@@ -241,7 +241,7 @@ class Pubsub {
         This function Updating Label id into database.(for newly created label)
     */
     static async UpdateLableInsideToken(user_id, label) {
-        const result = await auth_token.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.log(err); });
+        const result = await AuthToken.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.log(err); });
         return result;
     }
 

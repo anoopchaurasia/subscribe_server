@@ -26,9 +26,8 @@ router.post('/signin', async (req, res) => {
             console.log(err);
         })
         let access_token = token.tokens.access_token;
-        let authToken = token.tokens;
         let oauth2Client = await TokenHandler.createAuthCleint();
-        oauth2Client.credentials = authToken;
+        oauth2Client.credentials = token.tokens;
         console.log("calling watch api from signin")
         await GmailApi.watchapi(oauth2Client);
         // let newvalues = {

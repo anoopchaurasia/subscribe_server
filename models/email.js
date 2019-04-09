@@ -46,10 +46,7 @@ var email = new Schema({
         es_indexed: false,
         // index: true
     },
-    user_id: {
-        type: String,
-        index: true
-    },
+    user_id: { type: Schema.Types.ObjectId, ref: 'UserDetail', index: true },
     is_moved: {
         type: Boolean,
         default: false,
