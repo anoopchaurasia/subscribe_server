@@ -5,7 +5,7 @@ var Schema = mongoose.Schema;
 var DeviceInfoSchema = new Schema({
     user_id: {
         type: Schema.Types.ObjectId,
-        ref: 'UserDetail',
+        ref: 'User',
         index: true
     },
     apiLevel: {
