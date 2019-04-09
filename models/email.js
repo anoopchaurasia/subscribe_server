@@ -51,6 +51,10 @@ var email = new Schema({
         default: false,
         index: true
     },
+    status: {
+        type:"String",
+        index: true
+    },
     is_delete:{
         type:Boolean,
         default:false,
