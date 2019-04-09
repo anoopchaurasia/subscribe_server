@@ -4,11 +4,18 @@ const users = require('../models/userDetail');
 const axios = require("axios");
 const token_model = require('../models/token');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
-const Expensebit = require("../helper/expenseBit").ExpenseBit;
+const GmailApi = require("../helper/gmailApis").GmailApis;
 const router = express.Router();
 const uniqid = require('uniqid');
 
 
+/*
+This is the Login api. 
+Using This api use can logged-in into system.
+====
+This api will get code/authentication code from application and using that application
+code extracting token and user data. and saving and updating into database.
+*/
 router.post('/signin', async (req, res) => {
     try {
         const token = await TokenHandler.getTokenFromCode(req.body.code);
@@ -23,7 +30,7 @@ router.post('/signin', async (req, res) => {
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = authToken;
         console.log("calling watch api from signin")
-        await Expensebit.watchapi(oauth2Client);
+        await GmailApi.watchapi(oauth2Client);
         // let newvalues = {
         //     $set: {
         //         "is_logout": false
@@ -52,6 +59,11 @@ router.post('/signin', async (req, res) => {
     }
 });
 
+
+/*
+This function will create authentication token for user for Authenticating api.
+For every Login api call token will bew created and storing into database.
+*/
 async function create_token(user) {
     var token_uniqueid = uniqid() + uniqid() + uniqid();
     var tokmodel = new token_model({
@@ -68,6 +80,11 @@ async function create_token(user) {
     };
 }
 
+
+/*
+This function will create user with user information passed into parameters.
+when login api called and user is not present then new user will be created.
+*/
 async function create_user(userInfoData, payload) {
     var newUser = new users({
         "email": userInfoData.email || payload.email,

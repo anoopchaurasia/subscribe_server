@@ -5,6 +5,10 @@ const { google } = require('googleapis');
 const gmail = google.gmail('v1');
 const schedule = require('node-schedule');
 
+
+/*
+    This is schedular Function. This will be called Every Day for all user for Gmail Watch Api Request.
+*/
 schedule.scheduleJob('0 0 * * *',async () => { 
     console.log("scheduler called for watch api...");
     const users = await user_model.find().catch(e => console.error(e));
@@ -15,6 +19,11 @@ schedule.scheduleJob('0 0 * * *',async () => {
     });
 });
 
+
+/*
+    This function for calling Watch Api for User.
+    this will call gmail watch api for particular topic with given labels
+*/
 let watchapi = async (oauth2Client) => {
     const options = {
         userId: 'me',

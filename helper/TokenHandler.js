@@ -3,7 +3,6 @@ const fs = require("fs");
 const {client_secret, client_id, redirect_uris} = JSON.parse(fs.readFileSync(process.env.CLIENT_CONFIG)).installed;
 const { google } = require('googleapis');
 const auth_token_model  = require('../models/authToken');
-const Request = require('request');
 const axios = require('axios')
 const request_payload = {
     "client_id": client_id,
@@ -14,6 +13,10 @@ const request_payload = {
 
 class TokenHandler {
 
+    /*
+        This function is for checking token expiry. if expire then it will check invalid grant or not.
+        if token is ok then it will generate new one.
+    */
     static async checkTokenExpiry(user_id) {
         let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
             console.error(err);
@@ -30,6 +33,11 @@ class TokenHandler {
         return false
     }
 
+
+
+    /*
+        This is for checking token expiry and grant for user
+    */
     static async refreshTokenExpiry(authToken) {
         let body = { ...request_payload };
         body.refresh_token = authToken.refresh_token;
@@ -57,7 +65,10 @@ class TokenHandler {
         }
     }
 
-
+    /*
+        This function will return accesstoken to calling api or function.
+        Also check if token expire or not. based on that it will refresh the new token.
+    */
     static  async getAccessToken(user_id){
         let authToken = await auth_token_model.findOne({ "user_id": user_id }).catch(err => {
             console.error(err);
@@ -73,6 +84,11 @@ class TokenHandler {
         }
     }
 
+
+    /*
+        This function Will refresh/generate new the access token based on refresh token.
+        Also update that token into database.
+    */
     static async refreshToken(authToken){
         console.log("came here");
         let body = {...request_payload};
@@ -101,6 +117,10 @@ class TokenHandler {
         }
     }
 
+
+    /*
+        This function will return gmail/oauth2 client for another api or function.
+    */
     static async createAuthCleint(token){
         let {client_secret, client_id, redirect_uris} = request_payload;
         let OAuth2 = google.auth.OAuth2;
@@ -108,11 +128,16 @@ class TokenHandler {
         oauth2Client.credentials = token;
         return oauth2Client;
     }
+
+  
     static async getTokenFromCode(code) {
         var oauth2Client =await TokenHandler.createAuthCleint();
         return await oauth2Client.getToken(code).catch(e=> console.error(e));
     }
 
+    /*
+        This function will verify id token and get payload for user
+    */
     static async verifyIdToken (token) {
         let {  client_id } = request_payload;
         const client = await TokenHandler.createAuthCleint();
@@ -123,7 +148,9 @@ class TokenHandler {
         return ticket.getPayload();
     }
 
-
+    /*
+        This function will update or create Token information Into database.
+    */
     static async create_or_update(user,token) {         
         const tokedata = {
             "access_token": token.access_token,

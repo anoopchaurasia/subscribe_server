@@ -15,27 +15,29 @@ const fcm = new FCM(serverKey);
 
 const gmail = google.gmail('v1');
 
+
+/*
+This Api for Listening Pubsub Push-Notification.
+We will get base64 data for request and after parsing that data we will get Emailaddress and historyid.
+Using that history id getting message information using google api.
+*/
 router.post('/getemail', async (req, response) => {
     if (!req.body || !req.body.message || !req.body.message.data) {
         return response.sendStatus(400);
     }
     const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64').toString('utf8');
     var content;
-    // content = JSON.parse(dataUtf8encoded);
-    // var email_id = content.emailAddress;
-    // var historyID = content.historyId;
-    // console.log(email_id,historyID)
-    // return response.sendStatus(200);
     try {
         content = JSON.parse(dataUtf8encoded);
         var email_id = content.emailAddress;
         var historyID = content.historyId;
+        console.log(email_id,historyID)
         let userInfo = await user_model.findOne({ "email": email_id }).catch(err => { console.log(err); });
         console.log(email_id,historyID)
         if (userInfo) {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
+            console.log(is_expire)
             if (is_expire != false) {
-                // console.log("end history")
                 return response.sendStatus(200);
             } else {
                 let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
@@ -45,7 +47,10 @@ router.post('/getemail', async (req, response) => {
                     'startHistoryId': historyID,
                     auth: oauth2Client
                 };
-                let res = await gmail.users.history.list(options).catch(err => { console.log(err); });
+                let res = await gmail.users.history.list(options).catch(err => { 
+                    console.log(err);
+                    return response.sendStatus(200);
+                 });
                 if (res) {
                     let data = res.data;
                     if (data && data.history) {
@@ -53,66 +58,82 @@ router.post('/getemail', async (req, response) => {
                         let messageIDS = [];
                         history.forEach(async his => {
                             his.messages.forEach(async msg => {
-                                messageIDS.push(msg.id)
+                                // messageIDS.push(msg.id)
+                                await getRecentEmail(userInfo._id, oauth2Client, msg.id);
+                                // console.log(messageIDS)
                             });
                         });
-                        if (messageIDS.length != 0) {
-                            await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
-                        }
+                        // if (messageIDS.length != 0) {
+                            // await getRecentEmail(userInfo._id, oauth2Client, messageIDS);
+                        // }
+                        console.log("hdsgafsdg")
                         return response.sendStatus(200);
                     }
                 }
-
             }
         } else {
            return response.sendStatus(400);
         }
     } catch (ex) {
-        console.error(ex)
         return response.sendStatus(400);
     }
 });
 
-
-async function getRecentEmail(user_id, auth, messageIDS) {
-    messageIDS.forEach(async mids => {
-        let doc = await email.findOne({ "email_id": mids, "user_id": user_id }).catch(err => {
-            console.log(err);
-        });
+/*
+This function is geting messageid list as parameters and getting message from gmail api and parsing that email.
+*/
+async function getRecentEmail(user_id, auth, mids) {
+    console.log(mids)
+    // messageIDS.forEach(async mids => {
+        let doc = await email.findOne({ "email_id": mids, "user_id": user_id }).catch(err => {console.log(err);});
         if(!doc){
-            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
-                // console.log(err);
-                console.log("no msg")
-            });
+            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {console.log("no msg")});
             if (response) {
                 if (response.data.payload || response.data.payload['parts']) {
-                    let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
-                        : response.data.payload.parts[0].body.data;
-                    let data = message_raw;
-                    let buff = Buffer.from(data, 'base64');
-                    let text = buff.toString();
-                    simpleParser(text, async (err, parsed) => {
-                        if (parsed) {
-                            if (parsed['text']) {
-                                await checkEmail(parsed['text'], response['data'], user_id, auth);
-                            }
-                            if (parsed['headerLines']) {
-                                await checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
-                            }
-                            if (parsed['textAsHtml']) {
-                                await checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
-                            }
+                    let header_raw = response.data['payload']['headers'];
+                    let sender;
+                    // console.log(header_raw);
+                    header_raw.forEach(async data => {
+                        if (data.name == "From") {
+                            let from_data = data.value.indexOf("<") != -1 ? data.value.split("<")[1].replace(">", "") : data.value;
+                            sender = from_data;
                         }
                     });
+                    let getMail = await email.findOne({ "from_email": sender, "user_id": user_id }).catch(err => {
+                        console.log(err);
+                    });
+                    if (getMail) {
+                        console.log("same sender msg found")
+                        let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
+                            : response.data.payload.parts[0].body.data;
+                        let data = message_raw;
+                        let buff = Buffer.from(data, 'base64');
+                        let text = buff.toString();
+                        simpleParser(text, async (err, parsed) => {
+                            if (parsed) {
+                                if (parsed['text']) {
+                                    await checkEmail(parsed['text'], response['data'], user_id, auth);
+                                }
+                                if (parsed['headerLines']) {
+                                    await checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
+                                }
+                                if (parsed['textAsHtml']) {
+                                    await checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
+                                }
+                            }
+                        });
+                    }else{
+                        console.log("msg not found")
+                    }
                 }
-
             }
         }
-    });
+    // });
 }
 
+/*
 
-
+*/
 let checkEmail = async (emailObj, mail, user_id, auth) => {
     let $ = cheerio.load(emailObj)
     let url = null;
