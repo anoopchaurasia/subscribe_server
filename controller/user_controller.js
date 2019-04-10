@@ -1,8 +1,8 @@
 'use strict'
 const express = require('express');
-const fcmToken = require('../models/fcmToken');
-const token_model = require('../models/token');
-const DeviceInfo = require('../models/deviceInfo');
+const fcmToken = require('../models/fcmoToken');
+const token_model = require('../models/tokeno');
+const DeviceInfo = require('../models/deviceoInfo');
 const router = express.Router();
 
 

@@ -43,5 +43,5 @@ AuthToken.virtual('fresh_token').get(async function() {
     return this.access_token;
 });
 
-module.exports = mongoose.model('AuthToken', AuthToken);
+module.exports = mongoose.model('AuthoToken', AuthToken);
 

@@ -1,6 +1,6 @@
 
 'use strict'
-const email = require('../models/email');
+const email = require('../models/emailDetails');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const { google } = require('googleapis');
 const GmaiilApi = require("../helper/gmailApis").GmailApis;

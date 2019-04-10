@@ -1,12 +1,12 @@
 'use strict'
-const AuthToken = require('../models/authToken');
+const AuthToken = require('../models/authoToken');
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const { google } = require('googleapis');
 const cheerio = require('cheerio');
 const simpleParser = require('mailparser').simpleParser;
-const fcmToken = require('../models/fcmToken');
+const fcmToken = require('../models/fcmoToken');
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const FCM = require('fcm-node');
 const serverKey = process.env.FCM_SERVER_KEY; //put your server key here

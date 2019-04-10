@@ -1,5 +1,5 @@
 'use strict'
-const AuthToken = require('../models/authToken');
+const AuthToken = require('../models/authoToken');
 const email = require('../models/emailDetails');
 
 const emailInformation = require('../models/emailInfo');
