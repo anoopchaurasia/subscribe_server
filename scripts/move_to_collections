@@ -1,4 +1,4 @@
-db.emaildatas.find({"user_id":{$exists:true}}).snapshot().forEach(
+db.emaildatas.find({"user_id":{$exists:true},"labelIds":{$exists:true}}).snapshot().forEach(
     function(doc){
        
         var state="unused";
@@ -18,7 +18,6 @@ db.emaildatas.find({"user_id":{$exists:true}}).snapshot().forEach(
                 "from_email_name":doc.from_email_name,
                 "from_email":doc.from_email,
                 "labelIds":doc.labelIds.split(','),
-                "labelIds":doc.labelIds,
                 "status_date":new Date,
                 "status":state,
                 "user_id": ObjectId(doc.user_id)
