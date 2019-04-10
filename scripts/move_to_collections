@@ -1,6 +1,16 @@
 db.emaildatas.find().snapshot().forEach(
     function(doc){
-        db.emailDetails.findOneAndUpdate({"from_email":doc.from_email,"user_id":doc.user_id},
+        let state="unused";
+        if(doc.is_trash){
+            state="trash"
+        }else if(doc.is_moved){
+            state="move"
+        }else if(doc.is_keeped){
+            state="keep"
+        }else if(doc.is_delete){
+            state="delete"
+        }
+        db.emaildetails.findOneAndUpdate({"from_email":doc.from_email,"user_id":doc.user_id},
        { $set:  {
                 
                 "to_email":doc.to_email,
@@ -8,12 +18,12 @@ db.emaildatas.find().snapshot().forEach(
                 "from_email":doc.from_email,
                 "labelIds":doc.labelIds.split(','),
                 "labelIds":doc.labelIds,
-                "status_date":doc.status_date,
-                "status":doc.status,
+                "status_date":new Date,
+                "status":state,
                 "user_id":doc.user_id
             }
        },{upsert:true})
-        db.emailInfo.save(
+        db.emailinfos.save(
             {
                 "email_id":doc.email_id,
                 "subject":doc.subject,
@@ -21,47 +31,7 @@ db.emaildatas.find().snapshot().forEach(
                 "historyId":doc.historyId,
                 "labelIds":doc.labelIds.split(','),
                 "main_label":doc.main_label,
-                "from_email_id":db.emailDetails.findOne({"from_email":doc.from_email})._id
+                "from_email_id":db.emaildetails.findOne({"from_email":doc.from_email})._id
             })
-    }
-);
-
-db.emaildatas.find().snapshot().forEach(
-    function (doc) {
-        db.emailDetails.save({
-                "_id":doc._id,
-                "to_email":doc.to_email,
-                "from_email_name":doc.from_email_name,
-                "from_email":doc.from_email,
-                "historyId":doc.historyId,
-                "labelIds":doc.labelIds.split(','),
-                "main_label":doc.main_label,
-                "labelIds":doc.labelIds,
-                "status_date":doc.status_date,
-                "status":doc.status,
-                "user_id":doc.user_id
-            });
-    }
-);
-
-db.emaildatas.find().snapshot().forEach(
-    function (doc) {
-        db.emailInfo.save(
-            {
-                "email_id":doc.email_id,
-                "subject":doc.subject,
-                "unsubscribe":doc.unsubscribe,
-                "historyId":doc.historyId,
-                "labelIds":doc.labelIds.split(','),
-                "main_label":doc.main_label,
-                "from_email_id":doc._id
-            }
-        );
-    }
-);
-
-db.userdetails.find().snapshot().forEach(
-    function (doc) {
-        db.user.save(doc);
     }
 );

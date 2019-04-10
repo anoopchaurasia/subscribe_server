@@ -1,3 +1,11 @@
+
+db.userdetails.find().snapshot().forEach(
+    function (doc) {
+        db.user.save(doc);
+    }
+);
+
+
 db.emaildatas.find().snapshot().forEach(
     function (doc) {
         db.emaildatas.update(
@@ -6,7 +14,7 @@ db.emaildatas.find().snapshot().forEach(
             },
             {
                 $set: {
-                    user_id: db.userdetails.findOne({_id:doc.user_id})._id
+                    user_id: db.users.findOne({_id:doc.user_id})._id
                 }
             }
         );
@@ -21,7 +29,7 @@ db.authtokens.find().snapshot().forEach(
             },
             {
                 $set: {
-                    user_id: db.userdetails.findOne({_id:doc.user_id})._id
+                    user_id: db.users.findOne({_id:doc.user_id})._id
                 }
             }
         );
@@ -37,7 +45,7 @@ db.fcmtokens.find().snapshot().forEach(
             },
             {
                 $set: {
-                    user_id: db.userdetails.findOne({_id:doc.user_id})._id
+                    user_id: db.users.findOne({_id:doc.user_id})._id
                 }
             }
         );
@@ -52,7 +60,7 @@ db.tokens.find().snapshot().forEach(
             },
             {
                 $set: {
-                    user_id: db.userdetails.findOne({_id:doc.user_id})._id
+                    user_id: db.users.findOne({_id:doc.user_id})._id
                 }
             }
         );
