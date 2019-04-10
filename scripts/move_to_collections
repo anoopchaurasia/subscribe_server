@@ -25,8 +25,8 @@ db.emaildatas.find({"user_id":{$exists:true},"labelIds":{$exists:true}}).snapsho
                         "user_id": ObjectId(doc.user_id)
                     }
             },{upsert:true})
+            json[doc.user_id+doc.from_email] = db.emaildetails.findOne({"from_email":doc.from_email})._id;
         } else {
-            json[doc.user_id+doc.from_email] = 1;
         }
         db.emailinfos.save(
             {   
@@ -36,7 +36,7 @@ db.emaildatas.find({"user_id":{$exists:true},"labelIds":{$exists:true}}).snapsho
                 "historyId":doc.historyId,
                 "labelIds":doc.labelIds.split(','),
                 "main_label":doc.main_label,
-                "from_email_id":db.emaildetails.findOne({"from_email":doc.from_email})._id
+                "from_email_id":json[doc.user_id+doc.from_email]
             })
     }
 );
