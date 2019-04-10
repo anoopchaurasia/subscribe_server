@@ -61,6 +61,22 @@ class GmailApis {
         return response;
     }
 
+    static async trashBatchEmailAPi(authToken, mailIds) {
+        const gmail = await GmailApis.getGmailInstance(authToken);
+        // const gmail = google.gmail({ version: 'v1', auth: authToken })
+        let modify = await gmail.users.messages.batchModify({
+            userId: 'me',
+            resource: {
+                'ids': mailIds,
+                'addLabelIds': ["TRASH"]
+            }
+        });
+        console.log(modify.status)
+        return modify
+     
+    }
+
+
     /*
         This function will untrash email using email Id.
     */
@@ -127,13 +143,16 @@ class GmailApis {
     */
     static async batchModifyRemoveLabels(auth, mailIds, labels) {
         const gmail = google.gmail({ version: 'v1', auth });
-        await gmail.users.messages.batchModify({
+        let modif = await gmail.users.messages.batchModify({
             userId: 'me',
             resource: {
                 'ids': mailIds,
                 "removeLabelIds": labels
             }
+        }).catch(err => {
+            return
         });
+        return modif
     }
 
     /*
@@ -145,10 +164,13 @@ class GmailApis {
             userId: 'me',
             resource: {
                 'ids': mailIds,
-                'addLabelIds': labels
+                'addLabelIds': labels   
             }
+        }).catch(err => {
+            return
         });
         console.log(modify.status)
+        return modify.status
     }
 
 
@@ -164,6 +186,8 @@ class GmailApis {
                 'addLabelIds': addLabels,
                 "removeLabelIds": removeLabels
             }
+        }).catch (err => {
+            return 
         });
     }
 

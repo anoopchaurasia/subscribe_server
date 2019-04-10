@@ -1,6 +1,7 @@
 'use strict'
-const email = require('../models/email');
+const email = require('../models/emailDetails');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
+const emailInformation = require('../models/emailInfo');
 const { google } = require('googleapis');
 const GmaiilApi = require("../helper/gmailApis").GmailApis;
 class TrashEmail {
@@ -23,34 +24,34 @@ class TrashEmail {
         This function for Updating Is_trash Label for database.
         thsi will update email object with is_trash value based on parameters for trashe email data/list.
     */
-    static async addTrashFromLabel(emailInfo, trash_value = true) {
-        emailInfo.forEach(async email_id => {
-            console.log(email_id)
+    static async addTrashFromLabel(from_email,user_id, trash_value = "trash") {
             var oldvalue = {
-                email_id: email_id
+                from_email: from_email,
+                user_id:user_id
             };
             var newvalues = {
                 $set: {
-                    "is_trash": trash_value
+                    "status": trash_value,
+                    "status_date": new Date()
                 }
             };
             await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
                 console.log(err);
             });
-        });
     }
 
     /*
         This function for Updating Is_trash Label for database.
         thsi will update email object with is_trash=false for untrash email done by one.
     */
-    static async removeTrashFromLabel(emailInfo, trash_value = true) {
+    static async removeTrashFromLabel(emailInfo, trash_value = "trash") {
         var oldvalue = {
             email_id: emailInfo.email_id
         };
         var newvalues = {
             $set: {
-                "is_trash": trash_value
+                "status": trash_value,
+                "status_date": new Date()
             }
         };
         await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
@@ -65,17 +66,18 @@ class TrashEmail {
         Using That EmailId List Changing Trash Lable for all mail in Batch.
     */
     static async inboxToTrash(authToken, bodyData) {
-        let mailList = await email.find({
+        let mail = await email.findOne({
             from_email: bodyData.from_email,
             user_id: authToken.user_id
         }).catch(err => {
             console.log(err);
         });
+           let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.log(err); });
         let mailIdList = mailList.map(x => x.email_id);
         if (mailIdList) {
-            let modifying = await GmaiilApi.trashEmailAPi(authToken, mailIdList);
+            let modifying = await GmaiilApi.trashBatchEmailAPi(authToken, mailIdList);
             if (modifying) {
-                await TrashEmail.addTrashFromLabel(mailIdList);
+                await TrashEmail.addTrashFromLabel(bodyData.from_email,authToken.user_id);
             }
         }
     }
@@ -94,10 +96,11 @@ class TrashEmail {
                 };
                 var newvalues = {
                     $set: {
-                        "is_trash": true
+                        "status": "trash",
+                        "status_date": new Date()
                     }
                 };
-                await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+                await emailInformation.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
                     console.log(err);
                 });
             }
@@ -114,15 +117,14 @@ class TrashEmail {
         let mailList = await email.find({
             from_email: bodyData.from_email,
             user_id: authToken.user_id,
-            is_trash: true,
-            is_delete: false
+            status: "trash"
         }).catch(err => {
             console.log(err);
         });
         mailList.forEach(async mailid => {
             var res = await GmaiilApi.untrashEmailAPi(authToken, mailid);
             if (res) {
-                await TrashEmail.removeTrashFromLabel(mailid, false);
+                await TrashEmail.removeTrashFromLabel(mailid, "unused");
             }
         });
     }

@@ -1,6 +1,7 @@
 'use strict'
 const AuthToken = require('../models/authToken');
-const email = require('../models/email');
+const email = require('../models/emailDetails');
+const emailInformation = require('../models/emailInfo');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const { google } = require('googleapis');
 const cheerio = require('cheerio');
@@ -19,7 +20,7 @@ class Pubsub {
     This function is geting messageid list as parameters and getting message from gmail api and parsing that email.
     */
     static async getRecentEmail(user_id, auth, messageIDS) {
-        let gmail =await google.gmail('v1');
+        let gmail = await google.gmail('v1');
         if (messageIDS.length != 0) {
             messageIDS.forEach(async mids => {
                 let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
@@ -28,7 +29,7 @@ class Pubsub {
                 if (response) {
                     if (response.data.payload || response.data.payload['parts']) {
                         let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
-                                : response.data.payload.parts[0].body.data;
+                            : response.data.payload.parts[0].body.data;
                         let data = message_raw;
                         let buff = Buffer.from(data, 'base64');
                         let text = buff.toString();
@@ -145,18 +146,18 @@ class Pubsub {
                         console.log(err);
                     });
                     if (!doc) {
-                        let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "is_moved": true, "user_id": user_id }).catch(err => {
+                        let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
                             console.log(err);
                         });
                         await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.log(err); });
                         if (mailList) {
                             await Pubsub.getListLabel(user_id, auth, emailInfo)
                         }
-                        let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "is_trash": true, "user_id": user_id }).catch(err => { console.log(err); });
+                        let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": user_id }).catch(err => { console.log(err); });
                         if (mailInfo) {
                             await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfo);
                         }
-                         let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
+                        let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.log(err); });
                         if (tokenInfo) {
                             var message = {
                                 to: tokenInfo.fcm_token,
@@ -247,9 +248,9 @@ class Pubsub {
 
     /*
         This function will update email information into database.
-    */    
+    */
     static async UpdateNewEmail(email_id, newvalues) {
-       let resp= await email.updateOne({ "email_id": email_id }, newvalues, { upsert: true }).catch(err => {
+        let resp = await emailInformation.updateOne({ "email_id": email_id }, newvalues, { upsert: true }).catch(err => {
             console.log(err);
         });;
         return resp;
@@ -272,10 +273,11 @@ class Pubsub {
             }).catch(err => {
                 console.log(err);
             });
-            if(modifying.status==200){
+            if (modifying.status == 200) {
                 var newvalues = {
                     $set: {
-                        "is_moved": true
+                        "status": "move",
+                        "status_date": new Date()
                     }
                 };
                 let checkhere = await Pubsub.UpdateNewEmail(mailList.email_id, newvalues);
@@ -313,16 +315,17 @@ class Pubsub {
         let mailList = await email.find({ "from_email": from_email, "user_id": user_id }).catch(err => { console.log(err); });
         if (mailList) {
             mailList.forEach(async email => {
-                let modifying =  await gmail.users.messages.trash({
+                let modifying = await gmail.users.messages.trash({
                     userId: 'me',
                     'id': email.email_id
                 }).catch(err => { console.log(err); });
-                
+
                 if (modifying) {
                     console.log(modifying.status, "moved mail")
                     var newvalues = {
                         $set: {
-                            "is_delete": true
+                            "status": "delete",
+                            "status_date": new Date()
                         }
                     };
                     await Pubsub.UpdateNewEmail(email.email_id, newvalues);

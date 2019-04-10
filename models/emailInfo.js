@@ -7,7 +7,7 @@ var emailInfo = new Schema({
     email_id: {
         type: String,
         es_indexed: false,
-        index: true
+        index: true,
     },
     historyId: {
         type: String,
@@ -19,11 +19,23 @@ var emailInfo = new Schema({
         es_indexed: false,
         index: true
     },
+    mail_data: {
+        type: Object,
+        es_indexed: false
+    },
     unsubscribe: {
         type: String,
         es_indexed: false
     },
-    user_id: { type: Schema.Types.ObjectId, ref: 'User', index: true },
+    labelIds: {
+        type: Array,
+        es_indexed: true,
+        index: true
+    },
+    main_label: {
+        type: Array
+    },
+    from_email_id: { type: Schema.Types.ObjectId, ref: 'EmailDetail', index: true },
    });
 
 emailInfo.plugin(mongoosastic, {

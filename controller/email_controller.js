@@ -105,20 +105,14 @@ router.post('/readMailInfo', async (req, res) => {
         const doc = req.token;
         if (doc) {
             const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
-            const unreademail = await GetEmailQuery.getUnreadEmail(doc.user_id);
-            let unreadData = {};
-            if (unreademail) {
-                unreademail.forEach(async element => {
-                    unreadData[element._id.from_email] = element.count
-                });
-                const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-                res.status(200).json({
-                    error: false,
-                    data: emailinfos,
-                    unreadData: unreadData,
-                    totalEmail: total
-                })
-            }
+            const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
+            const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+            res.status(200).json({
+                error: false,
+                data: emailinfos,
+                unreadData: unreademail,
+                totalEmail: total
+            })
         }
     } catch (err) {
         console.log(err);
