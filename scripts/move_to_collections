@@ -1,5 +1,6 @@
-db.emaildatas.find().snapshot().forEach(
+db.emaildatas.find({"user_id":{$exists:true}}).snapshot().forEach(
     function(doc){
+       
         var state="unused";
         if(doc.is_trash){
             state="trash"
