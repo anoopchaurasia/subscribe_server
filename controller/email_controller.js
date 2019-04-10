@@ -1,6 +1,6 @@
 'use strict'
 const express = require('express');
-const email = require('../models/email');
+const email = require('../models/emailDetails');
 const Request = require("request");
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
@@ -199,7 +199,7 @@ This for function for scrapping Inbox for particular user.
 This will Get List of email in Batch of 100 for given Time period and will parsed mail.
 */
 async function getRecentEmail(user_id, auth, nextPageToken) {
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2019/02/01 ' });
+    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2019/02/01 ' });
     if (responseList && responseList['data']['messages']) {
         responseList['data']['messages'].forEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
@@ -290,15 +290,16 @@ router.post('/keepMailInformation', async (req, res) => {
         const doc = req.token;
         if (doc) {
             var oldvalue = {
-                user_id: doc.user_id,
-                "from_email": from_email
+                "from_email": from_email,
+                "user_id": doc.user_id
             };
             var newvalues = {
                 $set: {
-                    "is_keeped": true
+                    "status": "keep",
+                    "status_date": new Date()
                 }
             };
-            await email.updateMany(oldvalue, newvalues, { upsert: true }).catch(err => {
+            await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
                 console.log(err);
             });
         }

@@ -242,7 +242,6 @@ class ExpenseBit {
                 emailInfoNew['historyId']=emailInfo['historyId'];
                 emailInfoNew['unsubscribe']=emailInfo['unsubscribe'];
                 emailInfoNew['subject']=emailInfo['subject'];
-                emailInfoNew['email_id']=emailInfo['email_id'];
                 emailInfoNew['labelIds']=emailInfo['labelIds'];
                 emailInfoNew['main_label']=emailInfo['main_label'];
                 
@@ -270,9 +269,9 @@ class ExpenseBit {
                         });
                         if (!doc) {
                             emailInfoNew['from_email_id']=fromEmail._id;
-                            let emailInform = new emailInformation(emailInfoNew);
+                            // let emailInform = new emailInformation(emailInfoNew);
 
-                            await emailInform.save().catch(err => { console.log(err); });
+                            // await emailInform.save().catch(err => { console.log(err); });
                             let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
                                 console.log(err);
                             });
@@ -317,13 +316,8 @@ class ExpenseBit {
             } else {
                 await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
             }
-            if (is_remove_all) {
-                await ExpenseBit.MoveAllMailFromInBOX(user_id, auth,lbl_id);
-            } else if (is_unscubscribe) {
-                await ExpenseBit.MoveMailFromExpenseBit(user_id, auth, from_email, lbl_id);
-            } else {
-                await ExpenseBit.MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
-            }
+            await ExpenseBit.MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
+        
         }
     }
 
