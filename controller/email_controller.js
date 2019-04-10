@@ -210,7 +210,13 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                     let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
                         : response.data.payload.parts[0].body.data;
                     let data = message_raw;
-                    let buff = Buffer.from(data, 'base64');
+                    let buff
+                    try {
+                        buff = Buffer.from(data, 'base64');    
+                    } catch (e) {
+                        console.error(e)
+                        return
+                    }
                     let text = buff.toString();
                     simpleParser(text, async (err, parsed) => {
                         if (parsed) {

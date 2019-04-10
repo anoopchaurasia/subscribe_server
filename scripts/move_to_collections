@@ -1,6 +1,6 @@
 db.emaildatas.find().snapshot().forEach(
     function(doc){
-        let state="unused";
+        var state="unused";
         if(doc.is_trash){
             state="trash"
         }else if(doc.is_moved){
