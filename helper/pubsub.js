@@ -264,7 +264,7 @@ class Pubsub {
         let labelarry = [];
         labelarry[0] = label;
         if (mailList.email_id) {
-            let modifying = await gmail.users.messages.modify({
+            await gmail.users.messages.modify({
                 userId: 'me',
                 'id': mailList.email_id,
                 resource: {
@@ -273,15 +273,6 @@ class Pubsub {
             }).catch(err => {
                 console.log(err);
             });
-            if (modifying.status == 200) {
-                var newvalues = {
-                    $set: {
-                        "status": "move",
-                        "status_date": new Date()
-                    }
-                };
-                let checkhere = await Pubsub.UpdateNewEmail(mailList.email_id, newvalues);
-            }
             let datab = await gmail.users.messages.modify({
                 userId: 'me',
                 'id': mailList.email_id,

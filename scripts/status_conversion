@@ -22,6 +22,5 @@ db.emaildatas.find().snapshot().forEach(
                         }
                     }
                 );
-        
     }
 );

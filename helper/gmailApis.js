@@ -71,9 +71,9 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         });
-        console.log(modify.status)
-        return modify
-     
+        if(modify){
+            return modify
+        }
     }
 
 

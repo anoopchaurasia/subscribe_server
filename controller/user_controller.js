@@ -47,15 +47,12 @@ router.post('/disconnectGdprAccount', async (req, res) => {
         });
         console.log(doc)
         if (doc) {
-            // let newvalues = {
-            //     $set: {
-            //         "is_logout": true
-            //     }
-            // };
-            // let resp = await userDetails.findOneAndUpdate({ "_id": doc.user_id  }, newvalues, { upsert: true }).catch(err => { console.log(err); });
-            // console.log(resp)
             res.json({
                 message: "success"
+            });
+        }else{
+            res.status(400).json({
+                message: "fail"
             });
         }
     } catch (ex) {

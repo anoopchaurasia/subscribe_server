@@ -89,21 +89,7 @@ class TrashEmail {
     */
     static async inboxToTrashFromExpenseBit(authToken, emailInfo) {
         if (emailInfo.email_id) {
-            let modifying = await GmaiilApi.trashEmailAPi(authToken, emailInfo.email_id);
-            if (modifying) {
-                var oldvalue = {
-                    email_id: emailInfo.email_id
-                };
-                var newvalues = {
-                    $set: {
-                        "status": "trash",
-                        "status_date": new Date()
-                    }
-                };
-                await emailInformation.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
-                    console.log(err);
-                });
-            }
+            await GmaiilApi.trashEmailAPi(authToken, emailInfo.email_id);
         }
     }
 
