@@ -12,7 +12,7 @@ const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 
-
+static const APPROX_TWO_MONTH_IN_MS = 2*30*24*60*60*1000;
 /*
 This api for deleting mail from Inbox or Trash folder.
 */
@@ -199,7 +199,9 @@ This for function for scrapping Inbox for particular user.
 This will Get List of email in Batch of 100 for given Time period and will parsed mail.
 */
 async function getRecentEmail(user_id, auth, nextPageToken) {
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2019/02/01 ' });
+    let date = new Date(Date.now()-APPROX_TWO_MONTH_IN_MS);
+    let formatted_date = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}`; // "2019/2/1";
+    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
     if (responseList && responseList['data']['messages']) {
         responseList['data']['messages'].forEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
