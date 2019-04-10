@@ -17,7 +17,7 @@ var emaildetail = new Schema({
     from_email: {
         type: String,
         es_indexed: true,
-        index: true
+        index: true,
     },
     from_email_name: {
         type: String,

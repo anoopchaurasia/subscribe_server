@@ -252,10 +252,13 @@ class ExpenseBit {
                             console.log(err);
                         });
                     if(!fromEmail){
-                        let emailData = new email(emailInfo);
-                        await emailData.save().catch(err => {
+                        await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id },emailInfo,{upsert:true}).catch(err => {
                             console.log(err);
                         });
+                        // let emailData = new email(emailInfo);
+                        // await emailData.save().catch(err => {
+                        //     console.log(err);
+                        // });
                         fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
                             console.log(err);
                         });
