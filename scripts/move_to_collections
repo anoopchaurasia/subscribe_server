@@ -1,4 +1,4 @@
-let json ={};
+var json ={};
 db.emaildatas.find({"user_id":{$exists:true},"labelIds":{$exists:true}}).snapshot().forEach(
     function(doc){
        
@@ -24,7 +24,7 @@ db.emaildatas.find({"user_id":{$exists:true},"labelIds":{$exists:true}}).snapsho
                         "status":state,
                         "user_id": ObjectId(doc.user_id)
                     }
-            },{upsert:true})
+            },{upsert:true});
             json[doc.user_id+doc.from_email] = db.emaildetails.findOne({"from_email":doc.from_email})._id;
         } else {
         }
