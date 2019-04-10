@@ -2,6 +2,7 @@ db.emaildatas.find().snapshot().forEach(
     function(doc){
         db.emailDetails.findOneAndUpdate({"from_email":doc.from_email,"user_id":doc.user_id},
        { $set:  {
+                
                 "to_email":doc.to_email,
                 "from_email_name":doc.from_email_name,
                 "from_email":doc.from_email,

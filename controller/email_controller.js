@@ -12,7 +12,7 @@ const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 
-static const APPROX_TWO_MONTH_IN_MS = 2*30*24*60*60*1000;
+const APPROX_TWO_MONTH_IN_MS = 2*30*24*60*60*1000;
 /*
 This api for deleting mail from Inbox or Trash folder.
 */

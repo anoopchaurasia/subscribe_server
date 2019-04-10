@@ -1,6 +1,7 @@
 'use strict'
 const AuthToken = require('../models/authToken');
 const email = require('../models/emailDetails');
+
 const emailInformation = require('../models/emailInfo');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const { google } = require('googleapis');

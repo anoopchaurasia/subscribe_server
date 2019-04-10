@@ -13,9 +13,6 @@ db.emaildatas.find().snapshot().forEach(
     }
 );
 
-
-
-
 db.authtokens.find().snapshot().forEach(
     function (doc) {
         db.authtokens.update(
@@ -32,20 +29,6 @@ db.authtokens.find().snapshot().forEach(
 );
 
 
-db.deviceinfos.find().snapshot().forEach(
-    function (doc) {
-        db.deviceinfos.update(
-            {
-                _id: doc._id
-            },
-            {
-                $set: {
-                    user_id: db.userdetails.findOne({_id:doc.user_id})._id
-                }
-            }
-        );
-    }
-);
 db.fcmtokens.find().snapshot().forEach(
     function (doc) {
         db.fcmtokens.update(
