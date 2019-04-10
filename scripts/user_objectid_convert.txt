@@ -6,65 +6,30 @@ db.userdetails.find().snapshot().forEach(
 );
 
 
-db.emaildatas.find({}, {user_id:1}).snapshot().forEach(
-    function (doc) {
-        db.emaildatas.update(
-            {
-                _id: doc._id
-            },
-            {
-                $set: {
-                    user_id: db.users.findOne({_id: ObjectId(doc.user_id)}, {})._id
-                }
-            }
-        );
-    }
-);
 
-db.authtokens.find({}, {user_id:1}).snapshot().forEach(
+
+db.authtokens.find().snapshot().forEach(
     function (doc) {
-        print
-        db.authtokens.update(
-            {
-                _id: doc._id
-            },
-            {
-                $set: {
-                    user_id: db.users.findOne({_id: ObjectId(doc.user_id)}, {})._id
-                }
-            }
-        );
+        doc.user_id = ObjectId(doc.user_id);
+        db.authotokens.save(doc);
     }
 );
 
 
-db.fcmtokens.find({}, {user_id:1}).snapshot().forEach(
+db.fcmtokens.find().snapshot().forEach(
     function (doc) {
-
-        db.fcmtokens.update(
-            {
-                _id: doc._id
-            },
-            {
-                $set: {
-                    user_id: db.users.findOne({_id: ObjectId(doc.user_id)}, {})._id
-                }
-            }
+    doc.user_id = ObjectId(doc.user_id);
+        db.fcmotokens.save(
+           doc
         );
     }
 );
 
 db.tokens.find().snapshot().forEach(
     function (doc) {
-        db.tokens.update(
-            {
-                _id: doc._id
-            },
-            {
-                $set: {
-                    user_id: db.users.findOne({_id: ObjectId(doc.user_id)}, {})._id
-                }
-            }
+        doc.user_id = ObjectId(doc.user_id);
+        db.tokenos.save(
+           doc
         );
     }
 );

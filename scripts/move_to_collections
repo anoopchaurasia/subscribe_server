@@ -10,7 +10,7 @@ db.emaildatas.find().snapshot().forEach(
         }else if(doc.is_delete){
             state="delete"
         }
-        db.emaildetails.findOneAndUpdate({"from_email":doc.from_email,"user_id":doc.user_id},
+        db.emaildetails.findOneAndUpdate({"from_email":doc.from_email,"user_id":ObjectId(doc.user_id)},
        { $set:  {
                 
                 "to_email":doc.to_email,
@@ -20,11 +20,11 @@ db.emaildatas.find().snapshot().forEach(
                 "labelIds":doc.labelIds,
                 "status_date":new Date,
                 "status":state,
-                "user_id":doc.user_id
+                "user_id": ObjectId(doc.user_id)
             }
        },{upsert:true})
         db.emailinfos.save(
-            {
+            {   
                 "email_id":doc.email_id,
                 "subject":doc.subject,
                 "unsubscribe":doc.unsubscribe,

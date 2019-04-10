@@ -1,6 +1,6 @@
 'use strict'
 const TokenHandler = require("./TokenHandler").TokenHandler;
-const UserModel = require('../models/User');
+const UserModel = require('../models/user');
 const { google } = require('googleapis');
 const gmail = google.gmail('v1');
 const schedule = require('node-schedule');

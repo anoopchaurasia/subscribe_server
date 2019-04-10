@@ -1,6 +1,6 @@
 'use strict'
 const express = require('express');
-const UserModel = require('../models/User');
+const UserModel = require('../models/user');
 const axios = require("axios");
 const token_model = require('../models/tokeno');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
