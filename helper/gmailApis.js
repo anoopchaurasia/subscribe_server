@@ -143,7 +143,7 @@ class GmailApis {
             }
         };
         console.log("watch called")
-        let response = await gmail.users.watch(options);
+        let response = await gmail.users.watch(options).catch(e=> console.error(e.message, e.stack));
         return
     }
 

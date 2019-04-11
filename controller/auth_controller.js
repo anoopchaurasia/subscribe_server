@@ -48,6 +48,9 @@ router.post('/signin', async (req, res) => {
         }
     } catch (ex) {
         console.error(ex.message)
+        res.status(404).json({
+            error:true
+        });
     }
 });
 
