@@ -11,9 +11,9 @@ const schedule = require('node-schedule');
 */
 schedule.scheduleJob('0 0 * * *',async () => { 
     console.log("scheduler called for watch api...");
-    const users = await UserModel.find().catch(e => console.error(e));
+    const users = await UserModel.find().catch(e => console.error(e.message));
     users.forEach(async user => {
-        const authToken = await TokenHandler.getAccessToken(user._id).catch(e => console.error(e));
+        const authToken = await TokenHandler.getAccessToken(user._id).catch(e => console.error(e.message));
         let oauth2Client = await TokenHandler.createAuthCleint(authToken);
         await watchapi(oauth2Client);
     });
@@ -34,6 +34,5 @@ let watchapi = async (oauth2Client) => {
         }
     };
     console.log("watch api called")
-    const status = await gmail.users.watch(options).catch(er=>{console.log(er)});
-    console.log(status)
+    await gmail.users.watch(options).catch(er=>{console.log(er.message)});
 }

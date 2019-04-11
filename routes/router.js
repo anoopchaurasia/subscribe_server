@@ -10,7 +10,7 @@ router.use('/users', authenticate,require('../controller/user_controller'));
 
 async function authenticate(req, res, next){
     let doc = await token_model.findOne({ "token": req.body.authID }).catch(err => {
-        console.error(err);
+        console.error(err.message);
     });
     if(!doc) {
         return res.write({error:"auth failed"});

@@ -19,7 +19,8 @@ class GmailApis {
                 'ids': emailIdList
             }
         }).catch(err => {
-            console.log(err);
+            console.error(err.message);
+            return
         });
         return response;
     }
@@ -37,7 +38,8 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.log(err);
+            console.error(err.message);
+            return
         });
         return response;
     }
@@ -56,7 +58,8 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.log(err);
+            console.error(err.message);
+            return
         });
         return response;
     }
@@ -70,6 +73,9 @@ class GmailApis {
                 'ids': mailIds,
                 'addLabelIds': ["TRASH"]
             }
+        }).catch(err => {
+            console.error(err.message);
+            return
         });
         if(modify){
             return modify
@@ -86,7 +92,7 @@ class GmailApis {
             userId: 'me',
             'id': email_id
         }).catch(err => {
-            console.log(err);
+            console.error(err.message);
         });
         return response;
     }
@@ -115,6 +121,9 @@ class GmailApis {
                 "messageListVisibility": "show",
                 "name": "Unsubscribed Emails"
             }
+        }).catch(err => {
+            console.error(err.message);
+            return
         });
         return res;
     }
@@ -150,6 +159,7 @@ class GmailApis {
                 "removeLabelIds": labels
             }
         }).catch(err => {
+            console.error(err.message);
             return
         });
         return modif
@@ -167,6 +177,7 @@ class GmailApis {
                 'addLabelIds': labels   
             }
         }).catch(err => {
+            console.error(err.message);
             return
         });
         console.log(modify.status)
@@ -187,6 +198,7 @@ class GmailApis {
                 "removeLabelIds": removeLabels
             }
         }).catch (err => {
+            console.error(err.message);
             return 
         });
     }
@@ -203,7 +215,9 @@ class GmailApis {
                 "messageListVisibility": "show",
                 "name": "Unsubscribed Emails"
             }
-        });
+        }).catch(err => {
+            console.error(err.message);
+        });;
         await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
         return res;
     }
@@ -213,7 +227,7 @@ class GmailApis {
         const res = await gmail.users.labels.list({
             userId: 'me',
         }).catch(err => {
-            console.log(err);
+            console.error(err.message);
         });
         return res;
     }

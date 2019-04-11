@@ -30,7 +30,7 @@ class DeleteEmail {
         Using Accesstoken Infor and Credential Gmail Instance will be created.
     */
     static async getGmailInstance(auth) {
-        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
+        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e.message));
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = authToken;
         return google.gmail({
@@ -54,7 +54,7 @@ class DeleteEmail {
                 }
             };
             await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
-                console.log(err);
+                console.error(err.message);
             });
         });
     }

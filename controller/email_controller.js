@@ -69,6 +69,7 @@ router.post('/moveEmailToExpbit', async (req, res) => {
             })
         }
     } catch (ex) {
+        console.error(ex.message);
         res.sendStatus(400);
     }
 });
@@ -92,6 +93,7 @@ router.post('/getMailInfo', async (req, res) => {
             })
         }
     } catch (ex) {
+        console.error(ex.message);
         res.sendStatus(400);
     }
 });
@@ -115,7 +117,7 @@ router.post('/readMailInfo', async (req, res) => {
             })
         }
     } catch (err) {
-        console.log(err);
+        console.error(err.message);
         res.sendStatus(400);
     }
 });
@@ -142,7 +144,7 @@ router.post('/readProfileInfo', async (req, res) => {
             })
         }
     } catch (err) {
-        console.log(err);
+        console.error(err.message);
     }
 });
 
@@ -170,7 +172,7 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
             }
         }
     } catch (err) {
-        console.log(err)
+        console.error(err.message);
     }
 });
 
@@ -189,7 +191,7 @@ router.post('/getEmailSubscription', async (req, res) => {
             })
         }
     } catch (err) {
-        console.log(err)
+        console.error(err.message);
     }
 });
 
@@ -214,7 +216,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                     try {
                         buff = Buffer.from(data, 'base64');    
                     } catch (e) {
-                        console.error(e)
+                        console.error(e.message);
                         return
                     }
                     let text = buff.toString();
@@ -250,7 +252,7 @@ router.post('/unSubscribeMail', async (req, res) => {
     try {
         const from_email = req.body.from_email;
         const mailList = await email.findOne({ "from_email": from_email }).catch(err => {
-            console.log(err);
+            console.error(err.message);
         });
         if (mailList) {
             const settings = {
@@ -259,11 +261,12 @@ router.post('/unSubscribeMail', async (req, res) => {
             }
             Request(settings, async (error, response, body) => {
                 if (error) {
-                    return console.log(error);
+                    return console.error(err.message);
                 }
             });
         }
     } catch (ex) {
+        console.error(ex.message);
         res.sendStatus(400);
     }
 });
@@ -283,7 +286,7 @@ router.post('/getDeletedEmailData', async (req, res) => {
             })
         }
     } catch (err) {
-        console.log(err);
+        console.error(err.message);
     }
 });
 
@@ -308,10 +311,11 @@ router.post('/keepMailInformation', async (req, res) => {
                 }
             };
             await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                console.log(err);
+                console.error(err.message);
             });
         }
     } catch (ex) {
+        console.error(ex.message);
         res.sendStatus(400);
     }
 });
@@ -341,7 +345,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
             }
         }
     } catch (err) {
-        console.log(err);
+        console.error(err.message);
     }
 });
 

@@ -19,15 +19,13 @@ class TokenHandler {
     */
     static async checkTokenExpiry(user_id) {
         let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
-            console.error(err);
+            console.error(err.message);
         });
         if (!authToken){
             return true;
         }
         if (authToken.expiry_date < new Date()) {
-            // console.log("token expire")
-            let authTokenInfo = await TokenHandler.refreshTokenExpiry(authToken);
-            // console.log("cchecking here for token",authTokenInfo==undefined)
+             let authTokenInfo = await TokenHandler.refreshTokenExpiry(authToken);
             return authTokenInfo==undefined;
         }
         return false
@@ -52,7 +50,7 @@ class TokenHandler {
             }
         }
         let response = await axios(settings).catch(e=>{
-            // console.log("invalid grant")
+            console.error(e.message);
             return true
         });
         if(response.data && response.data['access_token']) {
@@ -71,7 +69,7 @@ class TokenHandler {
     */
     static  async getAccessToken(user_id){
         let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
-            console.error(err);
+            console.error(err.message);
         });
         if(authToken && authToken.expiry_date < new Date())
          {
@@ -79,7 +77,6 @@ class TokenHandler {
             let authTokenInfo = await TokenHandler.refreshToken(authToken);
             return authTokenInfo;
         }else{
-            // console.log("token not expire")
             return authToken;
         }
     }
@@ -103,7 +100,7 @@ class TokenHandler {
                 "access_type": 'offline'
             }
         }
-        let response = await axios(settings).catch(e=>console.log(e));
+        let response = await axios(settings).catch(e => console.error(e.message));
         
         if(response.data && response.data['access_token']){
             body = response.data;
@@ -132,7 +129,7 @@ class TokenHandler {
   
     static async getTokenFromCode(code) {
         var oauth2Client =await TokenHandler.createAuthCleint();
-        return await oauth2Client.getToken(code).catch(e=> console.error(e));
+        return await oauth2Client.getToken(code).catch(e => console.error(e.message));
     }
 
     /*
@@ -163,7 +160,7 @@ class TokenHandler {
             "created_at": new Date()
         };
         await AuthToken.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
-            console.log(err);
+            console.error(err.message);
         });
     }
 }

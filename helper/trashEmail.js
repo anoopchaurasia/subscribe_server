@@ -11,7 +11,7 @@ class TrashEmail {
     Using Accesstoken Infor and Credential Gmail Instance will be created.
     */
     static async getGmailInstance(auth) {
-        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
+        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e.message));
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = authToken;
         return google.gmail({
@@ -36,7 +36,7 @@ class TrashEmail {
                 }
             };
             await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
-                console.log(err);
+                console.error(err.message);
             });
     }
 
@@ -55,7 +55,7 @@ class TrashEmail {
             }
         };
         await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
-            console.log(err);
+            console.error(err.message);
         });
     }
 
@@ -70,9 +70,9 @@ class TrashEmail {
             from_email: bodyData.from_email,
             user_id: authToken.user_id
         }).catch(err => {
-            console.log(err);
+            console.error(err.message);
         });
-           let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.log(err); });
+        let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message); });
         let mailIdList = mailList.map(x => x.email_id);
         if (mailIdList) {
             let modifying = await GmaiilApi.trashBatchEmailAPi(authToken, mailIdList);
@@ -105,7 +105,7 @@ class TrashEmail {
             user_id: authToken.user_id,
             status: "trash"
         }).catch(err => {
-            console.log(err);
+            console.error(err.message);
         });
         mailList.forEach(async mailid => {
             var res = await GmaiilApi.untrashEmailAPi(authToken, mailid);

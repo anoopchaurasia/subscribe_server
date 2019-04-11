@@ -23,25 +23,16 @@ router.post('/signin', async (req, res) => {
         let user = await UserModel.findOne({
             'email': payload.email
         }).catch(err => {
-            console.log(err);
+            console.error(err.message)
         })
         let access_token = token.tokens.access_token;
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = token.tokens;
-        console.log("calling watch api from signin")
         await GmailApi.watchapi(oauth2Client);
-        // let newvalues = {
-        //     $set: {
-        //         "is_logout": false
-        //     }
-        // };
-        // await UserModel.findOneAndUpdate({ "user_id": user.user_id }, newvalues, { upsert: true }).catch(err => {
-        //     console.log(err);
-        // });
         if (!user) {
             let body = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo?alt=json&access_token=" + access_token);
             let userInfoData = body.data;
-            user =await create_user(userInfoData, payload);
+            user = await create_user(userInfoData, payload);
         }
         await TokenHandler.create_or_update(user, token.tokens);
         let response = await create_token(user);
@@ -51,10 +42,12 @@ router.post('/signin', async (req, res) => {
                 data: response
             })
         }else{
-            res.sendStatus(404);
+            res.status(404).json({
+                error:true
+            });
         }
     } catch (ex) {
-        console.log(ex);
+        console.error(ex.message)
     }
 });
 
@@ -71,7 +64,7 @@ async function create_token(user) {
         "created_at": new Date()
     });
     await tokmodel.save().catch(err => {
-        console.log(err);
+        console.error(err.message);
     });
     return {
         "tokenid": token_uniqueid,
@@ -96,7 +89,7 @@ async function create_user(userInfoData, payload) {
         // "is_logout": false
     });
     return await newUser.save().catch(err => {
-        console.log(err);
+        console.error(err.message);
     });
 }
 module.exports = router
