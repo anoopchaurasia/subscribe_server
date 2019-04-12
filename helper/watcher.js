@@ -13,9 +13,9 @@ if(process.env.NODE_APP_INSTANCE ==0) {
     */
     schedule.scheduleJob('0 0 * * *',async () => { 
         console.log("scheduler called for watch api...");
-        const users = await UserModel.find().catch(e => console.error(e.message));
+        const users = await UserModel.find().catch(e => console.error(e.message, e.stack));
         users.forEach(async user => {
-            const authToken = await TokenHandler.getAccessToken(user._id).catch(e => console.error(e.message));
+            const authToken = await TokenHandler.getAccessToken(user._id).catch(e => console.error(e.message, e.stack));
             let oauth2Client = await TokenHandler.createAuthCleint(authToken);
             await watchapi(oauth2Client);
         });
@@ -36,6 +36,6 @@ if(process.env.NODE_APP_INSTANCE ==0) {
             }
         };
         console.log("watch api called")
-        await gmail.users.watch(options).catch(er=>{console.log(er.message)});
+        await gmail.users.watch(options).catch(er => { console.log(er.message, er.stack)});
     }
 }

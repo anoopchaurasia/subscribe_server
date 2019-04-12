@@ -23,7 +23,7 @@ router.post('/signin', async (req, res) => {
         let user = await UserModel.findOne({
             'email': payload.email
         }).catch(err => {
-            console.error(err.message)
+            console.error(err.message, err.stack)
         })
         let access_token = token.tokens.access_token;
         let oauth2Client = await TokenHandler.createAuthCleint();
@@ -47,7 +47,7 @@ router.post('/signin', async (req, res) => {
             });
         }
     } catch (ex) {
-        console.error(ex.message)
+        console.error(ex.message, ex.stack)
         res.status(404).json({
             error:true
         });
@@ -67,7 +67,7 @@ async function create_token(user) {
         "created_at": new Date()
     });
     await tokmodel.save().catch(err => {
-        console.error(err.message);
+        console.error(err.message, err.stack);
     });
     return {
         "tokenid": token_uniqueid,
@@ -92,7 +92,7 @@ async function create_user(userInfoData, payload) {
         // "is_logout": false
     });
     return await newUser.save().catch(err => {
-        console.error(err.message);
+        console.error(err.message, err.stack);
     });
 }
 module.exports = router

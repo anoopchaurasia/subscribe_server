@@ -24,7 +24,7 @@ class Pubsub {
         if (messageIDS.length != 0) {
             messageIDS.forEach(async mids => {
                 let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
-                    console.error(err.message);
+                    console.error(err.message, err.stack);
                 });
                 if (response) {
                     if (response.data.payload || response.data.payload['parts']) {
@@ -142,21 +142,21 @@ class Pubsub {
             } else {
                 try {
                     let doc = await email.findOne({ "email_id": emailInfo.email_id, "user_id": user_id }).catch(err => {
-                        console.error(err.message);
+                        console.error(err.message, err.stack);
                     });
                     if (!doc) {
                         let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
-                            console.error(err.message);
+                            console.error(err.message, err.stack);
                         });
-                        await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.error(err.message); });
+                        await email.findOneAndUpdate({ "email_id": emailInfo.email_id }, emailInfo, { upsert: true }).catch(err => { console.error(err.message, err.stack); });
                         if (mailList) {
                             await Pubsub.getListLabel(user_id, auth, emailInfo)
                         }
-                        let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": user_id }).catch(err => { console.error(err.message); });
+                        let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
                         if (mailInfo) {
                             await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfo);
                         }
-                        let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.error(err.message); });
+                        let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
                         if (tokenInfo) {
                             var message = {
                                 to: tokenInfo.fcm_token,
@@ -170,7 +170,7 @@ class Pubsub {
                         }
                     }
                 } catch (err) {
-                    console.error(err.message);
+                    console.error(err.message, err.stack);
                 }
             }
         }
@@ -182,7 +182,7 @@ class Pubsub {
     static async sendFcmMessage(message) {
         fcm.send(message, async function (err, response) {
             if (err) {
-                console.error(err.message);
+                console.error(err.message, err.stack);
             } else {
                 console.log("Successfully sent with response: ", response);
             }
@@ -200,7 +200,7 @@ class Pubsub {
         var res = await gmail.users.labels.list({
             userId: 'me',
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
         });
 
         if (res) {
@@ -219,7 +219,7 @@ class Pubsub {
                         "name": "Unsubscribed Emails"
                     }
                 }).catch(err => {
-                    console.error(err.message);
+                    console.error(err.message, err.stack);
                 });
                 if (res) {
                     var result = await Pubsub.UpdateLableInsideToken(user_id, res.data.id);
@@ -241,7 +241,7 @@ class Pubsub {
         This function Updating Label id into database.(for newly created label)
     */
     static async UpdateLableInsideToken(user_id, label) {
-        const result = await AuthToken.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.error(err.message); });
+        const result = await AuthToken.updateOne({ user_id: user_id }, { $set: { "label_id": label } }, { upsert: true }).catch(err => { console.error(err.message, err.stack); });
         return result;
     }
 
@@ -250,7 +250,7 @@ class Pubsub {
     */
     static async UpdateNewEmail(email_id, newvalues) {
         let resp = await emailInformation.updateOne({ "email_id": email_id }, newvalues, { upsert: true }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
         });;
         return resp;
     }
@@ -270,7 +270,7 @@ class Pubsub {
                     'addLabelIds': labelarry,
                 }
             }).catch(err => {
-                console.error(err.message);
+                console.error(err.message, err.stack);
             });
             let datab = await gmail.users.messages.modify({
                 userId: 'me',
@@ -279,7 +279,7 @@ class Pubsub {
                     "removeLabelIds": ['INBOX']
                 }
             }).catch(err => {
-                console.error(err.message);
+                console.error(err.message, err.stack);
             });
             await gmail.users.messages.modify({
                 userId: 'me',
@@ -288,7 +288,7 @@ class Pubsub {
                     "removeLabelIds": ['CATEGORY_PROMOTIONS']
                 }
             }).catch(err => {
-                console.error(err.message);
+                console.error(err.message, err.stack);
             });
             await gmail.users.messages.modify({
                 userId: 'me',
@@ -297,7 +297,7 @@ class Pubsub {
                     "removeLabelIds": ['CATEGORY_PERSONAL']
                 }
             }).catch(err => {
-                console.error(err.message);
+                console.error(err.message, err.stack);
             });
             console.log(datab.status)
         }
@@ -308,13 +308,13 @@ class Pubsub {
     */
     static async  deleteEmailsAndMoveToTrash(user_id, auth, from_email) {
         const gmail = google.gmail({ version: 'v1', auth });
-        let mailList = await email.find({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message); });
+        let mailList = await email.find({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
         if (mailList) {
             mailList.forEach(async email => {
                 let modifying = await gmail.users.messages.trash({
                     userId: 'me',
                     'id': email.email_id
-                }).catch(err => { console.error(err.message); });
+                }).catch(err => { console.error(err.message, err.stack); });
 
                 if (modifying) {
                     var newvalues = {
@@ -335,7 +335,7 @@ class Pubsub {
     Using Accesstoken Infor and Credential Gmail Instance will be created.
     */
     static async getGmailInstance(auth) {
-        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e.message));
+        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e.message, e.stack));
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = authToken;
         return google.gmail({

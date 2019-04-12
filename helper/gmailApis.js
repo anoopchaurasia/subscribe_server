@@ -19,7 +19,7 @@ class GmailApis {
                 'ids': emailIdList
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
             return
         });
         return response;
@@ -38,7 +38,7 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
             return
         });
         return response;
@@ -58,7 +58,7 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
             return
         });
         return response;
@@ -74,7 +74,7 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
             return
         });
         if(modify){
@@ -92,7 +92,7 @@ class GmailApis {
             userId: 'me',
             'id': email_id
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
         });
         return response;
     }
@@ -122,7 +122,7 @@ class GmailApis {
                 "name": "Unsubscribed Emails"
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
             return
         });
         return res;
@@ -159,7 +159,7 @@ class GmailApis {
                 "removeLabelIds": labels
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
             return
         });
         return modif
@@ -177,11 +177,13 @@ class GmailApis {
                 'addLabelIds': labels   
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
             return
         });
-        console.log(modify.status)
-        return modify.status
+        if(modify){
+            console.log(modify.status)
+            return modify.status
+        }
     }
 
 
@@ -198,7 +200,7 @@ class GmailApis {
                 "removeLabelIds": removeLabels
             }
         }).catch (err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
             return 
         });
     }
@@ -216,7 +218,7 @@ class GmailApis {
                 "name": "Unsubscribed Emails"
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
         });;
         await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
         return res;
@@ -227,7 +229,7 @@ class GmailApis {
         const res = await gmail.users.labels.list({
             userId: 'me',
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
         });
         return res;
     }

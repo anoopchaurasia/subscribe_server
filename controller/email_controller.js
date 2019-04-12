@@ -60,7 +60,7 @@ router.post('/moveEmailToExpbit', async (req, res) => {
         const is_remove_all = req.body.is_remove_all;
         const tokenInfo = req.token;
         if (tokenInfo) {
-            const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e));
+            const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack));
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             await Expensebit.getListLabel(tokenInfo.user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
             res.status(200).json({
@@ -69,7 +69,7 @@ router.post('/moveEmailToExpbit', async (req, res) => {
             })
         }
     } catch (ex) {
-        console.error(ex.message);
+        console.error(ex.message, ex.stack);
         res.sendStatus(400);
     }
 });
@@ -83,7 +83,7 @@ router.post('/getMailInfo', async (req, res) => {
     try {
         const token = req.token;
         if (token) {
-            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e));
+            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack));
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             await getRecentEmail(token.user_id, oauth2Client, null);
@@ -93,7 +93,7 @@ router.post('/getMailInfo', async (req, res) => {
             })
         }
     } catch (ex) {
-        console.error(ex.message);
+        console.error(ex.message, ex.stack);
         res.sendStatus(400);
     }
 });
@@ -117,7 +117,7 @@ router.post('/readMailInfo', async (req, res) => {
             })
         }
     } catch (err) {
-        console.error(err.message);
+        console.error(err.message, err.stack);
         res.sendStatus(400);
     }
 });
@@ -144,7 +144,7 @@ router.post('/readProfileInfo', async (req, res) => {
             })
         }
     } catch (err) {
-        console.error(err.message);
+        console.error(err.message, err.stack);
     }
 });
 
@@ -172,7 +172,7 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
             }
         }
     } catch (err) {
-        console.error(err.message);
+        console.error(err.message, err.stack);
     }
 });
 
@@ -191,7 +191,7 @@ router.post('/getEmailSubscription', async (req, res) => {
             })
         }
     } catch (err) {
-        console.error(err.message);
+        console.error(err.message, err.stack);
     }
 });
 
@@ -216,7 +216,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                     try {
                         buff = Buffer.from(data, 'base64');    
                     } catch (e) {
-                        console.error(e.message);
+                        console.error(e.message, e.stack);
                         return
                     }
                     let text = buff.toString();
@@ -252,7 +252,7 @@ router.post('/unSubscribeMail', async (req, res) => {
     try {
         const from_email = req.body.from_email;
         const mailList = await email.findOne({ "from_email": from_email }).catch(err => {
-            console.error(err.message);
+            console.error(err.message, err.stack);
         });
         if (mailList) {
             const settings = {
@@ -261,12 +261,12 @@ router.post('/unSubscribeMail', async (req, res) => {
             }
             Request(settings, async (error, response, body) => {
                 if (error) {
-                    return console.error(err.message);
+                    return console.error(err.message, err.stack);
                 }
             });
         }
     } catch (ex) {
-        console.error(ex.message);
+        console.error(ex.message, ex.stack);
         res.sendStatus(400);
     }
 });
@@ -286,7 +286,7 @@ router.post('/getDeletedEmailData', async (req, res) => {
             })
         }
     } catch (err) {
-        console.error(err.message);
+        console.error(err.message, ex.stack);
     }
 });
 
@@ -311,11 +311,11 @@ router.post('/keepMailInformation', async (req, res) => {
                 }
             };
             await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                console.error(err.message);
+                console.error(err.message, err.stack);
             });
         }
     } catch (ex) {
-        console.error(ex.message);
+        console.error(ex.message, ex.stack);
         res.sendStatus(400);
     }
 });
@@ -345,7 +345,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
             }
         }
     } catch (err) {
-        console.error(err.message);
+        console.error(err.message, ex.stack);
     }
 });
 
