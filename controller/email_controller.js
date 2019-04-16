@@ -6,6 +6,7 @@ const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 const router = express.Router();
+const axios = require("axios");
 const { google } = require('googleapis');
 const simpleParser = require('mailparser').simpleParser;
 const gmail = google.gmail('v1');
@@ -201,6 +202,7 @@ This for function for scrapping Inbox for particular user.
 This will Get List of email in Batch of 100 for given Time period and will parsed mail.
 */
 async function getRecentEmail(user_id, auth, nextPageToken) {
+    let senderList = ["@accounts.google.com"]
     let date = new Date(Date.now()-APPROX_TWO_MONTH_IN_MS);
     let formatted_date = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}`; // "2019/2/1";
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
@@ -208,9 +210,38 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
         responseList['data']['messages'].forEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
             if (response) {
+                
                 if (response.data.payload || response.data.payload['parts']) {
                     let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
                         : response.data.payload.parts[0].body.data;
+                    let header_raw = response.data['payload']['headers'];
+                    let sender;
+                    header_raw.forEach(async data => {
+                        if (data.name == "From") {
+                            let from_data = data.value.indexOf("<") != -1 ? data.value.split("<")[1].replace(">", "") : data.value;
+                            sender = from_data;
+                        } 
+                    })
+                    if(sender){
+                        sender = sender.split("@")[1];
+                        if(senderList.includes("@"+sender)){
+                            console.log(sender)
+                            let body = response['data'];
+                            body = JSON.stringify(body);
+                            const settings = {
+                                "url": "",
+                                "method": "POST",
+                                data: body,
+                                "headers": {
+                                    'Content-Type': 'application/json'
+                                }
+                            }
+                            let resp = await axios(settings).catch(e => {
+                                console.error(e.message, e.stack);
+                            });
+                            console.log(resp);
+                        }
+                    }
                     let data = message_raw;
                     let buff
                     try {
