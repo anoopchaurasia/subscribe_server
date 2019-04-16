@@ -5,8 +5,9 @@ const Request = require("request");
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
+const MailScraper = require("../helper/mailScraper").MailScraper;
 const router = express.Router();
-const axios = require("axios");
+
 const { google } = require('googleapis');
 const simpleParser = require('mailparser').simpleParser;
 const gmail = google.gmail('v1');
@@ -14,7 +15,7 @@ const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 
 const APPROX_TWO_MONTH_IN_MS = 2*30*24*60*60*1000;
-const senderList = ["@accounts.google.com"]
+
 /*
 This api for deleting mail from Inbox or Trash folder.
 */
@@ -223,24 +224,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                         } 
                     })
                     if(sender){
-                        sender = sender.split("@")[1];
-                        if(senderList.includes("@"+sender)){
-                            console.log(sender)
-                            let body = response['data'];
-                            body = JSON.stringify(body);
-                            const settings = {
-                                "url": "",
-                                "method": "POST",
-                                data: body,
-                                "headers": {
-                                    'Content-Type': 'application/json'
-                                }
-                            }
-                            let resp = await axios(settings).catch(e => {
-                                console.error(e.message, e.stack);
-                            });
-                            console.log(resp);
-                        }
+                        MailScraper.sendMailToScraper(sender,response['data']);
                     }
                     let data = message_raw;
                     let buff
