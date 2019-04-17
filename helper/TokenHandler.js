@@ -62,7 +62,6 @@ class TokenHandler {
                 "expiry_date": new Date(new Date().getTime() + body.expires_in * 1000) 
             };
             await AuthToken.updateOne({ user_id: authToken.user_id }, { $set: obj }, { upsert: 1 });
-            authToken.access_token = body.access_token;
             return authToken;
         }
     }
