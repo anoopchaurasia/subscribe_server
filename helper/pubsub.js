@@ -263,7 +263,7 @@ class Pubsub {
         let labelarry = [];
         labelarry[0] = label;
         if (mailList.email_id) {
-            await gmail.users.messages.modify({
+            let datab = await gmail.users.messages.modify({
                 userId: 'me',
                 'id': mailList.email_id,
                 resource: {
@@ -272,7 +272,7 @@ class Pubsub {
             }).catch(err => {
                 console.error(err.message, err.stack);
             });
-            let datab = await gmail.users.messages.modify({
+            await gmail.users.messages.modify({
                 userId: 'me',
                 'id': mailList.email_id,
                 resource: {
@@ -299,7 +299,9 @@ class Pubsub {
             }).catch(err => {
                 console.error(err.message, err.stack);
             });
-            console.log(datab.status)
+            if(datab){
+                console.log(datab.status)
+            }
         }
     }
 
