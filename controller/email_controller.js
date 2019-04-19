@@ -209,30 +209,26 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
             if (response) {
                 if (response.data.payload || response.data.payload['parts']) {
-                    let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
-                        : response.data.payload.parts[0].body.data;
-                    let data = message_raw;
-                    let buff
+                    let unsub_url;
+                    let header_raw = response['data']['payload']['headers'];
+                    header_raw.forEach(async data => {
+                        if (data.name == "List-Unsubscribe") {
+                            unsub_url = data.value;
+                        }
+                    })
                     try {
-                        buff = Buffer.from(data, 'base64');    
+                        if (unsub_url) {
+                            console.log(unsub_url)
+                            await Expensebit.checkEmailWithInscribeHeader(unsub_url, response['data'], user_id, auth);
+                        } else {
+                            let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
+                            let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
+                            await Expensebit.checkEmail(bodydata, response['data'], user_id, auth); 
+                        }
                     } catch (e) {
                         console.error(e.message, e.stack);
                         return
-                    }
-                    let text = buff.toString();
-                    simpleParser(text, async (err, parsed) => {
-                        if (parsed) {
-                            if (parsed['text']) {
-                                await Expensebit.checkEmail(parsed['text'], response['data'], user_id, auth);
-                            }
-                            if (parsed['headerLines']) {
-                                await Expensebit.checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
-                            }
-                            if (parsed['textAsHtml']) {
-                                await Expensebit.checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
-                            }
-                        }
-                    });
+                    }   
                 }
             }
         });
@@ -349,6 +345,32 @@ router.post('/getKeepedMailInfo', async (req, res) => {
     }
 });
 
+function getPlainText(payload) {
+    var str = "";
+    var isHtmlTag;
+    if (payload.parts) {
+        for (var i = 0; i < payload.parts.length; i++) {
+            str += getPlainText(payload.parts[i]);
+        };
+    }
+    if (payload.mimeType == "text/plain") {
+        return payload["body"]["data"];
+    }
+    return str;
+}
+function getParts(payload) {
+    var str = "";
+    var isHtmlTag;
+    if (payload.parts) {
+        for (var i = 0; i < payload.parts.length; i++) {
+            if (payload.mimeType == "multipart/alternative" && payload.parts[i].mimeType != 'text/html') continue;
+            str += getParts(payload.parts[i]);
+        };
+    } else if ((payload.mimeType == "text/html")) {
+        return payload["body"]["data"];
+    }
+    return str;
+}
 
 module.exports = router
 

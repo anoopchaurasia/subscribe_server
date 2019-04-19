@@ -293,6 +293,68 @@ class ExpenseBit {
         }
     }
 
+    static async checkEmailWithInscribeHeader(url,mail,user_id,auth){
+        if (url != null) {
+            let emailInfo = await ExpenseBit.createEmailInfo(user_id, url, mail);
+            if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
+                console.log(emailInfo.from_email)
+            } else if (emailInfo) {
+                let emailInfoNew = {};
+                emailInfoNew['email_id'] = emailInfo['email_id'];
+                emailInfoNew['historyId'] = emailInfo['historyId'];
+                emailInfoNew['unsubscribe'] = emailInfo['unsubscribe'];
+                emailInfoNew['subject'] = emailInfo['subject'];
+                emailInfoNew['labelIds'] = emailInfo['labelIds'];
+                emailInfoNew['main_label'] = emailInfo['main_label'];
+
+                try {
+
+                    let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
+                        console.error(err.message, err.stack);
+                    });
+                    if (!fromEmail) {
+                        await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
+                            console.error(err.message, err.stack);
+                        });
+                        // let emailData = new email(emailInfo);
+                        // await emailData.save().catch(err => {
+                        //     console.error(err.message);
+                        // });
+                        fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
+                            console.error(err.message, err.stack);
+                        });
+                    }
+
+                    if (fromEmail) {
+                        let doc = await emailInformation.findOne({ "email_id": emailInfoNew.email_id, "from_email_id": fromEmail._id }).catch(err => {
+                            console.error(err.message, err.stack);
+                        });
+                        if (!doc) {
+                            emailInfoNew['from_email_id'] = fromEmail._id;
+                            // let emailInform = new emailInformation(emailInfoNew);
+
+                            // await emailInform.save().catch(err => { console.error(err.message); });
+                            let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
+                                console.error(err.message, err.stack);
+                            });
+
+                            await ExpenseBit.UpdateEmailInformation(emailInfoNew);
+                            if (mailList) {
+                                await Pubsub.getListLabel(user_id, auth, emailInfoNew);
+                            }
+                            let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": user_id }).catch(err => { console.error(err.message); });
+                            if (mailInfo) {
+                                await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error(err.message, err.stack);
+                }
+            }
+        }
+    }
+
 
     /*
         This function will check if lable or unsubscribed email folder created or not.
