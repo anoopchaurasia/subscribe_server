@@ -6,29 +6,10 @@ fm.Class('Parser', function (me) {
         me = _me;
     };
 
-    Static.parse = function (str,payload,parsed) {
+    Static.parse = function (str,parsed) {
         var json = typeof str === 'string' ? JSON.parse(str) : str;
-        if ((json.subject && !json.text) || json.typeList) {
-            return json
-        }
-        if (json.text) {
-            return {
-                payload: json.text,
-                date: new Date(parseInt(json.date)).toString(),
-                history_id: json.historyId,
-                subject: json.headers.Subject,
-                from: json.headers.From,
-                id: json.id,
-                timestamp: new Date(parseInt(json.date)).getTime(),
-                snippet: json.snippet,
-                index: json.index
-            }
-        }
-        try {
-            var data = parsed;
-        } catch (e) {
-            throw e.message;
-        }
+        var data = parsed;
+        var payload = str['payload'];
         return {
             payload: new Buffer(data, 'base64').toString('utf-8'),
             date: new Date(parseInt(json.internalDate)).toString(),
