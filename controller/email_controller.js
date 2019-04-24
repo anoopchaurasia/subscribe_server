@@ -11,8 +11,9 @@ const simpleParser = require('mailparser').simpleParser;
 const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
-
+const MailScraper = require("../helper/mailScraper").MailScraper;
 const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;
+fm.Include("com.anoop.email.Parser");
 /*
 This api for deleting mail from Inbox or Trash folder.
 */
@@ -226,6 +227,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                             unsub_url = data.value;
                         }
                     })
+                    await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response.data), user_id);
                     try {
                         if (unsub_url) {
                             console.log(unsub_url)
