@@ -16,10 +16,11 @@ class DeleteEmail {
     static async deleteEmails(authToken, bodyData) {
         const emails = await email.find({ user_id: authToken.user_id, "from_email": bodyData.from_email })
         const emailIdList = emails.map(x => x.email_id);
+        console.log(emailIdList)
         if (emailIdList) {
             let response = await GmaiilApi.deleteEmailApi(authToken,emailIdList);
-            if(response.status==200){
-                await DeleteEmail.update_delete_status(emailIdList, authToken.user_id)
+            if(response){
+                await DeleteEmail.update_delete_status(bodyData.from_email, authToken.user_id)
             }
         }
     }
@@ -43,20 +44,20 @@ class DeleteEmail {
         This function for Updating Is_delete Label for database.
         this will update email object with is_delete=true for Deleted email data/list.
     */
-    static async update_delete_status(emailInfo, user_id) {
-        emailInfo.forEach(async email_id => {
-            let oldvalue = {
-                "email_id": email_id
+    static async update_delete_status(from_email,user_id) {
+          let oldvalue = {
+                "from_email": from_email,
+                "user_id":user_id
             };
             let newvalues = {
                 $set: {
-                    "is_delete": true
+                    "status": "delete",
+                    "status_date":new Date()
                 }
             };
-            await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+            await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
                 console.error(err.message, err.stack);
             });
-        });
     }
 }
 

@@ -76,19 +76,11 @@ class ExpenseBit {
         This function will revet back Moved Email to INBOX folder.
     */
     static async  MoveMailFromExpenseBit(user_id, auth, from_email, label) {
-        let mailList = await email.find({ "user_id": user_id, "from_email": from_email }).catch(err => { console.error(err.message, err.stack); });
+        let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
+        let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
+        console.log(mailList.length)
         if (mailList) {
-            let allLabels = [];
-            let mailLBL = [];
-            if (mailList[0].labelIds) {
-                mailLBL = mailList[0].labelIds.split(",");
-            }
-            mailLBL.forEach(lblmail => {
-                if (lblmail != label) {
-                    allLabels.push(lblmail);
-                }
-            });
-            var oldvalue = {
+           var oldvalue = {
                 user_id: user_id,
                 "from_email": from_email,
                 "status": "move"
@@ -99,12 +91,14 @@ class ExpenseBit {
                     "status_date": new Date()
                 }
             };
-            await ExpenseBit.UpdateBatchEmail(oldvalue, newvalues);
+            email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                console.error(err.message, err.stack);
+            });
             let labelarry = [];
             labelarry[0] = label;
             let emailIdList = mailList.map(x => x.email_id);
             if (emailIdList) {
-                await GmailApi.batchModifyAddAndRemoveLabels(auth, emailIdList, allLabels, labelarry);
+                await GmailApi.batchModifyRemoveLabels(auth, emailIdList,labelarry);
                 await GmailApi.batchModifyAddLabels(auth, emailIdList, ['INBOX']);
             }
         }
@@ -376,7 +370,12 @@ class ExpenseBit {
             } else {
                 await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
             }
-            await ExpenseBit.MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
+            if (is_unscubscribe){
+                console.log("unmove pending")
+                await ExpenseBit.MoveMailFromExpenseBit(user_id,auth,from_email,lbl_id);
+            }else{
+                await ExpenseBit.MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
+            }
         
         }
     }

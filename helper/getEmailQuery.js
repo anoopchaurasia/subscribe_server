@@ -156,22 +156,22 @@ class GetEmailQuery {
         This function will return All keeped subscription List for particular user.
     */
     static async getAllKeepedSubscription(user_id) {
-        const emails = await email.aggregate([{ $match: { "status": "keep", "user_id": user_id } }, {
-            $group: {
-                _id: { "from_email": "$from_email" }, data: {
-                    $push: {
-                        "labelIds": "$labelIds",
-                        "email_id": "$email_id",
-                        "from_email_name": "$from_email_name"
-                    }
-                }, count: { $sum: 1 }
-            }
-        },
-        { $sort: { "count": -1 } },
-        { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }]).catch(err => {
-            console.error(err.message, err.stack);
-        });
-        return emails;
+        const emails = await email.find({ "status": "keep", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).exec()
+        const senddata = [];
+        for (let i = 0, len = emails.length; i < len; i++) {
+            let x = emails[i];
+            senddata.push({
+                _id: {
+                    from_email: x.from_email
+                },
+                data: [{ from_email_name: x.from_email_name }],
+                count: await emailInformation.countDocuments({ "from_email_id": x._id }).catch(err => {
+                    console.error(err.message, err.stack);
+                })
+            })
+        }
+        console.log(senddata)
+        return senddata;
     }
 
     /*
@@ -183,6 +183,7 @@ class GetEmailQuery {
         { $project: { "count": 1 } }]).catch(err => {
             console.error(err.message, err.stack);
         });
+        console.log(emails)
         return emails;
     }
 
@@ -207,6 +208,18 @@ class GetEmailQuery {
         });
         return emails;
     }
+
+    static async getUnreadTrashEmail(user_id) {
+        const emails = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "status": "trash", "user_id": user_id } },
+        { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
+        { $project: { "count": 1 } }]).catch(err => {
+            console.error(err.message, err.stack);
+        });
+        console.log(emails)
+        return emails;
+    }
+
+    
 }
 
 

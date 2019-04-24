@@ -12,11 +12,11 @@ const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 
-const APPROX_TWO_MONTH_IN_MS = 2*30*24*60*60*1000;
+const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;
 /*
 This api for deleting mail from Inbox or Trash folder.
 */
-router.post('/deleteMailFromInboxx', async (req, res) => {
+router.post('/deleteMailFromTrash', async (req, res) => {
     await DeleteEmail.deleteEmails(req.token, req.body);
     res.json({
         error: false,
@@ -42,11 +42,21 @@ router.post('/deleteMailFromInbox', async (req, res) => {
 Thsi api for Reverting Back Trash Email from Trash folder to Inbox.
 */
 router.post('/revertTrashMailToInbox', async (req, res) => {
-    await TrashEmail.revertMailFromTrash(req.token, req.body);
-    res.status(200).json({
-        error: false,
-        data: "moving"
-    })
+    try {
+        const tokenInfo = req.token;
+        if (tokenInfo) {
+            const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack));
+            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
+            await TrashEmail.revertMailFromTrash(tokenInfo.user_id, oauth2Client, req.body);
+            res.status(200).json({
+                error: false,
+                data: "moving"
+            })
+        }
+    } catch (ex) {
+        console.error(ex.message, ex.stack);
+        res.sendStatus(400);
+    }
 });
 
 
@@ -201,8 +211,8 @@ This for function for scrapping Inbox for particular user.
 This will Get List of email in Batch of 100 for given Time period and will parsed mail.
 */
 async function getRecentEmail(user_id, auth, nextPageToken) {
-    let date = new Date(Date.now()-APPROX_TWO_MONTH_IN_MS);
-    let formatted_date = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}`; // "2019/2/1";
+    let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
+    let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
     if (responseList && responseList['data']['messages']) {
         responseList['data']['messages'].forEach(async element => {
@@ -223,12 +233,12 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                         } else {
                             let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
                             let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
-                            await Expensebit.checkEmail(bodydata, response['data'], user_id, auth); 
+                            await Expensebit.checkEmail(bodydata, response['data'], user_id, auth);
                         }
                     } catch (e) {
                         console.error(e.message, e.stack);
                         return
-                    }   
+                    }
                 }
             }
         });
@@ -276,10 +286,24 @@ router.post('/getDeletedEmailData', async (req, res) => {
         const doc = req.token;
         if (doc) {
             const emailinfos = await GetEmailQuery.getAllTrashSubscription(doc.user_id);
-            res.status(200).json({
-                error: false,
-                data: emailinfos
-            })
+            const unreademail = await GetEmailQuery.getUnreadTrashEmail(doc.user_id);
+            let unreadData = {};
+            if (unreademail) {
+                unreademail.forEach(async element => {
+                    unreadData[element._id.from_email] = element.count
+                });
+                const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+                res.status(200).json({
+                    error: false,
+                    data: emailinfos,
+                    unreadData: unreadData,
+                    totalEmail: total
+                })
+            }
+            // res.status(200).json({
+            //     error: false,
+            //     data: emailinfos
+            // })
         }
     } catch (err) {
         console.error(err.message, ex.stack);
