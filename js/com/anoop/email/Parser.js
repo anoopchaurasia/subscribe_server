@@ -6,7 +6,7 @@ fm.Class('Parser', function (me) {
         me = _me;
     };
 
-    Static.parse = function (str) {
+    Static.parse = function (str,payload,parsed) {
         var json = typeof str === 'string' ? JSON.parse(str) : str;
         if ((json.subject && !json.text) || json.typeList) {
             return json
@@ -19,15 +19,13 @@ fm.Class('Parser', function (me) {
                 subject: json.headers.Subject,
                 from: json.headers.From,
                 id: json.id,
-                timestamp: new Date(json.date).getTime(),
+                timestamp: new Date(parseInt(json.date)).getTime(),
                 snippet: json.snippet,
                 index: json.index
             }
         }
-
-        var payload = json["payload"];
         try {
-            var data = getParts(payload) || getPlainText(payload);
+            var data = parsed;
         } catch (e) {
             throw e.message;
         }
@@ -35,7 +33,7 @@ fm.Class('Parser', function (me) {
             payload: new Buffer(data, 'base64').toString('utf-8'),
             date: new Date(parseInt(json.internalDate)).toString(),
             history_id: json.historyId,
-            timestamp: new Date(json.internalDate).getTime(),
+            timestamp: new Date(parseInt(json.internalDate)).getTime(),
             subject: getHeader(payload.headers, 'subject'),
             from: getHeader(payload.headers, "from"),
             id: json.id,
@@ -52,30 +50,4 @@ fm.Class('Parser', function (me) {
         }
     }
 
-    function getPlainText(payload) {
-        var str = "";
-        var isHtmlTag;
-        if (payload.parts) {
-            for (var i = 0; i < payload.parts.length; i++) {
-                str += getPlainText(payload.parts[i]);
-            };
-        }
-        if (payload.mimeType == "text/plain") {
-            return payload["body"]["data"];
-        }
-        return str;
-    }
-    function getParts(payload) {
-        var str = "";
-        var isHtmlTag;
-        if (payload.parts) {
-            for (var i = 0; i < payload.parts.length; i++) {
-                if (payload.mimeType == "multipart/alternative" && payload.parts[i].mimeType != 'text/html') continue;
-                str += getParts(payload.parts[i]);
-            };
-        } else if ((payload.mimeType == "text/html")) {
-            return payload["body"]["data"];
-        }
-        return str;
-    }
 });
