@@ -167,12 +167,10 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
         const doc = req.token;
         if (doc) {
             const emailinfos = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
-            const unreademail = await GetEmailQuery.getUnreadMovedEmail(doc.user_id);
-            let unreadData = {};
-            if (unreademail) {
-                unreademail.forEach(async element => {
-                    unreadData[element._id.from_email] = element.count
-                });
+
+            let unreadData = await GetEmailQuery.getUnreadMovedEmail(doc.user_id);
+            if (unreadData) {
+
                 const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
                 res.status(200).json({
                     error: false,
@@ -234,7 +232,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                         } else {
                             let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
                             let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
-                            await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'],parsed), user_id);
+                            await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
                             await Expensebit.checkEmail(bodydata, response['data'], user_id, auth);
                         }
                     } catch (e) {
@@ -288,12 +286,10 @@ router.post('/getDeletedEmailData', async (req, res) => {
         const doc = req.token;
         if (doc) {
             const emailinfos = await GetEmailQuery.getAllTrashSubscription(doc.user_id);
-            const unreademail = await GetEmailQuery.getUnreadTrashEmail(doc.user_id);
-            let unreadData = {};
-            if (unreademail) {
-                unreademail.forEach(async element => {
-                    unreadData[element._id.from_email] = element.count
-                });
+
+            let unreadData = await GetEmailQuery.getUnreadTrashEmail(doc.user_id);
+            if (unreadData) {
+
                 const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
                 res.status(200).json({
                     error: false,
@@ -351,12 +347,9 @@ router.post('/getKeepedMailInfo', async (req, res) => {
         const doc = req.token;
         if (doc) {
             const emailinfos = await GetEmailQuery.getAllKeepedSubscription(doc.user_id);
-            const unreademail = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
-            let unreadData = {};
-            if (unreademail) {
-                unreademail.forEach(async element => {
-                    unreadData[element._id.from_email] = element.count
-                });
+            let unreadData = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
+            if (unreadData) {
+               
                 const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
                 res.status(200).json({
                     error: false,

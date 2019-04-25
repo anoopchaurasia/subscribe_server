@@ -195,7 +195,7 @@ class GmailApis {
     */
     static async batchModifyAddAndRemoveLabels(auth, mailIds, addLabels, removeLabels) {
         const gmail = google.gmail({ version: 'v1', auth });
-        await gmail.users.messages.batchModify({
+        let resp = await gmail.users.messages.batchModify({
             userId: 'me',
             resource: {
                 'ids': mailIds,
@@ -206,6 +206,10 @@ class GmailApis {
             console.error(err.message, err.stack);
             return 
         });
+        if(resp){
+            console.log(resp.status)
+            return resp
+        }
     }
 
     /*

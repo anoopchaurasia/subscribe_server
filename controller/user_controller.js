@@ -27,9 +27,11 @@ This Api for storing Device Inforamtion into Database.
 router.post('/saveDeviceInfo', async (req, res) => {
     let deviceData = req.body.data;
     deviceData['user_id']=req.token.user_id;
-    await DeviceInfo.findOneAndUpdate({ "user_id": req.token.user_id }, deviceData, { upsert: true }).catch(err => {
+    console.log(deviceData);
+    let device = await DeviceInfo.findOneAndUpdate({ "user_id": req.token.user_id }, deviceData, { upsert: true }).catch(err => {
         console.error(err.message, err.stack);
     });
+    console.log(device)
     res.json({
         message: "success"
     });
