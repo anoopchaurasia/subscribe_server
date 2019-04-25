@@ -5,8 +5,8 @@ fm.Class('Parser', function (me) {
     this.setMe = function (_me) {
         me = _me;
     };
-
-    Static.parse = function (json,data) {
+    
+    Static.parse = function (json, data) {
         var payload = json['payload'];
         return {
             payload: data,
@@ -15,9 +15,7 @@ fm.Class('Parser', function (me) {
             timestamp: new Date(parseInt(json.internalDate)).getTime(),
             subject: getHeader(payload.headers, 'subject'),
             from: getHeader(payload.headers, "from"),
-            id: json.id,
-            snippet: json.snippet,
-            index: json.index
+            id: json.id
         }
     };
 
