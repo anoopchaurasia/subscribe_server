@@ -3,10 +3,7 @@ var Schema = mongoose.Schema;
 
 
 var token = new Schema({
-    user_id: {
-        type: String,
-        index: true
-    },
+    user_id: { type: Schema.Types.ObjectId, ref: 'User', index: true },
     token: {
         type: String
     },
@@ -14,5 +11,5 @@ var token = new Schema({
 });
 
 
-var tokens = mongoose.model('token', token);
+var tokens = mongoose.model('tokeno', token);
 module.exports = tokens;

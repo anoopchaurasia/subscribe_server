@@ -3,10 +3,7 @@ var Schema = mongoose.Schema;
 
 
 var fcmToken = new Schema({
-    user_id: {
-        type: String,
-        index:true
-    },
+    user_id: { type: Schema.Types.ObjectId, ref: 'User', index: true },
     fcm_token: {
         type: String
     },
@@ -14,5 +11,5 @@ var fcmToken = new Schema({
 });
 
 
-var fcmTokens = mongoose.model('fcmToken', fcmToken);
+var fcmTokens = mongoose.model('fcmoToken', fcmToken);
 module.exports = fcmTokens;

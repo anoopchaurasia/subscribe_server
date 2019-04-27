@@ -1,6 +1,6 @@
 'use strict'
 const express = require('express');
-const email = require('../models/email');
+const email = require('../models/emailDetails');
 const Request = require("request");
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
@@ -11,8 +11,13 @@ const simpleParser = require('mailparser').simpleParser;
 const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
-
-router.post('/deleteMailFromInboxx', async (req, res) => {
+const MailScraper = require("../helper/mailScraper").MailScraper;
+const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;
+fm.Include("com.anoop.email.Parser");
+/*
+This api for deleting mail from Inbox or Trash folder.
+*/
+router.post('/deleteMailFromTrash', async (req, res) => {
     await DeleteEmail.deleteEmails(req.token, req.body);
     res.json({
         error: false,
@@ -20,6 +25,11 @@ router.post('/deleteMailFromInboxx', async (req, res) => {
     })
 });
 
+
+/*
+This api for moving Mail from Inbox to Trash Folder.(When swipe Upper)
+here We will get Fromemail/sender so using that we are moving all coresponding mail to Trash Folder.
+*/
 router.post('/deleteMailFromInbox', async (req, res) => {
     await TrashEmail.inboxToTrash(req.token, req.body);
     res.status(200).json({
@@ -28,15 +38,32 @@ router.post('/deleteMailFromInbox', async (req, res) => {
     })
 });
 
+
+/*
+Thsi api for Reverting Back Trash Email from Trash folder to Inbox.
+*/
 router.post('/revertTrashMailToInbox', async (req, res) => {
-    await TrashEmail.revertMailFromTrash(req.token, req.body);
-    res.status(200).json({
-        error: false,
-        data: "moving"
-    })
+    try {
+        const tokenInfo = req.token;
+        if (tokenInfo) {
+            const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack));
+            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
+            await TrashEmail.revertMailFromTrash(tokenInfo.user_id, oauth2Client, req.body);
+            res.status(200).json({
+                error: false,
+                data: "moving"
+            })
+        }
+    } catch (ex) {
+        console.error(ex.message, ex.stack);
+        res.sendStatus(400);
+    }
 });
 
 
+/*
+This api for Moving Email From INbox to SUbscribed Folder.(Whne swipe Left)
+*/
 router.post('/moveEmailToExpbit', async (req, res) => {
     try {
         const from_email = req.body.from_email;
@@ -44,7 +71,7 @@ router.post('/moveEmailToExpbit', async (req, res) => {
         const is_remove_all = req.body.is_remove_all;
         const tokenInfo = req.token;
         if (tokenInfo) {
-            const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e));
+            const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack));
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             await Expensebit.getListLabel(tokenInfo.user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
             res.status(200).json({
@@ -53,20 +80,23 @@ router.post('/moveEmailToExpbit', async (req, res) => {
             })
         }
     } catch (ex) {
+        console.error(ex.message, ex.stack);
         res.sendStatus(400);
     }
 });
 
 
-
+/*
+This Api for Scrapping Mail from INbox.
+Based on user Information Email Inbox will be scrape
+*/
 router.post('/getMailInfo', async (req, res) => {
     try {
         const token = req.token;
         if (token) {
-            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e));
+            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack));
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
-            // Expensebit.watchapi(oauth2Client);
             await getRecentEmail(token.user_id, oauth2Client, null);
             res.status(200).json({
                 error: false,
@@ -74,37 +104,40 @@ router.post('/getMailInfo', async (req, res) => {
             })
         }
     } catch (ex) {
+        console.error(ex.message, ex.stack);
         res.sendStatus(400);
     }
 });
 
+/*
+This Api for Getting all Mail Subscription for Home screen for App.
+This will get Filter subcription(new subscription only), unread Mail Info and total Count
+*/
 router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
         if (doc) {
             const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
-            const unreademail = await GetEmailQuery.getUnreadEmail(doc.user_id);
-            let unreadData = {};
-            if (unreademail) {
-                unreademail.forEach(async element => {
-                    unreadData[element._id.from_email] = element.count
-                });
-                const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-                // console.log(emailinfos, unreademail, total)
-                res.status(200).json({
-                    error: false,
-                    data: emailinfos,
-                    unreadData: unreadData,
-                    totalEmail: total
-                })
-            }
+            const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
+            const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+            res.status(200).json({
+                error: false,
+                data: emailinfos,
+                unreadData: unreademail,
+                totalEmail: total
+            })
         }
     } catch (err) {
-        console.log(err);
+        console.error(err.message, err.stack);
         res.sendStatus(400);
     }
 });
 
+
+/*
+This Api will get Profile/statistic Inforamtion for Subcription.
+This will get all the subscription,Moved subscription,total email and total ubsubscribe email count.
+*/
 router.post('/readProfileInfo', async (req, res) => {
     try {
         const doc = req.token;
@@ -122,21 +155,22 @@ router.post('/readProfileInfo', async (req, res) => {
             })
         }
     } catch (err) {
-        console.log(err);
+        console.error(err.message, err.stack);
     }
 });
 
+/*
+This api will get All unsubscribe Subscription Related Information.
+*/
 router.post('/getUnsubscribeMailInfo', async (req, res) => {
     try {
         const doc = req.token;
         if (doc) {
             const emailinfos = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
-            const unreademail = await GetEmailQuery.getUnreadMovedEmail(doc.user_id);
-            let unreadData = {};
-            if (unreademail) {
-                unreademail.forEach(async element => {
-                    unreadData[element._id.from_email] = element.count
-                });
+
+            let unreadData = await GetEmailQuery.getUnreadMovedEmail(doc.user_id);
+            if (unreadData) {
+
                 const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
                 res.status(200).json({
                     error: false,
@@ -147,10 +181,14 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
             }
         }
     } catch (err) {
-        console.log(err)
+        console.error(err.message, err.stack);
     }
 });
 
+
+/*
+This api will get Filer subsciption(new only).
+*/
 router.post('/getEmailSubscription', async (req, res) => {
     try {
         const doc = req.token;
@@ -162,36 +200,45 @@ router.post('/getEmailSubscription', async (req, res) => {
             })
         }
     } catch (err) {
-        console.log(err)
+        console.error(err.message, err.stack);
     }
 });
 
 
+/*
+This for function for scrapping Inbox for particular user.
+This will Get List of email in Batch of 100 for given Time period and will parsed mail.
+*/
 async function getRecentEmail(user_id, auth, nextPageToken) {
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', includeSpamTrash: true, maxResults: 100, 'pageToken': nextPageToken, q: 'from:* AND after:2019/02/01 ' });
+    let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
+    let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
+    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
     if (responseList && responseList['data']['messages']) {
         responseList['data']['messages'].forEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
             if (response) {
                 if (response.data.payload || response.data.payload['parts']) {
-                    let message_raw = response.data.payload['parts'] == undefined ? response.data.payload.body.data
-                        : response.data.payload.parts[0].body.data;
-                    let data = message_raw;
-                    let buff = Buffer.from(data, 'base64');
-                    let text = buff.toString();
-                    simpleParser(text, async (err, parsed) => {
-                        if (parsed) {
-                            if (parsed['text']) {
-                                await Expensebit.checkEmail(parsed['text'], response['data'], user_id, auth);
-                            }
-                            if (parsed['headerLines']) {
-                                await Expensebit.checkEmail(parsed.headerLines[0].line, response['data'], user_id, auth);
-                            }
-                            if (parsed['textAsHtml']) {
-                                await Expensebit.checkEmail(parsed['textAsHtml'], response['data'], user_id, auth);
-                            }
+                    let unsub_url;
+                    let header_raw = response['data']['payload']['headers'];
+                    header_raw.forEach(async data => {
+                        if (data.name == "List-Unsubscribe") {
+                            unsub_url = data.value;
                         }
-                    });
+                    })
+                    try {
+                        if (unsub_url) {
+                            console.log(unsub_url)
+                            await Expensebit.checkEmailWithInscribeHeader(unsub_url, response['data'], user_id, auth);
+                        } else {
+                            let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
+                            let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
+                            await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
+                            await Expensebit.checkEmail(bodydata, response['data'], user_id, auth);
+                        }
+                    } catch (e) {
+                        console.error(e.message, e.stack);
+                        return
+                    }
                 }
             }
         });
@@ -203,12 +250,15 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
 }
 
 
-
+/*
+This api for unsubscribing mail from Inbox.
+This api Currently not using Its under development.
+*/
 router.post('/unSubscribeMail', async (req, res) => {
     try {
         const from_email = req.body.from_email;
         const mailList = await email.findOne({ "from_email": from_email }).catch(err => {
-            console.log(err);
+            console.error(err.message, err.stack);
         });
         if (mailList) {
             const settings = {
@@ -217,67 +267,89 @@ router.post('/unSubscribeMail', async (req, res) => {
             }
             Request(settings, async (error, response, body) => {
                 if (error) {
-                    return console.log(error);
+                    return console.error(err.message, err.stack);
                 }
             });
         }
     } catch (ex) {
+        console.error(ex.message, ex.stack);
         res.sendStatus(400);
     }
 });
 
+
+/*
+This api for getting only trash suscription information.
+*/
 router.post('/getDeletedEmailData', async (req, res) => {
     try {
         const doc = req.token;
         if (doc) {
             const emailinfos = await GetEmailQuery.getAllTrashSubscription(doc.user_id);
-            res.status(200).json({
-                error: false,
-                data: emailinfos
-            })
+
+            let unreadData = await GetEmailQuery.getUnreadTrashEmail(doc.user_id);
+            if (unreadData) {
+
+                const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+                res.status(200).json({
+                    error: false,
+                    data: emailinfos,
+                    unreadData: unreadData,
+                    totalEmail: total
+                })
+            }
+            // res.status(200).json({
+            //     error: false,
+            //     data: emailinfos
+            // })
         }
     } catch (err) {
-        console.log(err);
+        console.error(err.message, ex.stack);
     }
 });
 
+
+/*
+This api for changing keeped subscription.(when swipe right)
+this will changed changed is_keeped value in database for keped subscription
+*/
 router.post('/keepMailInformation', async (req, res) => {
     try {
         const from_email = req.body.from_email;
         const doc = req.token;
         if (doc) {
             var oldvalue = {
-                user_id: doc.user_id,
-                "from_email": from_email
+                "from_email": from_email,
+                "user_id": doc.user_id
             };
             var newvalues = {
                 $set: {
-                    "is_keeped": true
+                    "status": "keep",
+                    "status_date": new Date()
                 }
             };
-            var upsert = {
-                upsert: true
-            };
-            await email.updateMany(oldvalue, newvalues, upsert).catch(err => {
-                console.log(err);
+            await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                console.error(err.message, err.stack);
             });
         }
     } catch (ex) {
+        console.error(ex.message, ex.stack);
         res.sendStatus(400);
     }
 });
 
+
+/*
+This Api for getting only keeped subscription Information.
+*/
 router.post('/getKeepedMailInfo', async (req, res) => {
     try {
         const doc = req.token;
         if (doc) {
             const emailinfos = await GetEmailQuery.getAllKeepedSubscription(doc.user_id);
-            const unreademail = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
-            let unreadData = {};
-            if (unreademail) {
-                unreademail.forEach(async element => {
-                    unreadData[element._id.from_email] = element.count
-                });
+            let unreadData = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
+            if (unreadData) {
+               
                 const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
                 res.status(200).json({
                     error: false,
@@ -288,10 +360,36 @@ router.post('/getKeepedMailInfo', async (req, res) => {
             }
         }
     } catch (err) {
-        console.log(err);
+        console.error(err.message, ex.stack);
     }
 });
 
+function getPlainText(payload) {
+    var str = "";
+    var isHtmlTag;
+    if (payload.parts) {
+        for (var i = 0; i < payload.parts.length; i++) {
+            str += getPlainText(payload.parts[i]);
+        };
+    }
+    if (payload.mimeType == "text/plain") {
+        return payload["body"]["data"];
+    }
+    return str;
+}
+function getParts(payload) {
+    var str = "";
+    var isHtmlTag;
+    if (payload.parts) {
+        for (var i = 0; i < payload.parts.length; i++) {
+            if (payload.mimeType == "multipart/alternative" && payload.parts[i].mimeType != 'text/html') continue;
+            str += getParts(payload.parts[i]);
+        };
+    } else if ((payload.mimeType == "text/html")) {
+        return payload["body"]["data"];
+    }
+    return str;
+}
 
 module.exports = router
 

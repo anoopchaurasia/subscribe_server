@@ -1,0 +1,42 @@
+var json ={};
+db.emaildatas.find({"user_id":{$exists:true},"labelIds":{$exists:true}}).snapshot().forEach(
+    function(doc){
+       
+        var state="unused";
+        if(doc.is_trash){
+            state="trash"
+        }else if(doc.is_moved){
+            state="move"
+        }else if(doc.is_keeped){
+            state="keep"
+        }else if(doc.is_delete){
+            state="delete"
+        }
+        if(!json[doc.user_id+doc.from_email]) {
+            db.emaildetails.findOneAndUpdate({"from_email":doc.from_email,"user_id":ObjectId(doc.user_id)},
+            { $set:  {
+                        
+                        "to_email":doc.to_email,
+                        "from_email_name":doc.from_email_name,
+                        "from_email":doc.from_email,
+                        "labelIds":doc.labelIds.split(','),
+                        "status_date":new Date,
+                        "status":state,
+                        "user_id": ObjectId(doc.user_id)
+                    }
+            },{upsert:true});
+            json[doc.user_id+doc.from_email] = db.emaildetails.findOne({"from_email":doc.from_email})._id;
+        } else {
+        }
+        db.emailinfos.save(
+            {   
+                "email_id":doc.email_id,
+                "subject":doc.subject,
+                "unsubscribe":doc.unsubscribe,
+                "historyId":doc.historyId,
+                "labelIds":doc.labelIds.split(','),
+                "main_label":doc.main_label,
+                "from_email_id":json[doc.user_id+doc.from_email]
+            })
+    }
+);

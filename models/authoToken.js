@@ -3,11 +3,8 @@ let TokenHandler = require("../helper/TokenHandler");
 var Schema = mongoose.Schema;
 
 
-var authToken = new Schema({
-    user_id: {
-        type: String,
-        index: true
-    },
+var AuthToken = new Schema({
+    user_id: { type: Schema.Types.ObjectId, ref: 'User', index: true },
     access_token: {
         type: String
     },
@@ -34,17 +31,17 @@ var authToken = new Schema({
     }
 });
 
-authToken.virtual('isExpired').get(function() {  
+AuthToken.virtual('isExpired').get(function() {  
     return Date.now() >= new Date(this.expiry_date).getTime();
 });
 
 
-authToken.virtual('fresh_token').get(async function() {  
+AuthToken.virtual('fresh_token').get(async function() {  
     if(this.isExpired) {
         await TokenHandler.refreshToken(this);
     }
     return this.access_token;
 });
 
-var tokendata = mongoose.model('authToken', authToken);
-module.exports = tokendata;
+module.exports = mongoose.model('AuthoToken', AuthToken);
+

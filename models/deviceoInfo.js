@@ -2,9 +2,11 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 
-var deviceInfo = new Schema({
+var DeviceInfoSchema = new Schema({
     user_id: {
-        type: String
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        index: true
     },
     apiLevel: {
         type: String
@@ -33,9 +35,23 @@ var deviceInfo = new Schema({
     manufacturer: {
         type: String
     },
+    ipaddress:{
+        type:Object
+    },
+    macaddress:{
+        type:Object
+    },
+    serialno:{
+        type:String
+    },
+    timezone:{
+        type:String
+    },
+    istablet:{
+        type:Boolean
+    },
     created_at: Date
 });
 
 
-var deviceInfos = mongoose.model('deviceInfo', deviceInfo);
-module.exports = deviceInfos;
+module.exports = mongoose.model('DeviceoInfo', DeviceInfoSchema);

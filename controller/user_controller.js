@@ -1,55 +1,64 @@
 'use strict'
 const express = require('express');
-const fcmToken = require('../models/fcmToken');
-const token_model = require('../models/token');
-const auth_token = require('../models/authToken');
-const email = require('../models/email');
-const userDetails = require('../models/userDetail');
-const deviceInfo = require('../models/deviceInfo');
+const fcmToken = require('../models/fcmoToken');
+const token_model = require('../models/tokeno');
+const DeviceInfo = require('../models/deviceoInfo');
 const router = express.Router();
 
+
+/* 
+This Api for storing FCM Token Into database for firebase notification.
+*/
 router.post('/savefcmToken', async (req, res) => {
     let token = req.token;
     let tokenInfo = { "user_id": token.user_id, "fcm_token": req.body.fcmToken };
     await fcmToken.findOneAndUpdate({ "user_id": token.user_id }, tokenInfo, { upsert: true }).catch(err => {
-        console.log(err);
+        console.error(err.message, err.stack);
     });
     res.json({
         message: "success"
     });
 });
 
+
+/*
+This Api for storing Device Inforamtion into Database.
+*/
 router.post('/saveDeviceInfo', async (req, res) => {
     let deviceData = req.body.data;
     deviceData['user_id']=req.token.user_id;
-    await deviceInfo.findOneAndUpdate({ "user_id": req.token.user_id }, deviceData, { upsert: true }).catch(err => {
-        console.log(err);
+    console.log(deviceData);
+    let device = await DeviceInfo.findOneAndUpdate({ "user_id": req.token.user_id }, deviceData, { upsert: true }).catch(err => {
+        console.error(err.message, err.stack);
     });
+    console.log(device)
     res.json({
         message: "success"
     });
 });
 
+
+/*
+This api for Logout/deleting whole data for particular User.
+*/
 router.post('/disconnectGdprAccount', async (req, res) => {
     try {
         let auth_id = req.body.authID;
         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.log(err);
+            console.error(err.message, err.stack);
         });
         console.log(doc)
         if (doc) {
-            // let newvalues = {
-            //     $set: {
-            //         "is_logout": true
-            //     }
-            // };
-            // let resp = await userDetails.findOneAndUpdate({ "_id": doc.user_id  }, newvalues, { upsert: true }).catch(err => { console.log(err); });
-            // console.log(resp)
             res.json({
                 message: "success"
             });
+        }else{
+            res.status(400).json({
+                message: "fail"
+            });
         }
     } catch (ex) {
+        console.error(ex.message, ex.stack);
     }
 });
 

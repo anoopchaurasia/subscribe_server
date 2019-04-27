@@ -1,0 +1,35 @@
+
+db.userdetails.find().snapshot().forEach(
+    function (doc) {
+        db.users.save(doc);
+    }
+);
+
+
+
+
+db.authtokens.find().snapshot().forEach(
+    function (doc) {
+        doc.user_id = ObjectId(doc.user_id);
+        db.authotokens.save(doc);
+    }
+);
+
+
+db.fcmtokens.find().snapshot().forEach(
+    function (doc) {
+    doc.user_id = ObjectId(doc.user_id);
+        db.fcmotokens.save(
+           doc
+        );
+    }
+);
+
+db.tokens.find().snapshot().forEach(
+    function (doc) {
+        doc.user_id = ObjectId(doc.user_id);
+        db.tokenos.save(
+           doc
+        );
+    }
+);
