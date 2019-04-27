@@ -64,10 +64,11 @@ class ExpenseBit {
                 console.error(err.message, err.stack);
             });
             if (mailIDSARRAY.length != 0) {
-                await GmailApi.batchModifyAddLabels(auth, mailIDSARRAY, labelarry);
-                await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['INBOX']);
-                await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PROMOTIONS']);
-                await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PERSONAL']);
+                await GmailApi.batchModifyAddAndRemoveLabels(auth,mailIDSARRAY,labelarry,['INBOX','CATEGORY_PERSONAL','CATEGORY_PROMOTIONS']);
+                // await GmailApi.batchModifyAddLabels(auth, mailIDSARRAY, labelarry);
+                // await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['INBOX']);
+                // await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PROMOTIONS']);
+                // await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PERSONAL']);
             }
         }
     }
@@ -98,8 +99,9 @@ class ExpenseBit {
             labelarry[0] = label;
             let emailIdList = mailList.map(x => x.email_id);
             if (emailIdList) {
-                await GmailApi.batchModifyRemoveLabels(auth, emailIdList,labelarry);
-                await GmailApi.batchModifyAddLabels(auth, emailIdList, ['INBOX']);
+                await GmailApi.batchModifyAddAndRemoveLabels(auth,emailIdList,['INBOX'],labelarry)
+                // await GmailApi.batchModifyRemoveLabels(auth, emailIdList,labelarry);
+                // await GmailApi.batchModifyAddLabels(auth, emailIdList, ['INBOX']);
             }
         }
     }

@@ -53,7 +53,7 @@ class TokenHandler {
             console.error(e.message, e.stack);
             return true
         });
-        if(response.data && response.data['access_token']) {
+        if(response && response.data && response.data['access_token']) {
             body = response.data;
             authToken.access_token = body.access_token;
             authToken.expiry_date = new Date(new Date().getTime() + body.expires_in * 1000);
@@ -105,7 +105,7 @@ class TokenHandler {
         }
         let response = await axios(settings).catch(e => console.error(e.message, e.stack));
         
-        if (response.data && response.data['access_token']) {
+        if (response && response.data && response.data['access_token']) {
             body = response.data;
             authToken.access_token = body.access_token;
             authToken.expiry_date = new Date(new Date().getTime() + body.expires_in * 1000);

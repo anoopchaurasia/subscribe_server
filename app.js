@@ -1,5 +1,9 @@
 'use strict'
 require("dotenv").config();
+require("jsfm");
+fm.basedir = process.cwd() + "/js";
+global.basedir = process.cwd();
+
 const express = require('express');
 const bodyParser = require('body-parser');
 var Raven = require('raven');

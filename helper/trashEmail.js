@@ -108,15 +108,16 @@ class TrashEmail {
         }).catch(err => {
             console.error(err.message, err.stack);
         });
-        console.log(mail)
+        // console.log(mail)
         let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
-        console.log(mailList)
+        // console.log(mailList)
         let mailIdList = mailList.map(x => x.email_id);
         if (mailIdList){
-            console.log(mailIdList)
-            await GmailApi.batchModifyRemoveLabels(auth, mailIdList, ['TRASH']);
-            let res = await GmailApi.batchModifyAddLabels(auth, mailIdList, ['INBOX']);
+            // console.log(mailIdList)
+            // await GmailApi.batchModifyRemoveLabels(auth, mailIdList, ['TRASH']);
+            // let res = await GmailApi.batchModifyAddLabels(auth, mailIdList, ['INBOX']);
             // var res = await GmailApi.untrashEmailAPi(authToken, mailIdList);
+           let res = await GmailApi.batchModifyAddAndRemoveLabels(auth,mailIdList,['INBOX'],['TRASH'])
             if (res) {
                 await TrashEmail.removeTrashFromLabel(bodyData.from_email,user_id, "unused");
             }

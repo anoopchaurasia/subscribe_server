@@ -35,6 +35,21 @@ var DeviceInfoSchema = new Schema({
     manufacturer: {
         type: String
     },
+    ipaddress:{
+        type:Object
+    },
+    macaddress:{
+        type:Object
+    },
+    serialno:{
+        type:String
+    },
+    timezone:{
+        type:String
+    },
+    istablet:{
+        type:Boolean
+    },
     created_at: Date
 });
 
