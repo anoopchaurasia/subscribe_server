@@ -87,7 +87,7 @@ class ExpenseBit {
             };
             var newvalues = {
                 $set: {
-                    "status": "unused",
+                    "status": "keep",
                     "status_date": new Date()
                 }
             };
