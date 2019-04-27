@@ -119,7 +119,7 @@ class TrashEmail {
             // var res = await GmailApi.untrashEmailAPi(authToken, mailIdList);
            let res = await GmailApi.batchModifyAddAndRemoveLabels(auth,mailIdList,['INBOX'],['TRASH'])
             if (res) {
-                await TrashEmail.removeTrashFromLabel(bodyData.from_email,user_id, "unused");
+                await TrashEmail.removeTrashFromLabel(bodyData.from_email,user_id, "keep");
             }
         }
         
