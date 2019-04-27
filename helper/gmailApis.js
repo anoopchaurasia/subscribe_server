@@ -194,11 +194,14 @@ class GmailApis {
         This function will modify Add and remove labels Mail in Batch with given Parameters
     */
     static async batchModifyAddAndRemoveLabels(auth, mailIds, addLabels, removeLabels) {
-        const gmail = google.gmail({ version: 'v1', auth });
-        let resp = await gmail.users.messages.batchModify({
+        console.log(mailIds.length);
+        if(mailIds.length<=0) return;
+        var msgIDS = mailIds.splice(0,998);
+        let gmail = google.gmail({ version: 'v1', auth });
+        var resp = await gmail.users.messages.batchModify({
             userId: 'me',
             resource: {
-                'ids': mailIds,
+                'ids': msgIDS,
                 'addLabelIds': addLabels,
                 "removeLabelIds": removeLabels
             }
@@ -208,8 +211,8 @@ class GmailApis {
         });
         if(resp){
             console.log(resp.status)
-            return resp
         }
+        return GmailApis.batchModifyAddAndRemoveLabels(auth,mailIds,addLabels,removeLabels);
     }
 
     /*
