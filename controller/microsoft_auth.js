@@ -221,6 +221,34 @@ router.post('/revertMailToInbox', async (req, res) => {
     }
 });
 
+router.post('/revertTrashMailToInbox', async (req, res) => {
+    try {
+        let auth_id = req.body.authID;
+        let from_email = req.body.from_email;
+        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+            console.log(err);
+        });
+        if (doc) {
+            let tokenInfo = await auth_token.findOne({ "user_id": doc.user_id }).catch(err => {
+                console.log(err);
+            });
+            if (tokenInfo) {
+                let accessToken = await check_Token_info(doc.user_id, tokenInfo);
+                if (accessToken) {
+                    let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
+                    let id = await getRevertTrashMailFolderList(accessToken, doc.user_id, link, from_email, null, null)
+                    res.status(200).json({
+                        error: false,
+                        data: "moving"
+                    })
+                }
+            }
+        }
+    } catch (ex) {
+        res.sendStatus(400);
+    }
+});
+
 
 
 
@@ -587,6 +615,49 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email,sour
                 if (res['@odata.nextLink']) {
                     
                     await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email,source,dest)
+                }
+            }
+        }
+    });
+}
+
+let getRevertTrashMailFolderList = async (accessToken, user_id, link, from_email, source, dest) => {
+    var settings = {
+        "url": link,
+        "method": "GET",
+        "headers": {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + accessToken
+        }
+    }
+
+    Request(settings, async (error, response, body) => {
+        if (error) {
+            return console.log(error);
+        }
+        if (body) {
+            const res = JSON.parse(body);
+            let length = res.value.length;
+            let count = 0;
+            await res.value.forEach(async folder => {
+                // console.log(folder)
+                count++;
+                if (folder.displayName == 'Inbox') {
+                    console.log(folder)
+                    dest = folder.id;
+                } else if (folder.displayName == 'Junk Email') {
+                    console.log(folder)
+                    source = folder.id;
+                }
+                console.log(dest, source);
+                if (dest && source) {
+                    return await RevertMailToInbox(user_id, accessToken, from_email, source, dest);
+                }
+            });
+            if (count == length) {
+                if (res['@odata.nextLink']) {
+
+                    await getRevertTrashMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email, source, dest)
                 }
             }
         }
