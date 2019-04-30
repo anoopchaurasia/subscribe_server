@@ -57,7 +57,6 @@ router.get('/getOutLookApiUrl', async function (req, res) {
 
 
 router.post('/getMail', async function (req, resp, next) {
-    console.log(req.body)
     let authCode = req.body.authID;
     let userInfo = await token_model.findOne({ token: authCode }).catch(e => console.error(e));
     let token = await auth_token.findOne({ "user_id": userInfo.user_id });
@@ -94,9 +93,7 @@ router.post('/getMail', async function (req, resp, next) {
         });
 
     } else {
-        resp.status(404).json({
-            error: false
-        })
+        resp.sendStatus(404);
     }
 });
 
@@ -208,7 +205,7 @@ router.post('/revertMailToInbox', async (req, res) => {
                 let accessToken = await check_Token_info(doc.user_id, tokenInfo);
                 if (accessToken) {
                     let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-                    let id = await getRevertMailFolderList(accessToken, doc.user_id, link, from_email,null,null)
+                    let id = await getRevertMailFolderList(accessToken, doc.user_id, link, from_email, null, null)
                     res.status(200).json({
                         error: false,
                         data: "moving"
@@ -338,17 +335,17 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
                 if (error) {
                     return console.log(error);
                 }
-                if(response){
+                if (response) {
                     let resp = JSON.parse(response.body);
-                    if(resp && resp['id']){
-                        console.log(JSON.parse(response.body).id)
+                    if (resp && resp['id']) {
+
                         var oldvalue = {
                             "email_id": email_id,
-                            "from_email_id":mail._id
+                            "from_email_id": mail._id
                         };
                         var newvalues = {
                             $set: {
-                                "email_id":resp['id']
+                                "email_id": resp['id']
                             }
                         };
                         await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
@@ -424,7 +421,7 @@ async function MoveMailToTrashFromInBOX(user_id, accessToken, from_email, label_
             if (response) {
                 let resp = JSON.parse(response.body);
                 if (resp && resp['id']) {
-                    console.log(JSON.parse(response.body).id)
+
                     var oldvalue = {
                         "email_id": email_id,
                         "from_email_id": mail._id
@@ -593,7 +590,7 @@ let getFolderList = async (accessToken, user_id, link, from_email) => {
 }
 
 
-let getRevertMailFolderList = async (accessToken, user_id, link, from_email,source,dest) => {
+let getRevertMailFolderList = async (accessToken, user_id, link, from_email, source, dest) => {
     var settings = {
         "url": link,
         "method": "GET",
@@ -612,24 +609,23 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email,sour
             let length = res.value.length;
             let count = 0;
             await res.value.forEach(async folder => {
-                // console.log(folder)
+                
                 count++;
                 if (folder.displayName == 'Inbox') {
-                    console.log(folder)
+
                     dest = folder.id;
-                }else if (folder.displayName == 'Unsubscribed Emails'){
-                    console.log(folder)
+                } else if (folder.displayName == 'Unsubscribed Emails') {
+
                     source = folder.id;
                 }
-                console.log(dest,source);
-                if(dest && source){
+
+                if (dest && source) {
                     return await RevertMailToInbox(user_id, accessToken, from_email, source, dest);
                 }
             });
             if (count == length) {
                 if (res['@odata.nextLink']) {
-                    
-                    await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email,source,dest)
+                    await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email, source, dest)
                 }
             }
         }
@@ -655,23 +651,20 @@ let getRevertTrashMailFolderList = async (accessToken, user_id, link, from_email
             let length = res.value.length;
             let count = 0;
             await res.value.forEach(async folder => {
-                // console.log(folder)
                 count++;
                 if (folder.displayName == 'Inbox') {
-                    console.log(folder)
+
                     dest = folder.id;
                 } else if (folder.displayName == 'Junk Email') {
-                    console.log(folder)
                     source = folder.id;
                 }
-                console.log(dest, source);
+
                 if (dest && source) {
                     return await RevertMailToInbox(user_id, accessToken, from_email, source, dest);
                 }
             });
             if (count == length) {
                 if (res['@odata.nextLink']) {
-
                     await getRevertTrashMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email, source, dest)
                 }
             }
@@ -681,7 +674,7 @@ let getRevertTrashMailFolderList = async (accessToken, user_id, link, from_email
 
 
 
-async function RevertMailToInbox(user_id, accessToken, from_email,source, label_id) {
+async function RevertMailToInbox(user_id, accessToken, from_email, source, label_id) {
     let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
     let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
     if (mailList) {
@@ -701,7 +694,7 @@ async function RevertMailToInbox(user_id, accessToken, from_email,source, label_
         });
         await mailIDSARRAY.asynForEach(async email_id => {
             var settings = {
-                "url": encodeURI("https://graph.microsoft.com/v1.0/me/mailFolders/"+source+"/messages/" + email_id + "/move"),
+                "url": encodeURI("https://graph.microsoft.com/v1.0/me/mailFolders/" + source + "/messages/" + email_id + "/move"),
                 "method": "POST",
                 "headers": {
                     'Content-Type': 'application/json',
@@ -718,7 +711,7 @@ async function RevertMailToInbox(user_id, accessToken, from_email,source, label_
                 if (response) {
                     let resp = JSON.parse(response.body);
                     if (resp && resp['id']) {
-                        console.log(JSON.parse(response.body).id)
+
                         var oldvalue = {
                             "email_id": email_id,
                             "from_email_id": mail._id
@@ -773,7 +766,6 @@ let getFolderListForTrash = async (accessToken, user_id, link, from_email) => {
                     await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
                         console.log(err);
                     });
-                    console.log(folder.id)
                     return await MoveMailToTrashFromInBOX(user_id, accessToken, from_email, folder.id);
                 }
             });
@@ -966,7 +958,7 @@ router.get('/auth/callback', async function (req, res) {
             console.log(tokenid)
             if (tokenid) {
                 var jsondata = { "tokenid": token_uniqueid, "user": existingUser };
-                res.send();
+                resp.sendStatus(200);
             }
         } else {
             users.findOne({ state: state }, async function (err, newUserData) {
@@ -993,7 +985,7 @@ router.get('/auth/callback', async function (req, res) {
                     if (tokenid) {
                         var jsondata = { "tokenid": token_uniqueid, "user": newUser };
                         console.log(jsondata)
-                        res.send();
+                        resp.sendStatus(200);
                     }
                 }
 

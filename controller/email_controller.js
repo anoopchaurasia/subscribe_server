@@ -360,6 +360,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
             }
         }
     } catch (err) {
+        res.sendStatus(400);
         console.error(err.message, ex.stack);
     }
 });
