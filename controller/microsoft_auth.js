@@ -651,7 +651,7 @@ let getRevertTrashMailFolderList = async (accessToken, user_id, link, from_email
                 }
                 console.log(dest, source);
                 if (dest && source) {
-                    return await RevertMailToInbox(user_id, accessToken, from_email, source, dest);
+                    return await RevertTrashMailToInbox(user_id, accessToken, from_email, source, dest);
                 }
             });
             if (count == length) {
@@ -665,6 +665,64 @@ let getRevertTrashMailFolderList = async (accessToken, user_id, link, from_email
 }
 
 
+
+async function RevertTrashMailToInbox(user_id, accessToken, from_email, source, label_id) {
+    let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
+    let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
+    if (mailList) {
+        let mailIDSARRAY = mailList.map(x => x.email_id);
+        var oldvalue = {
+            "from_email": from_email,
+            "user_id": user_id
+        };
+        var newvalues = {
+            $set: {
+                "status": "keep",
+                "status_date": new Date()
+            }
+        };
+        await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+            console.error(err.message, err.stack);
+        });
+        await mailIDSARRAY.asynForEach(async email_id => {
+            var settings = {
+                "url": encodeURI("https://graph.microsoft.com/v1.0/me/mailFolders/" + source + "/messages/" + email_id + "/move"),
+                "method": "POST",
+                "headers": {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                "body": JSON.stringify({ "destinationId": label_id })
+            }
+            console.log(settings)
+
+            Request(settings, async (error, response, body) => {
+                if (error) {
+                    return console.log(error);
+                }
+                if (response) {
+                    console.log(response.body)
+                    // let resp = JSON.parse(response.body);
+                    // if (resp && resp['id']) {
+                    //     console.log(JSON.parse(response.body).id)
+                    //     var oldvalue = {
+                    //         "email_id": email_id,
+                    //         "from_email_id": mail._id
+                    //     };
+                    //     var newvalues = {
+                    //         $set: {
+                    //             "email_id": resp['id']
+                    //         }
+                    //     };
+                    //     await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                    //         console.error(err.message, err.stack);
+                    //     });
+                    // }
+                }
+            });
+        });
+    }
+}
 
 async function RevertMailToInbox(user_id, accessToken, from_email,source, label_id) {
     let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
