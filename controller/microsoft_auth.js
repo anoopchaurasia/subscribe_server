@@ -558,9 +558,10 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => 
                 // console.log(folder)
                 count++;
                 if (folder.displayName == 'Inbox') {
+                    console.log(folder)
                     dest = folder.id;
-                }
-                if (folder.displayName == 'Unsubscribed Emails'){
+                }else if (folder.displayName == 'Unsubscribed Emails'){
+                    console.log(folder)
                     source = folder.id;
                 }
                 console.log(dest,source);
