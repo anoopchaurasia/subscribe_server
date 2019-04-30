@@ -311,11 +311,22 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
                     return console.log(error);
                 }
                 if(response){
-                    console.log(JSON.parse(response.body))
-                    console.log(JSON.parse(response.body).id)
-                }
-                if (body) {
-                    console.log("here")
+                    let resp = JSON.parse(response.body);
+                    if(resp && resp['id']){
+                        console.log(JSON.parse(response.body).id)
+                        var oldvalue = {
+                            "email_id": email_id,
+                            "user_id": user_id
+                        };
+                        var newvalues = {
+                            $set: {
+                                "email_id":resp['id']
+                            }
+                        };
+                        await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                            console.error(err.message, err.stack);
+                        });
+                    }
                 }
             });
         });
