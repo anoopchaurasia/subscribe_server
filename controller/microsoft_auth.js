@@ -603,6 +603,9 @@ async function RevertMailToInbox(user_id, accessToken, from_email, label_id) {
                 if (error) {
                     return console.log(error);
                 }
+                if(response){
+                    console.log(response)
+                }
                 if (body) {
                     console.log("here")
                 }
