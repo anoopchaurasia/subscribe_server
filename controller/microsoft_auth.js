@@ -322,8 +322,11 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
         await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
             console.error(err.message, err.stack);
         });
+        let batchRequest=[]
+        let count = 0;
         await mailIDSARRAY.asynForEach(async email_id => {
             var settings = {
+                "id":email_id,
                 "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + email_id + "/move"),
                 "method": "POST",
                 "headers": {
@@ -332,33 +335,77 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
                 },
                 "body": JSON.stringify({ "destinationId": label_id })
             }
+            count++;
+            batchRequest.push(settings);
+            if(count==mailIDSARRAY.length-1){
+                await sendRequestInBatch(batchRequest)
+            }
+
             // console.log(settings)
 
-            Request(settings, async (error, response, body) => {
-                if (error) {
-                    return console.log(error);
-                }
-                if (response) {
-                    let resp = JSON.parse(response.body);
-                    if (resp && resp['id']) {
+            // Request(settings, async (error, response, body) => {
+            //     if (error) {
+            //         return console.log(error);
+            //     }
+            //     if (response) {
+            //         let resp = JSON.parse(response.body);
+            //         if (resp && resp['id']) {
 
-                        var oldvalue = {
-                            "email_id": email_id,
-                            "from_email_id": mail._id
-                        };
-                        var newvalues = {
-                            $set: {
-                                "email_id": resp['id']
-                            }
-                        };
-                        await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                            console.error(err.message, err.stack);
-                        });
-                    }
-                }
-            });
+            //             var oldvalue = {
+            //                 "email_id": email_id,
+            //                 "from_email_id": mail._id
+            //             };
+            //             var newvalues = {
+            //                 $set: {
+            //                     "email_id": resp['id']
+            //                 }
+            //             };
+            //             await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+            //                 console.error(err.message, err.stack);
+            //             });
+            //         }
+            //     }
+            // });
         });
     }
+}
+
+async function sendRequestInBatch(reqArray) {
+    var settings = {
+        "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
+        "method": "POST",
+        "headers": {
+            'Content-Type': 'application/json',
+             'Accept': 'application/json'
+        },
+        "body": JSON.stringify(reqArray)
+    }
+    console.log(settings)
+
+    Request(settings, async (error, response, body) => {
+        if (error) {
+            return console.log(error);
+        }
+        if (response) {
+            console.log(JSON.parse(response.body))
+            // let resp = JSON.parse(response.body);
+            // if (resp && resp['id']) {
+
+            //     var oldvalue = {
+            //         "email_id": email_id,
+            //         "from_email_id": mail._id
+            //     };
+            //     var newvalues = {
+            //         $set: {
+            //             "email_id": resp['id']
+            //         }
+            //     };
+            //     await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+            //         console.error(err.message, err.stack);
+            //     });
+            // }
+        }
+    });
 }
 
 
@@ -612,7 +659,7 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email, sou
             let length = res.value.length;
             let count = 0;
             await res.value.forEach(async folder => {
-                
+
                 count++;
                 if (folder.displayName == 'Inbox') {
 
