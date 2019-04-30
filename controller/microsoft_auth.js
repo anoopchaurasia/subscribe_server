@@ -193,6 +193,36 @@ router.post('/moveEmailFromInbox', async (req, res) => {
     }
 });
 
+router.post('/revertMailToInbox', async (req, res) => {
+    try {
+        let auth_id = req.body.authID;
+        let from_email = req.body.from_email;
+        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+            console.log(err);
+        });
+        if (doc) {
+            let tokenInfo = await auth_token.findOne({ "user_id": doc.user_id }).catch(err => {
+                console.log(err);
+            });
+            if (tokenInfo) {
+                let accessToken = await check_Token_info(doc.user_id, tokenInfo);
+                if (accessToken) {
+                    let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
+                    let id = await getRevertMailFolderList(accessToken, doc.user_id, link, from_email)
+                    res.status(200).json({
+                        error: false,
+                        data: "moving"
+                    })
+                }
+            }
+        }
+    } catch (ex) {
+        res.sendStatus(400);
+    }
+});
+
+
+
 
 
 router.post('/moveEmailToTrashFromInbox', async (req, res) => {
@@ -453,7 +483,7 @@ let getFolderListForTrashScrapping = async (accessToken, user_id, link, emailId)
     });
 }
 
-let getFolderList = async (accessToken, user_id, link, from_email) => {
+let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => {
     var settings = {
         "url": link,
         "method": "GET",
@@ -493,7 +523,7 @@ let getFolderList = async (accessToken, user_id, link, from_email) => {
             });
             if (count == length) {
                 if (res['@odata.nextLink']) {
-                    await getFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
+                    await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
                 } else {
                     let lbl = await createFolderOutlook(accessToken, user_id)
                     return await MoveMailFromInBOX(user_id, accessToken, from_email, lbl);
@@ -501,6 +531,83 @@ let getFolderList = async (accessToken, user_id, link, from_email) => {
             }
         }
     });
+}
+
+
+let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => {
+    var settings = {
+        "url": link,
+        "method": "GET",
+        "headers": {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + accessToken
+        }
+    }
+
+    Request(settings, async (error, response, body) => {
+        if (error) {
+            return console.log(error);
+        }
+        if (body) {
+            const res = JSON.parse(body);
+            let length = res.value.length;
+            let count = 0;
+            await res.value.asynForEach(async folder => {
+                count++;
+                if (folder.displayName == 'Inbox') {
+                    return await RevertMailToInbox(user_id, accessToken, from_email, folder.id);
+                }
+            });
+            if (count == length) {
+                if (res['@odata.nextLink']) {
+                    await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
+                }
+            }
+        }
+    });
+}
+
+
+
+async function RevertMailToInbox(user_id, accessToken, from_email, label_id) {
+    let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
+    let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
+    if (mailList) {
+        let mailIDSARRAY = mailList.map(x => x.email_id);
+        var oldvalue = {
+            "from_email": from_email,
+            "user_id": user_id
+        };
+        var newvalues = {
+            $set: {
+                "status": "unused",
+                "status_date": new Date()
+            }
+        };
+        await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+            console.error(err.message, err.stack);
+        });
+        await mailIDSARRAY.asynForEach(async email_id => {
+            var settings = {
+                "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + email_id + "/move"),
+                "method": "POST",
+                "headers": {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                "body": JSON.stringify({ "destinationId": label_id })
+            }
+
+            Request(settings, async (error, response, body) => {
+                if (error) {
+                    return console.log(error);
+                }
+                if (body) {
+                    console.log("here")
+                }
+            });
+        });
+    }
 }
 
 let getFolderListForTrash = async (accessToken, user_id, link, from_email) => {
