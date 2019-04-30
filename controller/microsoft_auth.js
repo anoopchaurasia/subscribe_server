@@ -705,13 +705,14 @@ async function RevertMailToInbox(user_id, accessToken, from_email, source, label
                 },
                 "body": JSON.stringify({ "destinationId": label_id })
             }
-            console.log(settings)
+            // console.log(settings)
 
             Request(settings, async (error, response, body) => {
                 if (error) {
                     return console.log(error);
                 }
                 if (response) {
+                    console.log(response.body)
                     let resp = JSON.parse(response.body);
                     if (resp && resp['id']) {
 
