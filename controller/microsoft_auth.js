@@ -563,8 +563,10 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => 
                     source = folder.id;
                 }
             });
-            console.log(folder,source)
-            return await RevertMailToInbox(user_id, accessToken, from_email, source, folder);
+            console.log(folder,source);
+            if(folder && source)
+                return await RevertMailToInbox(user_id, accessToken, from_email, source, folder);
+            }
             if (count == length) {
                 if (res['@odata.nextLink']) {
                     await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
@@ -610,7 +612,7 @@ async function RevertMailToInbox(user_id, accessToken, from_email,source, label_
                     return console.log(error);
                 }
                 if(response){
-                    console.log(response)
+                    console.log(response.body)
                 }
                 if (body) {
                     console.log("here")
