@@ -332,7 +332,7 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
                 },
                 "body": JSON.stringify({ "destinationId": label_id })
             }
-            console.log(settings)
+            // console.log(settings)
 
             Request(settings, async (error, response, body) => {
                 if (error) {
@@ -712,7 +712,7 @@ async function RevertMailToInbox(user_id, accessToken, from_email, source, label
                     return console.log(error);
                 }
                 if (response) {
-                    console.log(response.body)
+                    // console.log(response.body)
                     let resp = JSON.parse(response.body);
                     if (resp && resp['id']) {
 
