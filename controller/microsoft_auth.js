@@ -333,7 +333,7 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + accessToken
                 },
-                "body": JSON.stringify({ "destinationId": label_id })
+                "body": { "destinationId": label_id }
             }
             count++;
             batchRequest.push(settings);
