@@ -629,11 +629,23 @@ async function RevertMailToInbox(user_id, accessToken, from_email,source, label_
                 if (error) {
                     return console.log(error);
                 }
-                if(response){
-                    console.log(response.body)
-                }
-                if (body) {
-                    console.log("here")
+                if (response) {
+                    let resp = JSON.parse(response.body);
+                    if (resp && resp['id']) {
+                        console.log(JSON.parse(response.body).id)
+                        var oldvalue = {
+                            "email_id": email_id,
+                            "from_email_id": mail._id
+                        };
+                        var newvalues = {
+                            $set: {
+                                "email_id": resp['id']
+                            }
+                        };
+                        await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                            console.error(err.message, err.stack);
+                        });
+                    }
                 }
             });
         });
