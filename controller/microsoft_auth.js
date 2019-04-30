@@ -553,6 +553,7 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => 
             let length = res.value.length;
             let count = 0;
             await res.value.asynForEach(async folder => {
+                console.log(folder)
                 count++;
                 if (folder.displayName == 'Inbox') {
                     return await RevertMailToInbox(user_id, accessToken, from_email, folder.id);
@@ -580,7 +581,7 @@ async function RevertMailToInbox(user_id, accessToken, from_email, label_id) {
         };
         var newvalues = {
             $set: {
-                "status": "unused",
+                "status": "keep",
                 "status_date": new Date()
             }
         };
