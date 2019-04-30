@@ -958,7 +958,7 @@ router.get('/auth/callback', async function (req, res) {
             console.log(tokenid)
             if (tokenid) {
                 var jsondata = { "tokenid": token_uniqueid, "user": existingUser };
-                resp.sendStatus(200);
+                res.sendStatus(200);
             }
         } else {
             users.findOne({ state: state }, async function (err, newUserData) {
@@ -985,7 +985,7 @@ router.get('/auth/callback', async function (req, res) {
                     if (tokenid) {
                         var jsondata = { "tokenid": token_uniqueid, "user": newUser };
                         console.log(jsondata)
-                        resp.sendStatus(200);
+                        res.sendStatus(200);
                     }
                 }
 
