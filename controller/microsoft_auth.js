@@ -379,7 +379,7 @@ async function sendRequestInBatch(accessToken,reqArray) {
              'Accept': 'application/json',
             'Authorization': 'Bearer ' + accessToken
         },
-        "body": JSON.stringify(reqArray)
+        "body": JSON.stringify({"requests":reqArray})
     }
     console.log(settings)
 
