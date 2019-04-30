@@ -338,7 +338,7 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
             count++;
             batchRequest.push(settings);
             if(count==mailIDSARRAY.length-1){
-                await sendRequestInBatch(batchRequest)
+                await sendRequestInBatch(accessToken,batchRequest)
             }
 
             // console.log(settings)
@@ -370,13 +370,14 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
     }
 }
 
-async function sendRequestInBatch(reqArray) {
+async function sendRequestInBatch(accessToken,reqArray) {
     var settings = {
         "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
         "method": "POST",
         "headers": {
             'Content-Type': 'application/json',
-             'Accept': 'application/json'
+             'Accept': 'application/json',
+            'Authorization': 'Bearer ' + accessToken
         },
         "body": JSON.stringify(reqArray)
     }
