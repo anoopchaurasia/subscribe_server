@@ -552,13 +552,19 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => 
             const res = JSON.parse(body);
             let length = res.value.length;
             let count = 0;
+            let folder;
+            let source;
             await res.value.asynForEach(async folder => {
-                console.log(folder)
+                // console.log(folder)
                 count++;
                 if (folder.displayName == 'Inbox') {
-                    return await RevertMailToInbox(user_id, accessToken, from_email, folder.id);
+                    folder = folder.id;
+                } else if (folder.displayName == 'Unsubscribed Emails'){
+                    source = folder.id;
                 }
             });
+            console.log(folder,source)
+            return await RevertMailToInbox(user_id, accessToken, from_email, source, folder);
             if (count == length) {
                 if (res['@odata.nextLink']) {
                     await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
@@ -570,7 +576,7 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => 
 
 
 
-async function RevertMailToInbox(user_id, accessToken, from_email, label_id) {
+async function RevertMailToInbox(user_id, accessToken, from_email,source, label_id) {
     let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
     let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
     if (mailList) {
@@ -590,7 +596,7 @@ async function RevertMailToInbox(user_id, accessToken, from_email, label_id) {
         });
         await mailIDSARRAY.asynForEach(async email_id => {
             var settings = {
-                "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + email_id + "/move"),
+                "url": encodeURI("https://graph.microsoft.com/v1.0/me/mailFolders/"+source+"/messages/" + email_id + "/move"),
                 "method": "POST",
                 "headers": {
                     'Content-Type': 'application/json',
