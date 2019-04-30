@@ -311,7 +311,8 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
                     return console.log(error);
                 }
                 if(response){
-                    console.log(response.body)
+                    console.log(JSON.parse(response.body))
+                    console.log(JSON.parse(response.body).id)
                 }
                 if (body) {
                     console.log("here")
