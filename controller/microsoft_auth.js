@@ -208,7 +208,7 @@ router.post('/revertMailToInbox', async (req, res) => {
                 let accessToken = await check_Token_info(doc.user_id, tokenInfo);
                 if (accessToken) {
                     let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-                    let id = await getRevertMailFolderList(accessToken, doc.user_id, link, from_email)
+                    let id = await getRevertMailFolderList(accessToken, doc.user_id, link, from_email,null,null)
                     res.status(200).json({
                         error: false,
                         data: "moving"
@@ -534,7 +534,7 @@ let getFolderList = async (accessToken, user_id, link, from_email) => {
 }
 
 
-let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => {
+let getRevertMailFolderList = async (accessToken, user_id, link, from_email,source,dest) => {
     var settings = {
         "url": link,
         "method": "GET",
@@ -552,8 +552,6 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => 
             const res = JSON.parse(body);
             let length = res.value.length;
             let count = 0;
-            var dest;
-            var source;
             await res.value.forEach(async folder => {
                 // console.log(folder)
                 count++;
@@ -571,7 +569,7 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => 
             });
             if (count == length) {
                 if (res['@odata.nextLink']) {
-                    await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
+                    await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email,source,dest)
                 }
             }
         }
