@@ -316,7 +316,7 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
                         console.log(JSON.parse(response.body).id)
                         var oldvalue = {
                             "email_id": email_id,
-                            "user_id": user_id
+                            "from_email_id":mail._id
                         };
                         var newvalues = {
                             $set: {
