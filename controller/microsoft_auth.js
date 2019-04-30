@@ -496,7 +496,7 @@ let getFolderList = async (accessToken, user_id, link, from_email) => {
                     await getFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
                 } else {
                     let lbl = await createFolderOutlook(accessToken, user_id)
-                    return await MoveMailFromInBOX(user_id,accessToken, from_email, lbl);
+                    return await MoveMailFromInBOX(user_id, accessToken, from_email, lbl);
                 }
             }
         }
@@ -704,7 +704,7 @@ router.get('/auth/callback', async function (req, res) {
     const token = await oauth2.accessToken.create(result);;
     const userInfo = jwt.decode(token.token.id_token);
     var token_uniqueid = uniqid() + uniqid() + uniqid();
-    users.findOne({ email: userInfo.preferred_username, email_client:"outlook" }, async function (err, existingUser) {
+    users.findOne({ email: userInfo.preferred_username, email_client: "outlook" }, async function (err, existingUser) {
         if (existingUser) {
             await users.remove({ state: state }).catch(err => {
                 console.log(err);
