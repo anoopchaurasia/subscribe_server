@@ -327,7 +327,7 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
         await mailIDSARRAY.asynForEach(async email_id => {
             var settings = {
                 "id":email_id,
-                "url": "https://graph.microsoft.com/v1.0/me/messages/" + email_id + "/move",
+                "url": encodeURI("/me/messages/" + email_id + "/move"),
                 "method": "POST",
                 "headers": {
                     'Content-Type': 'application/json',
