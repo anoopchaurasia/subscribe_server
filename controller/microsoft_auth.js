@@ -552,21 +552,22 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => 
             const res = JSON.parse(body);
             let length = res.value.length;
             let count = 0;
-            let dest;
-            let source;
+            var dest;
+            var source;
             await res.value.asynForEach(async folder => {
                 // console.log(folder)
                 count++;
                 if (folder.displayName == 'Inbox') {
                     dest = folder.id;
-                } else if (folder.displayName == 'Unsubscribed Emails'){
+                }
+                if (folder.displayName == 'Unsubscribed Emails'){
                     source = folder.id;
                 }
+                console.log(dest,source);
+                if(dest && source){
+                    return await RevertMailToInbox(user_id, accessToken, from_email, source, dest);
+                }
             });
-            console.log(dest,source);
-            if(dest && source){
-                return await RevertMailToInbox(user_id, accessToken, from_email, source, dest);
-            }
             if (count == length) {
                 if (res['@odata.nextLink']) {
                     await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
