@@ -57,6 +57,7 @@ router.get('/getOutLookApiUrl', async function (req, res) {
 
 
 router.post('/getMail', async function (req, resp, next) {
+    console.log(req.body)
     let authCode = req.body.authID;
     let userInfo = await token_model.findOne({ token: authCode }).catch(e => console.error(e));
     let token = await auth_token.findOne({ "user_id": userInfo.user_id });
@@ -93,7 +94,9 @@ router.post('/getMail', async function (req, resp, next) {
         });
 
     } else {
-        resp.sendStatus(404);
+        resp.status(404).json({
+            error: false
+        })
     }
 });
 
@@ -958,7 +961,7 @@ router.get('/auth/callback', async function (req, res) {
             console.log(tokenid)
             if (tokenid) {
                 var jsondata = { "tokenid": token_uniqueid, "user": existingUser };
-                res.sendStatus(200);
+                res.send();
             }
         } else {
             users.findOne({ state: state }, async function (err, newUserData) {
@@ -985,7 +988,7 @@ router.get('/auth/callback', async function (req, res) {
                     if (tokenid) {
                         var jsondata = { "tokenid": token_uniqueid, "user": newUser };
                         console.log(jsondata)
-                        res.sendStatus(200);
+                        res.send();
                     }
                 }
 
