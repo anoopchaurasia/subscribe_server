@@ -554,7 +554,7 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => 
             let count = 0;
             var dest;
             var source;
-            await res.value.asynForEach(async folder => {
+            await res.value.forEach(async folder => {
                 // console.log(folder)
                 count++;
                 if (folder.displayName == 'Inbox') {
