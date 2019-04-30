@@ -564,7 +564,7 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email) => 
                 }
             });
             console.log(dest,source);
-            if(folder && source){
+            if(dest && source){
                 return await RevertMailToInbox(user_id, accessToken, from_email, source, dest);
             }
             if (count == length) {
