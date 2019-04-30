@@ -304,10 +304,14 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
                 },
                 "body": JSON.stringify({ "destinationId": label_id })
             }
+            console.log(settings)
 
             Request(settings, async (error, response, body) => {
                 if (error) {
                     return console.log(error);
+                }
+                if(response){
+                    console.log(response.body)
                 }
                 if (body) {
                     console.log("here")
@@ -569,6 +573,7 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email,sour
             });
             if (count == length) {
                 if (res['@odata.nextLink']) {
+                    
                     await getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email,source,dest)
                 }
             }
@@ -737,7 +742,6 @@ let checkEmail = async (emailObj, user_id, accessToken) => {
     })
     if (url != null) {
         emailInfo['user_id'] = user_id;
-        delete emailObj['@odata.etag'];
         emailInfo['mail_data'] = null;
         emailInfo['unsubscribe'] = url;
         emailInfo['status'] = "unused";
