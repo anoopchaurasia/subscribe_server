@@ -21,7 +21,8 @@ router.post('/signin', async (req, res) => {
         const token = await TokenHandler.getTokenFromCode(req.body.code);
         const payload = await TokenHandler.verifyIdToken(token);
         let user = await UserModel.findOne({
-            'email': payload.email
+            'email': payload.email,
+            "email_client": "gmail"
         }).catch(err => {
             console.error(err.message, err.stack)
         })
@@ -89,7 +90,7 @@ async function create_user(userInfoData, payload) {
         "family_name": userInfoData['family_name'] ? userInfoData.family_name : "",
         "gender": userInfoData['gender'] ? userInfoData.gender : "",
         "birth_date": userInfoData['birth_date'] ? userInfoData.birth_date : "",
-        // "is_logout": false
+        "email_client": "gmail"
     });
     return await newUser.save().catch(err => {
         console.error(err.message, err.stack);

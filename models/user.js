@@ -8,7 +8,6 @@ var UserSchema = new Schema({
     },
     email: {
         type: String,
-        unique: true
     },
     user_id: {
         type: String,
@@ -17,17 +16,23 @@ var UserSchema = new Schema({
     image_url: {
         type: String
     },
-    given_name:{
-        type:String
+    given_name: {
+        type: String
     },
-    family_name:{
-        type:String
+    family_name: {
+        type: String
     },
-    gender:{
-        type:String
+    gender: {
+        type: String
     },
-    birth_date:{
-        type:Date
+    birth_date: {
+        type: Date
+    },
+    state: {
+        type: String
+    },
+    email_client: {
+        type: String,
     }
 });
 
