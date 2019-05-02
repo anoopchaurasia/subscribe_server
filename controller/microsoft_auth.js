@@ -429,7 +429,7 @@ async function sendRequestInBatch(accessToken,reqArray) {
         if (response) {
             console.log(JSON.parse(response.body))
             let rsp = JSON.parse(response.body);
-            rsp.responses.forEach(element => {
+            await rsp.responses.asynForEach(async element => {
                 console.log(element.status)
                 if(element.status==201){
                     console.log(element.body)
