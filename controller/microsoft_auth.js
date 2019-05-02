@@ -322,54 +322,93 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
         await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
             console.error(err.message, err.stack);
         });
-        let batchRequest=[]
-        let count = 0;
-        await mailIDSARRAY.asynForEach(async email_id => {
-            var settings = {
-                "id":email_id,
-                "url": encodeURI("/me/messages/" + email_id + "/move"),
-                "method": "POST",
-                "headers": {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + accessToken
-                },
-                "body": { "destinationId": label_id }
-            }
-            count++;
-            batchRequest.push(settings);
-            if(count==mailIDSARRAY.length){
-                await sendRequestInBatch(accessToken,batchRequest)
-            }
+        await sendMailToBatchProcess(accessToken,mailIDSARRAY,label_id);
+        // let batchRequest=[]
+        // let count = 0;
+        // await mailIDSARRAY.asynForEach(async email_id => {
+        //     var settings = {
+        //         "id":email_id,
+        //         "url": encodeURI("/me/messages/" + email_id + "/move"),
+        //         "method": "POST",
+        //         "headers": {
+        //             'Content-Type': 'application/json',
+        //             'Authorization': 'Bearer ' + accessToken
+        //         },
+        //         "body": { "destinationId": label_id }
+        //     }
+        //     count++;
+        //     batchRequest.push(settings);
+        //     if(count==mailIDSARRAY.length){
+        //         await sendRequestInBatch(accessToken,batchRequest)
+        //     }
 
-            // console.log(settings)
+        //     // console.log(settings)
 
-            // Request(settings, async (error, response, body) => {
-            //     if (error) {
-            //         return console.log(error);
-            //     }
-            //     if (response) {
-            //         let resp = JSON.parse(response.body);
-            //         if (resp && resp['id']) {
+        //     // Request(settings, async (error, response, body) => {
+        //     //     if (error) {
+        //     //         return console.log(error);
+        //     //     }
+        //     //     if (response) {
+        //     //         let resp = JSON.parse(response.body);
+        //     //         if (resp && resp['id']) {
 
-            //             var oldvalue = {
-            //                 "email_id": email_id,
-            //                 "from_email_id": mail._id
-            //             };
-            //             var newvalues = {
-            //                 $set: {
-            //                     "email_id": resp['id']
-            //                 }
-            //             };
-            //             await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-            //                 console.error(err.message, err.stack);
-            //             });
-            //         }
-            //     }
-            // });
-        });
+        //     //             var oldvalue = {
+        //     //                 "email_id": email_id,
+        //     //                 "from_email_id": mail._id
+        //     //             };
+        //     //             var newvalues = {
+        //     //                 $set: {
+        //     //                     "email_id": resp['id']
+        //     //                 }
+        //     //             };
+        //     //             await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+        //     //                 console.error(err.message, err.stack);
+        //     //             });
+        //     //         }
+        //     //     }
+        //     // });
+        // });
     }
 }
 
+
+async function sendMailToBatchProcess(accessToken,mailIds,label_id){
+    console.log(mailIds.length);
+    if (mailIds.length <= 0) return;
+    var msgIDS = mailIds.splice(0, 18);
+    var batchRequest=[];
+    for(let i=0;i<msgIDS.length;i++){
+        var settings = {
+            "id": email_id,
+            "url": encodeURI("/me/messages/" + email_id + "/move"),
+            "method": "POST",
+            "headers": {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
+            "body": { "destinationId": label_id }
+        }
+        batchRequest.push(settings);
+    }
+    await sendRequestInBatch(accessToken,batchRequest)
+    // let gmail = google.gmail({ version: 'v1', auth });
+    // var resp = await gmail.users.messages.batchModify({
+    //     userId: 'me',
+    //     resource: {
+    //         'ids': msgIDS,
+    //         'addLabelIds': addLabels,
+    //         "removeLabelIds": removeLabels
+    //     }
+    // }).catch(err => {
+    //     console.error(err.message, err.stack);
+    //     return
+    // });
+    // if (resp) {
+    //     console.log(resp.status)
+    // }
+    return sendMailToBatchProcess(accessToken,mailIds,label_id);
+   
+}
 async function sendRequestInBatch(accessToken,reqArray) {
     var settings = {
         "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
