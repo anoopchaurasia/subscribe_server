@@ -441,9 +441,14 @@ async function sendRequestInBatch(accessToken,reqArray) {
                                     "email_id": element.body.id
                                 }
                             };
-                            await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                            let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
                                 console.error(err.message, err.stack);
                             });
+                            if(check){
+
+                                console.log(check)
+                            }
+
                 }
             });
             
