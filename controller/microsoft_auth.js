@@ -322,7 +322,7 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
         await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
             console.error(err.message, err.stack);
         });
-        return await sendMailToBatchProcess(accessToken,mailIDSARRAY,label_id);
+        return await sendMailToBatchProcess(accessToken, mailIDSARRAY, label_id);
         // let batchRequest=[]
         // let count = 0;
         // await mailIDSARRAY.asynForEach(async email_id => {
@@ -372,12 +372,12 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
 }
 
 
-async function sendMailToBatchProcess(accessToken,mailIds,label_id){
+async function sendMailToBatchProcess(accessToken, mailIds, label_id) {
     console.log(mailIds.length);
     if (mailIds.length <= 0) return;
     var msgIDS = mailIds.splice(0, 18);
-    var batchRequest=[];
-    for(let i=0;i<msgIDS.length;i++){
+    var batchRequest = [];
+    for (let i = 0; i < msgIDS.length; i++) {
         var settings = {
             "id": msgIDS[i],
             "url": encodeURI("/me/messages/" + msgIDS[i] + "/move"),
@@ -390,7 +390,7 @@ async function sendMailToBatchProcess(accessToken,mailIds,label_id){
         }
         batchRequest.push(settings);
     }
-    await sendRequestInBatch(accessToken,batchRequest)
+    await sendRequestInBatch(accessToken, batchRequest)
     // let gmail = google.gmail({ version: 'v1', auth });
     // var resp = await gmail.users.messages.batchModify({
     //     userId: 'me',
@@ -406,19 +406,19 @@ async function sendMailToBatchProcess(accessToken,mailIds,label_id){
     // if (resp) {
     //     console.log(resp.status)
     // }
-    return await sendMailToBatchProcess(accessToken,mailIds,label_id);
-   
+    return await sendMailToBatchProcess(accessToken, mailIds, label_id);
+
 }
-async function sendRequestInBatch(accessToken,reqArray) {
+async function sendRequestInBatch(accessToken, reqArray) {
     var settings = {
         "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
         "method": "POST",
         "headers": {
             'Content-Type': 'application/json',
-             'Accept': 'application/json',
+            'Accept': 'application/json',
             'Authorization': 'Bearer ' + accessToken
         },
-        "body": JSON.stringify({"requests":reqArray})
+        "body": JSON.stringify({ "requests": reqArray })
     }
     console.log(settings)
 
@@ -431,27 +431,24 @@ async function sendRequestInBatch(accessToken,reqArray) {
             let rsp = JSON.parse(response.body);
             await rsp.responses.asynForEach(async element => {
                 console.log(element.status)
-                if(element.status==201){
+                if (element.status == 201) {
                     console.log(element.body.id)
-                            var oldvalue = {
-                                "email_id": element.id
-                            };
-                            var newvalues = {
-                                $set: {
-                                    "email_id": element.body.id
-                                }
-                            };
-                            let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                                console.error(err.message, err.stack);
-                            });
-                            if(check){
-
-                                console.log(check)
-                            }
-
+                    var oldvalue = {
+                        "email_id": element.id
+                    };
+                    var newvalues = {
+                        $set: {
+                            "email_id": element.body.id
+                        }
+                    };
+                    let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                        console.error(err.message, err.stack);
+                    });
+                    if (check) {
+                        console.log(check)
+                    }
                 }
             });
-            
         }
     });
 }
