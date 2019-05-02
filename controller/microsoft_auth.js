@@ -431,23 +431,22 @@ async function sendRequestInBatch(accessToken,reqArray) {
             let rsp = JSON.parse(response.body);
             rsp.responses.forEach(element => {
                 console.log(element.status)
+                if(element.status==201){
+                    console.log(element.body)
+                            // var oldvalue = {
+                            //     "email_id": element.id
+                            // };
+                            // var newvalues = {
+                            //     $set: {
+                            //         "email_id": resp['id']
+                            //     }
+                            // };
+                            // await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                            //     console.error(err.message, err.stack);
+                            // });
+                }
             });
-            // let resp = JSON.parse(response.body);
-            // if (resp && resp['id']) {
-
-            //     var oldvalue = {
-            //         "email_id": email_id,
-            //         "from_email_id": mail._id
-            //     };
-            //     var newvalues = {
-            //         $set: {
-            //             "email_id": resp['id']
-            //         }
-            //     };
-            //     await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-            //         console.error(err.message, err.stack);
-            //     });
-            // }
+            
         }
     });
 }
