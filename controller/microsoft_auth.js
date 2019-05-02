@@ -379,8 +379,8 @@ async function sendMailToBatchProcess(accessToken,mailIds,label_id){
     var batchRequest=[];
     for(let i=0;i<msgIDS.length;i++){
         var settings = {
-            "id": email_id,
-            "url": encodeURI("/me/messages/" + email_id + "/move"),
+            "id": msgIDS[i],
+            "url": encodeURI("/me/messages/" + msgIDS[i] + "/move"),
             "method": "POST",
             "headers": {
                 'Content-Type': 'application/json',
