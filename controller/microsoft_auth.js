@@ -433,17 +433,17 @@ async function sendRequestInBatch(accessToken,reqArray) {
                 console.log(element.status)
                 if(element.status==201){
                     console.log(element.body)
-                            // var oldvalue = {
-                            //     "email_id": element.id
-                            // };
-                            // var newvalues = {
-                            //     $set: {
-                            //         "email_id": resp['id']
-                            //     }
-                            // };
-                            // await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                            //     console.error(err.message, err.stack);
-                            // });
+                            var oldvalue = {
+                                "email_id": element.id
+                            };
+                            var newvalues = {
+                                $set: {
+                                    "email_id": element.body.id
+                                }
+                            };
+                            await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                                console.error(err.message, err.stack);
+                            });
                 }
             });
             
