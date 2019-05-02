@@ -322,7 +322,7 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
         await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
             console.error(err.message, err.stack);
         });
-        await sendMailToBatchProcess(accessToken,mailIDSARRAY,label_id);
+        return await sendMailToBatchProcess(accessToken,mailIDSARRAY,label_id);
         // let batchRequest=[]
         // let count = 0;
         // await mailIDSARRAY.asynForEach(async email_id => {
@@ -406,7 +406,7 @@ async function sendMailToBatchProcess(accessToken,mailIds,label_id){
     // if (resp) {
     //     console.log(resp.status)
     // }
-    return sendMailToBatchProcess(accessToken,mailIds,label_id);
+    return await sendMailToBatchProcess(accessToken,mailIds,label_id);
    
 }
 async function sendRequestInBatch(accessToken,reqArray) {
@@ -428,6 +428,9 @@ async function sendRequestInBatch(accessToken,reqArray) {
         }
         if (response) {
             console.log(JSON.parse(response.body))
+            response.body.responses.forEach(element => {
+                console.log(element.status)
+            });
             // let resp = JSON.parse(response.body);
             // if (resp && resp['id']) {
 
