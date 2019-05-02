@@ -428,7 +428,8 @@ async function sendRequestInBatch(accessToken,reqArray) {
         }
         if (response) {
             console.log(JSON.parse(response.body))
-            response.body.responses.forEach(element => {
+            let rsp = JSON.parse(response.body);
+            rsp.responses.forEach(element => {
                 console.log(element.status)
             });
             // let resp = JSON.parse(response.body);
