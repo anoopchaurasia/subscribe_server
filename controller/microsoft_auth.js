@@ -432,7 +432,7 @@ async function sendRequestInBatch(accessToken,reqArray) {
             await rsp.responses.asynForEach(async element => {
                 console.log(element.status)
                 if(element.status==201){
-                    console.log(element.body)
+                    console.log(element.body.id)
                             var oldvalue = {
                                 "email_id": element.id
                             };
