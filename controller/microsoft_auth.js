@@ -337,7 +337,7 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
             }
             count++;
             batchRequest.push(settings);
-            if(count==mailIDSARRAY.length-1){
+            if(count==mailIDSARRAY.length){
                 await sendRequestInBatch(accessToken,batchRequest)
             }
 
