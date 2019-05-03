@@ -17,7 +17,6 @@ Array.prototype.asynForEach = async function (cb) {
     }
 }
 
-
 const credentials = {
     client: {
         id: process.env.APP_ID,
@@ -250,9 +249,6 @@ router.post('/revertTrashMailToInbox', async (req, res) => {
 });
 
 
-
-
-
 router.post('/moveEmailToTrashFromInbox', async (req, res) => {
     try {
         let auth_id = req.body.authID;
@@ -323,51 +319,6 @@ async function MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
             console.error(err.message, err.stack);
         });
         return await sendMailToBatchProcess(accessToken, mailIDSARRAY, label_id);
-        // let batchRequest=[]
-        // let count = 0;
-        // await mailIDSARRAY.asynForEach(async email_id => {
-        //     var settings = {
-        //         "id":email_id,
-        //         "url": encodeURI("/me/messages/" + email_id + "/move"),
-        //         "method": "POST",
-        //         "headers": {
-        //             'Content-Type': 'application/json',
-        //             'Authorization': 'Bearer ' + accessToken
-        //         },
-        //         "body": { "destinationId": label_id }
-        //     }
-        //     count++;
-        //     batchRequest.push(settings);
-        //     if(count==mailIDSARRAY.length){
-        //         await sendRequestInBatch(accessToken,batchRequest)
-        //     }
-
-        //     // console.log(settings)
-
-        //     // Request(settings, async (error, response, body) => {
-        //     //     if (error) {
-        //     //         return console.log(error);
-        //     //     }
-        //     //     if (response) {
-        //     //         let resp = JSON.parse(response.body);
-        //     //         if (resp && resp['id']) {
-
-        //     //             var oldvalue = {
-        //     //                 "email_id": email_id,
-        //     //                 "from_email_id": mail._id
-        //     //             };
-        //     //             var newvalues = {
-        //     //                 $set: {
-        //     //                     "email_id": resp['id']
-        //     //                 }
-        //     //             };
-        //     //             await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-        //     //                 console.error(err.message, err.stack);
-        //     //             });
-        //     //         }
-        //     //     }
-        //     // });
-        // });
     }
 }
 
@@ -391,24 +342,9 @@ async function sendMailToBatchProcess(accessToken, mailIds, label_id) {
         batchRequest.push(settings);
     }
     await sendRequestInBatch(accessToken, batchRequest)
-    // let gmail = google.gmail({ version: 'v1', auth });
-    // var resp = await gmail.users.messages.batchModify({
-    //     userId: 'me',
-    //     resource: {
-    //         'ids': msgIDS,
-    //         'addLabelIds': addLabels,
-    //         "removeLabelIds": removeLabels
-    //     }
-    // }).catch(err => {
-    //     console.error(err.message, err.stack);
-    //     return
-    // });
-    // if (resp) {
-    //     console.log(resp.status)
-    // }
     return await sendMailToBatchProcess(accessToken, mailIds, label_id);
-
 }
+
 async function sendRequestInBatch(accessToken, reqArray) {
     var settings = {
         "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
@@ -420,8 +356,6 @@ async function sendRequestInBatch(accessToken, reqArray) {
         },
         "body": JSON.stringify({ "requests": reqArray })
     }
-    console.log(settings)
-
     Request(settings, async (error, response, body) => {
         if (error) {
             return console.log(error);
@@ -465,7 +399,6 @@ async function trashSingleMailFromInBOX(accessToken, emailId, label_id) {
         "body": JSON.stringify({ "destinationId": label_id })
     }
 
-
     Request(settings, async (error, response, body) => {
         if (error) {
             return console.log(error);
@@ -475,6 +408,7 @@ async function trashSingleMailFromInBOX(accessToken, emailId, label_id) {
         }
     });
 }
+
 async function MoveMailToTrashFromInBOX(user_id, accessToken, from_email, label_id) {
     let mail = await email.findOne({
         from_email: from_email,
@@ -508,7 +442,6 @@ async function MoveMailToTrashFromInBOX(user_id, accessToken, from_email, label_
             "body": JSON.stringify({ "destinationId": label_id })
         }
 
-
         Request(settings, async (error, response, body) => {
             if (error) {
                 return console.log(error);
@@ -533,7 +466,6 @@ async function MoveMailToTrashFromInBOX(user_id, accessToken, from_email, label_
             }
         });
     });
-
 }
 
 let getFolderListForScrapping = async (accessToken, user_id, link, emailId) => {
@@ -704,16 +636,12 @@ let getRevertMailFolderList = async (accessToken, user_id, link, from_email, sou
             let length = res.value.length;
             let count = 0;
             await res.value.forEach(async folder => {
-
                 count++;
                 if (folder.displayName == 'Inbox') {
-
                     dest = folder.id;
                 } else if (folder.displayName == 'Unsubscribed Emails') {
-
                     source = folder.id;
                 }
-
                 if (dest && source) {
                     return await RevertMailToInbox(user_id, accessToken, from_email, source, dest);
                 }
@@ -748,12 +676,10 @@ let getRevertTrashMailFolderList = async (accessToken, user_id, link, from_email
             await res.value.forEach(async folder => {
                 count++;
                 if (folder.displayName == 'Inbox') {
-
                     dest = folder.id;
                 } else if (folder.displayName == 'Junk Email') {
                     source = folder.id;
                 }
-
                 if (dest && source) {
                     return await RevertMailToInbox(user_id, accessToken, from_email, source, dest);
                 }
@@ -787,44 +713,29 @@ async function RevertMailToInbox(user_id, accessToken, from_email, source, label
         await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
             console.error(err.message, err.stack);
         });
-        await mailIDSARRAY.asynForEach(async email_id => {
-            var settings = {
-                "url": encodeURI("https://graph.microsoft.com/v1.0/me/mailFolders/" + source + "/messages/" + email_id + "/move"),
-                "method": "POST",
-                "headers": {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + accessToken
-                },
-                "body": JSON.stringify({ "destinationId": label_id })
-            }
-            // console.log(settings)
-
-            Request(settings, async (error, response, body) => {
-                if (error) {
-                    return console.log(error);
-                }
-                if (response) {
-                    // console.log(response.body)
-                    let resp = JSON.parse(response.body);
-                    if (resp && resp['id']) {
-
-                        var oldvalue = {
-                            "email_id": email_id,
-                            "from_email_id": mail._id
-                        };
-                        var newvalues = {
-                            $set: {
-                                "email_id": resp['id']
-                            }
-                        };
-                        await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                            console.error(err.message, err.stack);
-                        });
-                    }
-                }
-            });
-        });
+        await sendRevertMailToBatchProcess(accessToken, mailIDSARRAY, source, label_id)
     }
+}
+
+async function sendRevertMailToBatchProcess(accessToken, mailIds, label_id) {
+    console.log(mailIds.length);
+    if (mailIds.length <= 0) return;
+    var msgIDS = mailIds.splice(0, 18);
+    var batchRequest = [];
+    for (let i = 0; i < msgIDS.length; i++) {
+        var settings = {
+            "url": encodeURI("/me/mailFolders/" + source + "/messages/" + email_id + "/move"),
+            "method": "POST",
+            "headers": {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
+            "body": { "destinationId": label_id }
+        }
+        batchRequest.push(settings);
+    }
+    await sendRequestInBatch(accessToken, batchRequest);
+    return await sendMailToBatchProcess(accessToken, mailIds, label_id);
 }
 
 let getFolderListForTrash = async (accessToken, user_id, link, from_email) => {
@@ -921,10 +832,8 @@ let checkEmail = async (emailObj, user_id, accessToken) => {
             anchortext.indexOf("visit this link") != -1 ||
             anchortext.indexOf("do not wish to receive our mails") != -1 ||
             anchortext.indexOf("not receiving our emails") != -1) {
-
             url = $(this).attr().href;
             console.log(url);
-
         } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
             anchorParentText.indexOf("stop receiving emails") != -1 ||
             anchorParentText.indexOf("unsubscribe") != -1 ||
@@ -944,7 +853,6 @@ let checkEmail = async (emailObj, user_id, accessToken) => {
         emailInfo['unsubscribe'] = url;
         emailInfo['status'] = "unused";
         emailInfo['status_date'] = new Date()
-
         if (emailObj.isRead) {
             emailInfo['labelIds'] = 'INBOX';
             emailInfo['main_label'] = ['INBOX'];
@@ -967,7 +875,6 @@ let checkEmail = async (emailObj, user_id, accessToken) => {
             console.log(emailInfo.from_email)
         } else {
             try {
-
                 let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
                     console.error(err.message, err.stack);
                 });
@@ -979,7 +886,6 @@ let checkEmail = async (emailObj, user_id, accessToken) => {
                         console.error(err.message, err.stack);
                     });
                 }
-
                 if (fromEmail) {
                     let doc = await emailInformation.findOne({ "email_id": emailInfoNew.email_id, "from_email_id": fromEmail._id }).catch(err => {
                         console.error(err.message, err.stack);
@@ -989,7 +895,6 @@ let checkEmail = async (emailObj, user_id, accessToken) => {
                         let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
                             console.error(err.message, err.stack);
                         });
-
                         await ExpenseBit.UpdateEmailInformation(emailInfoNew);
                         if (mailList) {
                             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
@@ -1002,7 +907,6 @@ let checkEmail = async (emailObj, user_id, accessToken) => {
                         }
                     }
                 }
-
             } catch (err) {
                 console.log(err);
             }
@@ -1084,12 +988,9 @@ router.get('/auth/callback', async function (req, res) {
                         res.send();
                     }
                 }
-
             });
         }
-
     });
-
 });
 
 
@@ -1133,7 +1034,6 @@ router.get('/getAuthTokenForApi', async function (req, res) {
                 data: "no user found"
             })
         }
-
     });
 });
 
