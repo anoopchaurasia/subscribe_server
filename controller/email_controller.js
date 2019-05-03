@@ -336,6 +336,7 @@ router.post('/keepMailInformation', async (req, res) => {
                 console.error(err.message, err.stack);
             });
         }
+        res.sendStatus(200)
     } catch (ex) {
         console.error(ex.message, ex.stack);
         res.sendStatus(400);
