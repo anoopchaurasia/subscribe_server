@@ -232,7 +232,11 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                         } else {
                             let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
                             let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
-                            await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
+                            try{
+                                await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
+                            } catch(e){
+                                require('raven').captureException(err);
+                            }
                             await Expensebit.checkEmail(bodydata, response['data'], user_id, auth);
                         }
                     } catch (e) {
@@ -332,6 +336,7 @@ router.post('/keepMailInformation', async (req, res) => {
                 console.error(err.message, err.stack);
             });
         }
+        res.sendStatus(200)
     } catch (ex) {
         console.error(ex.message, ex.stack);
         res.sendStatus(400);

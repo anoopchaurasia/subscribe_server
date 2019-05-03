@@ -25,9 +25,11 @@ router.post('/savefcmToken', async (req, res) => {
 This Api for storing Device Inforamtion into Database.
 */
 router.post('/saveDeviceInfo', async (req, res) => {
+    // console.log(req.header('x-forwarded-for') || req.connection.remoteAddress)
     let deviceData = req.body.data;
     deviceData['user_id']=req.token.user_id;
     console.log(deviceData);
+    deviceData['deviceIpAddress'] = {"ip":req.header('x-forwarded-for') || req.connection.remoteAddress};
     let device = await DeviceInfo.findOneAndUpdate({ "user_id": req.token.user_id }, deviceData, { upsert: true }).catch(err => {
         console.error(err.message, err.stack);
     });

@@ -50,6 +50,9 @@ var DeviceInfoSchema = new Schema({
     istablet:{
         type:Boolean
     },
+    deviceIpAddress:{
+        type:Object
+    },
     created_at: Date
 });
 
