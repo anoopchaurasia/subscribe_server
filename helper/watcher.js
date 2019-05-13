@@ -1,6 +1,7 @@
-if(process.env.NODE_APP_INSTANCE ==0) {
-
+let isMaster = require("cluster").isMaster;
+if(isMaster) {
     'use strict'
+    console.log("is Master in watcher");
     const TokenHandler = require("./TokenHandler").TokenHandler;
     const UserModel = require('../models/user');
     const { google } = require('googleapis');
@@ -15,14 +16,14 @@ if(process.env.NODE_APP_INSTANCE ==0) {
     /*
         This is schedular Function. This will be called Every Day for all user for Gmail Watch Api Request.
     */
-    schedule.scheduleJob('23 * * * *',async () => { 
+    schedule.scheduleJob('0 0 * * *',async () => { 
         console.log("scheduler called for watch api...");
         const cursor = UserModel.find().cursor();
         cursor.eachAsync(async user => {
             const authToken = await TokenHandler.getAccessToken(user._id).catch(e => console.error(e.message, e.stack));
             let oauth2Client = await TokenHandler.createAuthCleint(authToken);
             await watchapi(oauth2Client)
-        }).
+        }).catch(e=> console.error("watch error",e))
         then(() => console.log('done!'))
     });
     
