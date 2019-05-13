@@ -1,5 +1,5 @@
 let isMaster = require("cluster").isMaster;
-if(isMaster) {
+if(process.env.NODE_APP_INSTANCE ==0) {
     'use strict'
     console.log("is Master in watcher");
     const TokenHandler = require("./TokenHandler").TokenHandler;
