@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
 let token_model = require("../models/tokeno");
-let watchAPi = require("../helper/watcher");
 
 router.use('/auth', require('../controller/auth_controller'));
 router.use('/email', authenticate,require('../controller/email_controller'));
