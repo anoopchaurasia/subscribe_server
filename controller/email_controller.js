@@ -365,6 +365,22 @@ router.post('/getKeepedMailInfo', async (req, res) => {
     }
 });
 
+router.post('/getMailListForSender', async (req, res) => {
+    try {
+        const doc = req.token;
+        if (doc) {
+            const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(doc.user_id,req.body.from_email);
+                res.status(200).json({
+                    error: false,
+                    data: emailinfos
+                })
+        }
+    } catch (err) {
+        res.sendStatus(400);
+        console.error(err.message, ex.stack);
+    }
+});
+
 function getPlainText(payload) {
     var str = "";
     var isHtmlTag;

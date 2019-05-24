@@ -24,6 +24,13 @@ class GetEmailQuery {
         return senddata;
     }
 
+    static async getAllMailBasedOnSender(user_id,from_email){
+       let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack);});
+        let mailList = await emailInformation.find({ "from_email_id": mail._id }).catch(err => { console.error(err.message, err.stack);});
+        
+        return mailList;
+    }
+
     /*
         This function will return all unread subscription Information.
     */
