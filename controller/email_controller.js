@@ -218,7 +218,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
             if (response) {
                 if (response.data.payload || response.data.payload['parts']) {
-                    let unsub_url;
+                    let unsub_url=null;
                     let header_raw = response['data']['payload']['headers'];
                     header_raw.forEach(async data => {
                         if (data.name == "List-Unsubscribe") {
@@ -227,7 +227,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                     })
                     try {
                         if (unsub_url) {
-                            console.log(unsub_url)
+                            console.log("prantik data",unsub_url)
                             await Expensebit.checkEmailWithInscribeHeader(unsub_url, response['data'], user_id, auth);
                         } else {
                             let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
@@ -237,7 +237,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                             } catch(e){
                                 require('raven').captureException(err);
                             }
-                            await Expensebit.checkEmail(bodydata, response['data'], user_id, auth);
+                            await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth);
                         }
                     } catch (e) {
                         console.error(e.message, e.stack);
@@ -368,6 +368,23 @@ router.post('/getKeepedMailInfo', async (req, res) => {
         console.error(err.message, ex.stack);
     }
 });
+
+router.post('/getMailListForSender', async (req, res) => {
+    try {
+        const doc = req.token;
+        if (doc) {
+            const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(doc.user_id, req.body.from_email);
+            res.status(200).json({
+                error: false,
+                data: emailinfos
+            })
+        }
+    } catch (err) {
+        res.sendStatus(400);
+        console.error(err.message, err.stack);
+    }
+});
+
 
 function getPlainText(payload) {
     var str = "";
