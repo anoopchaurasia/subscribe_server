@@ -237,7 +237,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                             } catch(e){
                                 require('raven').captureException(err);
                             }
-                            await Expensebit.checkEmail(bodydata, response['data'], user_id, auth);
+                            await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth);
                         }
                     } catch (e) {
                         console.error(e.message, e.stack);
