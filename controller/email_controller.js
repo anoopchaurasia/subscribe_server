@@ -12,6 +12,15 @@ const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const MailScraper = require("../helper/mailScraper").MailScraper;
+var redis = require("redis");
+var RedisClient = redis.createClient();
+RedisClient.on('error', function (err) {
+    console.log('Redis error: ' + err);
+});
+
+RedisClient.on("ready", function () {
+    console.log("Redis is ready");
+});
 const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.email.Parser");
 /*
@@ -95,6 +104,18 @@ router.post('/getMailInfo', async (req, res) => {
         const token = req.token;
         if (token) {
             const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack));
+            // RedisClient.setex(token.user_id.toString(), 3600, JSON.stringify({}))
+            // RedisClient.flushdb(function (err, succeeded) {
+            //     console.log(succeeded); // will be true if successfull
+            // });
+            RedisClient.keys(token.user_id + "-*", (err, keylist) => {
+                if (keylist.length != 0) {
+                    RedisClient.del(keylist, function (err, o) {
+                        console.log(o)
+                    });
+                   
+                }
+            });
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             await getRecentEmail(token.user_id, oauth2Client, null);
@@ -109,17 +130,65 @@ router.post('/getMailInfo', async (req, res) => {
     }
 });
 
+router.post('/getMailListForSender', async (req, res) => {
+    try {
+        const doc = req.token;
+        if (doc) {
+            const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(doc.user_id, req.body.from_email);
+            res.status(200).json({
+                error: false,
+                data: emailinfos
+            })
+        }
+    } catch (err) {
+        res.sendStatus(400);
+        console.error(err.message, err.stack);
+    }
+});
+
+
+
 /*
-This Api for Getting all Mail Subscription for Home screen for App.
+This Api for Getting all Mail Subscri for Home screen for App.
 This will get Filter subcription(new subscription only), unread Mail Info and total Count
 */
 router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
         if (doc) {
+            RedisClient.keys(doc.user_id + "-*", async (err, keylist) => {
+                if (keylist.length != 0) {
+                    keylist.forEach(async element => {
+                        RedisClient.get(element, async (err, mail) => {
+                            console.log(mail)
+                            var mailData = JSON.parse(mail);
+                            if((mailData.unread*100/(mailData.read+mailData.unread))>90){
+                                await Expensebit.storeEmailInDB(JSON.parse(mail), doc.user_id);
+                                RedisClient.del(element, function (err, o) {
+                                    console.log(o)
+                                });
+                            }else{
+                                RedisClient.del(element, function (err, o) {
+                                    console.log(o)
+                                });
+                            }
+                        })
+                    });
+                }
+            });
+            // RedisClient.keys(doc.user_id + "-*", (err, keylist) => {
+            //     if (keylist.length != 0) {
+            //         RedisClient.del(keylist, function (err, o) {
+            //             console.log(o)
+            //         });
+
+            //     }
+            // });
             const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
             const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
             const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+            
+     
             res.status(200).json({
                 error: false,
                 data: emailinfos,

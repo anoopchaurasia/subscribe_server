@@ -14,6 +14,8 @@ mongoose.connection.once('connected', function () {
     console.log("Connected to database")
 });
 
+
+
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
