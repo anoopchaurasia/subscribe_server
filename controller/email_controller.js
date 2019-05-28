@@ -162,8 +162,11 @@ router.post('/readMailInfo', async (req, res) => {
                         RedisClient.get(element, async (err, mail) => {
                             console.log(mail)
                             var mailData = JSON.parse(mail);
+                            
                             if((mailData.unread*100/(mailData.read+mailData.unread))>90){
-                                await Expensebit.storeEmailInDB(JSON.parse(mail), doc.user_id);
+                                if((mailData.read+mailData.unread)>=5){
+                                    await Expensebit.storeEmailInDB(JSON.parse(mail), doc.user_id);
+                                }
                                 RedisClient.del(element, function (err, o) {
                                     console.log(o)
                                 });
