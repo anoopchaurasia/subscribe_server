@@ -231,46 +231,12 @@ class ExpenseBit {
         return emailInfo;
     }
 
-    static async createEmailInfoNew(user_id, mail) {
-        let emailInfo = {};
-        emailInfo['user_id'] = user_id;
-        emailInfo['mail_data'] = null;
-        emailInfo['email_id'] = mail.id;
-        emailInfo['unsubscribe'] = null;
-        emailInfo['historyId'] = mail.historyId;
-        emailInfo['labelIds'] = mail.labelIds;
-        emailInfo['main_label'] = mail.labelIds;
-        emailInfo['status'] = "unused";
-        emailInfo['status_date'] = new Date()
-        if (mail.labelIds.indexOf("TRASH") != -1) {
-            emailInfo['status'] = "trash";
-        }
-        let header_raw = mail['payload']['headers']
-        header_raw.forEach(async data => {
-            if (data.name == "From") {
-                let from_data = data.value.indexOf("<") != -1 ? data.value.split("<")[1].replace(">", "") : data.value;
-                emailInfo['from_email_name'] = data.value;
-                emailInfo['from_email'] = from_data;
-            } else if (data.name == "To") {
-                emailInfo['to_email'] = data.value;
-            } else if (data.name == "Subject") {
-                emailInfo['subject'] = data.value;
-            }
-        });
-        return emailInfo;
-    }
-
+  
     static async checkEmailForUnreadCount(user_id,email){
         let data={};
-        // > RedisClient.keys("123-*", (err, mail) => { console.log(mail) })
-        // true
-        //     > ['123-jeet@gmail.com', '123-jitu@gmail.com']
-        //     > RedisClient.keys("123-*", (err, mail) => { console.log(mail) })
-        // RedisClient.setex(user_id.toString(), 3600, JSON.stringify({}))
         if(email && email.labelIds.length!=0){
             RedisClient.get(user_id+'-'+email.from_email, (err, mail) => {
                 if (mail) {
-                    console.log(mail)
                     data = JSON.parse(mail);
                         if (email.labelIds.includes("UNREAD")) {
                             email["read"]= data['read'];
@@ -293,14 +259,11 @@ class ExpenseBit {
             });
             
         }
-        // let redisuser = await RedisClient.get(user_id.toString())
-       
-
     }
 
 
     static async checkEmailNew(emailObj, mail, user_id, auth) {
-        let emailInfo = await ExpenseBit.createEmailInfoNew(user_id, mail);
+        let emailInfo = await ExpenseBit.createEmailInfo(user_id,null, mail);
         await ExpenseBit.checkEmailForUnreadCount(user_id,emailInfo);
         if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
             console.log(emailInfo.from_email)
@@ -405,10 +368,6 @@ class ExpenseBit {
                         await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id },emailInfo,{upsert:true}).catch(err => {
                             console.error(err.message, err.stack);
                         });
-                        // let emailData = new email(emailInfo);
-                        // await emailData.save().catch(err => {
-                        //     console.error(err.message);
-                        // });
                         fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
                             console.error(err.message, err.stack);
                         });
@@ -420,9 +379,6 @@ class ExpenseBit {
                         });
                         if (!doc) {
                             emailInfoNew['from_email_id']=fromEmail._id;
-                            // let emailInform = new emailInformation(emailInfoNew);
-
-                            // await emailInform.save().catch(err => { console.error(err.message); });
                             let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
                                 console.error(err.message, err.stack);
                             });
@@ -515,10 +471,6 @@ class ExpenseBit {
                         await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
                             console.error(err.message, err.stack);
                         });
-                        // let emailData = new email(emailInfo);
-                        // await emailData.save().catch(err => {
-                        //     console.error(err.message);
-                        // });
                         fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
                             console.error(err.message, err.stack);
                         });
@@ -530,10 +482,7 @@ class ExpenseBit {
                         });
                         if (!doc) {
                             emailInfoNew['from_email_id'] = fromEmail._id;
-                            // let emailInform = new emailInformation(emailInfoNew);
-
-                            // await emailInform.save().catch(err => { console.error(err.message); });
-                            let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
+                           let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
                                 console.error(err.message, err.stack);
                             });
 

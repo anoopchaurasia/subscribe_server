@@ -4,7 +4,6 @@ let token_model = require("../models/tokeno");
 
 router.use('/auth', require('../controller/auth_controller'));
 router.use('/email', authenticate,require('../controller/email_controller'));
-// router.use('/pubsub',require('../controller/pubsub_controller'));
 router.use('/users', authenticate,require('../controller/user_controller'));
 
 async function authenticate(req, res, next){

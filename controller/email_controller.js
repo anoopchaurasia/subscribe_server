@@ -7,7 +7,6 @@ const Expensebit = require("../helper/expenseBit").ExpenseBit;
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 const router = express.Router();
 const { google } = require('googleapis');
-const simpleParser = require('mailparser').simpleParser;
 const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
@@ -104,18 +103,14 @@ router.post('/getMailInfo', async (req, res) => {
         const token = req.token;
         if (token) {
             const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack));
-            // RedisClient.setex(token.user_id.toString(), 3600, JSON.stringify({}))
-            // RedisClient.flushdb(function (err, succeeded) {
-            //     console.log(succeeded); // will be true if successfull
-            // });
-            RedisClient.keys(token.user_id + "-*", (err, keylist) => {
-                if (keylist.length != 0) {
-                    RedisClient.del(keylist, function (err, o) {
-                        console.log(o)
-                    });
+            // RedisClient.keys(token.user_id + "-*", (err, keylist) => {
+            //     if (keylist.length != 0) {
+            //         RedisClient.del(keylist, function (err, o) {
+            //             console.log(o)
+            //         });
                    
-                }
-            });
+            //     }
+            // });
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             await getRecentEmail(token.user_id, oauth2Client, null);
@@ -179,14 +174,6 @@ router.post('/readMailInfo', async (req, res) => {
                     });
                 }
             });
-            // RedisClient.keys(doc.user_id + "-*", (err, keylist) => {
-            //     if (keylist.length != 0) {
-            //         RedisClient.del(keylist, function (err, o) {
-            //             console.log(o)
-            //         });
-
-            //     }
-            // });
             const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
             const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
             const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);

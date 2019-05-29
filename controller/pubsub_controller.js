@@ -21,11 +21,6 @@ router.post('/getemail', async (req, response) => {
     }
     const dataUtf8encoded = Buffer.from(req.body.message.data, 'base64').toString('utf8');
     var content;
-    // content = JSON.parse(dataUtf8encoded);
-    // var email_id = content.emailAddress;
-    // var historyID = content.historyId;
-    // console.log(email_id,historyID)
-    // return response.sendStatus(200);
     try {
         content = JSON.parse(dataUtf8encoded);
         var email_id = content.emailAddress;
@@ -35,7 +30,6 @@ router.post('/getemail', async (req, response) => {
         if (userInfo) {
             let is_expire = await TokenHandler.checkTokenExpiry(userInfo._id);
             if (is_expire != false) {
-                // console.log("end history")
                 return response.sendStatus(200);
             } else {
                 let authToken = await TokenHandler.getAccessToken(userInfo._id).catch(e => console.error(e));
@@ -77,7 +71,6 @@ async function getRecentEmail(user_id, auth, mids) {
         });
         if(!doc){
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': mids }).catch(err => {
-                // console.log(err);
                 console.log("no msg")
             });
             if (response) {
