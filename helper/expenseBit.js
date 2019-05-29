@@ -9,15 +9,16 @@ const cheerio = require('cheerio');
 const Pubsub = require("../helper/pubsub").Pubsub;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const GmailApi = require("../helper/gmailApis").GmailApis;
-var redis = require("redis");
-var RedisClient = redis.createClient();
-RedisClient.on('error', function(err) {
-    console.log('Redis error: ' + err);
-});
+fm.Include("com.anoop.vendor.Redis");
+// var redis = require("redis");
+// var RedisClient = redis.createClient();
+// RedisClient.on('error', function(err) {
+//     console.log('Redis error: ' + err);
+// });
 
-RedisClient.on("ready",function () {
-    console.log("Redis is ready");
-});
+// RedisClient.on("ready",function () {
+//     console.log("Redis is ready");
+// });
 let ds = {}
 class ExpenseBit {
 
@@ -233,38 +234,39 @@ class ExpenseBit {
 
   
     static async checkEmailForUnreadCount(user_id,email){
-        let data={};
-        if(email && email.labelIds.length!=0){
-            RedisClient.get(user_id+'-'+email.from_email, (err, mail) => {
-                if (mail) {
-                    data = JSON.parse(mail);
-                        if (email.labelIds.includes("UNREAD")) {
-                            email["read"]= data['read'];
-                            email["unread"]= data['unread'] + 1;
-                        } else {
-                            email["read"] = data['read'] + 1;
-                            email["unread"] = data['unread'];
-                        }
-                        RedisClient.setex(user_id + '-' + email.from_email, 3600, JSON.stringify(email))   
-                } else {
-                    if (email.labelIds.includes("UNREAD")) {
-                        email["read"]= 0;
-                        email["unread"]= 1 ;
-                    } else {
-                        email["read"] = 1;
-                        email["unread"] = 0;
-                    }
-                    RedisClient.setex(user_id + '-' + email.from_email, 3600, JSON.stringify(email))
-                }
-            });
+        com.anoop.vendor.Redis.setJSON(user_id + '-' + email.from_email,email);
+    // com.anoop.vensor.Parser.setJ(response['data'], bodydata), user_id);
+        // let data={};
+        // if(email && email.labelIds.length!=0){
+        //     RedisClient.get(user_id+'-'+email.from_email, (err, mail) => {
+        //         if (mail) {
+        //             data = JSON.parse(mail);
+        //                 if (email.labelIds.includes("UNREAD")) {
+        //                     email["read"]= data['read'];
+        //                     email["unread"]= data['unread'] + 1;
+        //                 } else {
+        //                     email["read"] = data['read'] + 1;
+        //                     email["unread"] = data['unread'];
+        //                 }
+        //                 RedisClient.setex(user_id + '-' + email.from_email, 3600, JSON.stringify(email))   
+        //         } else {
+        //             if (email.labelIds.includes("UNREAD")) {
+        //                 email["read"]= 0;
+        //                 email["unread"]= 1 ;
+        //             } else {
+        //                 email["read"] = 1;
+        //                 email["unread"] = 0;
+        //             }
+        //             RedisClient.setex(user_id + '-' + email.from_email, 3600, JSON.stringify(email))
+        //         }
+        //     });
             
-        }
+        // }
     }
 
 
     static async checkEmailNew(emailObj, mail, user_id, auth) {
         let emailInfo = await ExpenseBit.createEmailInfo(user_id,null, mail);
-        await ExpenseBit.checkEmailForUnreadCount(user_id,emailInfo);
         if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
             console.log(emailInfo.from_email)
             return
@@ -332,6 +334,8 @@ class ExpenseBit {
                             console.error(err.message, err.stack, "here problem");
                         });;
                     }
+                }else{
+                    await ExpenseBit.checkEmailForUnreadCount(user_id, emailInfo);
                 }
             }
         }
@@ -450,7 +454,7 @@ class ExpenseBit {
     static async checkEmailWithInscribeHeader(url,mail,user_id,auth){
         if (url != null) {
             let emailInfo = await ExpenseBit.createEmailInfo(user_id, url, mail);
-            await ExpenseBit.checkEmailForUnreadCount(user_id, emailInfo);
+            // await ExpenseBit.checkEmailForUnreadCount(user_id, emailInfo);
             if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
                 console.log(emailInfo.from_email)
             } else if (emailInfo) {
