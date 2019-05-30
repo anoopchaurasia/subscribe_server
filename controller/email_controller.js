@@ -11,15 +11,15 @@ const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const MailScraper = require("../helper/mailScraper").MailScraper;
-var redis = require("redis");
-var RedisClient = redis.createClient();
-RedisClient.on('error', function (err) {
-    console.log('Redis error: ' + err);
-});
+// var redis = require("redis");
+// var RedisClient = redis.createClient();
+// RedisClient.on('error', function (err) {
+//     console.log('Redis error: ' + err);
+// });
 
-RedisClient.on("ready", function () {
-    console.log("Redis is ready");
-});
+// RedisClient.on("ready", function () {
+//     console.log("Redis is ready");
+// });
 const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.email.Parser");
 /*
@@ -74,6 +74,7 @@ This api for Moving Email From INbox to SUbscribed Folder.(Whne swipe Left)
 */
 router.post('/moveEmailToExpbit', async (req, res) => {
     try {
+        
         const from_email = req.body.from_email;
         const is_unscubscribe = req.body.is_unscubscribe;
         const is_remove_all = req.body.is_remove_all;
@@ -151,29 +152,25 @@ router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
         if (doc) {
-            RedisClient.keys(doc.user_id + "-*", async (err, keylist) => {
+            let keylist = await com.anoop.vendor.Redis.getKEYS(doc.user_id + "-*");
                 if (keylist.length != 0) {
+                    console.log(keylist)
                     keylist.forEach(async element => {
-                        RedisClient.get(element, async (err, mail) => {
-                            console.log(mail)
-                            var mailData = JSON.parse(mail);
-                            
-                            if((mailData.unread*100/(mailData.read+mailData.unread))>90){
-                                if((mailData.read+mailData.unread)>=5){
-                                    await Expensebit.storeEmailInDB(JSON.parse(mail), doc.user_id);
+                        let mail = await com.anoop.vendor.Redis.getJSON(element, email);
+                            if(mail){
+                                console.log(mail)
+                                var mailData = mail;
+                                if ((mailData.unread * 100 / (mailData.read + mailData.unread)) > 90) {
+                                    if ((mailData.read + mailData.unread) >= 5) {
+                                        await Expensebit.storeEmailInDB(JSON.parse(mail), doc.user_id);
+                                    }
+                                    await com.anoop.vendor.Redis.delKEY(element);
+                                } else {
+                                    await com.anoop.vendor.Redis.delKEY(element);
                                 }
-                                RedisClient.del(element, function (err, o) {
-                                    console.log(o)
-                                });
-                            }else{
-                                RedisClient.del(element, function (err, o) {
-                                    console.log(o)
-                                });
-                            }
-                        })
+                            }   
                     });
                 }
-            });
             const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
             const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
             const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);

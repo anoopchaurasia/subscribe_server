@@ -18,6 +18,7 @@ code extracting token and user data. and saving and updating into database.
 */
 router.post('/signin', async (req, res) => {
     try {
+        let app_version = req.headers['x-app-version'];
         const token = await TokenHandler.getTokenFromCode(req.body.code);
         const payload = await TokenHandler.verifyIdToken(token);
         let user = await UserModel.findOne({
@@ -32,7 +33,17 @@ router.post('/signin', async (req, res) => {
         if (!user) {
             let body = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo?alt=json&access_token=" + access_token);
             let userInfoData = body.data;
-            user = await create_user(userInfoData, payload);
+            user = await create_user(userInfoData, payload,app_version);
+        }else{
+            try {
+                console.log("app_version",app_version)
+                let data = await UserModel.findOneAndUpdate({ "email": payload.email }, { "project_name": app_version}, { upsert: true }).catch(err => {
+                    console.error(err.message, err.stack);
+                });
+            } catch (error) {
+                console.log(error,"hedfghdgf")
+            }
+           
         }
         await TokenHandler.create_or_update(user, token.tokens);
         let response = await create_token(user);
@@ -80,7 +91,7 @@ async function create_token(user) {
 This function will create user with user information passed into parameters.
 when login api called and user is not present then new user will be created.
 */
-async function create_user(userInfoData, payload) {
+async function create_user(userInfoData, payload,app_version) {
     var newUser = new UserModel({
         "email": userInfoData.email || payload.email,
         "name": userInfoData.name || payload.name,
@@ -89,6 +100,7 @@ async function create_user(userInfoData, payload) {
         "family_name": userInfoData['family_name'] ? userInfoData.family_name : "",
         "gender": userInfoData['gender'] ? userInfoData.gender : "",
         "birth_date": userInfoData['birth_date'] ? userInfoData.birth_date : "",
+        "project_name":app_version
         // "is_logout": false
     });
     return await newUser.save().catch(err => {

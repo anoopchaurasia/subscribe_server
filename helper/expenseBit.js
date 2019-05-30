@@ -234,34 +234,32 @@ class ExpenseBit {
 
   
     static async checkEmailForUnreadCount(user_id,email){
-        com.anoop.vendor.Redis.setJSON(user_id + '-' + email.from_email,email);
-    // com.anoop.vensor.Parser.setJ(response['data'], bodydata), user_id);
-        // let data={};
-        // if(email && email.labelIds.length!=0){
-        //     RedisClient.get(user_id+'-'+email.from_email, (err, mail) => {
-        //         if (mail) {
-        //             data = JSON.parse(mail);
-        //                 if (email.labelIds.includes("UNREAD")) {
-        //                     email["read"]= data['read'];
-        //                     email["unread"]= data['unread'] + 1;
-        //                 } else {
-        //                     email["read"] = data['read'] + 1;
-        //                     email["unread"] = data['unread'];
-        //                 }
-        //                 RedisClient.setex(user_id + '-' + email.from_email, 3600, JSON.stringify(email))   
-        //         } else {
-        //             if (email.labelIds.includes("UNREAD")) {
-        //                 email["read"]= 0;
-        //                 email["unread"]= 1 ;
-        //             } else {
-        //                 email["read"] = 1;
-        //                 email["unread"] = 0;
-        //             }
-        //             RedisClient.setex(user_id + '-' + email.from_email, 3600, JSON.stringify(email))
-        //         }
-        //     });
+        let data={};
+        if(email && email.labelIds.length!=0){
+            let mail = await com.anoop.vendor.Redis.getJSON(user_id + '-' + email.from_email, email);
+                if (mail) {
+                    // console.log(mail)
+                    data = mail;
+                        if (email.labelIds.includes("UNREAD")) {
+                            email["read"]= data['read'];
+                            email["unread"]= data['unread'] + 1;
+                        } else {
+                            email["read"] = data['read'] + 1;
+                            email["unread"] = data['unread'];
+                        }
+                      await  com.anoop.vendor.Redis.setJSON(user_id + '-' + email.from_email, email);
+                } else {
+                    if (email.labelIds.includes("UNREAD")) {
+                        email["read"]= 0;
+                        email["unread"]= 1 ;
+                    } else {
+                        email["read"] = 1;
+                        email["unread"] = 0;
+                    }
+                   await com.anoop.vendor.Redis.setJSON(user_id + '-' + email.from_email, email);
+                }
             
-        // }
+        }
     }
 
 

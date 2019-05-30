@@ -7,6 +7,7 @@ router.use('/email', authenticate,require('../controller/email_controller'));
 router.use('/users', authenticate,require('../controller/user_controller'));
 
 async function authenticate(req, res, next){
+    // console.log(req.headers['x-app-version'])
     let doc = await token_model.findOne({ "token": req.body.authID }).catch(err => {
         console.error(err.message);
     });

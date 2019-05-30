@@ -21,4 +21,22 @@ fm.Class("Redis", function(me) {
             });
         });
     };
+
+    Static.getKEYS = async function(key){
+        return new Promise((resolve,reject)=>{
+            client.keys(key,(err,keyList)=>{
+                if(err) return reject(err);
+                resolve(keyList);
+            });
+        });
+    };
+
+    Static.delKEY = async function (key) {
+        return new Promise((resolve, reject) => {
+            client.del(key, (err, res) => {
+                if (err) return reject(err);
+                resolve(res);
+            });
+        });
+    };
 });
