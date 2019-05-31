@@ -11,15 +11,6 @@ const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const MailScraper = require("../helper/mailScraper").MailScraper;
-// var redis = require("redis");
-// var RedisClient = redis.createClient();
-// RedisClient.on('error', function (err) {
-//     console.log('Redis error: ' + err);
-// });
-
-// RedisClient.on("ready", function () {
-//     console.log("Redis is ready");
-// });
 const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.email.Parser");
 /*
@@ -104,14 +95,6 @@ router.post('/getMailInfo', async (req, res) => {
         const token = req.token;
         if (token) {
             const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack));
-            // RedisClient.keys(token.user_id + "-*", (err, keylist) => {
-            //     if (keylist.length != 0) {
-            //         RedisClient.del(keylist, function (err, o) {
-            //             console.log(o)
-            //         });
-                   
-            //     }
-            // });
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             await getRecentEmail(token.user_id, oauth2Client, null);

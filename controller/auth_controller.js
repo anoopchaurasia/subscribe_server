@@ -41,9 +41,8 @@ router.post('/signin', async (req, res) => {
                     console.error(err.message, err.stack);
                 });
             } catch (error) {
-                console.log(error,"hedfghdgf")
+                console.error(error.stack);
             }
-           
         }
         await TokenHandler.create_or_update(user, token.tokens);
         let response = await create_token(user);
@@ -91,7 +90,7 @@ async function create_token(user) {
 This function will create user with user information passed into parameters.
 when login api called and user is not present then new user will be created.
 */
-async function create_user(userInfoData, payload,app_version) {
+async function create_user(userInfoData, payload, app_version) {
     var newUser = new UserModel({
         "email": userInfoData.email || payload.email,
         "name": userInfoData.name || payload.name,

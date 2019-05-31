@@ -10,16 +10,6 @@ const Pubsub = require("../helper/pubsub").Pubsub;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const GmailApi = require("../helper/gmailApis").GmailApis;
 fm.Include("com.anoop.vendor.Redis");
-// var redis = require("redis");
-// var RedisClient = redis.createClient();
-// RedisClient.on('error', function(err) {
-//     console.log('Redis error: ' + err);
-// });
-
-// RedisClient.on("ready",function () {
-//     console.log("Redis is ready");
-// });
-let ds = {}
 class ExpenseBit {
 
     /*
