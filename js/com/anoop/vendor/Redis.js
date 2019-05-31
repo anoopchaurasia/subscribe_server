@@ -39,4 +39,17 @@ fm.Class("Redis", function(me) {
             });
         });
     };
+
+    Static.pushData = async function (key,data) {
+         return client.lpush(key, JSON.stringify(data));
+     };
+
+    Static.popData = async function (key) {
+        return new Promise((resolve, reject) => {
+            client.lrange(key, 0, -1, (err, res) => {
+                if (err) return reject(err);
+                resolve(res);
+            });
+        });
+    };
 });
