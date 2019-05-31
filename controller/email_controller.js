@@ -65,7 +65,7 @@ This api for Moving Email From INbox to SUbscribed Folder.(Whne swipe Left)
 */
 router.post('/moveEmailToExpbit', async (req, res) => {
     try {
-        
+
         const from_email = req.body.from_email;
         const is_unscubscribe = req.body.is_unscubscribe;
         const is_remove_all = req.body.is_remove_all;
@@ -136,29 +136,55 @@ router.post('/readMailInfo', async (req, res) => {
         const doc = req.token;
         if (doc) {
             let keylist = await com.anoop.vendor.Redis.getKEYS(doc.user_id + "-*");
-                if (keylist.length != 0) {
-                    console.log(keylist)
-                    keylist.forEach(async element => {
-                        let mail = await com.anoop.vendor.Redis.getJSON(element, email);
-                            if(mail){
-                                console.log(mail)
-                                var mailData = mail;
-                                if ((mailData.unread * 100 / (mailData.read + mailData.unread)) > 90) {
-                                    if ((mailData.read + mailData.unread) >= 5) {
-                                        await Expensebit.storeEmailInDB(JSON.parse(mail), doc.user_id);
-                                    }
-                                    await com.anoop.vendor.Redis.delKEY(element);
-                                } else {
-                                    await com.anoop.vendor.Redis.delKEY(element);
-                                }
-                            }   
-                    });
-                }
+            if (keylist.length != 0) {
+                console.log(keylist)
+                keylist.forEach(async element => {
+                    let mail = await com.anoop.vendor.Redis.popData(element);
+                    console.log(mail[0])
+                    if (mail.length != 0) {
+                        var unread = 0;
+                        var read = 0;
+                        var count = 0;
+                        mail.forEach(mailObj => {
+                            count++;
+                            mailObj = JSON.parse(mailObj);
+                            if (mailObj.labelIds.includes("UNREAD")) {
+                                unread++;
+                            } else {
+                                read++;
+                            }
+                        });
+                        console.log((unread * 100) / count, "%")
+                        if (count == mail.length && ((unread * 100) / count) > 90) {
+                            console.log(element, unread, read)
+                            mail.forEach(async mailObj => {
+                                await Expensebit.storeEmailInDB(JSON.parse(mailObj), doc.user_id);
+                            });
+                            await com.anoop.vendor.Redis.delKEY(element);
+                        }else{
+                            await com.anoop.vendor.Redis.delKEY(element);
+                        }
+                    }
+
+                    // if(mail){
+                    //     console.log(mail)
+                    //     var mailData = mail;
+                    //     if ((mailData.unread * 100 / (mailData.read + mailData.unread)) > 90) {
+                    //         if ((mailData.read + mailData.unread) >= 5) {
+                    //             await Expensebit.storeEmailInDB(JSON.parse(mail), doc.user_id);
+                    //         }
+                    //         await com.anoop.vendor.Redis.delKEY(element);
+                    //     } else {
+                    //         await com.anoop.vendor.Redis.delKEY(element);
+                    //     }
+                    // }   
+                });
+            }
             const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
             const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
             const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-            
-     
+
+
             res.status(200).json({
                 error: false,
                 data: emailinfos,
@@ -271,9 +297,9 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                         } else {
                             let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
                             let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
-                            try{
+                            try {
                                 await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
-                            } catch(e){
+                            } catch (e) {
                                 require('raven').captureException(err);
                             }
                             await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth);
@@ -393,7 +419,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
             const emailinfos = await GetEmailQuery.getAllKeepedSubscription(doc.user_id);
             let unreadData = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
             if (unreadData) {
-               
+
                 const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
                 res.status(200).json({
                     error: false,

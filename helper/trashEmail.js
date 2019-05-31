@@ -117,10 +117,8 @@ class TrashEmail {
             // await GmailApi.batchModifyRemoveLabels(auth, mailIdList, ['TRASH']);
             // let res = await GmailApi.batchModifyAddLabels(auth, mailIdList, ['INBOX']);
             // var res = await GmailApi.untrashEmailAPi(authToken, mailIdList);
-           let res = await GmailApi.batchModifyAddAndRemoveLabels(auth,mailIdList,['INBOX'],['TRASH'])
-            if (res) {
-                await TrashEmail.removeTrashFromLabel(bodyData.from_email,user_id, "keep");
-            }
+           await GmailApi.batchModifyAddAndRemoveLabels(auth,mailIdList,['INBOX'],['TRASH'])
+           await TrashEmail.removeTrashFromLabel(bodyData.from_email,user_id, "keep");
         }
         
     }
