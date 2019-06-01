@@ -28,9 +28,6 @@ var UserSchema = new Schema({
     },
     birth_date:{
         type:Date
-    },
-    project_name:{
-        type:String
     }
 });
 

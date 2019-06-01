@@ -1,7 +1,6 @@
 'use strict'
 const AuthToken = require('../models/authoToken');
 const email = require('../models/emailDetails');
-
 const emailInformation = require('../models/emailInfo');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const { google } = require('googleapis');
@@ -9,17 +8,8 @@ const cheerio = require('cheerio');
 const Pubsub = require("../helper/pubsub").Pubsub;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const GmailApi = require("../helper/gmailApis").GmailApis;
-fm.Include("com.anoop.vendor.Redis");
-// var redis = require("redis");
-// var RedisClient = redis.createClient();
-// RedisClient.on('error', function(err) {
-//     console.log('Redis error: ' + err);
-// });
+fm.Include("com.jeet.memdb.RedisDB");
 
-// RedisClient.on("ready",function () {
-//     console.log("Redis is ready");
-// });
-let ds = {}
 class ExpenseBit {
 
     /*
@@ -36,7 +26,7 @@ class ExpenseBit {
         });
     }
 
-   
+
 
     /*
         This function will create Unsubscribed Emails label in to gmail account and update labelId into database.
@@ -54,8 +44,8 @@ class ExpenseBit {
         This function will move Email from Inbox to Unsubscribed Folder.
     */
     static async MoveMailFromInBOX(user_id, auth, from_email, label) {
-        let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack);});
-        let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack);});
+        let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
+        let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
         console.log(mailList.length)
         if (mailList) {
             let labelarry = [];
@@ -75,7 +65,7 @@ class ExpenseBit {
                 console.error(err.message, err.stack);
             });
             if (mailIDSARRAY.length != 0) {
-                await GmailApi.batchModifyAddAndRemoveLabels(auth,mailIDSARRAY,labelarry,['INBOX','CATEGORY_PERSONAL','CATEGORY_PROMOTIONS']);
+                await GmailApi.batchModifyAddAndRemoveLabels(auth, mailIDSARRAY, labelarry, ['INBOX', 'CATEGORY_PERSONAL', 'CATEGORY_PROMOTIONS']);
                 // await GmailApi.batchModifyAddLabels(auth, mailIDSARRAY, labelarry);
                 // await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['INBOX']);
                 // await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PROMOTIONS']);
@@ -92,7 +82,7 @@ class ExpenseBit {
         let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
         console.log(mailList.length)
         if (mailList) {
-           var oldvalue = {
+            var oldvalue = {
                 user_id: user_id,
                 "from_email": from_email,
                 "status": "move"
@@ -110,7 +100,7 @@ class ExpenseBit {
             labelarry[0] = label;
             let emailIdList = mailList.map(x => x.email_id);
             if (emailIdList) {
-                await GmailApi.batchModifyAddAndRemoveLabels(auth,emailIdList,['INBOX'],labelarry)
+                await GmailApi.batchModifyAddAndRemoveLabels(auth, emailIdList, ['INBOX'], labelarry)
                 // await GmailApi.batchModifyRemoveLabels(auth, emailIdList,labelarry);
                 // await GmailApi.batchModifyAddLabels(auth, emailIdList, ['INBOX']);
             }
@@ -212,11 +202,11 @@ class ExpenseBit {
         emailInfo['labelIds'] = mail.labelIds;
         emailInfo['unsubscribe'] = url;
         emailInfo['main_label'] = mail.labelIds;
-        emailInfo['status']="unused";
-        emailInfo['status_date']=new Date()
+        emailInfo['status'] = "unused";
+        emailInfo['status_date'] = new Date()
         if (mail.labelIds.indexOf("TRASH") != -1) {
             emailInfo['status'] = "trash";
-        } 
+        }
         let header_raw = mail['payload']['headers']
         header_raw.forEach(async data => {
             if (data.name == "From") {
@@ -232,17 +222,16 @@ class ExpenseBit {
         return emailInfo;
     }
 
-  
-    static async checkEmailForUnreadCount(user_id,email){
-        let data={};
-        if(email && email.labelIds.length!=0){
-            await com.anoop.vendor.Redis.pushData(user_id + '-' + email.from_email, email);
+
+    static async checkEmailForUnreadCount(user_id, email) {
+        if (email && email.labelIds.length != 0) {
+            await com.jeet.memdb.RedisDB.pushData(user_id, email.from_email, email);
         }
     }
 
 
     static async checkEmailNew(emailObj, mail, user_id, auth) {
-        let emailInfo = await ExpenseBit.createEmailInfo(user_id,null, mail);
+        let emailInfo = await ExpenseBit.createEmailInfo(user_id, null, mail);
         if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
             console.log(emailInfo.from_email)
             return
@@ -310,7 +299,7 @@ class ExpenseBit {
                             console.error(err.message, err.stack, "here problem");
                         });;
                     }
-                }else{
+                } else {
                     await ExpenseBit.checkEmailForUnreadCount(user_id, emailInfo);
                 }
             }
@@ -332,33 +321,33 @@ class ExpenseBit {
                 console.log(emailInfo.from_email)
             } else if (emailInfo) {
                 let emailInfoNew = {};
-                emailInfoNew['email_id']=emailInfo['email_id'];
-                emailInfoNew['historyId']=emailInfo['historyId'];
-                emailInfoNew['unsubscribe']=emailInfo['unsubscribe'];
-                emailInfoNew['subject']=emailInfo['subject'];
-                emailInfoNew['labelIds']=emailInfo['labelIds'];
-                emailInfoNew['main_label']=emailInfo['main_label'];
-                
+                emailInfoNew['email_id'] = emailInfo['email_id'];
+                emailInfoNew['historyId'] = emailInfo['historyId'];
+                emailInfoNew['unsubscribe'] = emailInfo['unsubscribe'];
+                emailInfoNew['subject'] = emailInfo['subject'];
+                emailInfoNew['labelIds'] = emailInfo['labelIds'];
+                emailInfoNew['main_label'] = emailInfo['main_label'];
+
                 try {
-                    
+
                     let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
                         console.error(err.message, err.stack);
-                        });
-                    if(!fromEmail){
-                        await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id },emailInfo,{upsert:true}).catch(err => {
+                    });
+                    if (!fromEmail) {
+                        await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
                             console.error(err.message, err.stack);
                         });
                         fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
                             console.error(err.message, err.stack);
                         });
                     }
-                    
-                    if (fromEmail){
-                        let doc = await emailInformation.findOne({ "email_id": emailInfoNew.email_id,"from_email_id":fromEmail._id }).catch(err => {
+
+                    if (fromEmail) {
+                        let doc = await emailInformation.findOne({ "email_id": emailInfoNew.email_id, "from_email_id": fromEmail._id }).catch(err => {
                             console.error(err.message, err.stack);
                         });
                         if (!doc) {
-                            emailInfoNew['from_email_id']=fromEmail._id;
+                            emailInfoNew['from_email_id'] = fromEmail._id;
                             let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
                                 console.error(err.message, err.stack);
                             });
@@ -371,8 +360,8 @@ class ExpenseBit {
                             if (mailInfo) {
                                 await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew);
                             }
-                        }    
-                    } 
+                        }
+                    }
                 } catch (err) {
                     console.error(err.message, err.stack);
                 }
@@ -380,7 +369,58 @@ class ExpenseBit {
         }
     }
 
-    static async storeEmailInDB(emailInfo,user_id) {
+    static async saveAndReturnEmailData(emailInfo, user_id) {
+        if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
+            console.log(emailInfo.from_email)
+            return
+        }
+        else {
+            let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
+                console.error(err.message, err.stack);
+            });
+            if (!fromEmail) {
+                await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
+                    console.error(err.message, err.stack);
+                });
+                fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
+                    console.error(err.message, err.stack);
+                });
+            }
+            if (fromEmail) {
+                return fromEmail._id;
+            }
+        }
+    }
+
+
+    static async storeBulkEmailInDB(email,from_email_id) {
+        var bulk = emailInformation.collection.initializeUnorderedBulkOp();
+        email.forEach(emailInfo => {
+            emailInfo = JSON.parse(emailInfo);
+            let emailInfoNew = {};
+            emailInfoNew['email_id'] = emailInfo['email_id'];
+            emailInfoNew['historyId'] = emailInfo['historyId'];
+            emailInfoNew['unsubscribe'] = emailInfo['unsubscribe'];
+            emailInfoNew['subject'] = emailInfo['subject'];
+            emailInfoNew['labelIds'] = emailInfo['labelIds'];
+            emailInfoNew['main_label'] = emailInfo['main_label'];
+            emailInfoNew['from_email_id'] = from_email_id;
+            // console.log(emailInfoNew);
+            try {
+                bulk.find({ "email_id": emailInfo.email_id }).upsert().update({ $set: emailInfoNew });
+            } catch (err) {
+                console.error(err.message, err.stack);
+            }
+        });
+        bulk.execute(function (err, result) {
+            console.log("Inserted Docs", result)
+        });
+    }
+
+    static async checkEmailWithInscribeHeader(url, mail, user_id, auth) {
+        if (url != null) {
+            let emailInfo = await ExpenseBit.createEmailInfo(user_id, url, mail);
+            // await ExpenseBit.checkEmailForUnreadCount(user_id, emailInfo);
             if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
                 console.log(emailInfo.from_email)
                 return
@@ -392,55 +432,6 @@ class ExpenseBit {
                 emailInfoNew['subject'] = emailInfo['subject'];
                 emailInfoNew['labelIds'] = emailInfo['labelIds'];
                 emailInfoNew['main_label'] = emailInfo['main_label'];
-                console.log(emailInfo);
-                console.log(emailInfoNew);
-                try {
-                    console.log(user_id)
-                    let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
-                        console.error(err.message, err.stack);
-                    });
-                    console.log(fromEmail)
-                    if (!fromEmail) {
-                        await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
-                            console.error(err.message, err.stack);
-                        });
-                        fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
-                            console.error(err.message, err.stack);
-                        });
-                    }
-
-                    console.log(fromEmail)
-                    if (fromEmail) {
-                        let doc = await emailInformation.findOne({ "email_id": emailInfoNew.email_id, "from_email_id": fromEmail._id }).catch(err => {
-                            console.error(err.message, err.stack);
-                        });
-                        console.log(doc)
-                        if (!doc) {
-                            emailInfoNew['from_email_id'] = fromEmail._id;
-                            await ExpenseBit.UpdateEmailInformation(emailInfoNew);
-                        }
-                    }
-                } catch (err) {
-                    console.error(err.message, err.stack);
-                }
-            }
-        
-    }
-
-    static async checkEmailWithInscribeHeader(url,mail,user_id,auth){
-        if (url != null) {
-            let emailInfo = await ExpenseBit.createEmailInfo(user_id, url, mail);
-            // await ExpenseBit.checkEmailForUnreadCount(user_id, emailInfo);
-            if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
-                console.log(emailInfo.from_email)
-            } else if (emailInfo) {
-                let emailInfoNew = {};
-                emailInfoNew['email_id'] = emailInfo['email_id'];
-                emailInfoNew['historyId'] = emailInfo['historyId'];
-                emailInfoNew['unsubscribe'] = emailInfo['unsubscribe'];
-                emailInfoNew['subject'] = emailInfo['subject'];
-                emailInfoNew['labelIds'] = emailInfo['labelIds'];
-                emailInfoNew['main_label'] = emailInfo['main_label'];
 
                 try {
 
@@ -462,7 +453,7 @@ class ExpenseBit {
                         });
                         if (!doc) {
                             emailInfoNew['from_email_id'] = fromEmail._id;
-                           let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
+                            let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
                                 console.error(err.message, err.stack);
                             });
 
@@ -504,13 +495,13 @@ class ExpenseBit {
             } else {
                 await ExpenseBit.UpdateLableInsideToken(user_id, lbl_id);
             }
-            if (is_unscubscribe){
+            if (is_unscubscribe) {
                 console.log("unmove pending")
-                await ExpenseBit.MoveMailFromExpenseBit(user_id,auth,from_email,lbl_id);
-            }else{
+                await ExpenseBit.MoveMailFromExpenseBit(user_id, auth, from_email, lbl_id);
+            } else {
                 await ExpenseBit.MoveMailFromInBOX(user_id, auth, from_email, lbl_id);
             }
-        
+
         }
     }
 

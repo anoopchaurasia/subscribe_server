@@ -28,6 +28,12 @@ var AuthToken = new Schema({
     },
     created_at:{
         type:Date
+    },
+    app_version: {
+        type: String
+    },
+    is_valid:{
+        type:Boolean
     }
 });
 

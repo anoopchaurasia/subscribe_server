@@ -152,7 +152,7 @@ class TokenHandler {
     /*
         This function will update or create Token information Into database.
     */
-    static async create_or_update(user,token) {         
+    static async create_or_update(user,token,app_version) {         
         const tokedata = {
             "access_token": token.access_token,
             "refresh_token": token.refresh_token,
@@ -161,7 +161,9 @@ class TokenHandler {
             "token_type": token.token_type,
             "expiry_date": token.expiry_date,
             "user_id": user._id,
-            "created_at": new Date()
+            "created_at": new Date(),
+            "app_version": app_version,
+            "is_valid":true
         };
         await AuthToken.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
             console.error(err.message, err.stack);
