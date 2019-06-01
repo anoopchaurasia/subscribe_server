@@ -92,14 +92,16 @@ Based on user Information Email Inbox will be scrape
 router.post('/getMailInfo', async (req, res) => {
     try {
         const token = req.token;
-        const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack));
-        const oauth2Client = await TokenHandler.createAuthCleint(authToken);
-        Expensebit.createEmailLabel(token.user_id, oauth2Client);
-        await getRecentEmail(token.user_id, oauth2Client, null);
-        res.status(200).json({
-            error: false,
-            data: "scrape"
-        })
+        if (token) {
+            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack));
+            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
+            Expensebit.createEmailLabel(token.user_id, oauth2Client);
+            await getRecentEmail(token.user_id, oauth2Client, null);
+            res.status(200).json({
+                error: false,
+                data: "scrape"
+            })
+        }
     } catch (ex) {
         console.error(ex.message, ex.stack);
         res.sendStatus(400);
