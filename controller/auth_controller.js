@@ -19,15 +19,17 @@ code extracting token and user data. and saving and updating into database.
 router.post('/signin', async (req, res) => {
     try {
         let app_version = req.headers['x-app-version'];
-        const token = await TokenHandler.getTokenFromCode(req.body.code);
-        const payload = await TokenHandler.verifyIdToken(token);
+        console.log(app_version)
+        console.log(req.body)
+        const token = await TokenHandler.getTokenFromCode(req.body.code, app_version);
+        const payload = await TokenHandler.verifyIdToken(token, app_version);
         let user = await UserModel.findOne({
             'email': payload.email
         }).catch(err => {
             console.error(err.message, err.stack)
         })
         let access_token = token.tokens.access_token;
-        let oauth2Client = await TokenHandler.createAuthCleint();
+        let oauth2Client = await TokenHandler.createAuthCleint(app_version);
         oauth2Client.credentials = token.tokens;
         await GmailApi.watchapi(oauth2Client);
         if (!user) {

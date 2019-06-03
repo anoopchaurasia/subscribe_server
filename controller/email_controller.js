@@ -163,6 +163,27 @@ router.post('/readMailInfo', async (req, res) => {
 });
 
 
+router.post('/readMailInfoPage', async (req, res) => {
+    try {
+        const doc = req.token;
+        const emailinfos = await GetEmailQuery.getAllFilteredSubscriptionPage(doc.user_id,req.body.skipcount);
+        console.log(emailinfos)
+        console.log(emailinfos.length)
+        const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
+        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos,
+            unreadData: unreademail,
+            totalEmail: total
+        })
+    } catch (err) {
+        console.error(err.message, err.stack);
+        res.sendStatus(400);
+    }
+});
+
+
 /*
 This Api will get Profile/statistic Inforamtion for Subcription.
 This will get all the subscription,Moved subscription,total email and total ubsubscribe email count.

@@ -1,13 +1,21 @@
 'use strict'
 const fs = require("fs");
-const {client_secret, client_id, redirect_uris} = JSON.parse(fs.readFileSync(process.env.CLIENT_CONFIG)).installed;
+const { client_secret, client_id, redirect_uris } = JSON.parse(fs.readFileSync(process.env.CLIENT_CONFIG)).installed;
+const { new_client_secret, new_client_id, new_redirect_uris } = JSON.parse(fs.readFileSync(process.env.NEW_CLIENT_CONFIG)).installed;
 const { google } = require('googleapis');
-const AuthToken  = require('../models/authoToken');
+const AuthToken = require('../models/authoToken');
 const axios = require('axios')
 const request_payload = {
     "client_id": client_id,
     "client_secret": client_secret,
-    "redirect_uris":redirect_uris,
+    "redirect_uris": redirect_uris,
+    "grant_type": 'refresh_token'
+};
+
+const new_request_payload = {
+    "client_id": new_client_id,
+    "client_secret": new_client_secret,
+    "redirect_uris": new_redirect_uris,
     "grant_type": 'refresh_token'
 };
 
@@ -21,12 +29,12 @@ class TokenHandler {
         let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
             console.error(err.message, err.stack);
         });
-        if (!authToken){
+        if (!authToken) {
             return true;
         }
         if (authToken.expiry_date < new Date()) {
-             let authTokenInfo = await TokenHandler.refreshTokenExpiry(authToken);
-            return authTokenInfo==undefined;
+            let authTokenInfo = await TokenHandler.refreshTokenExpiry(authToken);
+            return authTokenInfo == undefined;
         }
         return false
     }
@@ -38,6 +46,9 @@ class TokenHandler {
     */
     static async refreshTokenExpiry(authToken) {
         let body = { ...request_payload };
+        if (authToken["app_version"] && authToken.app_version >= "1.2.7") {
+            body = { ...new_request_payload };
+        }
         body.refresh_token = authToken.refresh_token;
         body = JSON.stringify(body);
         const settings = {
@@ -49,17 +60,17 @@ class TokenHandler {
                 "access_type": 'offline'
             }
         }
-        let response = await axios(settings).catch(e=>{
+        let response = await axios(settings).catch(e => {
             console.error(e.message, e.stack);
             return true
         });
-        if(response && response.data && response.data['access_token']) {
+        if (response && response.data && response.data['access_token']) {
             body = response.data;
             authToken.access_token = body.access_token;
             authToken.expiry_date = new Date(new Date().getTime() + body.expires_in * 1000);
-            let obj = { 
-                "access_token": body.access_token, 
-                "expiry_date": new Date(new Date().getTime() + body.expires_in * 1000) 
+            let obj = {
+                "access_token": body.access_token,
+                "expiry_date": new Date(new Date().getTime() + body.expires_in * 1000)
             };
             await AuthToken.updateOne({ user_id: authToken.user_id }, { $set: obj }, { upsert: 1 });
         }
@@ -70,16 +81,15 @@ class TokenHandler {
         This function will return accesstoken to calling api or function.
         Also check if token expire or not. based on that it will refresh the new token.
     */
-    static  async getAccessToken(user_id){
+    static async getAccessToken(user_id) {
         let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
             console.error(err.message, err.stack);
         });
-        if(authToken && authToken.expiry_date < new Date())
-         {
+        if (authToken && authToken.expiry_date < new Date()) {
             console.log("token expire")
             let authTokenInfo = await TokenHandler.refreshToken(authToken);
             return authTokenInfo;
-        }else{
+        } else {
             return authToken;
         }
     }
@@ -89,22 +99,25 @@ class TokenHandler {
         This function Will refresh/generate new the access token based on refresh token.
         Also update that token into database.
     */
-    static async refreshToken(authToken){
+    static async refreshToken(authToken) {
         console.log("came here");
-        let body = {...request_payload};
+        let body = { ...request_payload };
+        if (authToken["app_version"] && authToken.app_version >= "1.2.7") {
+            body = { ...new_request_payload };
+        }
         body.refresh_token = authToken.refresh_token;
         body = JSON.stringify(body);
         const settings = {
             "url": "https://www.googleapis.com/oauth2/v4/token",
             "method": "POST",
-            data:body,
+            data: body,
             "headers": {
                 'Content-Type': 'application/json',
                 "access_type": 'offline'
             }
         }
         let response = await axios(settings).catch(e => console.error(e.message, e.stack));
-        
+
         if (response && response.data && response.data['access_token']) {
             body = response.data;
             authToken.access_token = body.access_token;
@@ -122,26 +135,49 @@ class TokenHandler {
     /*
         This function will return gmail/oauth2 client for another api or function.
     */
-    static async createAuthCleint(token){
-        let {client_secret, client_id, redirect_uris} = request_payload;
+    static async createAuthCleint(token) {
+        // console.log(token.app_version)
+        // console.log(new_request_payload)
+        let { client_secret, client_id, redirect_uris } = request_payload;
+        if (token["app_version"] && token.app_version >= "1.2.7") {
+            client_secret = new_request_payload.client_secret;
+            client_id = new_request_payload.client_id;
+            redirect_uris = new_request_payload.redirect_uris;
+        }
         let OAuth2 = google.auth.OAuth2;
         let oauth2Client = new OAuth2(client_id, client_secret, redirect_uris[0]);
         oauth2Client.credentials = token;
         return oauth2Client;
     }
 
-  
-    static async getTokenFromCode(code) {
-        var oauth2Client =await TokenHandler.createAuthCleint();
+    static async createAuthClientLogin(app_version) {
+        let { client_secret, client_id, redirect_uris } = request_payload;
+        if (app_version >= "1.2.7") {
+            console.log("here")
+            client_secret = new_request_payload.client_secret;
+            client_id = new_request_payload.client_id;
+            redirect_uris = new_request_payload.redirect_uris;
+        }
+        let OAuth2 = google.auth.OAuth2;
+        let oauth2Client = new OAuth2(client_id, client_secret, redirect_uris[0]);
+        return oauth2Client;
+    }
+
+
+    static async getTokenFromCode(code, app_version) {
+        var oauth2Client = await TokenHandler.createAuthClientLogin(app_version);
         return await oauth2Client.getToken(code).catch(e => console.error(e.message, e.stack));
     }
 
     /*
         This function will verify id token and get payload for user
     */
-    static async verifyIdToken (token) {
-        let {  client_id } = request_payload;
-        const client = await TokenHandler.createAuthCleint();
+    static async verifyIdToken(token, app_version) {
+        let { client_id } = request_payload;
+        if (app_version >= "1.2.7") {
+            client_id = new_request_payload.client_id;
+        }
+        const client = await TokenHandler.createAuthClientLogin(app_version);
         const ticket = await client.verifyIdToken({
             idToken: token.tokens.id_token,
             audience: client_id,
@@ -152,7 +188,7 @@ class TokenHandler {
     /*
         This function will update or create Token information Into database.
     */
-    static async create_or_update(user,token,app_version) {         
+    static async create_or_update(user, token, app_version) {
         const tokedata = {
             "access_token": token.access_token,
             "refresh_token": token.refresh_token,
@@ -163,7 +199,7 @@ class TokenHandler {
             "user_id": user._id,
             "created_at": new Date(),
             "app_version": app_version,
-            "is_valid":true
+            "is_valid": true
         };
         await AuthToken.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
             console.error(err.message, err.stack);
