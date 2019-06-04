@@ -14,7 +14,7 @@ fm.Class("RedisDB>com.anoop.vendor.Redis", function(me) {
                 read++;
             }
         });
-        console.log(unread, read, ((unread * 100) / count))
+        // console.log(unread, read, ((unread * 100) / count))
         return ((unread * 100) / count) > 90 && count>1;
     };
 

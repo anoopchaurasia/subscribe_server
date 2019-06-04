@@ -134,13 +134,13 @@ router.post('/readMailInfo', async (req, res) => {
         let keylist = await com.jeet.memdb.RedisDB.getKEYS(doc.user_id);
         console.log(keylist)
         if (keylist && keylist.length != 0) {
-            console.log(keylist)
+            // console.log(keylist)
             keylist.forEach(async element => {
                 let mail = await com.jeet.memdb.RedisDB.popData(element);
                 if (mail.length != 0) {
                     let result = await com.jeet.memdb.RedisDB.findPercent(mail);
                     if (result) {
-                        console.log(mail)
+                        // console.log(mail)
                         let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
                         await Expensebit.storeBulkEmailInDB(mail,from_email_id);
                     }
