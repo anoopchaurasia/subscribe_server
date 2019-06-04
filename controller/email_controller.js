@@ -10,11 +10,10 @@ const { google } = require('googleapis');
 const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
-const MailScraper = require("../helper/mailScraper").MailScraper;
 const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
-
+let RedisDB = com.jeet.memdb.RedisDB;
 
 /*
 This api for deleting mail from Inbox or Trash folder.
@@ -131,14 +130,14 @@ This will get Filter subcription(new subscription only), unread Mail Info and to
 router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
-        let keylist = await com.jeet.memdb.RedisDB.getKEYS(doc.user_id);
+        let keylist = await RedisDB.getKEYS(doc.user_id);
         console.log(keylist)
         if (keylist && keylist.length != 0) {
             // console.log(keylist)
             keylist.forEach(async element => {
-                let mail = await com.jeet.memdb.RedisDB.popData(element);
+                let mail = await RedisDB.popData(element);
                 if (mail.length != 0) {
-                    let result = await com.jeet.memdb.RedisDB.findPercent(mail);
+                    let result = await RedisDB.findPercent(mail);
                     if (result) {
                         // console.log(mail)
                         let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
@@ -146,7 +145,7 @@ router.post('/readMailInfo', async (req, res) => {
                     }
                 }
             });
-            await com.jeet.memdb.RedisDB.delKEY(keylist);
+            await RedisDB.delKEY(keylist);
         }
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
