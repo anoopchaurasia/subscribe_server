@@ -273,7 +273,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                             try {
                                 await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
                             } catch (e) {
-                                require('raven').captureException(err);
+                                require('raven').captureException(e);
                             }
                             await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth);
                         }
