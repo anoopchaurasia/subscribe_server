@@ -53,6 +53,9 @@ var DeviceInfoSchema = new Schema({
     deviceIpAddress:{
         type:Object
     },
+    timeZoneOffset:{
+        type:String
+    },
     created_at: Date
 });
 
