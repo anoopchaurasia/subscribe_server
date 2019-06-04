@@ -11,7 +11,7 @@ const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;
-const MailScraper = require("MailScraper").MailScraper;
+const MailScraper = require("../helper/MailScraper").MailScraper;
 fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
