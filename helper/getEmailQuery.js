@@ -24,6 +24,25 @@ class GetEmailQuery {
         return senddata;
     }
 
+
+    static async getAllFilteredSubscriptionPage(user_id, skipcount) {
+        const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(skipcount).limit(8).exec()
+        const senddata = [];
+        for (let i = 0, len = emails.length; i < len; i++) {
+            let x = emails[i];
+            senddata.push({
+                _id: {
+                    from_email: x.from_email
+                },
+                data: [{ from_email_name: x.from_email_name }],
+                count: await emailInformation.countDocuments({ "from_email_id": x._id }).catch(err => {
+                    console.error(err.message, err.stack);
+                })
+            })
+        }
+        return senddata;
+    }
+
     
 
     static async getAllMailBasedOnSender(user_id, from_email) {
