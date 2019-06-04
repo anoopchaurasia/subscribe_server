@@ -132,12 +132,15 @@ router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
         let keylist = await com.jeet.memdb.RedisDB.getKEYS(doc.user_id);
+        console.log(keylist)
         if (keylist && keylist.length != 0) {
+            console.log(keylist)
             keylist.forEach(async element => {
                 let mail = await com.jeet.memdb.RedisDB.popData(element);
                 if (mail.length != 0) {
                     let result = await com.jeet.memdb.RedisDB.findPercent(mail);
                     if (result) {
+                        console.log(mail)
                         let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
                         await Expensebit.storeBulkEmailInDB(mail,from_email_id);
                     }
@@ -268,11 +271,11 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                         } else {
                             let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
                             let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
-                            try {
-                                await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
-                            } catch (e) {
-                                require('raven').captureException(err);
-                            }
+                            // try {
+                            //     await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
+                            // } catch (e) {
+                            //     require('raven').captureException(err);
+                            // }
                             await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth);
                         }
                     } catch (e) {

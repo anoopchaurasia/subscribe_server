@@ -14,7 +14,8 @@ fm.Class("RedisDB>com.anoop.vendor.Redis", function(me) {
                 read++;
             }
         });
-        return ((unread * 100) / count) > 90;
+        console.log(unread, read, ((unread * 100) / count))
+        return ((unread * 100) / count) > 90 && count>1;
     };
 
     function createKey(user_id, from_email){
