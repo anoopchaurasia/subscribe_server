@@ -132,14 +132,18 @@ class GmailApis {
         This function for calling Watch Api for User.
         this will call gmail watch api for particular topic with given labels
     */
-    static async watchapi(oauth2Client) {
+    static async watchapi(oauth2Client,app_version) {
         const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
+        let topic = 'projects/retail-1083/topics/subscribeMail';
+        if(app_version>= "1.2.7"){
+            topic = "projects/email-cleaner-242110/topics/subscribeMail";
+        }
         const options = {
             userId: 'me',
             auth: oauth2Client,
             resource: {
                 labelIds: ["INBOX", "CATEGORY_PROMOTIONS", "CATEGORY_PERSONAL", "UNREAD"],
-                topicName: 'projects/retail-1083/topics/subscribeMail'
+                topicName: topic
             }
         };
         console.log("watch called")

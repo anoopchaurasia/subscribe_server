@@ -108,6 +108,7 @@ router.post('/getMailInfo', async (req, res) => {
     }
 });
 
+
 router.post('/getMailListForSender', async (req, res) => {
     try {
         const doc = req.token;

@@ -18,7 +18,7 @@ code extracting token and user data. and saving and updating into database.
 */
 router.post('/signin', async (req, res) => {
     try {
-        let app_version = req.headers['x-app-version'];
+        let app_version = "1.2.6";//req.headers['x-app-version'];
         console.log(app_version)
         console.log(req.body)
         const token = await TokenHandler.getTokenFromCode(req.body.code, app_version);
@@ -31,7 +31,7 @@ router.post('/signin', async (req, res) => {
         let access_token = token.tokens.access_token;
         let oauth2Client = await TokenHandler.createAuthCleint(app_version);
         oauth2Client.credentials = token.tokens;
-        await GmailApi.watchapi(oauth2Client);
+        await GmailApi.watchapi(oauth2Client,app_version);
         if (!user) {
             let body = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo?alt=json&access_token=" + access_token);
             let userInfoData = body.data;

@@ -22,7 +22,7 @@ if(process.env.NODE_APP_INSTANCE ==0) {
         cursor.eachAsync(async user => {
             const authToken = await TokenHandler.getAccessToken(user._id).catch(e => console.error(e.message, e.stack));
             let oauth2Client = await TokenHandler.createAuthCleint(authToken);
-            await watchapi(oauth2Client)
+            await watchapi(oauth2Client,authToken)
         }).catch(e=> console.error("watch error",e))
         then(() => console.log('done!'))
     });
@@ -31,13 +31,17 @@ if(process.env.NODE_APP_INSTANCE ==0) {
         This function for calling Watch Api for User.
         this will call gmail watch api for particular topic with given labels
     */
-    let watchapi = async (oauth2Client) => {
+    let watchapi = async (oauth2Client,authToken) => {
+        let topic = 'projects/retail-1083/topics/subscribeMail';
+        if (authToken && authToken['app_version'] >= "1.2.7") {
+            topic = "projects/email-cleaner-242110/topics/subscribeMail";
+        }
         const options = {
             userId: 'me',
             auth: oauth2Client,
             resource: {
                 labelIds: ["INBOX", "CATEGORY_PROMOTIONS","CATEGORY_PERSONAL","UNREAD"],
-                topicName: 'projects/retail-1083/topics/subscribeMail'
+                topicName: topic
             }
         };
         console.log("watch api called")
