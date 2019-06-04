@@ -76,7 +76,6 @@ class TokenHandler {
         });
         if(authToken && authToken.expiry_date < new Date())
          {
-            console.log("token expire")
             let authTokenInfo = await TokenHandler.refreshToken(authToken);
             return authTokenInfo;
         }else{
@@ -90,7 +89,6 @@ class TokenHandler {
         Also update that token into database.
     */
     static async refreshToken(authToken){
-        console.log("came here");
         let body = {...request_payload};
         body.refresh_token = authToken.refresh_token;
         body = JSON.stringify(body);

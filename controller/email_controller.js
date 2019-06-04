@@ -133,10 +133,8 @@ router.post('/readMailInfo', async (req, res) => {
         const doc = req.token;
         let keylist = await com.jeet.memdb.RedisDB.getKEYS(doc.user_id);
         if (keylist && keylist.length != 0) {
-            console.log(keylist)
             keylist.forEach(async element => {
                 let mail = await com.jeet.memdb.RedisDB.popData(element);
-                console.log(mail[0])
                 if (mail.length != 0) {
                     let result = await com.jeet.memdb.RedisDB.findPercent(mail);
                     if (result) {
@@ -191,8 +189,7 @@ router.post('/readMailInfoPage', async (req, res) => {
     try {
         const doc = req.token;
         const emailinfos = await GetEmailQuery.getAllFilteredSubscriptionPage(doc.user_id, req.body.skipcount);
-        console.log(emailinfos)
-        console.log(emailinfos.length)
+    
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
         res.status(200).json({
@@ -267,7 +264,6 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                     })
                     try {
                         if (unsub_url) {
-                            console.log(unsub_url)
                             await Expensebit.checkEmailWithInscribeHeader(unsub_url, response['data'], user_id, auth);
                         } else {
                             let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])

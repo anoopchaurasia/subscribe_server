@@ -25,7 +25,7 @@ class GetEmailQuery {
     }
 
 
-    static async getAllFilteredSubscriptionPage(user_id, skipcount) {
+    static async getAllFilteredSubscriptionPage(user_id, skipcount = 0) {
         const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(skipcount).limit(25).exec()
         const senddata = [];
         for (let i = 0, len = emails.length; i < len; i++) {
@@ -84,7 +84,7 @@ class GetEmailQuery {
             });
             mailInfo[emails[i].from_email] = count
         }
-        console.log(mailInfo)
+        
         return mailInfo;
     }
 
@@ -104,7 +104,7 @@ class GetEmailQuery {
             });
             mailInfo[emails[i].from_email] = count
         }
-        console.log(mailInfo)
+        
         return mailInfo;
     }
 
@@ -209,7 +209,7 @@ class GetEmailQuery {
                 })
             })
         }
-        console.log(senddata)
+        
         return senddata;
     }
 
@@ -228,7 +228,7 @@ class GetEmailQuery {
             });
             mailInfo[emails[i].from_email] = count
         }
-        console.log(mailInfo)
+        
         return mailInfo;
     }
 
@@ -265,7 +265,7 @@ class GetEmailQuery {
             });
             mailInfo[emails[i].from_email] = count
         }
-        console.log(mailInfo)
+        
         return mailInfo;
     }
 

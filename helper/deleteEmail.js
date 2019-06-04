@@ -16,7 +16,6 @@ class DeleteEmail {
     static async deleteEmails(authToken, bodyData) {
         const emails = await email.find({ user_id: authToken.user_id, "from_email": bodyData.from_email })
         const emailIdList = emails.map(x => x.email_id);
-        console.log(emailIdList)
         if (emailIdList) {
             let response = await GmaiilApi.deleteEmailApi(authToken,emailIdList);
             if(response){

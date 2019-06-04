@@ -138,7 +138,7 @@ class Pubsub {
         if (url != null) {
             let emailInfo = await Pubsub.createEmailInfo(user_id, url, mail);
             if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
-                console.log(emailInfo.from_email)
+                return
             } else {
                 try {
                     let doc = await email.findOne({ "email_id": emailInfo.email_id, "user_id": user_id }).catch(err => {
@@ -299,9 +299,7 @@ class Pubsub {
             }).catch(err => {
                 console.error(err.message, err.stack);
             });
-            if(datab){
-                console.log(datab.status)
-            }
+            
         }
     }
 

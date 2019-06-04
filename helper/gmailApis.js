@@ -19,7 +19,7 @@ class GmailApis {
                 'ids': emailIdList
             }
         }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
             return
         });
         return response;
@@ -38,7 +38,7 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
             return
         });
         return response;
@@ -58,7 +58,7 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
             return
         });
         return response;
@@ -74,7 +74,7 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
             return
         });
         if(modify){
@@ -92,7 +92,7 @@ class GmailApis {
             userId: 'me',
             'id': email_id
         }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
         });
         return response;
     }
@@ -122,7 +122,7 @@ class GmailApis {
                 "name": "Unsubscribed Emails"
             }
         }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
             return
         });
         return res;
@@ -142,8 +142,8 @@ class GmailApis {
                 topicName: 'projects/retail-1083/topics/subscribeMail'
             }
         };
-        console.log("watch called")
-        let response = await gmail.users.watch(options).catch(e=> console.error(e.message, e.stack));
+    
+        let response = await gmail.users.watch(options).catch(e=> console.error(e.message));
         return
     }
 
@@ -159,12 +159,9 @@ class GmailApis {
                 "removeLabelIds": labels
             }
         }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
             return
         });
-        if(modif){
-            console.log(modif.status)
-        }
         return modif
     }
 
@@ -180,11 +177,10 @@ class GmailApis {
                 'addLabelIds': labels   
             }
         }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
             return
         });
         if(modify){
-            console.log(modify.status)
             return modify.status
         }
     }
@@ -194,7 +190,7 @@ class GmailApis {
         This function will modify Add and remove labels Mail in Batch with given Parameters
     */
     static async batchModifyAddAndRemoveLabels(auth, mailIds, addLabels, removeLabels) {
-        console.log(mailIds.length);
+    
         if(mailIds.length<=0) return;
         var msgIDS = mailIds.splice(0,998);
         let gmail = google.gmail({ version: 'v1', auth });
@@ -206,12 +202,9 @@ class GmailApis {
                 "removeLabelIds": removeLabels
             }
         }).catch (err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
             return 
         });
-        if(resp){
-            console.log(resp.status)
-        }
         return GmailApis.batchModifyAddAndRemoveLabels(auth,mailIds,addLabels,removeLabels);
     }
 
@@ -228,7 +221,7 @@ class GmailApis {
                 "name": "Unsubscribed Emails"
             }
         }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
         });;
         await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
         return res;
@@ -239,7 +232,7 @@ class GmailApis {
         const res = await gmail.users.labels.list({
             userId: 'me',
         }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message);
         });
         return res;
     }

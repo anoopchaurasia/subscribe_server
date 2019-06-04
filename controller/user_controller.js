@@ -46,7 +46,6 @@ router.post('/disconnectGdprAccount', async (req, res) => {
         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
             console.error(err.message, err.stack);
         });
-        console.log(doc)
         if (doc) {
             res.json({
                 message: "success"
