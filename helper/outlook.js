@@ -312,7 +312,7 @@ class Outlook {
 
 
 
-    static async  sendRevertMailToBatchProcess(accessToken, mailIds, label_id) {
+    static async  sendRevertMailToBatchProcess(accessToken, mailIds,source, label_id) {
         console.log(mailIds.length);
         if (mailIds.length <= 0) return;
         var msgIDS = mailIds.splice(0, 18);
@@ -330,7 +330,7 @@ class Outlook {
             batchRequest.push(settings);
         }
         await Outlook.sendRequestInBatch(accessToken, batchRequest);
-        return await Outlook.sendMailToBatchProcess(accessToken, mailIds, label_id);
+        return await Outlook.sendMailToBatchProcess(accessToken, mailIds,source, label_id);
     }
 
     static async  MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
