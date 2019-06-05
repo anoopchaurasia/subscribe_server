@@ -294,6 +294,7 @@ class Outlook {
         let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
         if (mailList) {
             let mailIDSARRAY = mailList.map(x => x.email_id);
+            console.log(mailIDSARRAY)
             // var oldvalue = {
             //     "from_email": from_email,
             //     "user_id": user_id
