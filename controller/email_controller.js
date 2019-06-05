@@ -8,6 +8,7 @@ const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 const router = express.Router();
 const { google } = require('googleapis');
 const gmail = google.gmail('v1');
+const MailScraper = require("../helper/mailScraper").MailScraper;
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;

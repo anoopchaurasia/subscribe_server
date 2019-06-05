@@ -265,6 +265,7 @@ class ExpenseBit {
         }
         async function checkOtherUserActions(emailInfo, user_id) {
             let totalAvailable = await email.count({ "from_email": emailInfo.from_email, "status": { $in: ["move", "trash"] } }).catch(err => { console.error(err.message, err.stack); });
+            console.log(totalAvailable)
             if (totalAvailable >= 2) {
                 await createNewEmailForUser(emailInfo, user_id);
                 return true;
