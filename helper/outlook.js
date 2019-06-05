@@ -187,26 +187,26 @@ class Outlook {
             if (response) {
                 console.log(JSON.parse(response.body))
                 let rsp = JSON.parse(response.body);
-                // await rsp.responses.asynForEach(async element => {
-                //     console.log(element.status)
-                //     if (element.status == 201) {
-                //         console.log(element.body.id)
-                //         var oldvalue = {
-                //             "email_id": element.id
-                //         };
-                //         var newvalues = {
-                //             $set: {
-                //                 "email_id": element.body.id
-                //             }
-                //         };
-                //         let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                //             console.error(err.message, err.stack);
-                //         });
-                //         if (check) {
-                //             console.log(check)
-                //         }
-                //     }
-                // });
+                await rsp.responses.asynForEach(async element => {
+                    console.log(element.status)
+                    if (element.status == 201) {
+                        console.log(element.body.id)
+                        var oldvalue = {
+                            "email_id": element.id
+                        };
+                        var newvalues = {
+                            $set: {
+                                "email_id": element.body.id
+                            }
+                        };
+                        let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                            console.error(err.message, err.stack);
+                        });
+                        if (check) {
+                            console.log(check)
+                        }
+                    }
+                });
             }
         });
     }
@@ -298,19 +298,19 @@ class Outlook {
         if (mailList) {
             let mailIDSARRAY = mailList.map(x => x.email_id);
             console.log(mailIDSARRAY)
-            // var oldvalue = {
-            //     "from_email": from_email,
-            //     "user_id": user_id
-            // };
-            // var newvalues = {
-            //     $set: {
-            //         "status": "keep",
-            //         "status_date": new Date()
-            //     }
-            // };
-            // await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-            //     console.error(err.message, err.stack);
-            // });
+            var oldvalue = {
+                "from_email": from_email,
+                "user_id": user_id
+            };
+            var newvalues = {
+                $set: {
+                    "status": "keep",
+                    "status_date": new Date()
+                }
+            };
+            await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                console.error(err.message, err.stack);
+            });
             await Outlook.sendRevertMailToBatchProcess(accessToken, mailIDSARRAY, source, label_id)
         }
     }
