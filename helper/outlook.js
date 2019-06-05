@@ -148,6 +148,7 @@ class Outlook {
         if (mailIds.length <= 0) return;
         var msgIDS = mailIds.splice(0, 18);
         var batchRequest = [];
+        console.log(msgIDS)
         for (let i = 0; i < msgIDS.length; i++) {
             var settings = {
                 "id": msgIDS[i],
@@ -183,26 +184,26 @@ class Outlook {
             if (response) {
                 console.log(JSON.parse(response.body))
                 let rsp = JSON.parse(response.body);
-                await rsp.responses.asynForEach(async element => {
-                    console.log(element.status)
-                    if (element.status == 201) {
-                        console.log(element.body.id)
-                        var oldvalue = {
-                            "email_id": element.id
-                        };
-                        var newvalues = {
-                            $set: {
-                                "email_id": element.body.id
-                            }
-                        };
-                        let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                            console.error(err.message, err.stack);
-                        });
-                        if (check) {
-                            console.log(check)
-                        }
-                    }
-                });
+                // await rsp.responses.asynForEach(async element => {
+                //     console.log(element.status)
+                //     if (element.status == 201) {
+                //         console.log(element.body.id)
+                //         var oldvalue = {
+                //             "email_id": element.id
+                //         };
+                //         var newvalues = {
+                //             $set: {
+                //                 "email_id": element.body.id
+                //             }
+                //         };
+                //         let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                //             console.error(err.message, err.stack);
+                //         });
+                //         if (check) {
+                //             console.log(check)
+                //         }
+                //     }
+                // });
             }
         });
     }
