@@ -294,19 +294,19 @@ class Outlook {
         let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
         if (mailList) {
             let mailIDSARRAY = mailList.map(x => x.email_id);
-            var oldvalue = {
-                "from_email": from_email,
-                "user_id": user_id
-            };
-            var newvalues = {
-                $set: {
-                    "status": "keep",
-                    "status_date": new Date()
-                }
-            };
-            await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                console.error(err.message, err.stack);
-            });
+            // var oldvalue = {
+            //     "from_email": from_email,
+            //     "user_id": user_id
+            // };
+            // var newvalues = {
+            //     $set: {
+            //         "status": "keep",
+            //         "status_date": new Date()
+            //     }
+            // };
+            // await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+            //     console.error(err.message, err.stack);
+            // });
             await Outlook.sendRevertMailToBatchProcess(accessToken, mailIDSARRAY, source, label_id)
         }
     }
