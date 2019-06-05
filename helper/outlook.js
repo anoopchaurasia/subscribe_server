@@ -319,7 +319,7 @@ class Outlook {
         var batchRequest = [];
         for (let i = 0; i < msgIDS.length; i++) {
             var settings = {
-                "url": encodeURI("/me/mailFolders/" + source + "/messages/" + email_id + "/move"),
+                "url": encodeURI("/me/mailFolders/" + source + "/messages/" + msgIDS[i] + "/move"),
                 "method": "POST",
                 "headers": {
                     'Content-Type': 'application/json',
