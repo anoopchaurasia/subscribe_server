@@ -162,7 +162,9 @@ class Outlook {
             }
             batchRequest.push(settings);
         }
-        await Outlook.sendRequestInBatch(accessToken, batchRequest)
+        if(batchRequest.length>0){
+            await Outlook.sendRequestInBatch(accessToken, batchRequest)
+        }
         return await Outlook.sendMailToBatchProcess(accessToken, mailIds, label_id);
     }
 
@@ -332,7 +334,9 @@ class Outlook {
             }
             batchRequest.push(settings);
         }
-        await Outlook.sendRequestInBatch(accessToken, batchRequest);
+        if (batchRequest.length > 0) {
+            await Outlook.sendRequestInBatch(accessToken, batchRequest);
+        }
         return await Outlook.sendMailToBatchProcess(accessToken, mailIds,source, label_id);
     }
 
