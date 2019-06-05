@@ -83,7 +83,7 @@ router.post('/getMail', async function (req, resp, next) {
                 await res.value.asynForEach(async folder => {
                     if (folder.displayName == 'Inbox') {
                         let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$skip=0');
-                        await Outlook.getEmailInBulk(accessToken, link, userInfo.user_id);
+                        await getEmailInBulk(accessToken, link, userInfo.user_id);
                     }
                 });
                 resp.status(200).json({
@@ -120,7 +120,7 @@ async function getEmailInBulk(accessToken, link, user_id) {
                 await checkEmail(oneEmail, user_id, accessToken)
             });
             if (body['@odata.nextLink']) {
-                await Outlook.getEmailInBulk(accessToken, encodeURI(body['@odata.nextLink']), user_id);
+                await getEmailInBulk(accessToken, encodeURI(body['@odata.nextLink']), user_id);
             }
         }
     });
