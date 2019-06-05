@@ -167,6 +167,7 @@ class Outlook {
     }
 
     static async sendRequestInBatch(accessToken, reqArray) {
+        console.log(reqArray)
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
             "method": "POST",
