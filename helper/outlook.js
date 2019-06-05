@@ -16,6 +16,20 @@ Array.prototype.asynForEach = async function (cb) {
         await cb(this[i]);
     }
 }
+
+const credentials = {
+    client: {
+        id: process.env.APP_ID,
+        secret: process.env.APP_PASSWORD,
+    },
+    auth: {
+        tokenHost: 'https://login.microsoftonline.com',
+        authorizePath: 'common/oauth2/v2.0/authorize',
+        tokenPath: 'common/oauth2/v2.0/token'
+    }
+};
+const oauth2 = require('simple-oauth2').create(credentials);
+
 class Outlook {
     static async updateUserInfo(oldvalue, newvalue) {
         return await users.findOneAndUpdate(oldvalue, newvalue, { upsert: true }).catch(err => {
