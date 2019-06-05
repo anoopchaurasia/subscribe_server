@@ -87,6 +87,7 @@ class Outlook {
     static async check_Token_info(user_id, token) {
         if (token) {
             const expiration = new Date(token.expiry_date);
+            let accessToken;
             if (expiration > new Date()) {
                 accessToken = token.access_token;
                 return accessToken;
