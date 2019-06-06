@@ -84,7 +84,8 @@ router.post('/getMail', async function (req, resp, next) {
                 console.log(res.value)
                 await res.value.asynForEach(async folder => {
                     if (folder.displayName == 'Inbox') {
-                        let link = encodeURI('https://graph.microsoft.com/v1.0/me/messages?$skip=0');
+                        let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$skip=0');
+                        console.log(link)
                         await getEmailInBulk(accessToken, link, userInfo.user_id);
                     }
                 });
