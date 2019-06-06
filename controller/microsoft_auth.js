@@ -271,6 +271,7 @@ let getEmailInfoNew = async (emailInfo) => {
     emailInfoNew['subject'] = emailInfo['subject'];
     emailInfoNew['labelIds'] = emailInfo['labelIds'];
     emailInfoNew['main_label'] = emailInfo['main_label'];
+    console.log(emailInfoNew);
     return emailInfoNew;
 }
 async function checkUserOldAction(emailInfo, user_id, auth) {
@@ -330,7 +331,7 @@ let checkEmail = async (emailObj, user_id, auth) => {
     let url = await getUrlFromEmail(emailObj.body.content).catch(err => {
         console.error(err.message, err.stack, "dfgdhfvgdggd");
     });
-    if (url != null) {
+    if (url != null && url!=undefined) {
         emailInfo['unsubscribe'] = url;
         await createNewEmailForUser(emailInfo, user_id);
     } else {
