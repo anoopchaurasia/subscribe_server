@@ -259,13 +259,14 @@ async function createEmailInfo(user_id, url, emailObj) {
     // emailInfo['to_email'] = emailObj.toRecipients[0].emailAddress.address;
     emailInfo['from_email_name'] = emailObj.from.emailAddress.name;
     emailInfo['subject'] = emailObj.subject;
+    emailInfo['email_id'] = emailObj.id;
     return emailInfo;
 }
 
 
 let getEmailInfoNew = async (emailInfo) => {
     let emailInfoNew = {};
-    emailInfoNew['email_id'] = emailInfo.id;
+    emailInfoNew['email_id'] = emailInfo['email_id'];
     emailInfoNew['historyId'] = emailInfo['historyId'];
     emailInfoNew['unsubscribe'] = emailInfo['unsubscribe'];
     emailInfoNew['subject'] = emailInfo['subject'];
