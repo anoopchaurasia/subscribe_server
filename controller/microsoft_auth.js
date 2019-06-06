@@ -118,6 +118,7 @@ async function getEmailInBulk(accessToken, link, user_id) {
         if (body) {
             body = JSON.parse(body);
             let mailList = body.value;
+            console.log(mailList)
             await mailList.asynForEach(async oneEmail => {
                 await checkEmail(oneEmail, user_id, accessToken)
             });
