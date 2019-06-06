@@ -256,7 +256,7 @@ async function createEmailInfo(user_id, url, emailObj) {
         emailInfo['main_label'] = ['INBOX', 'UNREAD'];
     }
     emailInfo['from_email'] = emailObj.from.emailAddress.address;
-    emailInfo['to_email'] = emailObj.toRecipients[0].emailAddress.address;
+    // emailInfo['to_email'] = emailObj.toRecipients[0].emailAddress.address;
     emailInfo['from_email_name'] = emailObj.from.emailAddress.name;
     emailInfo['subject'] = emailObj.subject;
     return emailInfo;
@@ -273,58 +273,56 @@ let getEmailInfoNew = async (emailInfo) => {
     emailInfoNew['main_label'] = emailInfo['main_label'];
     return emailInfoNew;
 }
-
-
-let checkEmail = async (emailObj, user_id, auth) => {
-    let emailInfo = await createEmailInfo(user_id, null, emailObj);
-    if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
-        return
-    }
-    async function checkUserOldAction(emailInfo, user_id, auth) {
-        let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }, { status: 1 }).catch(err => {
-            console.error(err.message, err.stack);
-        });
-        if (fromEmail) {
-            let emailInfoNew = await getEmailInfoNew(emailInfo);
-            emailInfoNew['from_email_id'] = fromEmail._id;
-            await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
-                console.error(err.message, err.stack, "checking");
-            });
-            if (fromEmail.status == "move") {
-                let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-                let id = await Outlook.getFolderListForScrapping(accessToken, user_id, link, emailInfoNew.email_id)
-            } else if (fromEmail.staus == "trash") {
-                let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-                await Outlook.getFolderListForTrashScrapping(accessToken, user_id, link, emailInfoNew.email_id);
-            }
-
-            return true;
-        }
-        return false;
-    }
-    async function checkOtherUserActions(emailInfo, user_id) {
-        let totalAvailable = await email.count({ "from_email": emailInfo.from_email, "status": { $in: ["move", "trash"] } }).catch(err => { console.error(err.message, err.stack); });
-        console.log(totalAvailable)
-        if (totalAvailable >= 2) {
-            await createNewEmailForUser(emailInfo, user_id);
-            return true;
-        }
-        return false;
-    }
-
-    async function createNewEmailForUser(emailInfo, user_id) {
-        await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
-            console.error(err.message, err.stack);
-        });
-        let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }, { status: 1 }).catch(err => {
-            console.error(err.message, err.stack);
-        });
+async function checkUserOldAction(emailInfo, user_id, auth) {
+    let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }, { status: 1 }).catch(err => {
+        console.error(err.message, err.stack);
+    });
+    if (fromEmail) {
         let emailInfoNew = await getEmailInfoNew(emailInfo);
         emailInfoNew['from_email_id'] = fromEmail._id;
         await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
             console.error(err.message, err.stack, "checking");
         });
+        if (fromEmail.status == "move") {
+            let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
+            let id = await Outlook.getFolderListForScrapping(accessToken, user_id, link, emailInfoNew.email_id)
+        } else if (fromEmail.staus == "trash") {
+            let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
+            await Outlook.getFolderListForTrashScrapping(accessToken, user_id, link, emailInfoNew.email_id);
+        }
+
         return true;
+    }
+    return false;
+}
+async function checkOtherUserActions(emailInfo, user_id) {
+    let totalAvailable = await email.count({ "from_email": emailInfo.from_email, "status": { $in: ["move", "trash"] } }).catch(err => { console.error(err.message, err.stack); });
+    console.log(totalAvailable)
+    if (totalAvailable >= 2) {
+        await createNewEmailForUser(emailInfo, user_id);
+        return true;
+    }
+    return false;
+}
+async function createNewEmailForUser(emailInfo, user_id) {
+    await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
+        console.error(err.message, err.stack);
+    });
+    let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }, { status: 1 }).catch(err => {
+        console.error(err.message, err.stack);
+    });
+    let emailInfoNew = await getEmailInfoNew(emailInfo);
+    emailInfoNew['from_email_id'] = fromEmail._id;
+    await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
+        console.error(err.message, err.stack, "checking");
+    });
+    return true;
+}
+
+let checkEmail = async (emailObj, user_id, auth) => {
+    let emailInfo = await createEmailInfo(user_id, null, emailObj);
+    if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
+        return
     }
     if (await checkUserOldAction(emailInfo, user_id, auth)) return;
     if (await checkOtherUserActions(emailInfo, user_id)) return;
@@ -364,6 +362,7 @@ async function getUrlFromEmail(emailObj) {
             anchortext.indexOf("do not wish to receive our mails") != -1 ||
             anchortext.indexOf("not receiving our emails") != -1) {
             url = $(this).attr().href;
+            console.log(url)
             return url;
         } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
             anchorParentText.indexOf("stop receiving emails") != -1 ||
@@ -375,6 +374,7 @@ async function getUrlFromEmail(emailObj) {
             ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
             anchorParentText.indexOf("Don't want this") != -1) {
             url = $(this).attr().href;
+            console.log(url)
             return url;
         }
     })
