@@ -287,7 +287,7 @@ let checkEmail = async (emailObj, user_id, auth) => {
         if (fromEmail) {
             let emailInfoNew = await getEmailInfoNew(emailInfo);
             emailInfoNew['from_email_id'] = fromEmail._id;
-            await UpdateEmailInformation(emailInfoNew).catch(err => {
+            await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
                 console.error(err.message, err.stack, "checking");
             });
             if (fromEmail.status == "move") {
@@ -321,7 +321,7 @@ let checkEmail = async (emailObj, user_id, auth) => {
         });
         let emailInfoNew = await getEmailInfoNew(emailInfo);
         emailInfoNew['from_email_id'] = fromEmail._id;
-        await UpdateEmailInformation(emailInfoNew).catch(err => {
+        await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
             console.error(err.message, err.stack, "checking");
         });
         return true;
