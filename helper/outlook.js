@@ -514,33 +514,36 @@ static async getFolderListForTrashScrapping(accessToken, user_id, link, emailId)
         }
         if (body) {
             const res = JSON.parse(body);
-            let length = res.value.length;
-            let count = 0;
-            await res.value.asynForEach(async folder => {
-                count++;
-                if (folder.displayName == 'Junk Email') {
-                    var oldvalue = {
-                        user_id: user_id
-                    };
-                    var newvalues = {
-                        $set: {
-                            "label_id": folder.id
-                        }
-                    };
-                    var upsert = {
-                        upsert: true
-                    };
-                    await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                        console.log(err);
-                    });
-                    return await Outlook.trashSingleMailFromInBOX(accessToken, emailId, folder.id);
-                }
-            });
-            if (count == length) {
-                if (res['@odata.nextLink']) {
-                    await Outlook.getFolderListForTrashScrapping(accessToken, user_id, res['@odata.nextLink'], emailId)
+            if(res['value']){
+                let length = res.value.length;
+                let count = 0;
+                await res.value.asynForEach(async folder => {
+                    count++;
+                    if (folder.displayName == 'Junk Email') {
+                        var oldvalue = {
+                            user_id: user_id
+                        };
+                        var newvalues = {
+                            $set: {
+                                "label_id": folder.id
+                            }
+                        };
+                        var upsert = {
+                            upsert: true
+                        };
+                        await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+                            console.log(err);
+                        });
+                        return await Outlook.trashSingleMailFromInBOX(accessToken, emailId, folder.id);
+                    }
+                });
+                if (count == length) {
+                    if (res['@odata.nextLink']) {
+                        await Outlook.getFolderListForTrashScrapping(accessToken, user_id, res['@odata.nextLink'], emailId)
+                    }
                 }
             }
+            
         }
     });
 }

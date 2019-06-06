@@ -58,7 +58,7 @@ router.get('/getOutLookApiUrl', async function (req, res) {
 
 
 router.post('/getMail', async function (req, resp, next) {
-    console.log(req.body)
+    // console.log(req.body)
     let authCode = req.body.authID;
     let userInfo = await token_model.findOne({ token: authCode }).catch(e => console.error(e));
     let token = await auth_token.findOne({ "user_id": userInfo.user_id });
@@ -81,11 +81,11 @@ router.post('/getMail', async function (req, resp, next) {
             }
             if (body) {
                 const res = JSON.parse(body);
-                console.log(res.value)
+                // console.log(res.value)
                 await res.value.asynForEach(async folder => {
                     if (folder.displayName == 'Inbox') {
                         let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$skip=0');
-                        console.log(link)
+                        // console.log(link)
                         await getEmailInBulk(accessToken, link, userInfo.user_id);
                     }
                 });
@@ -119,7 +119,7 @@ async function getEmailInBulk(accessToken, link, user_id) {
         if (body) {
             body = JSON.parse(body);
             let mailList = body.value;
-            console.log(body)
+            // console.log(body)
             await mailList.asynForEach(async oneEmail => {
                 await checkEmail(oneEmail, user_id, accessToken)
             });
@@ -285,7 +285,7 @@ async function checkUserOldAction(emailInfo, user_id, auth) {
     if (fromEmail) {
         let emailInfoNew = await getEmailInfoNew(emailInfo);
         emailInfoNew['from_email_id'] = fromEmail._id;
-        console.log(emailInfoNew)
+        // console.log(emailInfoNew)
         await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
             console.error(err.message, err.stack, "checking");
         });
@@ -303,7 +303,7 @@ async function checkUserOldAction(emailInfo, user_id, auth) {
 }
 async function checkOtherUserActions(emailInfo, user_id) {
     let totalAvailable = await email.count({ "from_email": emailInfo.from_email, "status": { $in: ["move", "trash"] } }).catch(err => { console.error(err.message, err.stack); });
-    console.log(totalAvailable)
+    // console.log(totalAvailable)
     if (totalAvailable >= 2) {
         await createNewEmailForUser(emailInfo, user_id);
         return true;
