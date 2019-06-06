@@ -265,13 +265,13 @@ async function createEmailInfo(user_id, url, emailObj) {
 
 let getEmailInfoNew = async (emailInfo) => {
     let emailInfoNew = {};
-    emailInfoNew['email_id'] = emailInfo['email_id'];
+    emailInfoNew['email_id'] = emailInfo.id;
     emailInfoNew['historyId'] = emailInfo['historyId'];
     emailInfoNew['unsubscribe'] = emailInfo['unsubscribe'];
     emailInfoNew['subject'] = emailInfo['subject'];
     emailInfoNew['labelIds'] = emailInfo['labelIds'];
     emailInfoNew['main_label'] = emailInfo['main_label'];
-    console.log(emailInfoNew);
+    // console.log(emailInfoNew);
     return emailInfoNew;
 }
 async function checkUserOldAction(emailInfo, user_id, auth) {
@@ -281,6 +281,7 @@ async function checkUserOldAction(emailInfo, user_id, auth) {
     if (fromEmail) {
         let emailInfoNew = await getEmailInfoNew(emailInfo);
         emailInfoNew['from_email_id'] = fromEmail._id;
+        console.log(emailInfoNew)
         await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
             console.error(err.message, err.stack, "checking");
         });
@@ -314,6 +315,7 @@ async function createNewEmailForUser(emailInfo, user_id) {
     });
     let emailInfoNew = await getEmailInfoNew(emailInfo);
     emailInfoNew['from_email_id'] = fromEmail._id;
+    console.log(emailInfoNew)
     await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
         console.error(err.message, err.stack, "checking");
     });
