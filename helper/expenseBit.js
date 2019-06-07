@@ -271,7 +271,6 @@ class ExpenseBit {
         }
         async function checkOtherUserActions(emailInfo, user_id) {
             let totalAvailable = await email.count({ "from_email": emailInfo.from_email, "status": { $in: ["move", "trash"] } }).catch(err => { console.error(err.message, err.stack); });
-            // console.log(totalAvailable)
             if (totalAvailable >= 2) {
                 await createNewEmailForUser(emailInfo, user_id);
                 return true;
@@ -392,11 +391,9 @@ class ExpenseBit {
     static async storeBulkEmailInDB(email, from_email_id) {
     var bulk = emailInformation.collection.initializeUnorderedBulkOp();
         await email.asynForEach(async emailInfo => {
-        // console.log(11)
         emailInfo = JSON.parse(emailInfo);
         let emailInfoNew = await ExpenseBit.getEmailInfoNew(emailInfo);
         emailInfoNew['from_email_id'] = from_email_id;
-        // console.log(emailInfo)
         try {
             bulk.find({ "email_id": emailInfo.email_id }).upsert().update({ $set: emailInfoNew });
         } catch (err) {
@@ -404,7 +401,6 @@ class ExpenseBit {
         }
     });
     if(bulk.length>0){
-        // console.log("came here")
         bulk.execute(function (err, result) {
             if(err){
                 console.log(err)

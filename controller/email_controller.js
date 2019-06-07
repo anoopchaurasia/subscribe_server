@@ -273,7 +273,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                             let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
                             let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
                             try {
-                                await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
+                               // await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
                             } catch (e) {
                                 require('raven').captureException(e);
                             }
