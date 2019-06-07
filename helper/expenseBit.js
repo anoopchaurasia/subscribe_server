@@ -261,6 +261,7 @@ class ExpenseBit {
                     console.error(err.message, err.stack, "51");
                 });
                 if (fromEmail.status == "move") {
+                    // console.log("moved")
                     await Pubsub.getListLabel(user_id, auth, emailInfoNew);
                 } else if (fromEmail.staus == "trash") {
                     await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew);
