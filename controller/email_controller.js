@@ -142,6 +142,7 @@ router.post('/readMailInfo', async (req, res) => {
                     if (result) {
                         // console.log(mail)
                         let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
+                        console.log(from_email_id)
                         await Expensebit.storeBulkEmailInDB(mail,from_email_id);
                     }
                 }

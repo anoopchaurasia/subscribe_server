@@ -26,6 +26,7 @@ app.get('/api/v1/setToken', function (req, res) {
 
 
 app.get('/', function (req, res) {
+    console.log(req)
     res.send("welcome!!!!!!!!");
 })
 
