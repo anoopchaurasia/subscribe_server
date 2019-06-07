@@ -213,16 +213,7 @@ class Pubsub {
                 }
             });
             if (lbl_id == null) {
-                var res = gmail.users.labels.create({
-                    userId: 'me',
-                    resource: {
-                        "labelListVisibility": "labelShow",
-                        "messageListVisibility": "show",
-                        "name": "Unsubscribed Emails"
-                    }
-                }).catch(err => {
-                    console.error(err.message, err.stack,"95");
-                });
+                
                 if (res) {
                     var result = await Pubsub.UpdateLableInsideToken(user_id, res.data.id);
                     if (result) {
@@ -281,6 +272,16 @@ class Pubsub {
 
     static async moveFromINboxUNsub(auth, id_list, label) {
         const gmail = google.gmail({ version: 'v1', auth });
+        await gmail.users.labels.create({
+            userId: 'me',
+            resource: {
+                "labelListVisibility": "labelShow",
+                "messageListVisibility": "show",
+                "name": "Unsubscribed Emails"
+            }
+        }).catch(err => {
+            console.error(err.message, err.stack,"95");
+        });
         let datab = await gmail.users.messages.batchModify({
             userId: 'me',
             resource: {
