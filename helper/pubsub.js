@@ -235,6 +235,7 @@ class Pubsub {
             }
         }
     }
+    
 
 
     /*
@@ -258,16 +259,34 @@ class Pubsub {
     /*
         This function will move mail from Inbox.
     */
+
+    static user_move_mail_list = {};
+    static user_settimeout_const = {};
     static async  MoveMailFromInBOX(user_id, auth, mailList, label) {
+        if(!user_id) throw new Error("?????????????????????????????, no user",);
+        clearTimeout( user_settimeout_const[user_id]);
+        Pubsub.user_move_mail_list[user_id] = (Pubsub.user_move_mail_list[user_id]||[])
+        Pubsub.user_move_mail_list[user_id].push(mailList.email_id);
+        if(Pubsub.user_move_mail_list[user_id].length<200) {
+            return user_settimeout_const[user_id]= setTimeout(x=>{
+                Pubsub.moveFromINboxUNsub(auth, Pubsub.user_move_mail_list[user_id], label);
+                delete Pubsub.user_move_mail_list[user_id];
+            }, 4000);
+        } else {
+            Pubsub.moveFromINboxUNsub(auth, Pubsub.user_move_mail_list[user_id], label);
+            delete Pubsub.user_move_mail_list[user_id];
+        }
+        
+    }
+
+    static async moveFromINboxUNsub(auth, id_list, label) {
         const gmail = google.gmail({ version: 'v1', auth });
-        let labelarry = [];
-        labelarry[0] = label;
         if (mailList.email_id) {
-            let datab = await gmail.users.messages.modify({
+            let datab = await gmail.users.messages.batchModify({
                 userId: 'me',
-                'id': mailList.email_id,
                 resource: {
-                    'addLabelIds': labelarry,
+                    'ids': id_list,
+                    'addLabelIds': [label],
                     "removeLabelIds": ['INBOX', 'CATEGORY_PROMOTIONS', 'CATEGORY_PERSONAL']
                 }
             }).catch(err => {
