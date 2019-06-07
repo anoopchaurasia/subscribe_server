@@ -19,7 +19,7 @@ class GmailApis {
                 'ids': emailIdList
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message,"75");
             return
         });
         return response;
@@ -38,7 +38,7 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message,"76");
             return
         });
         return response;
@@ -58,7 +58,7 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message,"77");
             return
         });
         return response;
@@ -74,7 +74,7 @@ class GmailApis {
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message,"78");
             return
         });
         if(modify){
@@ -92,7 +92,7 @@ class GmailApis {
             userId: 'me',
             'id': email_id
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message,"79");
         });
         return response;
     }
@@ -103,7 +103,7 @@ class GmailApis {
         Using Accesstoken Infor and Credential Gmail Instance will be created.
     */
     static async getGmailInstance(auth) {
-        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e));
+        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e,"80"));
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = authToken;
         return google.gmail({
@@ -122,7 +122,7 @@ class GmailApis {
                 "name": "Unsubscribed Emails"
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message,"81");
             return
         });
         return res;
@@ -143,7 +143,7 @@ class GmailApis {
             }
         };
     
-        let response = await gmail.users.watch(options).catch(e=> console.error(e.message));
+        let response = await gmail.users.watch(options).catch(e=> console.error(e.message,"82"));
         return
     }
 
@@ -159,7 +159,7 @@ class GmailApis {
                 "removeLabelIds": labels
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message,"83");
             return
         });
         return modif
@@ -177,7 +177,7 @@ class GmailApis {
                 'addLabelIds': labels   
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message,"84");
             return
         });
         if(modify){
@@ -202,7 +202,7 @@ class GmailApis {
                 "removeLabelIds": removeLabels
             }
         }).catch (err => {
-            console.error(err.message);
+            console.error(err.message,"85");
             return 
         });
         return GmailApis.batchModifyAddAndRemoveLabels(auth,mailIds,addLabels,removeLabels);
@@ -221,7 +221,7 @@ class GmailApis {
                 "name": "Unsubscribed Emails"
             }
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message,"86");
         });;
         await ExpenseBit.UpdateLableInsideToken(user_id, res.data.id);
         return res;
@@ -232,7 +232,7 @@ class GmailApis {
         const res = await gmail.users.labels.list({
             userId: 'me',
         }).catch(err => {
-            console.error(err.message);
+            console.error(err.message,"87");
         });
         return res;
     }
