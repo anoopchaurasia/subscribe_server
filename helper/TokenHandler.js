@@ -19,7 +19,7 @@ class TokenHandler {
     */
     static async checkTokenExpiry(user_id) {
         let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message, err.stack,"31");
         });
         if (!authToken){
             return true;
@@ -50,7 +50,7 @@ class TokenHandler {
             }
         }
         let response = await axios(settings).catch(e=>{
-            console.error(e.message, e.stack);
+            console.error(e.message, e.stack,"32");
             return true
         });
         if(response && response.data && response.data['access_token']) {
@@ -72,7 +72,7 @@ class TokenHandler {
     */
     static  async getAccessToken(user_id){
         let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message, err.stack,"33");
         });
         if(authToken && authToken.expiry_date < new Date())
          {
@@ -101,7 +101,7 @@ class TokenHandler {
                 "access_type": 'offline'
             }
         }
-        let response = await axios(settings).catch(e => console.error(e.message, e.stack));
+        let response = await axios(settings).catch(e => console.error(e.message, e.stack,"34"));
         
         if (response && response.data && response.data['access_token']) {
             body = response.data;
@@ -131,7 +131,7 @@ class TokenHandler {
   
     static async getTokenFromCode(code) {
         var oauth2Client =await TokenHandler.createAuthCleint();
-        return await oauth2Client.getToken(code).catch(e => console.error(e.message, e.stack));
+        return await oauth2Client.getToken(code).catch(e => console.error(e.message, e.stack,"35"));
     }
 
     /*
@@ -164,7 +164,7 @@ class TokenHandler {
             "is_valid":true
         };
         await AuthToken.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message, err.stack,"36");
         });
     }
 }
