@@ -12,6 +12,7 @@ const MailScraper = require("../helper/mailScraper").MailScraper;
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;
+const MailScraper = require("../helper/mailScraper").MailScraper;
 fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
@@ -274,7 +275,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                             try {
                                 await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
                             } catch (e) {
-                                require('raven').captureException(err);
+                                require('raven').captureException(e);
                             }
                             await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth);
                         }
