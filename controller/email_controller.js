@@ -132,7 +132,7 @@ router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
         let keylist = await RedisDB.getKEYS(doc.user_id);
-        console.log(keylist)
+        // console.log(keylist)
         if (keylist && keylist.length != 0) {
             // console.log(keylist)
             keylist.forEach(async element => {
