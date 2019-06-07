@@ -83,22 +83,17 @@ class ExpenseBit {
         This function will revet back Moved Email to INBOX folder.
     */
     static async  MoveMailFromExpenseBit(user_id, auth, from_email, label) {
-        let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack,"45"); });
+        let mail = await email.findOne({ "from_email": from_email, "user_id": user_id, status: "move" }).catch(err => { console.error(err.message, err.stack,"45"); });
+        if(!mail) return;
         let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack,"46"); });
-
         if (mailList) {
-            var oldvalue = {
-                user_id: user_id,
-                "from_email": from_email,
-                "status": "move"
-            };
             var newvalues = {
                 $set: {
                     "status": "keep",
                     "status_date": new Date()
                 }
             };
-            email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+            email.findOneAndUpdate({_id: mail._id}, newvalues, { upsert: true }).catch(err => {
                 console.error(err.message, err.stack,"47");
             });
             let labelarry = [];
