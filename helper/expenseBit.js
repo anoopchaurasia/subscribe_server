@@ -10,6 +10,12 @@ const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const GmailApi = require("../helper/gmailApis").GmailApis;
 fm.Include("com.jeet.memdb.RedisDB");
 
+Array.prototype.asynForEach = async function (cb) {
+    for (let i = 0, len = this.length; i < len; i++) {
+        await cb(this[i]);
+    }
+}
+
 class ExpenseBit {
 
     /*
@@ -265,7 +271,7 @@ class ExpenseBit {
         }
         async function checkOtherUserActions(emailInfo, user_id) {
             let totalAvailable = await email.count({ "from_email": emailInfo.from_email, "status": { $in: ["move", "trash"] } }).catch(err => { console.error(err.message, err.stack); });
-            console.log(totalAvailable)
+            // console.log(totalAvailable)
             if (totalAvailable >= 2) {
                 await createNewEmailForUser(emailInfo, user_id);
                 return true;
@@ -385,11 +391,12 @@ class ExpenseBit {
 
     static async storeBulkEmailInDB(email, from_email_id) {
     var bulk = emailInformation.collection.initializeUnorderedBulkOp();
-    email.forEach(async emailInfo => {
+        await email.asynForEach(async emailInfo => {
+        // console.log(11)
         emailInfo = JSON.parse(emailInfo);
         let emailInfoNew = await ExpenseBit.getEmailInfoNew(emailInfo);
         emailInfoNew['from_email_id'] = from_email_id;
-
+        // console.log(emailInfo)
         try {
             bulk.find({ "email_id": emailInfo.email_id }).upsert().update({ $set: emailInfoNew });
         } catch (err) {
@@ -397,11 +404,15 @@ class ExpenseBit {
         }
     });
     if(bulk.length>0){
+        // console.log("came here")
         bulk.execute(function (err, result) {
-
-        }).catch(err => {
-            console.error(err.message, err.stack);
-        });
+            if(err){
+                console.log(err)
+            }
+            if(result){
+                console.log(result);
+            }
+        })
     }
 }
 
