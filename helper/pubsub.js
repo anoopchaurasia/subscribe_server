@@ -281,17 +281,18 @@ class Pubsub {
 
     static async moveFromINboxUNsub(auth, id_list, label) {
         const gmail = google.gmail({ version: 'v1', auth });
-            let datab = await gmail.users.messages.batchModify({
-                userId: 'me',
-                resource: {
-                    'ids': id_list,
-                    'addLabelIds': [label],
-                    "removeLabelIds": ['INBOX', 'CATEGORY_PROMOTIONS', 'CATEGORY_PERSONAL']
-                }
-            }).catch(err => {
-                console.error(err.message, err.stack,"98");
-            });
-      }
+        let datab = await gmail.users.messages.batchModify({
+            userId: 'me',
+            resource: {
+                'ids': id_list,
+                'addLabelIds': [label],
+                "removeLabelIds": ['INBOX', 'CATEGORY_PROMOTIONS', 'CATEGORY_PERSONAL']
+            }
+        }).catch(err => {
+            console.error(err.message, err.stack,"98");
+        });
+        
+    }
 
     /*
 
