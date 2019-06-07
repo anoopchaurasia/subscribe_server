@@ -13,6 +13,8 @@ const serverKey = process.env.FCM_SERVER_KEY; //put your server key here
 const fcm = new FCM(serverKey);
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
 
+let user_move_mail_list = {};
+let user_settimeout_const = {};
 
 class Pubsub {
 
@@ -260,28 +262,25 @@ class Pubsub {
         This function will move mail from Inbox.
     */
 
-    static user_move_mail_list = {};
-    static user_settimeout_const = {};
     static async  MoveMailFromInBOX(user_id, auth, mailList, label) {
         if(!user_id) throw new Error("?????????????????????????????, no user",);
         clearTimeout( user_settimeout_const[user_id]);
-        Pubsub.user_move_mail_list[user_id] = (Pubsub.user_move_mail_list[user_id]||[])
-        Pubsub.user_move_mail_list[user_id].push(mailList.email_id);
-        if(Pubsub.user_move_mail_list[user_id].length<200) {
+        user_move_mail_list[user_id] = (user_move_mail_list[user_id]||[])
+        user_move_mail_list[user_id].push(mailList.email_id);
+        if(user_move_mail_list[user_id].length<200) {
             return user_settimeout_const[user_id]= setTimeout(x=>{
-                Pubsub.moveFromINboxUNsub(auth, Pubsub.user_move_mail_list[user_id], label);
-                delete Pubsub.user_move_mail_list[user_id];
+                Pubsub.moveFromINboxUNsub(auth, user_move_mail_list[user_id], label);
+                delete user_move_mail_list[user_id];
             }, 4000);
         } else {
-            Pubsub.moveFromINboxUNsub(auth, Pubsub.user_move_mail_list[user_id], label);
-            delete Pubsub.user_move_mail_list[user_id];
+            Pubsub.moveFromINboxUNsub(auth, user_move_mail_list[user_id], label);
+            delete user_move_mail_list[user_id];
         }
         
     }
 
     static async moveFromINboxUNsub(auth, id_list, label) {
         const gmail = google.gmail({ version: 'v1', auth });
-        if (mailList.email_id) {
             let datab = await gmail.users.messages.batchModify({
                 userId: 'me',
                 resource: {
@@ -292,8 +291,7 @@ class Pubsub {
             }).catch(err => {
                 console.error(err.message, err.stack,"98");
             });
-        }
-    }
+      }
 
     /*
 
