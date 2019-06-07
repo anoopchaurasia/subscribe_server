@@ -200,7 +200,7 @@ class Pubsub {
         var res = await gmail.users.labels.list({
             userId: 'me',
         }).catch(err => {
-            console.error(err.message, err.stack,"94");
+            console.error(err.message, "94");
         });
 
         if (res) {
@@ -273,35 +273,6 @@ class Pubsub {
             }).catch(err => {
                 console.error(err.message, err.stack,"98");
             });
-            // console.log("moved",datab.status)
-            // await gmail.users.messages.modify({
-            //     userId: 'me',
-            //     'id': mailList.email_id,
-            //     resource: {
-            //         "removeLabelIds": ['INBOX']
-            //     }
-            // }).catch(err => {
-            //     console.error(err.message, err.stack,"99");
-            // });
-            // await gmail.users.messages.modify({
-            //     userId: 'me',
-            //     'id': mailList.email_id,
-            //     resource: {
-            //         "removeLabelIds": ['CATEGORY_PROMOTIONS']
-            //     }
-            // }).catch(err => {
-            //     console.error(err.message, err,"100");
-            // });
-            // await gmail.users.messages.modify({
-            //     userId: 'me',
-            //     'id': mailList.email_id,
-            //     resource: {
-            //         "removeLabelIds": ['CATEGORY_PERSONAL']
-            //     }
-            // }).catch(err => {
-            //     console.error(err.message, err.stack,"101");
-            // });
-            
         }
     }
 
