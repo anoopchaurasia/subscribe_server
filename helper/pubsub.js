@@ -268,37 +268,39 @@ class Pubsub {
                 'id': mailList.email_id,
                 resource: {
                     'addLabelIds': labelarry,
+                    "removeLabelIds": ['INBOX', 'CATEGORY_PROMOTIONS', 'CATEGORY_PERSONAL']
                 }
             }).catch(err => {
                 console.error(err.message, err.stack,"98");
             });
-            await gmail.users.messages.modify({
-                userId: 'me',
-                'id': mailList.email_id,
-                resource: {
-                    "removeLabelIds": ['INBOX']
-                }
-            }).catch(err => {
-                console.error(err.message, err.stack,"99");
-            });
-            await gmail.users.messages.modify({
-                userId: 'me',
-                'id': mailList.email_id,
-                resource: {
-                    "removeLabelIds": ['CATEGORY_PROMOTIONS']
-                }
-            }).catch(err => {
-                console.error(err.message, err,"100");
-            });
-            await gmail.users.messages.modify({
-                userId: 'me',
-                'id': mailList.email_id,
-                resource: {
-                    "removeLabelIds": ['CATEGORY_PERSONAL']
-                }
-            }).catch(err => {
-                console.error(err.message, err.stack,"101");
-            });
+            // console.log("moved",datab.status)
+            // await gmail.users.messages.modify({
+            //     userId: 'me',
+            //     'id': mailList.email_id,
+            //     resource: {
+            //         "removeLabelIds": ['INBOX']
+            //     }
+            // }).catch(err => {
+            //     console.error(err.message, err.stack,"99");
+            // });
+            // await gmail.users.messages.modify({
+            //     userId: 'me',
+            //     'id': mailList.email_id,
+            //     resource: {
+            //         "removeLabelIds": ['CATEGORY_PROMOTIONS']
+            //     }
+            // }).catch(err => {
+            //     console.error(err.message, err,"100");
+            // });
+            // await gmail.users.messages.modify({
+            //     userId: 'me',
+            //     'id': mailList.email_id,
+            //     resource: {
+            //         "removeLabelIds": ['CATEGORY_PERSONAL']
+            //     }
+            // }).catch(err => {
+            //     console.error(err.message, err.stack,"101");
+            // });
             
         }
     }
