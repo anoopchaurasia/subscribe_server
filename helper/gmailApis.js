@@ -71,7 +71,7 @@ class GmailApis {
     static async trashEmailAPiMulti(authToken, email_ids) {
         const gmail = google.gmail({ version: 'v1', auth:authToken })
         // const gmail = await GmailApis.getGmailInstance(authToken);
-        let response = await  gmail.users.messages.modify({
+        let response = await  gmail.users.messages.batchModify({
             userId: 'me',
             resource: {
                 ids: email_ids,
