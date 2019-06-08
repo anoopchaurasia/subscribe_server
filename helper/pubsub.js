@@ -156,7 +156,7 @@ class Pubsub {
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": user_id }).catch(err => { console.error(err.message, err.stack,"m14"); });
                         if (mailInfo) {
-                            await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfo);
+                            await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfo, user_id);
                         }
                         let tokenInfo = await fcmToken.findOne({ "user_id": user_id }).catch(err => { console.error(err.message, err.stack,"m15"); });
                         if (tokenInfo) {

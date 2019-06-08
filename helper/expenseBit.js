@@ -258,7 +258,7 @@ class ExpenseBit {
                 if (fromEmail.status == "move") {
                     await Pubsub.getListLabel(user_id, auth, emailInfoNew);
                 } else if (fromEmail.staus == "trash") {
-                    await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew);
+                    await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew, user_id);
                 }
                 return true;
             }
@@ -348,7 +348,7 @@ class ExpenseBit {
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": user_id }).catch(err => { console.error(err.message); });
                         if (mailInfo) {
-                            await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew);
+                            await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew, user_id);
                         }
                     }
                 }
@@ -447,7 +447,7 @@ class ExpenseBit {
                         }
                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": user_id }).catch(err => { console.error(err.message,"72"); });
                         if (mailInfo) {
-                            await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew);
+                            await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew, user_id);
                         }
                     }
                 }

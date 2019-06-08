@@ -4,6 +4,8 @@ const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const emailInformation = require('../models/emailInfo');
 const { google } = require('googleapis');
 const GmailApi = require("../helper/gmailApis").GmailApis;
+let delay_holder = {};
+let timeout_key_holder = {};
 class TrashEmail {
 
     /*
@@ -88,9 +90,22 @@ class TrashEmail {
         This Function For Moving Mail from inbox to Trash folder.
         This will move one email at a time. and changed is_trash value into database same time.
     */
-    static async inboxToTrashFromExpenseBit(authToken, emailInfo) {
+    static async inboxToTrashFromExpenseBit(authToken, emailInfo, user_id) {
         if (emailInfo.email_id) {
-            await GmailApi.trashEmailAPi(authToken, emailInfo.email_id);
+            clearTimeout(timeout_key_holder[user_id]);
+            delay_holder[user_id] = (delay_holder[user_id] || []);
+            delay_holder[user_id].push(emailInfo.email_id);
+            if(delay_holder[user_id].length<200) {
+                timeout_key_holder[user_id] =  setTimeout(x=> {
+                    GmailApi.trashEmailAPiMulti(authToken, delay_holder[user_id]);
+                    delete delay_holder[user_id];
+                    delete timeout_key_holder[user_id];
+                })
+            } else {
+                await GmailApi.trashEmailAPiMulti(authToken, delay_holder[user_id]);
+                delete delay_holder[user_id];
+                delete timeout_key_holder[user_id];
+            }
         }
     }
 

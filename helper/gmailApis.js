@@ -64,6 +64,26 @@ class GmailApis {
         return response;
     }
 
+    /*
+        This function for Moving Mail form INbox To trash Folder.
+        this will adc trash label in single mail requiest using email id.
+    */
+    static async trashEmailAPiMulti(authToken, email_ids) {
+        const gmail = google.gmail({ version: 'v1', auth:authToken })
+        // const gmail = await GmailApis.getGmailInstance(authToken);
+        let response = await  gmail.users.messages.modify({
+            userId: 'me',
+            resource: {
+                ids: email_ids,
+                'addLabelIds': ["TRASH"]
+            }
+        }).catch(err => {
+            console.error(err.message,"77");
+            return
+        });
+        return response;
+    }
+
     static async trashBatchEmailAPi(authToken, mailIds) {
         const gmail = await GmailApis.getGmailInstance(authToken);
         // const gmail = google.gmail({ version: 'v1', auth: authToken })
