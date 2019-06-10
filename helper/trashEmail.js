@@ -94,8 +94,8 @@ class TrashEmail {
             delay_holder[user_id] = (delay_holder[user_id] || []);
             delay_holder[user_id].push(emailInfo.email_id);
             if(delay_holder[user_id].length<200) {
-                
                 timeout_key_holder[user_id] =  setTimeout(x=> {
+                    if(!delay_holder[user_id]) return
                     console.log(delay_holder[user_id].length, user_id, "settimeout");
                     GmailApi.trashEmailAPiMulti(authToken, delay_holder[user_id]);
                     delete delay_holder[user_id];
