@@ -141,13 +141,13 @@ router.post('/readMailInfo', async (req, res) => {
                 if (mail.length != 0) {
                     let result = await RedisDB.findPercent(mail);
                     if (result) {
-                        // console.log(mail)
                         let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
                         await Expensebit.storeBulkEmailInDB(mail,from_email_id);
                     }
                 }
             });
             await RedisDB.delKEY(keylist);
+            console.log("keys",await RedisDB.getKEYS(doc.user_id))
         }
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
