@@ -79,9 +79,7 @@ class TrashEmail {
         let mailIdList = mailList.map(x => x.email_id);
         if (mailIdList) {
             let modifying = await GmailApi.trashBatchEmailAPi(authToken, mailIdList);
-            if (modifying) {
-                await TrashEmail.addTrashFromLabel(bodyData.from_email,authToken.user_id);
-            }
+            await TrashEmail.addTrashFromLabel(bodyData.from_email,authToken.user_id);
         }
     }
 
