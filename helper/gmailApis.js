@@ -84,22 +84,22 @@ class GmailApis {
         return response;
     }
 
-    static async trashBatchEmailAPi(authToken, mailIds) {
-        const gmail = await GmailApis.getGmailInstance(authToken);
+    static async trashBatchEmailAPi(authToken, mailIds) { 
+       if (mailIds.length <= 0) return;
+        var msgIDS = mailIds.splice(0, 998);
+        var gmail = await GmailApis.getGmailInstance(authToken);
         // const gmail = google.gmail({ version: 'v1', auth: authToken })
         let modify = await gmail.users.messages.batchModify({
             userId: 'me',
             resource: {
-                'ids': mailIds,
+                'ids': msgIDS,
                 'addLabelIds': ["TRASH"]
             }
         }).catch(err => {
             console.error(err.message,"78");
             return
         });
-        if(modify){
-            return modify
-        }
+        return GmailApis.trashBatchEmailAPi(authToken, mailIds);
     }
 
 
