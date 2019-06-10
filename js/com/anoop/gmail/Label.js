@@ -1,23 +1,31 @@
 fm.Package("com.anoop.gmail");
-fm.Class("Label>.Gmail", function(me){
+fm.Class("Label>.Message", function(me){
     this.setMe=_me=>me=_me;
 
     this.Label = function(){
 
     };
 
-    Static.moveToTrash = function(user_id){
-        const gmail = me.userInstance(user_id);
-        let response = await gmail.users.messages.batchModify({
+    Static.moveToTrash =async function(gmail, mailIdList){
+        return await me.batchModify(gmail,  {
+            'ids': mailIdList,
+            'addLabelIds': ["TRASH"]
+        });
+    };
+
+
+    Static.create = function (gmail, name="Unsubscribed Emails"){
+        const res = await gmail.users.labels.create({
             userId: 'me',
             resource: {
-                'ids': mailIdList,
-                'addLabelIds': ["TRASH"]
+                "labelListVisibility": "labelShow",
+                "messageListVisibility": "show",
+                "name": name
             }
         }).catch(err => {
-            console.error(err.message,"76");
+            console.error(err.message,"81");
             return
         });
-        return response;
+        return res;
     };
 })

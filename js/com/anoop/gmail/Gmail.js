@@ -4,22 +4,22 @@ const { google } = require('googleapis');
 fm.Class("Gmail", function(me){
     this.setMe=_me=>me=_me;
 
-    this.Gmail = function(){
-
+    this.Gmail = function(oauth2Client, authToken, user_id) {
+        this.oauth2Client = oauth2Client;
+        this.authToken = authToken;
+        this.user_id = user_id;
     };
 
-    Static.userInstance = function(user_id){
-        let oauth2Client = me.getOauth2ClientInstance(user_id);
-        return google.gmail({
-            version: 'v1',
-            auth: oauth2Client
-        });
-    }
-
-    Static.getOauth2ClientInstance = function(user_id){
+    Static.getInstanceForUser = async function(user_id) {
         const authToken = await TokenHandler.getAccessToken(user_id).catch(e => console.error(e,"80"));
         let oauth2Client = await TokenHandler.createAuthCleint();
-        oauth2Client.credentials = authToken;
+        return new me(oauth2Client, authToken, user_id);
+    };
+
+    this.userInstance = function(){
+        return google.gmail({
+            version: 'v1',
+            auth: me.oauth2Client
+        });
     }
-    
-})
+});
