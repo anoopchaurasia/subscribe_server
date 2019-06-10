@@ -240,7 +240,30 @@ class ExpenseBit {
     }
 
 
-    static async checkEmailNew(emailObj, mail, user_id, auth) {
+    static async findLabelId(auth) {
+        const gmail = google.gmail({ version: 'v1', auth });
+        var res = await gmail.users.labels.list({
+            userId: 'me',
+        }).catch(err => {
+            console.error(err.message, "94");
+        });
+        if (res) {
+            let lbl_id = null;
+            res.data.labels.forEach(lbl => {
+                if (lbl.name === "Unsubscribed Emails") {
+                    lbl_id = lbl.id;
+                }
+            });
+            if (lbl_id == null) {
+                return res.data.id;
+            } else {
+                return lbl_id
+            }
+        }
+    }
+
+
+    static async checkEmailNew(emailObj, mail, user_id, auth,label) {
         let emailInfo = await ExpenseBit.createEmailInfo(user_id, null, mail);
         if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
             return
@@ -256,8 +279,8 @@ class ExpenseBit {
                     console.error(err.message, err.stack, "51");
                 });
                 if (fromEmail.status == "move") {
-                    await Pubsub.getListLabel(user_id, auth, emailInfoNew);
-                } else if (fromEmail.staus == "trash") {
+                    await Pubsub.getListLabel(user_id, auth, emailInfoNew,label);
+                } else if (fromEmail.status == "trash") {
                     await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew, user_id);
                 }
                 return true;
