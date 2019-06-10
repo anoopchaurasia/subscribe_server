@@ -69,7 +69,7 @@ class GmailApis {
         this will adc trash label in single mail requiest using email id.
     */
     static async trashEmailAPiMulti(authToken, email_ids) {
-        console.log(email_ids.length)
+        // console.log(email_ids.length)
         const gmail = google.gmail({ version: 'v1', auth:authToken })
         // const gmail = await GmailApis.getGmailInstance(authToken);
         let response = await  gmail.users.messages.batchModify({
@@ -82,7 +82,7 @@ class GmailApis {
             console.error(err.message,"77");
             return
         });
-        console.log(response.status)
+        // console.log(response.status)
         return response;
     }
 

@@ -133,9 +133,7 @@ router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
         let keylist = await RedisDB.getKEYS(doc.user_id);
-        // console.log(keylist)
         if (keylist && keylist.length != 0) {
-            // console.log(keylist)
             keylist.forEach(async element => {
                 let mail = await RedisDB.popData(element);
                 if (mail.length != 0) {
@@ -147,7 +145,6 @@ router.post('/readMailInfo', async (req, res) => {
                 }
             });
             await RedisDB.delKEY(keylist);
-            console.log("keys",await RedisDB.getKEYS(doc.user_id))
         }
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);

@@ -421,10 +421,10 @@ class ExpenseBit {
     if(bulk.length>0){
         bulk.execute(function (err, result) {
             if(err){
-                console.log(err,"66")
+                console.error(err,"66")
             }
             if(result){
-                console.log(result);
+                // console.log(result);
             }
         })
     }

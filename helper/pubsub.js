@@ -269,12 +269,12 @@ class Pubsub {
         if (user_move_mail_list[user_id].length < 200) {
             return user_settimeout_const[user_id] = setTimeout(x => {
                 if(!user_move_mail_list[user_id]) return;
-                console.log(user_move_mail_list[user_id].length, user_id, "settimeout");
+                // console.log(user_move_mail_list[user_id].length, user_id, "settimeout");
                 Pubsub.moveFromINboxUNsub(auth, user_move_mail_list[user_id], label);
                 delete user_move_mail_list[user_id];
             }, 10000);
         } else {
-            console.log(user_move_mail_list[user_id].length, user_id, "settimeout200")
+            // console.log(user_move_mail_list[user_id].length, user_id, "settimeout200")
             Pubsub.moveFromINboxUNsub(auth, user_move_mail_list[user_id], label);
             delete user_move_mail_list[user_id];
         }
