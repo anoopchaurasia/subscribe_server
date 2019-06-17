@@ -47,7 +47,7 @@ Thsi api for Reverting Back Trash Email from Trash folder to Inbox.
 router.post('/revertTrashMailToInbox', async (req, res) => {
     try {
         const tokenInfo = req.token;
-        const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack,"1"));
+        const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack, "1"));
         const oauth2Client = await TokenHandler.createAuthCleint(authToken);
         await TrashEmail.revertMailFromTrash(tokenInfo.user_id, oauth2Client, req.body);
         res.status(200).json({
@@ -55,7 +55,7 @@ router.post('/revertTrashMailToInbox', async (req, res) => {
             data: "moving"
         })
     } catch (ex) {
-        console.error(ex.message, ex.stack,"2");
+        console.error(ex.message, ex.stack, "2");
         res.sendStatus(400);
     }
 });
@@ -71,7 +71,7 @@ router.post('/moveEmailToExpbit', async (req, res) => {
         const is_unscubscribe = req.body.is_unscubscribe;
         const is_remove_all = req.body.is_remove_all;
         const tokenInfo = req.token;
-        const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack,"3"));
+        const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack, "3"));
         const oauth2Client = await TokenHandler.createAuthCleint(authToken);
         await Expensebit.getListLabel(tokenInfo.user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
         res.status(200).json({
@@ -79,7 +79,7 @@ router.post('/moveEmailToExpbit', async (req, res) => {
             data: "moving"
         })
     } catch (ex) {
-        console.error(ex.message, ex.stack,"4");
+        console.error(ex.message, ex.stack, "4");
         res.sendStatus(400);
     }
 });
@@ -93,21 +93,69 @@ router.post('/getMailInfo', async (req, res) => {
     try {
         const token = req.token;
         if (token) {
-            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack,"5"));
+            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack, "5"));
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             let label = await Expensebit.findLabelId(oauth2Client);
-            await getRecentEmail(token.user_id, oauth2Client, null,label);
+            await getRecentEmail(token.user_id, oauth2Client, null, label);
             res.status(200).json({
                 error: false,
                 data: "scrape"
             })
         }
     } catch (ex) {
-        console.error(ex.message, ex.stack,"6");
+        console.error(ex.message, ex.stack, "6");
         res.sendStatus(400);
     }
 });
+
+
+
+router.post('/manualUnsubEmailFromUser', async (req, res) => {
+    try {
+        const token = req.token;
+        if (token) {
+            let sender_email = req.body.sender_email;
+            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack, "5"));
+            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
+            Expensebit.createEmailLabel(token.user_id, oauth2Client);
+            let label = await Expensebit.findLabelId(oauth2Client);
+            console.log(sender_email)
+            await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, sender_email,true);
+            res.status(200).json({
+                error: false,
+                data: "scrape"
+            })
+        }
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+});
+
+
+router.post('/manualTrashEmailFromUser', async (req, res) => {
+    try {
+        const token = req.token;
+        if (token) {
+            let sender_email = req.body.sender_email;
+            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack, "5"));
+            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
+            Expensebit.createEmailLabel(token.user_id, oauth2Client);
+            let label = await Expensebit.findLabelId(oauth2Client);
+            console.log(sender_email)
+            await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, sender_email, false);
+            res.status(200).json({
+                error: false,
+                data: "scrape"
+            })
+        }
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+});
+
 
 router.post('/getMailListForSender', async (req, res) => {
     try {
@@ -119,7 +167,7 @@ router.post('/getMailListForSender', async (req, res) => {
         })
     } catch (err) {
         res.sendStatus(400);
-        console.error(err.message, err.stack,"7");
+        console.error(err.message, err.stack, "7");
     }
 });
 
@@ -140,7 +188,7 @@ router.post('/readMailInfo', async (req, res) => {
                     let result = await RedisDB.findPercent(mail);
                     if (result) {
                         let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
-                        await Expensebit.storeBulkEmailInDB(mail,from_email_id);
+                        await Expensebit.storeBulkEmailInDB(mail, from_email_id);
                     }
                 }
             });
@@ -156,7 +204,7 @@ router.post('/readMailInfo', async (req, res) => {
             totalEmail: total
         })
     } catch (err) {
-        console.error(err.message, err.stack,"8");
+        console.error(err.message, err.stack, "8");
         res.sendStatus(400);
     }
 });
@@ -181,7 +229,7 @@ router.post('/readProfileInfo', async (req, res) => {
             totalUnscribeEmail: totalUnscribeEmail
         })
     } catch (err) {
-        console.error(err.message, err.stack,"9");
+        console.error(err.message, err.stack, "9");
     }
 });
 
@@ -190,7 +238,7 @@ router.post('/readMailInfoPage', async (req, res) => {
     try {
         const doc = req.token;
         const emailinfos = await GetEmailQuery.getAllFilteredSubscriptionPage(doc.user_id, req.body.skipcount);
-    
+
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
         res.status(200).json({
@@ -200,7 +248,7 @@ router.post('/readMailInfoPage', async (req, res) => {
             totalEmail: total
         })
     } catch (err) {
-        console.error(err.message, err.stack,"10");
+        console.error(err.message, err.stack, "10");
         res.sendStatus(400);
     }
 });
@@ -221,7 +269,7 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
             totalEmail: total
         })
     } catch (err) {
-        console.error(err.message, err.stack,"11");
+        console.error(err.message, err.stack, "11");
     }
 });
 
@@ -238,7 +286,7 @@ router.post('/getEmailSubscription', async (req, res) => {
             data: emailinfos
         })
     } catch (err) {
-        console.error(err.message, err.stack,"12");
+        console.error(err.message, err.stack, "12");
     }
 });
 
@@ -247,7 +295,7 @@ router.post('/getEmailSubscription', async (req, res) => {
 This for function for scrapping Inbox for particular user.
 This will Get List of email in Batch of 100 for given Time period and will parsed mail.
 */
-async function getRecentEmail(user_id, auth, nextPageToken,label) {
+async function getRecentEmail(user_id, auth, nextPageToken, label) {
     let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
     let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
@@ -270,14 +318,14 @@ async function getRecentEmail(user_id, auth, nextPageToken,label) {
                             let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
                             let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
                             try {
-                               // await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
+                                // await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
                             } catch (e) {
                                 require('raven').captureException(e);
                             }
-                            await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth,label);
+                            await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth, label);
                         }
                     } catch (e) {
-                        console.error(e.message, e.stack,"14");
+                        console.error(e.message, e.stack, "14");
                         return
                     }
                 }
@@ -286,7 +334,7 @@ async function getRecentEmail(user_id, auth, nextPageToken,label) {
     }
     nextPageToken = responseList['data'].nextPageToken;
     if (responseList['data'].nextPageToken) {
-        await getRecentEmail(user_id, auth, responseList['data'].nextPageToken,label);
+        await getRecentEmail(user_id, auth, responseList['data'].nextPageToken, label);
     }
 }
 
@@ -299,7 +347,7 @@ router.post('/unSubscribeMail', async (req, res) => {
     try {
         const from_email = req.body.from_email;
         const mailList = await email.findOne({ "from_email": from_email }).catch(err => {
-            console.error(err.message, err.stack,"15");
+            console.error(err.message, err.stack, "15");
         });
         if (mailList) {
             const settings = {
@@ -308,12 +356,12 @@ router.post('/unSubscribeMail', async (req, res) => {
             }
             Request(settings, async (error, response, body) => {
                 if (error) {
-                    return console.error(err.message, err.stack,"16");
+                    return console.error(err.message, err.stack, "16");
                 }
             });
         }
     } catch (ex) {
-        console.error(ex.message, ex.stack,"17");
+        console.error(ex.message, ex.stack, "17");
         res.sendStatus(400);
     }
 });
@@ -335,7 +383,7 @@ router.post('/getDeletedEmailData', async (req, res) => {
             totalEmail: total
         })
     } catch (err) {
-        console.error(err.message, ex.stack,"18");
+        console.error(err.message, ex.stack, "18");
     }
 });
 
@@ -359,11 +407,11 @@ router.post('/keepMailInformation', async (req, res) => {
             }
         };
         await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-            console.error(err.message, err.stack,"19");
+            console.error(err.message, err.stack, "19");
         });
         res.sendStatus(200)
     } catch (ex) {
-        console.error(ex.message, ex.stack,"20");
+        console.error(ex.message, ex.stack, "20");
         res.sendStatus(400);
     }
 });
@@ -385,7 +433,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
             totalEmail: total
         })
     } catch (err) {
-        console.error(err.message, ex.stack,"21");
+        console.error(err.message, ex.stack, "21");
     }
 });
 
@@ -414,6 +462,42 @@ function getParts(payload) {
         return payload["body"]["data"];
     }
     return str;
+}
+
+
+
+async function getEmailFromSpecificSender(user_id, auth, nextPageToken, label, sender_email,is_move) {
+    let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
+    let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+    let responseList = await gmail.users.messages.list({
+        auth: auth, userId: 'me', maxResults: 100,
+        'pageToken': nextPageToken,
+        q: `from:${sender_email} AND after:${formatted_date}`
+    });
+    if (responseList && responseList['data']['messages']) {
+        responseList['data']['messages'].forEach(async element => {
+            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
+            if (response) {
+                if (response.data.payload || response.data.payload['parts']) {
+                    try {
+                        // console.log(response.data)
+                        if(is_move){
+                            await Expensebit.manualMoveMail(response['data'], user_id, auth, label);
+                        }else{
+                            await Expensebit.manualTrashMail(response['data'], user_id, auth, label);
+                        }
+                    } catch (e) {
+                        console.error(e.message, e.stack, "14");
+                        return
+                    }
+                }
+            }
+        });
+    }
+    nextPageToken = responseList['data'].nextPageToken;
+    if (responseList['data'].nextPageToken) {
+        await getEmailFromSpecificSender(user_id, auth, responseList['data'].nextPageToken, label, sender_email,is_move);
+    }
 }
 
 module.exports = router

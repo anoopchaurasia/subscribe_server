@@ -325,6 +325,51 @@ class ExpenseBit {
 
 }
 
+    static async manualMoveMail(mail, user_id, auth, label) {
+        let emailInfo = await ExpenseBit.createEmailInfo(user_id, null, mail);
+        console.log(emailInfo)
+        if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
+            return
+        }
+        await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
+            console.error(err.message, err.stack, "52");
+        });
+        let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }, { status: 1 }).catch(err => {
+            console.error(err.message, err.stack, "53");
+        });
+        let emailInfoNew = await ExpenseBit.getEmailInfoNew(emailInfo);
+        emailInfoNew['from_email_id'] = fromEmail._id;
+        console.log(emailInfoNew,"here")
+        await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
+            console.error(err.message, err.stack, "54");
+        });
+        console.log("here")
+        await Pubsub.getListLabelNew(user_id, auth, emailInfoNew, label);
+    }
+
+
+    static async manualTrashMail(mail, user_id, auth, label) {
+        let emailInfo = await ExpenseBit.createEmailInfo(user_id, null, mail);
+        console.log(emailInfo)
+        // if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
+        //     return
+        // }
+        await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
+            console.error(err.message, err.stack, "52");
+        });
+        let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }, { status: 1 }).catch(err => {
+            console.error(err.message, err.stack, "53");
+        });
+        let emailInfoNew = await ExpenseBit.getEmailInfoNew(emailInfo);
+        emailInfoNew['from_email_id'] = fromEmail._id;
+        console.log(emailInfoNew, "here1")
+        await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
+            console.error(err.message, err.stack, "54");
+        });
+        console.log("here1")
+        await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew, user_id);
+    }
+
 
 
     /*
