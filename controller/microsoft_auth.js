@@ -58,7 +58,6 @@ router.get('/getOutLookApiUrl', async function (req, res) {
 
 
 router.post('/getMail', async function (req, resp, next) {
-    // console.log(req.body)
     let authCode = req.body.authID;
     let userInfo = await token_model.findOne({ token: authCode }).catch(e => console.error(e));
     let token = await auth_token.findOne({ "user_id": userInfo.user_id });
@@ -81,11 +80,9 @@ router.post('/getMail', async function (req, resp, next) {
             }
             if (body) {
                 const res = JSON.parse(body);
-                // console.log(res.value)
                 await res.value.asynForEach(async folder => {
                     if (folder.displayName == 'Inbox') {
                         let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$skip=0');
-                        // console.log(link)
                         await getEmailInBulk(accessToken, link, userInfo.user_id);
                     }
                 });
@@ -119,7 +116,6 @@ async function getEmailInBulk(accessToken, link, user_id) {
         if (body) {
             body = JSON.parse(body);
             let mailList = body.value;
-            // console.log(body)
             await mailList.asynForEach(async oneEmail => {
                 await checkEmail(oneEmail, user_id, accessToken)
             });
@@ -259,7 +255,6 @@ async function createEmailInfo(user_id, url, emailObj) {
         emailInfo['main_label'] = ['INBOX', 'UNREAD'];
     }
     emailInfo['from_email'] = emailObj.from.emailAddress.address;
-    // emailInfo['to_email'] = emailObj.toRecipients[0].emailAddress.address;
     emailInfo['from_email_name'] = emailObj.from.emailAddress.name;
     emailInfo['subject'] = emailObj.subject;
     emailInfo['email_id'] = emailObj.id;
@@ -275,7 +270,6 @@ let getEmailInfoNew = async (emailInfo) => {
     emailInfoNew['subject'] = emailInfo['subject'];
     emailInfoNew['labelIds'] = emailInfo['labelIds'];
     emailInfoNew['main_label'] = emailInfo['main_label'];
-    // console.log(emailInfoNew);
     return emailInfoNew;
 }
 async function checkUserOldAction(emailInfo, user_id, auth) {
@@ -285,7 +279,6 @@ async function checkUserOldAction(emailInfo, user_id, auth) {
     if (fromEmail) {
         let emailInfoNew = await getEmailInfoNew(emailInfo);
         emailInfoNew['from_email_id'] = fromEmail._id;
-        // console.log(emailInfoNew)
         await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
             console.error(err.message, err.stack, "checking");
         });
@@ -303,7 +296,6 @@ async function checkUserOldAction(emailInfo, user_id, auth) {
 }
 async function checkOtherUserActions(emailInfo, user_id) {
     let totalAvailable = await email.count({ "from_email": emailInfo.from_email, "status": { $in: ["move", "trash"] } }).catch(err => { console.error(err.message, err.stack); });
-    // console.log(totalAvailable)
     if (totalAvailable >= 2) {
         await createNewEmailForUser(emailInfo, user_id);
         return true;
@@ -388,104 +380,6 @@ async function getUrlFromEmail(emailObj) {
     return url;
 }
 
-// let checkEmail = async (emailObj, user_id, accessToken) => {
-//     // let emailData = emailObj.body.content;
-//     // $ = cheerio.load(emailData);
-//     // let url = null;
-//     // let emailInfo = {};
-//     // $('a').each(function (i, elem) {
-//     //     let fa = $(this).text();
-//     //     let anchortext = fa.toLowerCase();
-//     //     let anchorParentText = $(this).parent().text().toLowerCase();
-
-//     //     if (anchortext.indexOf("unsubscribe") != -1 ||
-//     //         anchortext.indexOf("preferences") != -1 ||
-//     //         anchortext.indexOf("subscription") != -1 ||
-//     //         anchortext.indexOf("visit this link") != -1 ||
-//     //         anchortext.indexOf("do not wish to receive our mails") != -1 ||
-//     //         anchortext.indexOf("not receiving our emails") != -1) {
-//     //         url = $(this).attr().href;
-//     //         console.log(url);
-//     //     } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
-//     //         anchorParentText.indexOf("stop receiving emails") != -1 ||
-//     //         anchorParentText.indexOf("unsubscribe") != -1 ||
-//     //         anchorParentText.indexOf("subscription") != -1 ||
-//     //         anchorParentText.indexOf("preferences") != -1 ||
-//     //         anchorParentText.indexOf("mailing list") != -1 ||
-//     //         (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
-//     //         ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
-//     //         anchorParentText.indexOf("Don't want this") != -1) {
-//     //         url = $(this).attr().href;
-//     //         console.log(url)
-//     //     }
-//     // })
-//     // if (url != null) {
-//     //     emailInfo['user_id'] = user_id;
-//     //     emailInfo['mail_data'] = null;
-//     //     emailInfo['unsubscribe'] = url;
-//     //     emailInfo['status'] = "unused";
-//     //     emailInfo['status_date'] = new Date()
-//     //     if (emailObj.isRead) {
-//     //         emailInfo['labelIds'] = 'INBOX';
-//     //         emailInfo['main_label'] = ['INBOX'];
-//     //     } else {
-//     //         emailInfo['labelIds'] = 'INBOX,UNREAD';
-//     //         emailInfo['main_label'] = ['INBOX', 'UNREAD'];
-//     //     }
-//     //     emailInfo['from_email'] = emailObj.from.emailAddress.address;
-//     //     emailInfo['to_email'] = emailObj.toRecipients[0].emailAddress.address;
-//     //     emailInfo['from_email_name'] = emailObj.from.emailAddress.name;
-//     //     emailInfo['subject'] = emailObj.subject;
-//     //     let emailInfoNew = {};
-//     //     emailInfoNew['email_id'] = emailObj.id;
-//     //     emailInfoNew['historyId'] = emailInfo['historyId'];
-//     //     emailInfoNew['unsubscribe'] = emailInfo['unsubscribe'];
-//     //     emailInfoNew['subject'] = emailInfo['subject'];
-//     //     emailInfoNew['labelIds'] = emailInfo['labelIds'];
-//     //     emailInfoNew['main_label'] = emailInfo['main_label'];
-//         if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
-//             console.log(emailInfo.from_email)
-//         } else {
-//             try {
-//                 let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
-//                     console.error(err.message, err.stack);
-//                 });
-//                 if (!fromEmail) {
-//                     await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
-//                         console.error(err.message, err.stack);
-//                     });
-//                     fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }).catch(err => {
-//                         console.error(err.message, err.stack);
-//                     });
-//                 }
-//                 if (fromEmail) {
-//                     let doc = await emailInformation.findOne({ "email_id": emailInfoNew.email_id, "from_email_id": fromEmail._id }).catch(err => {
-//                         console.error(err.message, err.stack);
-//                     });
-//                     if (!doc) {
-//                         emailInfoNew['from_email_id'] = fromEmail._id;
-//                         let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": user_id }).catch(err => {
-//                             console.error(err.message, err.stack);
-//                         });
-//                         await ExpenseBit.UpdateEmailInformation(emailInfoNew);
-//                         if (mailList) {
-//                             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-//                             let id = await Outlook.getFolderListForScrapping(accessToken, doc.user_id, link, emailInfoNew.email_id)
-//                         }
-//                         let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": user_id }).catch(err => { console.error(err.message); });
-//                         if (mailInfo) {
-//                             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-//                             await Outlook.getFolderListForTrashScrapping(accessToken, doc.user_id, link, emailInfoNew.email_id);
-//                         }
-//                     }
-//                 }
-//             } catch (err) {
-//                 console.log(err);
-//             }
-//         }
-//     }
-// }
-
 
 router.get('/auth/callback', async function (req, res) {
     console.log("came here")
@@ -513,9 +407,6 @@ router.get('/auth/callback', async function (req, res) {
                 email_client: "outlook"
             };
             await Outlook.updateUserInfo({ "email": userInfo.preferred_username, email_client: "outlook" }, userdata);
-            // await users.findOneAndUpdate({ "email": userInfo.preferred_username, email_client: "outlook" }, userdata, { upsert: true }).catch(err => {
-            //     console.log(err);
-            // });
             await Outlook.extract_token(existingUser, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
                 console.log(err);
             });
@@ -542,9 +433,6 @@ router.get('/auth/callback', async function (req, res) {
                         email_client: "outlook"
                     };
                     let newUser = await Outlook.updateUserInfo({ "state": state }, userdata);
-                    // let newUser = await users.findOneAndUpdate({ "state": state }, userdata, { upsert: true }).catch(err => {
-                    //     console.log(err);
-                    // });
                     await Outlook.extract_token(newUserData, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
                         console.log(err);
                     });
