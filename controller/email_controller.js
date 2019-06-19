@@ -14,32 +14,15 @@ const APPROX_TWO_MONTH_IN_MS = 4 * 30 * 24 * 60 * 60 * 1000;
 const MailScraper = require("../helper/mailScraper").MailScraper;
 fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
+fm.Include("com.anoop.gmail.Gmail");
+fm.Include("com.anoop.gmail.Label");
+fm.Include("com.anoop.model.EmailDetail");
+fm.Include("com.anoop.model.EmailInfo");
+let EmailInfo = com.anoop.model.EmailInfo;
+let EmailDetail = com.anoop.model.EmailDetail;
+let Gmail = com.anoop.gmail.Gmail;
+let Label = com.anoop.gmail.Label;
 let RedisDB = com.jeet.memdb.RedisDB;
-
-/*
-This api for deleting mail from Inbox or Trash folder.
-*/
-router.post('/deleteMailFromTrash', async (req, res) => {
-    await DeleteEmail.deleteEmails(req.token, req.body);
-    res.json({
-        error: false,
-        data: "moving"
-    })
-});
-
-
-/*
-This api for moving Mail from Inbox to Trash Folder.(When swipe Upper)
-here We will get Fromemail/sender so using that we are moving all coresponding mail to Trash Folder.
-*/
-router.post('/deleteMailFromInbox', async (req, res) => {
-    await TrashEmail.inboxToTrash(req.token, req.body);
-    res.status(200).json({
-        error: false,
-        data: "moving"
-    })
-});
-
 
 /*
 Thsi api for Reverting Back Trash Email from Trash folder to Inbox.
@@ -47,13 +30,11 @@ Thsi api for Reverting Back Trash Email from Trash folder to Inbox.
 router.post('/revertTrashMailToInbox', async (req, res) => {
     try {
         const tokenInfo = req.token;
-        const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack,"1"));
-        const oauth2Client = await TokenHandler.createAuthCleint(authToken);
-        await TrashEmail.revertMailFromTrash(tokenInfo.user_id, oauth2Client, req.body);
-        res.status(200).json({
-            error: false,
-            data: "moving"
-        })
+        let emaildetail = await EmailDetail.get({userId: tokenInfo.user_id, from_email: req.body.from_email, status: "trash"});
+        let emailids = await EmailInfo.getEmailIdsByEmailDetail(emaildetail);
+        let gmailInstance = await Gmail.getInstanceForUser(tokenInfo.user_id);
+        await Label.moveTrashToInbox(gmailInstance, emailids);
+        await EmailDetail.updateStatus({_id: emaildetail._id},  "keep");
     } catch (ex) {
         console.error(ex.message, ex.stack,"2");
         res.sendStatus(400);
@@ -67,12 +48,10 @@ This api for Moving Email From INbox to SUbscribed Folder.(Whne swipe Left)
 router.post('/moveEmailToExpbit', async (req, res) => {
     try {
 
-        const from_email = req.body.from_email;
-        const is_unscubscribe = req.body.is_unscubscribe;
-        const is_remove_all = req.body.is_remove_all;
+        const {from_email, is_unscubscribe, is_remove_all} = req.body.from_email;
         const tokenInfo = req.token;
-        const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack,"3"));
-        const oauth2Client = await TokenHandler.createAuthCleint(authToken);
+        let gmailInstance = await Gmail.getInstanceForUser(tokenInfo.user_id);
+        
         await Expensebit.getListLabel(tokenInfo.user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
         res.status(200).json({
             error: false,

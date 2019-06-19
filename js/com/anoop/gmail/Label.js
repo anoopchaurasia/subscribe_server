@@ -6,12 +6,28 @@ fm.Class("Label>.Message", function(me){
 
     };
 
-    Static.moveToTrash =async function(gmail, mailIdList){
+    Static.moveInboxToTrash =async function(gmail, mailIdList){
         return await me.batchModify(gmail,  {
             'ids': mailIdList,
             'addLabelIds': ["TRASH"]
         });
     };
+
+    Static.moveTrashToInbox = async function(gmail, mailIdList) {
+        return await me.batchModify(gmail,  {
+            'ids': mailIdList,
+            addLabelIds: ["INBOX"],
+            removeLabelIds: ["TRASH"]
+        });
+    }
+
+    Static.moveUnsubToInbox = async function(gmail, mailIdList) {
+        return await me.batchModify(gmail,  {
+            'ids': mailIdList,
+            addLabelIds: ["INBOX"],
+            removeLabelIds: ["TRASH"]
+        });
+    }
 
 
     Static.create = function (gmail, name="Unsubscribed Emails"){
