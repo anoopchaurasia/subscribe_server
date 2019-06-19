@@ -79,9 +79,7 @@ class TrashEmail {
         let mailIdList = mailList.map(x => x.email_id);
         if (mailIdList) {
             let modifying = await GmailApi.trashBatchEmailAPi(authToken, mailIdList);
-            if (modifying) {
-                await TrashEmail.addTrashFromLabel(bodyData.from_email,authToken.user_id);
-            }
+            await TrashEmail.addTrashFromLabel(bodyData.from_email,authToken.user_id);
         }
     }
 
@@ -96,15 +94,15 @@ class TrashEmail {
             delay_holder[user_id] = (delay_holder[user_id] || []);
             delay_holder[user_id].push(emailInfo.email_id);
             if(delay_holder[user_id].length<200) {
-                
                 timeout_key_holder[user_id] =  setTimeout(x=> {
-                    console.log(delay_holder[user_id].length, user_id, "settimeout");
+                    if(!delay_holder[user_id]) return
+                    // console.log(delay_holder[user_id].length, user_id, "settimeout");
                     GmailApi.trashEmailAPiMulti(authToken, delay_holder[user_id]);
                     delete delay_holder[user_id];
                     delete timeout_key_holder[user_id];
                 },10000)
             } else {
-                console.log(delay_holder[user_id].length, user_id, "settimeout2000");
+                // console.log(delay_holder[user_id].length, user_id, "settimeout2000");
                 await GmailApi.trashEmailAPiMulti(authToken, delay_holder[user_id]);
                 delete delay_holder[user_id];
                 delete timeout_key_holder[user_id];
