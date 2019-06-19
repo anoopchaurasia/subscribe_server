@@ -47,16 +47,22 @@ This api for Moving Email From INbox to SUbscribed Folder.(Whne swipe Left)
 */
 router.post('/moveEmailToExpbit', async (req, res) => {
     try {
-
-        const {from_email, is_unscubscribe, is_remove_all} = req.body.from_email;
+        const {from_email, is_unscubscribe} = req.body.from_email;
         const tokenInfo = req.token;
         let gmailInstance = await Gmail.getInstanceForUser(tokenInfo.user_id);
-        
-        await Expensebit.getListLabel(tokenInfo.user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
-        res.status(200).json({
-            error: false,
-            data: "moving"
-        })
+        if(is_unscubscribe) {
+            /// emails are aleady in unsub folder
+            let emaildetail = await EmailDetail.get({userId: tokenInfo.user_id, from_email: from_email, status: "move"});
+            let emailids = await EmailInfo.getEmailIdsByEmailDetail(emaildetail);
+            await Label.moveTrashToInbox(gmailInstance, emailids);
+            await EmailDetail.updateStatus({_id: emaildetail._id},  "keep");
+        } else {
+            // no status as it may has unused
+            let emaildetail = await EmailDetail.get({userId: tokenInfo.user_id, from_email: from_email});
+            let emailids = await EmailInfo.getEmailIdsByEmailDetail(emaildetail);
+            await Label.moveInboxToUnsub(gmailInstance, emailids);
+            await EmailDetail.updateStatus({_id: emaildetail._id},  "move");
+        }
     } catch (ex) {
         console.error(ex.message, ex.stack,"4");
         res.sendStatus(400);

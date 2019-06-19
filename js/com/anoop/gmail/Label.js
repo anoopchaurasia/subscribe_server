@@ -19,16 +19,23 @@ fm.Class("Label>.Message", function(me){
             addLabelIds: ["INBOX"],
             removeLabelIds: ["TRASH"]
         });
-    }
+    };
 
     Static.moveUnsubToInbox = async function(gmail, mailIdList) {
         return await me.batchModify(gmail,  {
             'ids': mailIdList,
             addLabelIds: ["INBOX"],
-            removeLabelIds: ["TRASH"]
+            removeLabelIds: [gmail.authToken.label_id]
         });
-    }
+    };
 
+    Static.moveInboxToUnsub = async function(gmail, mailIdList) {
+        return await me.batchModify(gmail,  {
+            'ids': mailIdList,
+            addLabelIds: [gmail.authToken.label_id],
+            removeLabelIds: ["INBOX"]
+        });
+    };
 
     Static.create = function (gmail, name="Unsubscribed Emails"){
         const res = await gmail.users.labels.create({
