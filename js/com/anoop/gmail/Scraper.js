@@ -1,5 +1,7 @@
 fm.Package("com.anoop.gmail");
+fm.Import(".Header");
 const { google } = require('googleapis');
+
 fm.Class("Scraper>.Message", function(me){
     this.setMe=_me=>me=_me;
     Static.APPROX_TWO_MONTH_IN_MS = process.env.APPROX_TWO_MONTH_IN_MS || 4 * 30 * 24 * 60 * 60 * 1000;
@@ -11,21 +13,24 @@ fm.Class("Scraper>.Message", function(me){
         this.gmail = gmail;
     }
 
-    this.getEmailBody = function(){
-        
-    }
+    this.getEmailBody = function(message_ids){
+        let messageBodies = await me.getBatchMessage(me.gmail, message_ids);
+        return messageBodies.map(x=>{
+            let header = Header.new(x.payload.headers);
+            let payload = getParts(x.payload) || getPlainText(x.payload);
+            return {header, payload};
+        });
+    };
 
     this.start = async function(){
         let date = new Date(Date.now() - me.APPROX_TWO_MONTH_IN_MS);
         let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
         let nextPageToken = null, messages, error;
         while({messages, error, nextPageToken} = await me.getEmailList(me.gmail, nextPageToken, formatted_date)) {
-            me.getEmailBody(messages);
+            let emailbodies = await me.getEmailBody(messages);
             if(!nextPageToken) break;
-        }
-        
-
-
+        };
+ 
         let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
         if (responseList && responseList['data']['messages']) {
             responseList['data']['messages'].forEach(async element => {
@@ -33,6 +38,7 @@ fm.Class("Scraper>.Message", function(me){
                 if (response) {
                     if (response.data.payload || response.data.payload['parts']) {
                         let unsub_url;
+                        
                         let header_raw = response['data']['payload']['headers'];
                         header_raw.forEach(async data => {
                             if (data.name == "List-Unsubscribe") {
@@ -59,5 +65,31 @@ fm.Class("Scraper>.Message", function(me){
                     }
                 }
             });
+    }
+
+    
+    function getPlainText(payload) {
+        var str = "";
+        if (payload.parts) {
+            for (var i = 0; i < payload.parts.length; i++) {
+                str += getPlainText(payload.parts[i]);
+            };
+        }
+        if (payload.mimeType == "text/plain") {
+            return payload["body"]["data"];
+        }
+        return str;
+    }
+    function getParts(payload) {
+        var str = "";
+        if (payload.parts) {
+            for (var i = 0; i < payload.parts.length; i++) {
+                if (payload.mimeType == "multipart/alternative" && payload.parts[i].mimeType != 'text/html') continue;
+                str += getParts(payload.parts[i]);
+            };
+        } else if ((payload.mimeType == "text/html")) {
+            return payload["body"]["data"];
+        }
+        return str;
     }
 });

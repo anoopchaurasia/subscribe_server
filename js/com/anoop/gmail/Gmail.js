@@ -16,6 +16,10 @@ fm.Class("Gmail", function(me){
         return new me(oauth2Client, authToken, user_id);
     };
 
+    this.getAccessToken = async function (){
+       return this.authToken.access_token;
+    };
+
     this.userInstance = function(){
         return google.gmail({
             version: 'v1',
