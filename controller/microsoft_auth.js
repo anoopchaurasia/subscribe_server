@@ -553,7 +553,7 @@ router.get('/auth/callback', async function (req, res) {
                 console.log(err);
             });
             await subscribeToNotification(token.token.access_token,existingUser._id);
-            await updateSubscriptionForOutlook(token.token.accessToken,existingUser._id)
+            await updateSubscriptionForOutlook(token.token.access_token,existingUser._id)
             var tokmodel = new token_model({
                 "user_id": existingUser._id,
                 "token": token_uniqueid,
@@ -580,7 +580,7 @@ router.get('/auth/callback', async function (req, res) {
                         console.log(err);
                     });
                     await subscribeToNotification(token.token.access_token, newUserData._id);
-                    await updateSubscriptionForOutlook(token.token.accessToken, newUserData._id)
+                    await updateSubscriptionForOutlook(token.token.access_token, newUserData._id)
                     var tokmodel = new token_model({
                         "user_id": newUserData._id,
                         "token": token_uniqueid,
