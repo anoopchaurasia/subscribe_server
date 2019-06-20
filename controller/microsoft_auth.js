@@ -38,6 +38,15 @@ router.get('/getPushNotification', async function (req, res) {
     console.log("came here for url")
     console.log(req)
 });
+router.post('getPushNotification',async function (req, res) {
+    console.log("came here for url")
+    console.log(req)
+    res.format({
+        'text/plain': function () {
+            res.status(200).send({ "validationToken": req.query.validationToken});
+        }
+    });
+});
 
 
 async function subscribeToNotification(accessToken) {
