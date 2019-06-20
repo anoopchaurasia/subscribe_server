@@ -44,8 +44,8 @@ router.post('/getPushNotification',async function (req, res) {
     console.log("came here for url")
     console.log(req.query)
     console.log(req.query.validationToken)
-    res.type('text/plain');
-    res.status(200).send({ "validationToken": req.query.validationToken});
+    res.setHeader('content-type', 'text/plain');
+    res.status(200).write(req.query.validationToken);
       
 });
 
