@@ -57,6 +57,7 @@ router.post('/getPushNotification',async function (req, res) {
         let message_id = resource.id;
         
         console.log(user_id,message_id);
+        res.sendStatus(202);
     }
   
 });
