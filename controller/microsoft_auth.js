@@ -155,7 +155,7 @@ async function patchSubscription(accessToken, subscription) {
             'Authorization': 'Bearer ' + accessToken
         },
         "body": JSON.stringify({
-           "expirationDateTime": "2019-06-29T11:00:00.0000000Z",
+           "expirationDateTime": "2019-06-22T11:00:00.0000000Z",
         })
     }
 
