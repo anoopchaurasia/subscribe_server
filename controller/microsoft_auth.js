@@ -50,7 +50,7 @@ router.post('/getPushNotification',async function (req, res) {
         res.end();
 
     }else{
-        console.log(req)
+        console.log(req.body.value)
     }
   
 });
