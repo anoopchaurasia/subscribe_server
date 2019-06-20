@@ -60,7 +60,6 @@ class GetEmailQuery {
         This function will return all unread subscription Information.
     */
     static async getUnreadEmail(user_id) {
-
         const emails = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "status": "unused", "user_id": user_id } },
         { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
         { $project: { "count": 1 } }]).catch(err => {

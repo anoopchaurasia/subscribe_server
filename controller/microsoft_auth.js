@@ -33,6 +33,41 @@ const credentials = {
 const oauth2 = require('simple-oauth2').create(credentials);
 
 
+
+router.get('/getPushNotification', async function (req, res) {
+    console.log("came here for url")
+    console.log(req)
+});
+
+
+async function subscribeToNotification(accessToken) {
+    var settings = {
+        "url": "https://outlook.office.com/api/v2.0/me/subscriptions",
+        "method": "POST",
+        "headers": {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + accessToken
+        },
+        "body": JSON.stringify({
+            "@odata.type": "#Microsoft.OutlookServices.PushSubscription",
+            "Resource": "https://outlook.office.com/api/v2.0/me/mailfolders('inbox')/messages",
+            "NotificationURL": "https://test.expensebit.com/ot/api/v1/mail/microsoft/getPushNotification",
+            "ChangeType": "Created",
+        })
+    }
+
+    Request(settings, async (error, response, body) => {
+        if (error) {
+            console.log(error);
+        }
+        if (body) {
+           console.log(body);
+           
+        }
+    });
+}
+
+
 router.get('/getOutLookApiUrl', async function (req, res) {
     console.log("came here for url")
     const stateCode = uniqid() + "outlook" + uniqid();
@@ -410,6 +445,7 @@ router.get('/auth/callback', async function (req, res) {
             await Outlook.extract_token(existingUser, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
                 console.log(err);
             });
+            await subscribeToNotification(token.token.access_token);
 
             var tokmodel = new token_model({
                 "user_id": existingUser._id,
