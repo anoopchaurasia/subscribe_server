@@ -7,13 +7,15 @@ const Expensebit = require("../helper/expenseBit").ExpenseBit;
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 const router = express.Router();
 const { google } = require('googleapis');
-const simpleParser = require('mailparser').simpleParser;
 const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
+const APPROX_TWO_MONTH_IN_MS = 4 * 30 * 24 * 60 * 60 * 1000;
 const MailScraper = require("../helper/mailScraper").MailScraper;
-const APPROX_TWO_MONTH_IN_MS = 2 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.email.Parser");
+fm.Include("com.jeet.memdb.RedisDB");
+let RedisDB = com.jeet.memdb.RedisDB;
+
 /*
 This api for deleting mail from Inbox or Trash folder.
 */
@@ -45,17 +47,15 @@ Thsi api for Reverting Back Trash Email from Trash folder to Inbox.
 router.post('/revertTrashMailToInbox', async (req, res) => {
     try {
         const tokenInfo = req.token;
-        if (tokenInfo) {
-            const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack));
-            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
-            await TrashEmail.revertMailFromTrash(tokenInfo.user_id, oauth2Client, req.body);
-            res.status(200).json({
-                error: false,
-                data: "moving"
-            })
-        }
+        const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack,"1"));
+        const oauth2Client = await TokenHandler.createAuthCleint(authToken);
+        await TrashEmail.revertMailFromTrash(tokenInfo.user_id, oauth2Client, req.body);
+        res.status(200).json({
+            error: false,
+            data: "moving"
+        })
     } catch (ex) {
-        console.error(ex.message, ex.stack);
+        console.error(ex.message, ex.stack,"2");
         res.sendStatus(400);
     }
 });
@@ -66,21 +66,20 @@ This api for Moving Email From INbox to SUbscribed Folder.(Whne swipe Left)
 */
 router.post('/moveEmailToExpbit', async (req, res) => {
     try {
+
         const from_email = req.body.from_email;
         const is_unscubscribe = req.body.is_unscubscribe;
         const is_remove_all = req.body.is_remove_all;
         const tokenInfo = req.token;
-        if (tokenInfo) {
-            const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack));
-            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
-            await Expensebit.getListLabel(tokenInfo.user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
-            res.status(200).json({
-                error: false,
-                data: "moving"
-            })
-        }
+        const authToken = await TokenHandler.getAccessToken(tokenInfo.user_id).catch(e => console.error(e.message, e.stack,"3"));
+        const oauth2Client = await TokenHandler.createAuthCleint(authToken);
+        await Expensebit.getListLabel(tokenInfo.user_id, oauth2Client, from_email, is_unscubscribe, is_remove_all);
+        res.status(200).json({
+            error: false,
+            data: "moving"
+        })
     } catch (ex) {
-        console.error(ex.message, ex.stack);
+        console.error(ex.message, ex.stack,"4");
         res.sendStatus(400);
     }
 });
@@ -94,41 +93,70 @@ router.post('/getMailInfo', async (req, res) => {
     try {
         const token = req.token;
         if (token) {
-            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack));
+            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack,"5"));
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
-            await getRecentEmail(token.user_id, oauth2Client, null);
+            let label = await Expensebit.findLabelId(oauth2Client);
+            await getRecentEmail(token.user_id, oauth2Client, null,label);
             res.status(200).json({
                 error: false,
                 data: "scrape"
             })
         }
     } catch (ex) {
-        console.error(ex.message, ex.stack);
+        console.error(ex.message, ex.stack,"6");
         res.sendStatus(400);
     }
 });
 
+router.post('/getMailListForSender', async (req, res) => {
+    try {
+        const doc = req.token;
+        const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(doc.user_id, req.body.from_email);
+        res.status(200).json({
+            error: false,
+            data: emailinfos
+        })
+    } catch (err) {
+        res.sendStatus(400);
+        console.error(err.message, err.stack,"7");
+    }
+});
+
+
+
 /*
-This Api for Getting all Mail Subscription for Home screen for App.
+This Api for Getting all Mail Subscri for Home screen for App.
 This will get Filter subcription(new subscription only), unread Mail Info and total Count
 */
 router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
-        if (doc) {
-            const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
-            const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
-            const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-            res.status(200).json({
-                error: false,
-                data: emailinfos,
-                unreadData: unreademail,
-                totalEmail: total
-            })
+        let keylist = await RedisDB.getKEYS(doc.user_id);
+        if (keylist && keylist.length != 0) {
+            keylist.forEach(async element => {
+                let mail = await RedisDB.popData(element);
+                if (mail.length != 0) {
+                    let result = await RedisDB.findPercent(mail);
+                    if (result) {
+                        let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
+                        await Expensebit.storeBulkEmailInDB(mail,from_email_id);
+                    }
+                }
+            });
+            await RedisDB.delKEY(keylist);
         }
+        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
+        const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
+        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos,
+            unreadData: unreademail,
+            totalEmail: total
+        })
     } catch (err) {
-        console.error(err.message, err.stack);
+        console.error(err.message, err.stack,"8");
         res.sendStatus(400);
     }
 });
@@ -141,21 +169,39 @@ This will get all the subscription,Moved subscription,total email and total ubsu
 router.post('/readProfileInfo', async (req, res) => {
     try {
         const doc = req.token;
-        if (doc) {
-            const emailinfos = await GetEmailQuery.getAllSubscription(doc.user_id);
-            const movedMail = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
-            const totalEmail = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-            const totalUnscribeEmail = await GetEmailQuery.getTotalUnsubscribeEmailCount(doc.user_id);
-            res.status(200).json({
-                error: false,
-                data: emailinfos,
-                moveMail: movedMail,
-                totalEmail: totalEmail,
-                totalUnscribeEmail: totalUnscribeEmail
-            })
-        }
+        const emailinfos = await GetEmailQuery.getAllSubscription(doc.user_id);
+        const movedMail = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
+        const totalEmail = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const totalUnscribeEmail = await GetEmailQuery.getTotalUnsubscribeEmailCount(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos,
+            moveMail: movedMail,
+            totalEmail: totalEmail,
+            totalUnscribeEmail: totalUnscribeEmail
+        })
     } catch (err) {
-        console.error(err.message, err.stack);
+        console.error(err.message, err.stack,"9");
+    }
+});
+
+
+router.post('/readMailInfoPage', async (req, res) => {
+    try {
+        const doc = req.token;
+        const emailinfos = await GetEmailQuery.getAllFilteredSubscriptionPage(doc.user_id, req.body.skipcount);
+    
+        const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
+        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos,
+            unreadData: unreademail,
+            totalEmail: total
+        })
+    } catch (err) {
+        console.error(err.message, err.stack,"10");
+        res.sendStatus(400);
     }
 });
 
@@ -165,23 +211,17 @@ This api will get All unsubscribe Subscription Related Information.
 router.post('/getUnsubscribeMailInfo', async (req, res) => {
     try {
         const doc = req.token;
-        if (doc) {
-            const emailinfos = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
-
-            let unreadData = await GetEmailQuery.getUnreadMovedEmail(doc.user_id);
-            if (unreadData) {
-
-                const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-                res.status(200).json({
-                    error: false,
-                    data: emailinfos,
-                    unreadData: unreadData,
-                    totalEmail: total
-                })
-            }
-        }
+        const emailinfos = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
+        let unreadData = await GetEmailQuery.getUnreadMovedEmail(doc.user_id);
+        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos,
+            unreadData: unreadData,
+            totalEmail: total
+        })
     } catch (err) {
-        console.error(err.message, err.stack);
+        console.error(err.message, err.stack,"11");
     }
 });
 
@@ -192,15 +232,13 @@ This api will get Filer subsciption(new only).
 router.post('/getEmailSubscription', async (req, res) => {
     try {
         const doc = req.token;
-        if (doc) {
-            const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
-            res.status(200).json({
-                error: false,
-                data: emailinfos
-            })
-        }
+        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos
+        })
     } catch (err) {
-        console.error(err.message, err.stack);
+        console.error(err.message, err.stack,"12");
     }
 });
 
@@ -209,7 +247,7 @@ router.post('/getEmailSubscription', async (req, res) => {
 This for function for scrapping Inbox for particular user.
 This will Get List of email in Batch of 100 for given Time period and will parsed mail.
 */
-async function getRecentEmail(user_id, auth, nextPageToken) {
+async function getRecentEmail(user_id, auth, nextPageToken,label) {
     let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
     let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
@@ -227,16 +265,19 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
                     })
                     try {
                         if (unsub_url) {
-                            console.log(unsub_url)
                             await Expensebit.checkEmailWithInscribeHeader(unsub_url, response['data'], user_id, auth);
                         } else {
                             let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
                             let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
-                            await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
-                            await Expensebit.checkEmail(bodydata, response['data'], user_id, auth);
+                            try {
+                               // await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
+                            } catch (e) {
+                                require('raven').captureException(e);
+                            }
+                            await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth,label);
                         }
                     } catch (e) {
-                        console.error(e.message, e.stack);
+                        console.error(e.message, e.stack,"14");
                         return
                     }
                 }
@@ -245,7 +286,7 @@ async function getRecentEmail(user_id, auth, nextPageToken) {
     }
     nextPageToken = responseList['data'].nextPageToken;
     if (responseList['data'].nextPageToken) {
-        await getRecentEmail(user_id, auth, responseList['data'].nextPageToken);
+        await getRecentEmail(user_id, auth, responseList['data'].nextPageToken,label);
     }
 }
 
@@ -258,7 +299,7 @@ router.post('/unSubscribeMail', async (req, res) => {
     try {
         const from_email = req.body.from_email;
         const mailList = await email.findOne({ "from_email": from_email }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message, err.stack,"15");
         });
         if (mailList) {
             const settings = {
@@ -267,12 +308,12 @@ router.post('/unSubscribeMail', async (req, res) => {
             }
             Request(settings, async (error, response, body) => {
                 if (error) {
-                    return console.error(err.message, err.stack);
+                    return console.error(err.message, err.stack,"16");
                 }
             });
         }
     } catch (ex) {
-        console.error(ex.message, ex.stack);
+        console.error(ex.message, ex.stack,"17");
         res.sendStatus(400);
     }
 });
@@ -284,27 +325,17 @@ This api for getting only trash suscription information.
 router.post('/getDeletedEmailData', async (req, res) => {
     try {
         const doc = req.token;
-        if (doc) {
-            const emailinfos = await GetEmailQuery.getAllTrashSubscription(doc.user_id);
-
-            let unreadData = await GetEmailQuery.getUnreadTrashEmail(doc.user_id);
-            if (unreadData) {
-
-                const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-                res.status(200).json({
-                    error: false,
-                    data: emailinfos,
-                    unreadData: unreadData,
-                    totalEmail: total
-                })
-            }
-            // res.status(200).json({
-            //     error: false,
-            //     data: emailinfos
-            // })
-        }
+        const emailinfos = await GetEmailQuery.getAllTrashSubscription(doc.user_id);
+        let unreadData = await GetEmailQuery.getUnreadTrashEmail(doc.user_id);
+        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos,
+            unreadData: unreadData,
+            totalEmail: total
+        })
     } catch (err) {
-        console.error(err.message, ex.stack);
+        console.error(err.message, ex.stack,"18");
     }
 });
 
@@ -317,23 +348,22 @@ router.post('/keepMailInformation', async (req, res) => {
     try {
         const from_email = req.body.from_email;
         const doc = req.token;
-        if (doc) {
-            var oldvalue = {
-                "from_email": from_email,
-                "user_id": doc.user_id
-            };
-            var newvalues = {
-                $set: {
-                    "status": "keep",
-                    "status_date": new Date()
-                }
-            };
-            await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                console.error(err.message, err.stack);
-            });
-        }
+        var oldvalue = {
+            "from_email": from_email,
+            "user_id": doc.user_id
+        };
+        var newvalues = {
+            $set: {
+                "status": "keep",
+                "status_date": new Date()
+            }
+        };
+        await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+            console.error(err.message, err.stack,"19");
+        });
+        res.sendStatus(200)
     } catch (ex) {
-        console.error(ex.message, ex.stack);
+        console.error(ex.message, ex.stack,"20");
         res.sendStatus(400);
     }
 });
@@ -345,20 +375,15 @@ This Api for getting only keeped subscription Information.
 router.post('/getKeepedMailInfo', async (req, res) => {
     try {
         const doc = req.token;
-        if (doc) {
-            const emailinfos = await GetEmailQuery.getAllKeepedSubscription(doc.user_id);
-            let unreadData = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
-            if (unreadData) {
-               
-                const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-                res.status(200).json({
-                    error: false,
-                    data: emailinfos,
-                    unreadData: unreadData,
-                    totalEmail: total
-                })
-            }
-        }
+        const emailinfos = await GetEmailQuery.getAllKeepedSubscription(doc.user_id);
+        let unreadData = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
+        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos,
+            unreadData: unreadData,
+            totalEmail: total
+        })
     } catch (err) {
         res.sendStatus(400);
         console.error(err.message, ex.stack);
