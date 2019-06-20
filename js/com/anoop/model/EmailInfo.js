@@ -1,11 +1,28 @@
 fm.Package("com.anoop.model");
 const mongo_emailInfo = require('../../../../models/emailInfo');
 
-fm.Class("EmailInfo", function(me){
+fm.Class("EmailInfo>.BaseModel", function(me){
     this.setMe=_me=>me=_me;
 
     Static.getEmailIdsByEmailDetail = async function(emaildetail){
         let emails = await mongo_emailInfo.find({ "from_email_id": emaildetail._id }, { "email_id": 1, _id: 0 });
         return emails.map(x=>x.email_id);
     };
+
+    Static.updateOrCreateAndGet = async function(query, set) {
+        me.updateQueryValidation(query, 'from_email_id');
+        return await mongo_emaildetail.findOneAndUpdate(query, {$setOnInsert: set}, {new: true, upsert: true});
+    };
+
+
+    Static.fromEamil = async function(data, from_email_id, url) {
+        return {
+            from_email_id,
+            email_id: data.email_id,
+            historyId: data.historyId,
+            unsubscribe: url,
+            subject: data.subject,
+            labelIds: data.labelIds
+        }
+    }
 });
