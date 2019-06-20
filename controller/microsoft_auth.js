@@ -45,7 +45,8 @@ router.post('/getPushNotification',async function (req, res) {
     console.log(req.query)
     console.log(req.query.validationToken)
     res.setHeader('content-type', 'text/plain');
-    res.status(200).write(req.query.validationToken);
+    res.write(req.query.validationToken);
+    res.end();
       
 });
 
