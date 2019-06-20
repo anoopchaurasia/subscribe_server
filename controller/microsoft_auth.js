@@ -42,7 +42,7 @@ router.get('/getPushNotification', async function (req, res) {
 
 router.post('/getPushNotification',async function (req, res) {
     console.log("came here for url")
-    console.log(req)
+    console.log(req.query)
     res.set('Content-Type', 'text/plain');
     res.status(200).send({ "validationToken": req.query.validationToken});
       
