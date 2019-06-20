@@ -38,7 +38,9 @@ router.get('/getPushNotification', async function (req, res) {
     console.log("came here for url")
     console.log(req)
 });
-router.post('getPushNotification',async function (req, res) {
+
+
+router.post('/getPushNotification',async function (req, res) {
     console.log("came here for url")
     console.log(req)
     res.format({
