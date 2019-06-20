@@ -85,7 +85,7 @@ async function getWebhookMail(accessToken, link, user_id) {
         }
         if (body) {
             console.log(body);
-                await checkEmail(body, user_id, accessToken)
+                await checkEmail(JSON.parse(body), user_id, accessToken)
           }
     });
 }
