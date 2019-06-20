@@ -53,7 +53,7 @@ router.post('/getPushNotification',async function (req, res) {
         console.log(req.body.value)
         let data = req.body.value[0];
         let resource = data.resourceData;
-        let user_id = resource.clientState;
+        let user_id = data.clientState;
         let message_id = resource.id;
         
         console.log(user_id,message_id);
