@@ -122,52 +122,7 @@ async function subscribeToNotification(accessToken,user_id) {
 }
 
 
-async function updateSubscriptionForOutlook(accessToken, user_id) {
-    var settings = {
-        "url": "https://graph.microsoft.com/v1.0/subscriptions",
-        "method": "GET",
-        "headers": {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + accessToken
-        }
-    }
 
-    Request(settings, async (error, response, body) => {
-        if (error) {
-            console.log(error);
-        }
-        if (body) {
-            console.log(body);
-            let value = JSON.parse(body).value;
-            await value.asynForEach(async subscription => {
-                await patchSubscription(accessToken,subscription)
-            });
-        }
-    });
-}
-
-async function patchSubscription(accessToken, subscription) {
-    var settings = {
-        "url": "https://graph.microsoft.com/v1.0/subscriptions/"+subscription.id,
-        "method": "patch",
-        "headers": {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + accessToken
-        },
-        "body": JSON.stringify({
-           "expirationDateTime": "2019-06-22T11:00:00.0000000Z",
-        })
-    }
-
-    Request(settings, async (error, response, body) => {
-        if (error) {
-            console.log(error);
-        }
-        if (body) {
-            console.log(body);
-        }
-    });
-}
 
 
 router.get('/getOutLookApiUrl', async function (req, res) {
@@ -553,7 +508,6 @@ router.get('/auth/callback', async function (req, res) {
                 console.log(err);
             });
             await subscribeToNotification(token.token.access_token,existingUser._id);
-            await updateSubscriptionForOutlook(token.token.access_token,existingUser._id)
             var tokmodel = new token_model({
                 "user_id": existingUser._id,
                 "token": token_uniqueid,
@@ -580,7 +534,6 @@ router.get('/auth/callback', async function (req, res) {
                         console.log(err);
                     });
                     await subscribeToNotification(token.token.access_token, newUserData._id);
-                    await updateSubscriptionForOutlook(token.token.access_token, newUserData._id)
                     var tokmodel = new token_model({
                         "user_id": newUserData._id,
                         "token": token_uniqueid,
