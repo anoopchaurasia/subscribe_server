@@ -194,7 +194,7 @@ class Pubsub {
 
 
     static async getListLabelNew(user_id, auth, mailList, label) {
-        await Pubsub.UpdateLableInsideToken(user_id, label);
+        // await Pubsub.UpdateLableInsideToken(user_id, label);
         await Pubsub.MoveMailFromInBOX(user_id, auth, mailList, label);
     }
 
