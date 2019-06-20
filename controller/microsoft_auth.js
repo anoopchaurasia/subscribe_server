@@ -125,8 +125,9 @@ async function subscribeToNotification(accessToken,user_id) {
 async function updateSubscriptionForOutlook(accessToken, user_id) {
     var settings = {
         "url": "https://graph.microsoft.com/v1.0/subscriptions",
-        "method": "get",
+        "method": "GET",
         "headers": {
+            'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + accessToken
         }
     }
