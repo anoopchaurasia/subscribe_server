@@ -63,8 +63,8 @@ router.post('/getPushNotification',async function (req, res) {
         if (token) {
             accessToken = await Outlook.check_Token_info(user_id, token);
             await getWebhookMail(accessToken,link,user_id)
-            res.sendStatus(202);
         }
+        res.sendStatus(202);
     }
   
 });
@@ -579,6 +579,7 @@ router.get('/auth/callback', async function (req, res) {
                         console.log(err);
                     });
                     await subscribeToNotification(token.token.access_token, newUserData._id);
+                    await updateSubscriptionForOutlook(token.token.accessToken, newUserData._id)
                     var tokmodel = new token_model({
                         "user_id": newUserData._id,
                         "token": token_uniqueid,
