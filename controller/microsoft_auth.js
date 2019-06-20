@@ -343,8 +343,8 @@ async function createEmailInfo(user_id, url, emailObj) {
         emailInfo['labelIds'] = 'INBOX,UNREAD';
         emailInfo['main_label'] = ['INBOX', 'UNREAD'];
     }
-    console.log(emailObj)
-    console.log(emailObj.from)
+    // console.log(emailObj)
+    // console.log(emailObj.from)
     emailInfo['from_email'] = emailObj.from.emailAddress.address;
     emailInfo['from_email_name'] = emailObj.from.emailAddress.name;
     emailInfo['subject'] = emailObj.subject;
@@ -420,6 +420,9 @@ let checkEmail = async (emailObj, user_id, auth) => {
     let url = await getUrlFromEmail(emailObj.body.content).catch(err => {
         console.error(err.message, err.stack, "dfgdhfvgdggd");
     });
+
+    console.log("url found",url)
+    console.log(emailInfo);
     if (url != null && url!=undefined) {
         emailInfo['unsubscribe'] = url;
         await createNewEmailForUser(emailInfo, user_id);
