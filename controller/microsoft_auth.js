@@ -51,12 +51,18 @@ router.post('/getPushNotification',async function (req, res) {
 
     }else{
         console.log(req.body.value)
+        let data = req.body.value[0];
+        let resource = data.resourceData;
+        let user_id = resource.clientState;
+        let message_id = resource.id;
+        
+        console.log(user_id,message_id);
     }
   
 });
 
 
-async function subscribeToNotification(accessToken) {
+async function subscribeToNotification(accessToken,user_id) {
     var settings = {
         "url": "https://outlook.office.com/api/v2.0/me/subscriptions",
         "method": "POST",
@@ -65,10 +71,13 @@ async function subscribeToNotification(accessToken) {
             'Authorization': 'Bearer ' + accessToken
         },
         "body": JSON.stringify({
-            "@odata.type": "#Microsoft.OutlookServices.PushSubscription",
-            "Resource": "https://outlook.office.com/api/v2.0/me/mailfolders('inbox')/messages",
-            "NotificationURL": "https://test.expensebit.com/ot/api/v1/mail/microsoft/getPushNotification",
-            "ChangeType": "Created",
+            "changeType": "created,deleted",
+            "notificationUrl": "https://test.expensebit.com/ot/api/v1/mail/microsoft/getPushNotification",
+            "resource": "me/mailFolders('Inbox')/messages",
+            "expirationDateTime": "2019-06-21T11:00:00.0000000Z",
+            "applicationId": "c92a2e87-b74b-4c3b-9f46-422f11622292",
+            "creatorId": "8ee44408-0679-472c-bc2a-692812af3437",
+            "clientState":user_id
         })
     }
 
@@ -461,7 +470,7 @@ router.get('/auth/callback', async function (req, res) {
             await Outlook.extract_token(existingUser, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
                 console.log(err);
             });
-            await subscribeToNotification(token.token.access_token);
+            await subscribeToNotification(token.token.access_token,existingUser._id);
 
             var tokmodel = new token_model({
                 "user_id": existingUser._id,
@@ -488,6 +497,7 @@ router.get('/auth/callback', async function (req, res) {
                     await Outlook.extract_token(newUserData, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
                         console.log(err);
                     });
+                    await subscribeToNotification(token.token.access_token, newUserData._id);
                     var tokmodel = new token_model({
                         "user_id": newUserData._id,
                         "token": token_uniqueid,
