@@ -16,7 +16,7 @@ class MailScraper {
             return;
         }
         mail.company = companyNameMap[company] || company;
-        await require("axios").post(process.env.ASYNC_SCRAPER_SEND_DATA_URL, { emaildata: JSON.stringify(mail) }).catch(function (err) { err && console.error(err) })
+        await require("axios").post(process.env.ASYNC_SCRAPER_SEND_DATA_URL, { emaildata: JSON.stringify(mail) }).catch(function (err) { err && console.error(err,"121") })
     }
 }
 

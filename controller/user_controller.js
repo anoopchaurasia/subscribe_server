@@ -13,7 +13,7 @@ router.post('/savefcmToken', async (req, res) => {
     let token = req.token;
     let tokenInfo = { "user_id": token.user_id, "fcm_token": req.body.fcmToken };
     await fcmToken.findOneAndUpdate({ "user_id": token.user_id }, tokenInfo, { upsert: true }).catch(err => {
-        console.error(err.message, err.stack);
+        console.error(err.message, err.stack,"26");
     });
     res.json({
         message: "success"
@@ -29,7 +29,7 @@ router.post('/saveDeviceInfo', async (req, res) => {
     deviceData['user_id']=req.token.user_id;
     deviceData['deviceIpAddress'] = {"ip":req.header('x-forwarded-for') || req.connection.remoteAddress};
     let device = await DeviceInfo.findOneAndUpdate({ "user_id": req.token.user_id }, deviceData, { upsert: true }).catch(err => {
-        console.error(err.message, err.stack);
+        console.error(err.message, err.stack,"27");
     });
     res.json({
         message: "success"
@@ -44,7 +44,7 @@ router.post('/disconnectGdprAccount', async (req, res) => {
     try {
         let auth_id = req.body.authID;
         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message, err.stack,"28");
         });
         if (doc) {
             res.json({
@@ -56,7 +56,7 @@ router.post('/disconnectGdprAccount', async (req, res) => {
             });
         }
     } catch (ex) {
-        console.error(ex.message, ex.stack);
+        console.error(ex.message, ex.stack,"29");
     }
 });
 
