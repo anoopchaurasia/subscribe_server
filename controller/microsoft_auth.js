@@ -343,6 +343,8 @@ async function createEmailInfo(user_id, url, emailObj) {
         emailInfo['labelIds'] = 'INBOX,UNREAD';
         emailInfo['main_label'] = ['INBOX', 'UNREAD'];
     }
+    console.log(emailObj)
+    console.log(emailObj.from)
     emailInfo['from_email'] = emailObj.from.emailAddress.address;
     emailInfo['from_email_name'] = emailObj.from.emailAddress.name;
     emailInfo['subject'] = emailObj.subject;
