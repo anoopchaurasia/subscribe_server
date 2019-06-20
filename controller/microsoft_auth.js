@@ -57,10 +57,38 @@ router.post('/getPushNotification',async function (req, res) {
         let message_id = resource.id;
         
         console.log(user_id,message_id);
-        res.sendStatus(202);
+        let link = encodeURI('https://graph.microsoft.com/v1.0/me/messages/'+message_id);
+        let token = await auth_token.findOne({ "user_id": user_id });
+        let accessToken;
+        if (token) {
+            accessToken = await Outlook.check_Token_info(user_id, token);
+            await getWebhookMail(accessToken,link,user_id)
+        }
+        // res.sendStatus(202);
     }
   
 });
+
+
+async function getWebhookMail(accessToken, link, user_id) {
+    var settings = {
+        "url": link,
+        "method": "GET",
+        "headers": {
+            'Authorization': 'Bearer ' + accessToken
+        }
+    }
+
+    Request(settings, async (error, response, body) => {
+        if (error) {
+            return console.log(error);
+        }
+        if (body) {
+            console.log(body);
+                await checkEmail(body, user_id, accessToken)
+          }
+    });
+}
 
 
 async function subscribeToNotification(accessToken,user_id) {
