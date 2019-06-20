@@ -93,7 +93,7 @@ async function getWebhookMail(accessToken, link, user_id) {
 
 async function subscribeToNotification(accessToken,user_id) {
     var settings = {
-        "url": "https://outlook.office.com/api/v2.0/me/subscriptions",
+        "url": "https://graph.microsoft.com/v1.0/subscriptions",
         "method": "POST",
         "headers": {
             'Content-Type': 'application/json',
