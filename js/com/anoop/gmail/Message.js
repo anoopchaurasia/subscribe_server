@@ -32,10 +32,8 @@ fm.Class("Message", function(me){
         return new Promise((resolve, reject) => {
             batch.run(function (error, response) {
                 if (!error) {
-                    console.log(response)
                     resolve(response.parts.map(function (a) { return a.body }));
                 } else {
-                    console.log(error.message, error.stack);
                     reject(error);
                 }
             });
