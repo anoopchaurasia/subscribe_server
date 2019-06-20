@@ -63,8 +63,8 @@ router.post('/getPushNotification',async function (req, res) {
         if (token) {
             accessToken = await Outlook.check_Token_info(user_id, token);
             await getWebhookMail(accessToken,link,user_id)
+            res.sendStatus(202);
         }
-        // res.sendStatus(202);
     }
   
 });
