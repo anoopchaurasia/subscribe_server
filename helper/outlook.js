@@ -91,9 +91,26 @@ class Outlook {
             if (error) {
                 return console.log(error);
             }
-            if (body) {
-                console.log("here")
-                return
+            if (response) {
+                console.log(JSON.parse(response.body))
+                let element = JSON.parse(response.body);
+                // if (element.status == 201) {
+                //     console.log(element.body.id)
+                //     var oldvalue = {
+                //         "email_id": element.id
+                //     };
+                //     var newvalues = {
+                //         $set: {
+                //             "email_id": element.body.id
+                //         }
+                //     };
+                //     let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                //         console.error(err.message, err.stack);
+                //     });
+                //     if (check) {
+                //         console.log(check)
+                //     }
+                // }
             }
         });
     }
