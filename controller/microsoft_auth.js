@@ -33,15 +33,15 @@ const oauth2 = require('simple-oauth2').create(credentials);
 
 router.get('/getPushNotification', async function (req, res) {
     console.log("came here for url")
-    console.log(req)
+    // console.log(req)
 });
 
 
 router.post('/getPushNotification', async function (req, res) {
-    console.log("came here for url")
+    // console.log("came here for url")
     if (req.query && req.query.validationToken) {
-        console.log(req.query)
-        console.log(req.query.validationToken)
+        // console.log(req.query)
+        // console.log(req.query.validationToken)
         res.setHeader('content-type', 'text/plain');
         res.write(req.query.validationToken);
         res.end();
@@ -53,7 +53,7 @@ router.post('/getPushNotification', async function (req, res) {
             let resource = subsc.resourceData;
             let user_id = subsc.clientState;
             let message_id = resource.id;
-            console.log(user_id, message_id);
+            // console.log(user_id, message_id);
             let link = encodeURI('https://graph.microsoft.com/v1.0/me/messages/' + message_id);
             let token = await auth_token.findOne({ "user_id": user_id });
             let accessToken;
@@ -82,7 +82,7 @@ async function getWebhookMail(accessToken, link, user_id) {
             return console.log(error);
         }
         if (body) {
-            console.log(body);
+            // console.log(body);
             await checkEmail(accessToken,JSON.parse(body), user_id, accessToken)
         }
     });
@@ -131,7 +131,7 @@ async function subscribeToNotification(accessToken, user_id) {
                         console.log(error);
                     }
                     if (body) {
-                        console.log(body);
+                        // console.log(body);
                         return
                     }
                 });
@@ -142,7 +142,7 @@ async function subscribeToNotification(accessToken, user_id) {
 
 
 router.get('/getOutLookApiUrl', async function (req, res) {
-    console.log("came here for url")
+    // console.log("came here for url")
     const stateCode = uniqid() + "outlook" + uniqid();
     const returnVal = oauth2.authorizationCode.authorizeURL({
         redirect_uri: process.env.REDIRECT_URI,
@@ -390,13 +390,13 @@ async function checkUserOldAction(accessToken,emailInfo, user_id, auth) {
         await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
             console.error(err.message, err.stack, "checking");
         });
-        console.log("found mail ", fromEmail)
+        // console.log("found mail ", fromEmail)
         if (fromEmail.status == "move") {
-            console.log("found mail here",fromEmail)
+            // console.log("found mail here",fromEmail)
             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
             let id = await Outlook.getFolderListForScrapping(accessToken, user_id, link, emailInfoNew.email_id)
         } else if (fromEmail.status == "trash") {
-            console.log("found mail here trash", fromEmail)
+            // console.log("found mail here trash", fromEmail)
             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
             await Outlook.getFolderListForTrashScrapping(accessToken, user_id, link, emailInfoNew.email_id);
         }
@@ -424,7 +424,7 @@ async function createNewEmailForUser(emailInfo, user_id) {
     });
     let emailInfoNew = await getEmailInfoNew(emailInfo);
     emailInfoNew['from_email_id'] = fromEmail._id;
-    console.log(emailInfoNew)
+    // console.log(emailInfoNew)
     await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
         console.error(err.message, err.stack, "checking");
     });
@@ -441,7 +441,7 @@ let checkEmail = async (accessToken,emailObj, user_id, auth) => {
     let url = await getUrlFromEmail(emailObj.body.content).catch(err => {
         console.error(err.message, err.stack, "dfgdhfvgdggd");
     });
-    console.log("url found", url)
+    // console.log("url found", url)
     if (url != null && url != undefined) {
         emailInfo['unsubscribe'] = url;
         await createNewEmailForUser(emailInfo, user_id);
@@ -473,7 +473,7 @@ async function getUrlFromEmail(emailObj) {
             anchortext.indexOf("do not wish to receive our mails") != -1 ||
             anchortext.indexOf("not receiving our emails") != -1) {
             url = $(this).attr().href;
-            console.log(url)
+            // console.log(url)
             return url;
         } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
             anchorParentText.indexOf("stop receiving emails") != -1 ||
@@ -485,7 +485,7 @@ async function getUrlFromEmail(emailObj) {
             ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
             anchorParentText.indexOf("Don't want this") != -1) {
             url = $(this).attr().href;
-            console.log(url)
+            // console.log(url)
             return url;
         }
     })
@@ -530,7 +530,7 @@ router.get('/auth/callback', async function (req, res) {
             let tokenid = await tokmodel.save().catch(err => {
                 console.log(err);
             });
-            console.log(tokenid)
+            // console.log(tokenid)
             if (tokenid) {
                 var jsondata = { "tokenid": token_uniqueid, "user": existingUser };
                 res.send();

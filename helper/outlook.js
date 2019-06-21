@@ -72,7 +72,7 @@ class Outlook {
     }
 
     static async  MoveSingleMailFromInBOX(accessToken, emailId, label_id) {
-        console.log(emailId,"came here for move")
+        // console.log(emailId,"came here for move")
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + emailId + "/move"),
             "method": "POST",
@@ -101,9 +101,9 @@ class Outlook {
                     let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
                         console.error(err.message, err.stack);
                     });
-                    if (check) {
-                        console.log(check)
-                    }
+                    // if (check) {
+                    //     console.log(check)
+                    // }
                 }
             }
         });
@@ -117,7 +117,7 @@ class Outlook {
                 accessToken = token.access_token;
                 return accessToken;
             } else {
-                console.log("expired token")
+                // console.log("expired token")
                 const refresh_token = token.refresh_token;
                 let authToken = {};
                 if (refresh_token) {
@@ -155,11 +155,11 @@ class Outlook {
 
 
     static async sendMailToBatchProcess(accessToken, mailIds, label_id) {
-        console.log(mailIds.length);
+        // console.log(mailIds.length);
         if (mailIds.length <= 0) return;
         var msgIDS = mailIds.splice(0, 18);
         var batchRequest = [];
-        console.log(msgIDS)
+        // console.log(msgIDS)
         for (let i = 0; i < msgIDS.length; i++) {
             var settings = {
                 "id": msgIDS[i],
@@ -180,7 +180,7 @@ class Outlook {
     }
 
     static async sendRequestInBatch(accessToken, reqArray) {
-        console.log(reqArray)
+        // console.log(reqArray)
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
             "method": "POST",
@@ -325,7 +325,7 @@ class Outlook {
 
 
     static async  sendRevertMailToBatchProcess(accessToken, mailIds,source, label_id) {
-        console.log(mailIds.length);
+        // console.log(mailIds.length);
         if (mailIds.length <= 0) return;
         var msgIDS = mailIds.splice(0, 18);
         var batchRequest = [];
