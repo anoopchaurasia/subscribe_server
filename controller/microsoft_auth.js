@@ -4,7 +4,6 @@ let users = require('../models/user');
 let auth_token = require('../models/authoToken');
 let token_model = require('../models/tokeno');
 let email = require('../models/emailDetails');
-let emailInformation = require('../models/emailInfo');
 let router = express.Router();
 var uniqid = require('uniqid');
 const jwt = require('jsonwebtoken');
@@ -67,7 +66,6 @@ router.post('/getPushNotification', async function (req, res) {
         });
         res.sendStatus(202);
     }
-
 });
 
 
@@ -363,8 +361,6 @@ async function createEmailInfo(user_id, url, emailObj) {
         emailInfo['labelIds'] = 'INBOX,UNREAD';
         emailInfo['main_label'] = ['INBOX', 'UNREAD'];
     }
-    // console.log(emailObj)
-    // console.log(emailObj.from)
     emailInfo['from_email'] = emailObj.from.emailAddress.address;
     emailInfo['from_email_name'] = emailObj.from.emailAddress.name;
     emailInfo['subject'] = emailObj.subject;

@@ -2,15 +2,10 @@
 let express = require('express');
 let users = require('../models/user');
 let auth_token = require('../models/authoToken');
-let token_model = require('../models/tokeno');
 let email = require('../models/emailDetails');
 let emailInformation = require('../models/emailInfo');
-let router = express.Router();
-var uniqid = require('uniqid');
-const jwt = require('jsonwebtoken');
-const ExpenseBit = require("./expenseBit").ExpenseBit;
-const cheerio = require('cheerio');
 var Request = require('request');
+
 Array.prototype.asynForEach = async function (cb) {
     for (let i = 0, len = this.length; i < len; i++) {
         await cb(this[i]);
@@ -31,6 +26,7 @@ const credentials = {
 const oauth2 = require('simple-oauth2').create(credentials);
 
 class Outlook {
+
     static async updateUserInfo(oldvalue, newvalue) {
         return await users.findOneAndUpdate(oldvalue, newvalue, { upsert: true }).catch(err => {
             console.log(err);
@@ -92,7 +88,6 @@ class Outlook {
                 return console.log(error);
             }
             if (response) {
-                // console.log(JSON.parse(response.body))
                 let element = JSON.parse(response.body);
                 if (element['id']) {
                     var oldvalue = {
@@ -201,12 +196,9 @@ class Outlook {
                 return console.log(error);
             }
             if (response) {
-                console.log(JSON.parse(response.body))
                 let rsp = JSON.parse(response.body);
                 await rsp.responses.asynForEach(async element => {
-                    console.log(element.status)
                     if (element.status == 201) {
-                        console.log(element.body.id)
                         var oldvalue = {
                             "email_id": element.id
                         };
@@ -313,7 +305,6 @@ class Outlook {
         let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
         if (mailList) {
             let mailIDSARRAY = mailList.map(x => x.email_id);
-            console.log(mailIDSARRAY)
             var oldvalue = {
                 "from_email": from_email,
                 "user_id": user_id
@@ -380,11 +371,7 @@ class Outlook {
     }
 
 
-
-
-
     static async trashSingleMailFromInBOX(accessToken, emailId, label_id) {
-        console.log("trash email here");
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + emailId + "/move"),
             "method": "POST",
@@ -413,9 +400,6 @@ class Outlook {
                     let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
                         console.error(err.message, err.stack);
                     });
-                    if (check) {
-                        console.log(check)
-                    }
                 }
             }
         });
