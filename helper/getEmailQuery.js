@@ -212,7 +212,7 @@ class GetEmailQuery {
     }   
 
     static async getAllMovedSubscriptionPage(user_id,skipcount=0) {
-        const emails = await email.find({ "status": "move", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(skipcount).limit(12).exec()
+        const emails = await email.find({ "status": "move", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(skipcount).limit(25).exec()
         const senddata = [];
         for (let i = 0, len = emails.length; i < len; i++) {
             let x = emails[i];
