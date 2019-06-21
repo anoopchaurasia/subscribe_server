@@ -399,8 +399,24 @@ class Outlook {
             if (error) {
                 return console.log(error);
             }
-            if (body) {
-                console.log("here")
+            if (response) {
+                let element = JSON.parse(response.body);
+                if (element['id']) {
+                    var oldvalue = {
+                        "email_id": emailId
+                    };
+                    var newvalues = {
+                        $set: {
+                            "email_id": element.id
+                        }
+                    };
+                    let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                        console.error(err.message, err.stack);
+                    });
+                    if (check) {
+                        console.log(check)
+                    }
+                }
             }
         });
     }
