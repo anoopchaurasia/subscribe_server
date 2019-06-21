@@ -15,7 +15,11 @@ const MailScraper = require("../helper/mailScraper").MailScraper;
 fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
-
+Array.prototype.asyncForEach = async function (cb) {
+    for (let i = 0, len = this.length; i < len; i++) {
+        await cb(this[i], i, this);
+    }
+}
 /*
 This api for deleting mail from Inbox or Trash folder.
 */
@@ -97,7 +101,7 @@ router.post('/getMailInfo', async (req, res) => {
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             let label = await Expensebit.findLabelId(oauth2Client);
-            await getRecentEmail(token.user_id, oauth2Client, null,label,async function afterEnd(){
+            getRecentEmail(token.user_id, oauth2Client, null,label,async function afterEnd(){
                 let doc = token;
                 let keylist = await RedisDB.getKEYS(doc.user_id);
                 if (keylist && keylist.length != 0) {
@@ -339,7 +343,7 @@ async function getRecentEmail(user_id, auth, nextPageToken,label, afterFinishCB)
     let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
     if (responseList && responseList['data']['messages']) {
-        responseList['data']['messages'].forEach(async element => {
+        await responseList['data']['messages'].asyncForEach(async element => {
             let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
             if (response) {
                 if (response.data.payload || response.data.payload['parts']) {
