@@ -70,7 +70,7 @@ class ExpenseBit {
                 console.error(err.message, err.stack,"44");
             });
             if (mailIDSARRAY.length != 0) {
-                await GmailApi.batchModifyAddAndRemoveLabels(auth, mailIDSARRAY, ["jeet"], ['INBOX', 'CATEGORY_PERSONAL', 'CATEGORY_PROMOTIONS']);
+                await GmailApi.batchModifyAddAndRemoveLabels(auth, mailIDSARRAY, labelarry, ['INBOX', 'CATEGORY_PERSONAL', 'CATEGORY_PROMOTIONS']);
                 // await GmailApi.batchModifyAddLabels(auth, mailIDSARRAY, labelarry);
                 // await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['INBOX']);
                 // await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PROMOTIONS']);

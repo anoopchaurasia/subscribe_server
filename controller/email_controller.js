@@ -97,7 +97,22 @@ router.post('/getMailInfo', async (req, res) => {
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             let label = await Expensebit.findLabelId(oauth2Client);
-            await getRecentEmail(token.user_id, oauth2Client, null,label);
+            await getRecentEmail(token.user_id, oauth2Client, null,label, function cleanRedis(){
+                let keylist = await RedisDB.getKEYS(token.user_id);
+                if (keylist && keylist.length != 0) {
+                    keylist.forEach(async element => {
+                        let mail = await RedisDB.popData(element);
+                        if (mail.length != 0) {
+                            let result = await RedisDB.findPercent(mail);
+                            if (result) {
+                                let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), token.user_id)
+                                await Expensebit.storeBulkEmailInDB(mail,from_email_id);
+                            }
+                        }
+                    });
+                    await RedisDB.delKEY(keylist);
+                }
+            });
             res.status(200).json({
                 error: false,
                 data: "scrape"
@@ -144,7 +159,6 @@ router.post('/readMailInfo', async (req, res) => {
                     }
                 }
             });
-            await RedisDB.delKEY(keylist);
         }
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
