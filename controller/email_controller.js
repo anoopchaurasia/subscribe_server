@@ -173,12 +173,18 @@ router.post('/readProfileInfo', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllSubscription(doc.user_id);
         const movedMail = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
         const totalEmail = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const keepCount = await GetEmailQuery.getTotalKeepSubscription(doc.user_id);
+        const trashCount = await GetEmailQuery.getTotalTrashSubscription(doc.user_id);
+        const moveCount = await GetEmailQuery.getTotalMoveSubscription(doc.user_id);
         const totalUnscribeEmail = await GetEmailQuery.getTotalUnsubscribeEmailCount(doc.user_id);
         res.status(200).json({
             error: false,
             data: emailinfos,
             moveMail: movedMail,
             totalEmail: totalEmail,
+            moveCount: moveCount,
+            trashCount: trashCount,
+            keepCount: keepCount,
             totalUnscribeEmail: totalUnscribeEmail
         })
     } catch (err) {
@@ -226,6 +232,23 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
     }
 });
 
+
+router.post('/getUnsubscribeMailInfoPage', async (req, res) => {
+    try {
+        const doc = req.token;
+        const emailinfos = await GetEmailQuery.getAllMovedSubscriptionPage(doc.user_id);
+        let unreadData = await GetEmailQuery.getUnreadMovedEmail(doc.user_id);
+        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos,
+            unreadData: unreadData,
+            totalEmail: total
+        })
+    } catch (err) {
+        console.error(err.message, err.stack, "11");
+    }
+});
 
 /*
 This api will get Filer subsciption(new only).
@@ -340,6 +363,23 @@ router.post('/getDeletedEmailData', async (req, res) => {
     }
 });
 
+router.post('/getDeletedEmailDataPage', async (req, res) => {
+    try {
+        const doc = req.token;
+        const emailinfos = await GetEmailQuery.getAllTrashSubscriptionPage(doc.user_id);
+        let unreadData = await GetEmailQuery.getUnreadTrashEmail(doc.user_id);
+        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos,
+            unreadData: unreadData,
+            totalEmail: total
+        })
+    } catch (err) {
+        console.error(err.message, ex.stack, "18");
+    }
+});
+
 
 /*
 This api for changing keeped subscription.(when swipe right)
@@ -387,6 +427,23 @@ router.post('/getKeepedMailInfo', async (req, res) => {
         })
     } catch (err) {
         console.error(err.message, ex.stack,"21");
+    }
+});
+
+router.post('/getKeepedMailInfoPage', async (req, res) => {
+    try {
+        const doc = req.token;
+        const emailinfos = await GetEmailQuery.getAllKeepedSubscriptionPage(doc.user_id);
+        let unreadData = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
+        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        res.status(200).json({
+            error: false,
+            data: emailinfos,
+            unreadData: unreadData,
+            totalEmail: total
+        })
+    } catch (err) {
+        console.error(err.message, ex.stack, "21");
     }
 });
 
