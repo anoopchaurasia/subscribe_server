@@ -97,7 +97,23 @@ router.post('/getMailInfo', async (req, res) => {
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             let label = await Expensebit.findLabelId(oauth2Client);
-            await getRecentEmail(token.user_id, oauth2Client, null,label);
+            await getRecentEmail(token.user_id, oauth2Client, null,label, function afterEnd(){
+                let doc = token;
+                let keylist = await RedisDB.getKEYS(doc.user_id);
+                if (keylist && keylist.length != 0) {
+                    keylist.forEach(async element => {
+                        let mail = await RedisDB.popData(element);
+                        if (mail.length != 0) {
+                            let result = await RedisDB.findPercent(mail);
+                            if (result) {
+                                let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
+                                await Expensebit.storeBulkEmailInDB(mail,from_email_id);
+                            }
+                        }
+                    });
+                    await RedisDB.delKEY(keylist);
+                }
+            });
             res.status(200).json({
                 error: false,
                 data: "scrape"
@@ -144,7 +160,6 @@ router.post('/readMailInfo', async (req, res) => {
                     }
                 }
             });
-            await RedisDB.delKEY(keylist);
         }
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
@@ -247,7 +262,7 @@ router.post('/getEmailSubscription', async (req, res) => {
 This for function for scrapping Inbox for particular user.
 This will Get List of email in Batch of 100 for given Time period and will parsed mail.
 */
-async function getRecentEmail(user_id, auth, nextPageToken,label) {
+async function getRecentEmail(user_id, auth, nextPageToken,label, afterFinishCB) {
     let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
     let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
@@ -286,7 +301,9 @@ async function getRecentEmail(user_id, auth, nextPageToken,label) {
     }
     nextPageToken = responseList['data'].nextPageToken;
     if (responseList['data'].nextPageToken) {
-        await getRecentEmail(user_id, auth, responseList['data'].nextPageToken,label);
+        await getRecentEmail(user_id, auth, responseList['data'].nextPageToken,label, afterFinishCB);
+    } else {
+        afterFinishCB()
     }
 }
 
