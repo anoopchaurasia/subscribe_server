@@ -101,7 +101,7 @@ router.post('/getMailInfo', async (req, res) => {
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             let label = await Expensebit.findLabelId(oauth2Client);
-            await getRecentEmail(token.user_id, oauth2Client, null,label,async function afterEnd(){
+            getRecentEmail(token.user_id, oauth2Client, null,label,async function afterEnd(){
                 let doc = token;
                 let keylist = await RedisDB.getKEYS(doc.user_id);
                 if (keylist && keylist.length != 0) {
