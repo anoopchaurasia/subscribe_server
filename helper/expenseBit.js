@@ -326,6 +326,7 @@ class ExpenseBit {
 
     static async manualMoveMail(mail, user_id, auth, label) {
         let emailInfo = await ExpenseBit.createEmailInfo(user_id, null, mail);
+        emailInfo['status'] = "move";
         await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
             console.error(err.message, err.stack, "52");
         });
@@ -343,6 +344,7 @@ class ExpenseBit {
 
     static async manualTrashMail(mail, user_id, auth, label) {
         let emailInfo = await ExpenseBit.createEmailInfo(user_id, null, mail);     
+        emailInfo['status'] = "trash";
         await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
             console.error(err.message, err.stack, "52");
         });
