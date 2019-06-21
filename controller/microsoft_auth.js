@@ -401,6 +401,7 @@ async function checkUserOldAction(accessToken,emailInfo, user_id, auth) {
             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
             let id = await Outlook.getFolderListForScrapping(accessToken, user_id, link, emailInfoNew.email_id)
         } else if (fromEmail.staus == "trash") {
+            console.log("found mail here trash", fromEmail)
             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
             await Outlook.getFolderListForTrashScrapping(accessToken, user_id, link, emailInfoNew.email_id);
         }

@@ -368,6 +368,7 @@ class Outlook {
 
 
     static async trashSingleMailFromInBOX(accessToken, emailId, label_id) {
+        console.log("trash email here");
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + emailId + "/move"),
             "method": "POST",
