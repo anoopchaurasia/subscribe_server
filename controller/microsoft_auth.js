@@ -391,6 +391,7 @@ async function checkUserOldAction(accessToken,emailInfo, user_id, auth) {
         console.error(err.message, err.stack);
     });
     if (fromEmail) {
+        console.log("found mail here",fromEmail)
         let emailInfoNew = await getEmailInfoNew(emailInfo);
         emailInfoNew['from_email_id'] = fromEmail._id;
         await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
