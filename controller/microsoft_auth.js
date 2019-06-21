@@ -86,7 +86,7 @@ async function getWebhookMail(accessToken, link, user_id) {
         }
         if (body) {
             console.log(body);
-            await checkEmail(JSON.parse(body), user_id, accessToken)
+            await checkEmail(accessToken,JSON.parse(body), user_id, accessToken)
         }
     });
 }
@@ -229,7 +229,7 @@ async function getEmailInBulk(accessToken, link, user_id) {
             body = JSON.parse(body);
             let mailList = body.value;
             await mailList.asynForEach(async oneEmail => {
-                await checkEmail(oneEmail, user_id, accessToken)
+                await checkEmail(accessToken,oneEmail, user_id, accessToken)
             });
             if (body['@odata.nextLink']) {
                 await getEmailInBulk(accessToken, encodeURI(body['@odata.nextLink']), user_id);
@@ -386,7 +386,7 @@ let getEmailInfoNew = async (emailInfo) => {
     emailInfoNew['main_label'] = emailInfo['main_label'];
     return emailInfoNew;
 }
-async function checkUserOldAction(emailInfo, user_id, auth) {
+async function checkUserOldAction(accessToken,emailInfo, user_id, auth) {
     let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }, { status: 1 }).catch(err => {
         console.error(err.message, err.stack);
     });
@@ -408,7 +408,7 @@ async function checkUserOldAction(emailInfo, user_id, auth) {
     }
     return false;
 }
-async function checkOtherUserActions(emailInfo, user_id) {
+async function checkOtherUserActions(accessToken,emailInfo, user_id) {
     let totalAvailable = await email.count({ "from_email": emailInfo.from_email, "status": { $in: ["move", "trash"] } }).catch(err => { console.error(err.message, err.stack); });
     if (totalAvailable >= 2) {
         await createNewEmailForUser(emailInfo, user_id);
@@ -432,20 +432,19 @@ async function createNewEmailForUser(emailInfo, user_id) {
     return true;
 }
 
-let checkEmail = async (emailObj, user_id, auth) => {
+let checkEmail = async (accessToken,emailObj, user_id, auth) => {
     let emailInfo = await createEmailInfo(user_id, null, emailObj);
     if (emailInfo.from_email.toLowerCase().indexOf('@gmail') != -1) {
         return
     }
-    if (await checkUserOldAction(emailInfo, user_id, auth)) return;
-    if (await checkOtherUserActions(emailInfo, user_id)) return;
+    if (await checkUserOldAction(accessToken,emailInfo, user_id, auth)) return;
+    if (await checkOtherUserActions(accessToken,emailInfo, user_id)) return;
 
     let url = await getUrlFromEmail(emailObj.body.content).catch(err => {
         console.error(err.message, err.stack, "dfgdhfvgdggd");
     });
 
     console.log("url found", url)
-    // console.log(emailInfo);
     if (url != null && url != undefined) {
         emailInfo['unsubscribe'] = url;
         await createNewEmailForUser(emailInfo, user_id);
