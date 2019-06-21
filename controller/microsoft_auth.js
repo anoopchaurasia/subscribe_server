@@ -79,7 +79,6 @@ async function getWebhookMail(accessToken, link, user_id) {
             'Authorization': 'Bearer ' + accessToken
         }
     }
-
     Request(settings, async (error, response, body) => {
         if (error) {
             return console.log(error);
@@ -140,8 +139,7 @@ async function subscribeToNotification(accessToken, user_id) {
                 });
             }
         }
-    });
-   
+    });   
 }
 
 
@@ -158,7 +156,6 @@ router.get('/getOutLookApiUrl', async function (req, res) {
         email: stateCode,
         email_client: "outlook"
     });
-
     let newUser = await user.save().catch(err => {
         console.log(err);
     });
@@ -386,6 +383,7 @@ let getEmailInfoNew = async (emailInfo) => {
     emailInfoNew['main_label'] = emailInfo['main_label'];
     return emailInfoNew;
 }
+
 async function checkUserOldAction(accessToken,emailInfo, user_id, auth) {
     let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }, { status: 1 }).catch(err => {
         console.error(err.message, err.stack);
@@ -411,6 +409,7 @@ async function checkUserOldAction(accessToken,emailInfo, user_id, auth) {
     }
     return false;
 }
+
 async function checkOtherUserActions(accessToken,emailInfo, user_id) {
     let totalAvailable = await email.count({ "from_email": emailInfo.from_email, "status": { $in: ["move", "trash"] } }).catch(err => { console.error(err.message, err.stack); });
     if (totalAvailable >= 2) {
@@ -419,6 +418,7 @@ async function checkOtherUserActions(accessToken,emailInfo, user_id) {
     }
     return false;
 }
+
 async function createNewEmailForUser(emailInfo, user_id) {
     await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
         console.error(err.message, err.stack);
@@ -442,11 +442,9 @@ let checkEmail = async (accessToken,emailObj, user_id, auth) => {
     }
     if (await checkUserOldAction(accessToken,emailInfo, user_id, auth)) return;
     if (await checkOtherUserActions(accessToken,emailInfo, user_id)) return;
-
     let url = await getUrlFromEmail(emailObj.body.content).catch(err => {
         console.error(err.message, err.stack, "dfgdhfvgdggd");
     });
-
     console.log("url found", url)
     if (url != null && url != undefined) {
         emailInfo['unsubscribe'] = url;
@@ -454,7 +452,6 @@ let checkEmail = async (accessToken,emailObj, user_id, auth) => {
     } else {
         await checkEmailForUnreadCount(user_id, emailInfo);
     }
-
 }
 
 async function checkEmailForUnreadCount(user_id, email) {
@@ -511,7 +508,6 @@ router.get('/auth/callback', async function (req, res) {
     }).catch(err => {
         console.log(err);
     });
-
     const token = await oauth2.accessToken.create(result);;
     const userInfo = jwt.decode(token.token.id_token);
     var token_uniqueid = uniqid() + uniqid() + uniqid();
