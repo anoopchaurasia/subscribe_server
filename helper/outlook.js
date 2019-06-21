@@ -76,7 +76,7 @@ class Outlook {
     }
 
     static async  MoveSingleMailFromInBOX(accessToken, emailId, label_id) {
-
+        console.log(emailId,"came here for move")
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + emailId + "/move"),
             "method": "POST",

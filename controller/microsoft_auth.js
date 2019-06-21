@@ -391,13 +391,13 @@ async function checkUserOldAction(accessToken,emailInfo, user_id, auth) {
         console.error(err.message, err.stack);
     });
     if (fromEmail) {
-        console.log("found mail here",fromEmail)
         let emailInfoNew = await getEmailInfoNew(emailInfo);
         emailInfoNew['from_email_id'] = fromEmail._id;
         await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
             console.error(err.message, err.stack, "checking");
         });
         if (fromEmail.status == "move") {
+            console.log("found mail here",fromEmail)
             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
             let id = await Outlook.getFolderListForScrapping(accessToken, user_id, link, emailInfoNew.email_id)
         } else if (fromEmail.staus == "trash") {
