@@ -15,6 +15,7 @@ const MailScraper = require("../helper/mailScraper").MailScraper;
 fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
 fm.Include("com.anoop.gmail.Gmail");
+fm.Include("com.anoop.gmail.Scraper");
 fm.Include("com.anoop.gmail.Label");
 fm.Include("com.anoop.model.EmailDetail");
 fm.Include("com.anoop.model.EmailInfo");
@@ -22,6 +23,7 @@ let EmailInfo = com.anoop.model.EmailInfo;
 let EmailDetail = com.anoop.model.EmailDetail;
 let Gmail = com.anoop.gmail.Gmail;
 let Label = com.anoop.gmail.Label;
+let Scraper = com.anoop.gmail.Scraper;
 let RedisDB = com.jeet.memdb.RedisDB;
 
 /*
@@ -76,18 +78,14 @@ Based on user Information Email Inbox will be scrape
 */
 router.post('/getMailInfo', async (req, res) => {
     try {
-        const token = req.token;
-        if (token) {
-            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack,"5"));
-            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
-            Expensebit.createEmailLabel(token.user_id, oauth2Client);
-            let label = await Expensebit.findLabelId(oauth2Client);
-            await getRecentEmail(token.user_id, oauth2Client, null,label);
+            let gmailInstance = await Gmail.getInstanceForUser(req.token.user_id);
+            let scraper = Scraper.new(gmailInstance);
+            scraper.start();
             res.status(200).json({
                 error: false,
                 data: "scrape"
             })
-        }
+        
     } catch (ex) {
         console.error(ex.message, ex.stack,"6");
         res.sendStatus(400);
@@ -97,7 +95,8 @@ router.post('/getMailInfo', async (req, res) => {
 router.post('/getMailListForSender', async (req, res) => {
     try {
         const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(doc.user_id, req.body.from_email);
+        let emaildetail = await EmailDetail.get({userId: req.token.user_id, from_email: req.body.from_email});
+        
         res.status(200).json({
             error: false,
             data: emailinfos
@@ -250,55 +249,6 @@ router.post('/getEmailSubscription', async (req, res) => {
     }
 });
 
-
-/*
-This for function for scrapping Inbox for particular user.
-This will Get List of email in Batch of 100 for given Time period and will parsed mail.
-*/
-async function getRecentEmail(user_id, auth, nextPageToken,label) {
-    let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
-    let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
-    if (responseList && responseList['data']['messages']) {
-        responseList['data']['messages'].forEach(async element => {
-            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
-            if (response) {
-                if (response.data.payload || response.data.payload['parts']) {
-                    let unsub_url;
-                    let header_raw = response['data']['payload']['headers'];
-                    header_raw.forEach(async data => {
-                        if (data.name == "List-Unsubscribe") {
-                            unsub_url = data.value;
-                        }
-                    })
-                    try {
-                        if (unsub_url) {
-                            await Expensebit.checkEmailWithInscribeHeader(unsub_url, response['data'], user_id, auth);
-                        } else {
-                            let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
-                            let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
-                            try {
-                               // await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
-                            } catch (e) {
-                                require('raven').captureException(e);
-                            }
-                            await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth,label);
-                        }
-                    } catch (e) {
-                        console.error(e.message, e.stack,"14");
-                        return
-                    }
-                }
-            }
-        });
-    }
-    nextPageToken = responseList['data'].nextPageToken;
-    if (responseList['data'].nextPageToken) {
-        await getRecentEmail(user_id, auth, responseList['data'].nextPageToken,label);
-    }
-}
-
-
 /*
 This api for unsubscribing mail from Inbox.
 This api Currently not using Its under development.
@@ -371,21 +321,7 @@ this will changed changed is_keeped value in database for keped subscription
 */
 router.post('/keepMailInformation', async (req, res) => {
     try {
-        const from_email = req.body.from_email;
-        const doc = req.token;
-        var oldvalue = {
-            "from_email": from_email,
-            "user_id": doc.user_id
-        };
-        var newvalues = {
-            $set: {
-                "status": "keep",
-                "status_date": new Date()
-            }
-        };
-        await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-            console.error(err.message, err.stack,"19");
-        });
+        EmailDetail.updateStatus({user_id: req.token.user_id, from_email: req.body.from_email}, "keep");
         res.sendStatus(200)
     } catch (ex) {
         console.error(ex.message, ex.stack,"20");
@@ -413,7 +349,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
         console.error(err.message, ex.stack,"21");
     }
 });
-
+/// is it being used 
 router.post('/getKeepedMailInfoPage', async (req, res) => {
     try {
         const doc = req.token;
@@ -430,33 +366,6 @@ router.post('/getKeepedMailInfoPage', async (req, res) => {
         console.error(err.message, ex.stack, "21");
     }
 });
-
-function getPlainText(payload) {
-    var str = "";
-    var isHtmlTag;
-    if (payload.parts) {
-        for (var i = 0; i < payload.parts.length; i++) {
-            str += getPlainText(payload.parts[i]);
-        };
-    }
-    if (payload.mimeType == "text/plain") {
-        return payload["body"]["data"];
-    }
-    return str;
-}
-function getParts(payload) {
-    var str = "";
-    var isHtmlTag;
-    if (payload.parts) {
-        for (var i = 0; i < payload.parts.length; i++) {
-            if (payload.mimeType == "multipart/alternative" && payload.parts[i].mimeType != 'text/html') continue;
-            str += getParts(payload.parts[i]);
-        };
-    } else if ((payload.mimeType == "text/html")) {
-        return payload["body"]["data"];
-    }
-    return str;
-}
 
 module.exports = router
 

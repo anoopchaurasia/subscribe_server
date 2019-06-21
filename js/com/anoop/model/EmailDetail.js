@@ -24,8 +24,10 @@ fm.Class("EmailDetail>.BaseModel", function(me){
     };
 
     Static.isEmailMovable = async function(from_email) {
-        let totalAvailable = await mongo_emaildetail.estimatedDocumentCount({ "from_email": from_email, "status": { $in: ["move", "trash"] } }).catch(err => { console.error(err.message, err.stack); });
-        if (totalAvailable >= 2) {
+        let totalMoved = await mongo_emaildetail.estimatedDocumentCount({ "from_email": from_email, "status": { $in: ["move", "trash"] } })
+        let totalKept = await mongo_emaildetail.estimatedDocumentCount({ "from_email": from_email, "status": "keep" })
+        let percentMoved = totalMoved*100/((totalKept+totalMoved)||1);
+        if (percentMoved>=50) {
             return true;
         }
         return false;
