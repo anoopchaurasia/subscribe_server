@@ -445,7 +445,7 @@ let checkEmail = async (emailObj, user_id, auth) => {
     });
 
     console.log("url found", url)
-    console.log(emailInfo);
+    // console.log(emailInfo);
     if (url != null && url != undefined) {
         emailInfo['unsubscribe'] = url;
         await createNewEmailForUser(emailInfo, user_id);
