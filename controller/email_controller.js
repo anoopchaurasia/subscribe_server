@@ -480,7 +480,6 @@ async function getEmailFromSpecificSender(user_id, auth, nextPageToken, label, s
             if (response) {
                 if (response.data.payload || response.data.payload['parts']) {
                     try {
-                        // console.log(response.data)
                         if(is_move){
                             await Expensebit.manualMoveMail(response['data'], user_id, auth, label);
                         }else{
