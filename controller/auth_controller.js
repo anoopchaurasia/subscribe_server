@@ -22,8 +22,7 @@ router.post('/signin', async (req, res) => {
         const token = await TokenHandler.getTokenFromCode(req.body.code);
         const payload = await TokenHandler.verifyIdToken(token);
         let user = await UserModel.findOne({
-            'email': payload.email,
-            "email_client": "gmail"
+            'email': payload.email
         }).catch(err => {
             console.error(err.message, err.stack,"22")
         })
