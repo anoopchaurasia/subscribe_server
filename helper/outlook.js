@@ -487,7 +487,7 @@ static async getFolderListForScrapping(accessToken, user_id, link, emailId){
             });
             if (count == length) {
                 if (res['@odata.nextLink']) {
-                    await getFolderListForScrapping(accessToken, user_id, res['@odata.nextLink'], emailId)
+                    await Outlook.getFolderListForScrapping(accessToken, user_id, res['@odata.nextLink'], emailId)
                 } else {
                     let lbl = await Outlook.createFolderOutlook(accessToken, user_id)
                     return await Outlook.MoveSingleMailFromInBOX(accessToken, emailId, lbl);
