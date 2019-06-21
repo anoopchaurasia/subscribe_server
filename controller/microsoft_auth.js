@@ -32,41 +32,42 @@ const credentials = {
 };
 const oauth2 = require('simple-oauth2').create(credentials);
 
-
-
 router.get('/getPushNotification', async function (req, res) {
     console.log("came here for url")
     console.log(req)
 });
 
 
-router.post('/getPushNotification',async function (req, res) {
+router.post('/getPushNotification', async function (req, res) {
     console.log("came here for url")
-    if(req.query && req.query.validationToken){
+    if (req.query && req.query.validationToken) {
         console.log(req.query)
         console.log(req.query.validationToken)
         res.setHeader('content-type', 'text/plain');
         res.write(req.query.validationToken);
         res.end();
 
-    }else{
+    } else {
         console.log(req.body.value)
-        let data = req.body.value[0];
-        let resource = data.resourceData;
-        let user_id = data.clientState;
-        let message_id = resource.id;
-        
-        console.log(user_id,message_id);
-        let link = encodeURI('https://graph.microsoft.com/v1.0/me/messages/'+message_id);
-        let token = await auth_token.findOne({ "user_id": user_id });
-        let accessToken;
-        if (token) {
-            accessToken = await Outlook.check_Token_info(user_id, token);
-            await getWebhookMail(accessToken,link,user_id)
-        }
+        let data = req.body.value;
+        await data.asynForEach(async subsc => {
+            let resource = subsc.resourceData;
+            let user_id = subsc.clientState;
+            let message_id = resource.id;
+            console.log(user_id, message_id);
+            let link = encodeURI('https://graph.microsoft.com/v1.0/me/messages/' + message_id);
+            let token = await auth_token.findOne({ "user_id": user_id });
+            let accessToken;
+            if (token) {
+                accessToken = await Outlook.check_Token_info(user_id, token);
+                await getWebhookMail(accessToken, link, user_id).catch (err => {
+                    console.log(err);
+                });
+            }
+        });
         res.sendStatus(202);
     }
-  
+
 });
 
 
@@ -85,13 +86,13 @@ async function getWebhookMail(accessToken, link, user_id) {
         }
         if (body) {
             console.log(body);
-                await checkEmail(JSON.parse(body), user_id, accessToken)
-          }
+            await checkEmail(JSON.parse(body), user_id, accessToken)
+        }
     });
 }
 
 
-async function subscribeToNotification(accessToken,user_id) {
+async function subscribeToNotification(accessToken, user_id) {
     var settings = {
         "url": "https://graph.microsoft.com/v1.0/subscriptions",
         "method": "POST",
@@ -100,13 +101,13 @@ async function subscribeToNotification(accessToken,user_id) {
             'Authorization': 'Bearer ' + accessToken
         },
         "body": JSON.stringify({
-            "changeType": "created,deleted",
+            "changeType": "created",
             "notificationUrl": "https://test.expensebit.com/ot/api/v1/mail/microsoft/getPushNotification",
             "resource": "me/mailFolders('Inbox')/messages",
-            "expirationDateTime": "2019-06-21T11:00:00.0000000Z",
+            "expirationDateTime": new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000),
             "applicationId": "c92a2e87-b74b-4c3b-9f46-422f11622292",
             "creatorId": "8ee44408-0679-472c-bc2a-692812af3437",
-            "clientState":user_id
+            "clientState": user_id
         })
     }
 
@@ -115,14 +116,10 @@ async function subscribeToNotification(accessToken,user_id) {
             console.log(error);
         }
         if (body) {
-           console.log(body);
-           
+            console.log(body);
         }
     });
 }
-
-
-
 
 
 router.get('/getOutLookApiUrl', async function (req, res) {
@@ -424,9 +421,9 @@ let checkEmail = async (emailObj, user_id, auth) => {
         console.error(err.message, err.stack, "dfgdhfvgdggd");
     });
 
-    console.log("url found",url)
+    console.log("url found", url)
     console.log(emailInfo);
-    if (url != null && url!=undefined) {
+    if (url != null && url != undefined) {
         emailInfo['unsubscribe'] = url;
         await createNewEmailForUser(emailInfo, user_id);
     } else {
@@ -507,7 +504,7 @@ router.get('/auth/callback', async function (req, res) {
             await Outlook.extract_token(existingUser, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
                 console.log(err);
             });
-            await subscribeToNotification(token.token.access_token,existingUser._id);
+            await subscribeToNotification(token.token.access_token, existingUser._id);
             var tokmodel = new token_model({
                 "user_id": existingUser._id,
                 "token": token_uniqueid,
