@@ -117,7 +117,7 @@ async function subscribeToNotification(accessToken, user_id) {
                     },
                     "body": JSON.stringify({
                         "changeType": "created",
-                        "notificationUrl": "https://test.expensebit.com/ot/api/v1/mail/microsoft/getPushNotification",
+                        "notificationUrl": "https://unsub.expensebit.com/api/v1/mail/microsoft/getPushNotification",
                         "resource": "me/mailFolders('Inbox')/messages",
                         "expirationDateTime": new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000),
                         "applicationId": "c92a2e87-b74b-4c3b-9f46-422f11622292",
