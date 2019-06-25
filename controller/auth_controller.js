@@ -89,7 +89,8 @@ async function create_user(userInfoData, payload) {
         "given_name": userInfoData['given_name'] ? userInfoData.given_name : "",
         "family_name": userInfoData['family_name'] ? userInfoData.family_name : "",
         "gender": userInfoData['gender'] ? userInfoData.gender : "",
-        "birth_date": userInfoData['birth_date'] ? userInfoData.birth_date : ""
+        "birth_date": userInfoData['birth_date'] ? userInfoData.birth_date : "",
+        "email_client": "gmail"
         // "is_logout": false
     });
     return await newUser.save().catch(err => {

@@ -24,5 +24,21 @@ fm.Class("EmailInfo>.BaseModel", function(me){
             subject: data.subject,
             labelIds: data.labelIds
         }
-    }
+    };
+
+    Static.bulkInsert = async function(bulkdata){
+        var bulk = mongo_emailInfo.initializeUnorderedBulkOp();
+        //bulkdata
+    };
+
+    Static.getBulkCount = async function(emaildetail_ids) {
+        return await mongo_emailInfo.aggregate([
+            {
+                $match: {from_email_id:{$in: emaildetail_ids}},
+            },
+            {
+                $group:{_id: "$from_email_id", count:{$sum:1}}
+            }
+        ]).exec();
+    };
 });

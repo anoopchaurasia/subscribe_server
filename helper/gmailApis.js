@@ -95,7 +95,8 @@ class GmailApis {
             userId: 'me',
             resource: {
                 'ids': msgIDS,
-                'addLabelIds': ["TRASH"]
+                'addLabelIds': ["TRASH"],
+                'removeLabels': ["Unsubscribed Emails"]
             }
         }).catch(err => {
             console.error(err.message,"78");

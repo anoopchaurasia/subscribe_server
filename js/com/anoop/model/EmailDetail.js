@@ -18,9 +18,14 @@ fm.Class("EmailDetail>.BaseModel", function(me){
         return await mongo_emaildetail.findOneAndUpdate(query, {$setOnInsert: set}, {new: true, upsert: true}).exec();
     };
 
-    Static.getIfExist = async function (){
+    Static.getIfExist = async function (query){
         me.updateQueryValidation(query);
         return await mongo_emaildetail.findOne(query);
+    };
+
+    Static.getUnused = async function(query, filter){
+        me.updateQueryValidation(query, filter);
+        return await mongo_emaildetail.find(query).exec();
     };
 
     Static.isEmailMovable = async function(from_email) {

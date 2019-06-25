@@ -1,0 +1,97 @@
+fm.Package('com.anoop.email');
+fm.Import("..model.EmailDetail");
+fm.Import("..model.EmailInfo");
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo) {
+    'use strict';
+    this.setMe = function (_me) {
+        me = _me;
+    };
+
+    Static.updateOrCreateAndGetEMailDetailFromData = async function(data, user_id){
+        let emaildetailraw = EmailDetail.fromEamil(data, user_id);
+        return await EmailDetail.updateOrCreateAndGet({from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id}, emaildetailraw);
+    }
+    Static.updateOrCreateAndGetEMailInfoFromData = async function(emaildetail, data, url){
+        let emailinforaw = EmalInfo.fromEamil(data, emaildetail._id, url);
+        return await EmailInfo.updateOrCreateAndGet({from_email_id: emaildetail._id, email_id: emailinforaw.email_id}, emailinforaw);
+    };
+
+    Static.getEmailDetailAndInfosFrom = async function (user_id, from_email) {
+        let emaildetail = await EmailDetail.get({user_id: user_id, from_email: from_email});
+        let emailids = await EmailInfo.getEmailIdsByEmailDetail(emaildetail);
+        return {emaildetail, emailids};
+    };
+
+    Static.isEmailMovable = async function(from_email){
+        await EmailDetail.isEmailMovable(from_email);
+    };
+
+    Static.dataToEmailDetailRaw = function(data, user_id){
+        return EmailDetail.fromEamil(data, user_id);
+    }
+
+    Static.getEmailDetailFromRaw = async function(emaildetailraw) {
+        return await EmailDetail.get({user_id: emaildetailraw.user_id, from_email: emaildetailraw.from_email});
+    };
+
+    Static.updateEmailDetailStatus = async function(_id, status) {
+        return await EmailDetail.updateStatus({_id: emaildetail._id},  status);
+    };
+
+    Static.inboxToUnsubBySender = async function(token, sender_email){
+        let emailinfos = await commonBySender(token, sender_email, "move");
+        await Emailinfo.bulkInsert(emailinfos);
+    };
+
+    async function commonBySender(token, sender_email, status) {
+        let gmailInstance = await Gmail.getInstanceForUser(user_id);
+        let scraper = Scraper.new(gmailInstance);
+        let ids = await scraper.getEmaiIdsBySender(sender_email);
+        if(ids.length==0) {
+            throw new Error("no email fond for sender", sender_email, user_id);
+        }
+        let emaildetail_raw = EmailDetail.fromEamil({from_email: sender_email, from_email_name: sender_email, to_email: null}, user_id);
+        emaildetail_raw.status = status;
+        let emaildetail = await EmailDetail.updateOrCreateAndGet({user_id: user_id, from_email: sender_email}, emaildetail_raw);
+        
+        return  ids.map(x=> {
+            return Emailinfo.fromEamil({email_id: x, labelIds:[]}, emaildetail._id);
+        });
+
+    }
+    
+    Static.inboxToTrashBySender = async function(token, sender_email) {
+        let emailinfos =  await commonBySender(token, sender_email, "trash");
+        await Emailinfo.bulkInsert(emailinfos);
+    }
+
+
+    Static.getUnusedEmails = async function (token) {
+        let emaildetails = await EmailDetail.getUnused({ "status": "unused", "user_id": user_id },  { from_email: 1, from_email_name: 1 })
+        let senddata = await EmailInfo.getBulkCount(emaildetails.map(x=>x._id));
+        let mapper = {};
+        emaildetails.forEach(x=> mapper[x._id] = {a: x.from_email_name, b: x.from_email });
+        senddata.forEach(x=> {
+            x.from_email_name=mapper[x._id].a;
+            x.from_email=mapper[x._id].b;
+        })
+        return senddata;
+    }
+
+    Static.handleRedis = async function(user_id){
+        let keylist = await RedisDB.getKEYS(user_id);
+        if (keylist && keylist.length != 0) {
+            keylist.forEach(async element => {
+                let mail = await RedisDB.popData(element);
+                if (mail.length != 0) {
+                    let result = await RedisDB.findPercent(mail);
+                    if (result) {
+                        let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), user_id)
+                        await Expensebit.storeBulkEmailInDB(mail,from_email_id);
+                    }
+                }
+            });
+            await RedisDB.delKEY(keylist);
+        }
+    }
+});

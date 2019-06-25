@@ -28,7 +28,14 @@ var UserSchema = new Schema({
     },
     birth_date:{
         type:Date
+    },
+    state: {
+        type: String
+    },
+    email_client: {
+        type: String,
     }
+
 });
 
 

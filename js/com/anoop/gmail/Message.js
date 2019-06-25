@@ -10,18 +10,36 @@ fm.Class("Message", function(me){
         });
     };
 
-    Static.getEmailList = async function (gmail, nextPageToken, formatted_date){
-        let result = await gmail.userInstance().users.messages.list({ 
+    Static.getAllEmailList = async function (gmail, nextPageToken, formatted_date){
+        return await runQuery(gmail, {
             userId: 'me',
             maxResults: 100, 
             'pageToken': nextPageToken, 
             q: `from:* AND after:${formatted_date}` 
-        });
+        })
+    };
+
+
+    async function runQuery(gmail, query) {
+        query.userId = query.userId || "me";
+        query.maxResults = query.maxResults || 100;
+        await gmail.userInstance().users.messages.list(query);
         let {messages, error, nextPageToken} = result;
         return {messages, error, nextPageToken};
     };
 
-    Static.getBatchMessage = await function(gmail, message_ids) {
+    Static.getEmailsBySender = async function(gmail, sender, formatted_date){
+        return await runQuery(gmail, {
+            userId: 'me',
+            maxResults: 100, 
+            'pageToken': nextPageToken, 
+            q: `from:(${sender}) after:${formatted_date}`
+        })
+    };
+
+
+
+    Static.getBatchMessage = async function(gmail, message_ids) {
         let batch = getBatch(await gmail.getAccessToken());
         message_ids.forEach(function (message) {
             batch.add({

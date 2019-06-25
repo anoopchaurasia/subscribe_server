@@ -70,7 +70,7 @@ class ExpenseBit {
                 console.error(err.message, err.stack,"44");
             });
             if (mailIDSARRAY.length != 0) {
-                await GmailApi.batchModifyAddAndRemoveLabels(auth, mailIDSARRAY, ["jeet"], ['INBOX', 'CATEGORY_PERSONAL', 'CATEGORY_PROMOTIONS']);
+                await GmailApi.batchModifyAddAndRemoveLabels(auth, mailIDSARRAY, labelarry, ['INBOX', 'CATEGORY_PERSONAL', 'CATEGORY_PROMOTIONS']);
                 // await GmailApi.batchModifyAddLabels(auth, mailIDSARRAY, labelarry);
                 // await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['INBOX']);
                 // await GmailApi.batchModifyRemoveLabels(auth, mailIDSARRAY, ['CATEGORY_PROMOTIONS']);
@@ -322,8 +322,42 @@ class ExpenseBit {
         } else {
             await ExpenseBit.checkEmailForUnreadCount(user_id, emailInfo);
         }
-
 }
+
+    static async manualMoveMail(mail, user_id, auth, label) {
+        let emailInfo = await ExpenseBit.createEmailInfo(user_id, null, mail);
+        emailInfo['status'] = "move";
+        await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
+            console.error(err.message, err.stack, "52");
+        });
+        let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }, { status: 1 }).catch(err => {
+            console.error(err.message, err.stack, "53");
+        });
+        let emailInfoNew = await ExpenseBit.getEmailInfoNew(emailInfo);
+        emailInfoNew['from_email_id'] = fromEmail._id;
+        await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
+            console.error(err.message, err.stack, "54");
+        });
+        await Pubsub.getListLabelNew(user_id, auth, emailInfoNew, label);
+    }
+
+
+    static async manualTrashMail(mail, user_id, auth, label) {
+        let emailInfo = await ExpenseBit.createEmailInfo(user_id, null, mail);     
+        emailInfo['status'] = "trash";
+        await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": user_id }, emailInfo, { upsert: true }).catch(err => {
+            console.error(err.message, err.stack, "52");
+        });
+        let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": user_id }, { status: 1 }).catch(err => {
+            console.error(err.message, err.stack, "53");
+        });
+        let emailInfoNew = await ExpenseBit.getEmailInfoNew(emailInfo);
+        emailInfoNew['from_email_id'] = fromEmail._id;
+        await ExpenseBit.UpdateEmailInformation(emailInfoNew).catch(err => {
+            console.error(err.message, err.stack, "54");
+        });
+        await TrashEmail.inboxToTrashFromExpenseBit(auth, emailInfoNew, user_id);
+    }
 
 
 

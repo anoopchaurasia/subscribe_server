@@ -81,7 +81,6 @@ class GetEmailQuery {
         This function will return all unread subscription Information.
     */
     static async getUnreadEmail(user_id) {
-
         const emails = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "status": "unused", "user_id": user_id } },
         { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
         { $project: { "count": 1 } }]).catch(err => {
@@ -213,7 +212,7 @@ class GetEmailQuery {
     }   
 
     static async getAllMovedSubscriptionPage(user_id,skipcount=0) {
-        const emails = await email.find({ "status": "move", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(skipcount).limit(12).exec()
+        const emails = await email.find({ "status": "move", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(skipcount).limit(25).exec()
         const senddata = [];
         for (let i = 0, len = emails.length; i < len; i++) {
             let x = emails[i];

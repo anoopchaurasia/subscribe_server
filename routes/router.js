@@ -5,6 +5,7 @@ let token_model = require("../models/tokeno");
 router.use('/auth', require('../controller/auth_controller'));
 router.use('/email', authenticate,require('../controller/email_controller'));
 router.use('/users', authenticate,require('../controller/user_controller'));
+router.use('/microsoft', require('../controller/microsoft_auth'));
 
 async function authenticate(req, res, next){
     // console.log(req.headers['x-app-version'])

@@ -5,7 +5,7 @@ fm.Class("Label>.Message", function(me){
     this.Label = function(){
 
     };
-
+    ///---------------from inbox ------------
     Static.moveInboxToTrash =async function(gmail, mailIdList){
         return await me.batchModify(gmail,  {
             'ids': mailIdList,
@@ -13,13 +13,15 @@ fm.Class("Label>.Message", function(me){
         });
     };
 
-    Static.moveTrashToInbox = async function(gmail, mailIdList) {
+    Static.moveInboxToUnsub = async function(gmail, mailIdList) {
         return await me.batchModify(gmail,  {
             'ids': mailIdList,
-            addLabelIds: ["INBOX"],
-            removeLabelIds: ["TRASH"]
+            addLabelIds: [gmail.authToken.label_id],
+            removeLabelIds: ["INBOX"]
         });
     };
+
+    ////----------------------------unsub
 
     Static.moveUnsubToInbox = async function(gmail, mailIdList) {
         return await me.batchModify(gmail,  {
@@ -29,11 +31,29 @@ fm.Class("Label>.Message", function(me){
         });
     };
 
-    Static.moveInboxToUnsub = async function(gmail, mailIdList) {
+    Static.moveUnsubToTrash = async function(gmail, mailIdList) {
+        return await me.batchModify(gmail,  {
+            'ids': mailIdList,
+            addLabelIds: ["TRASH"],
+            removeLabelIds: [gmail.authToken.label_id]
+        });
+    };
+
+    ////--------------------------trash
+
+    Static.moveTrashToInbox = async function(gmail, mailIdList) {
+        return await me.batchModify(gmail,  {
+            'ids': mailIdList,
+            addLabelIds: ["INBOX"],
+            removeLabelIds: ["TRASH"]
+        });
+    };
+
+    Static.moveTrashToUnsub = async function(gmail, mailIdList) {
         return await me.batchModify(gmail,  {
             'ids': mailIdList,
             addLabelIds: [gmail.authToken.label_id],
-            removeLabelIds: ["INBOX"]
+            removeLabelIds: ["TRASH"]
         });
     };
 
