@@ -67,21 +67,30 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo) {
 
 
     Static.getUnusedEmails = async function (token) {
-        let emaildetails = await EmailDetail.getUnused({ "status": "unused", "user_id": user_id },  { from_email: 1, from_email_name: 1 })
-        let senddata = await EmailInfo.getBulkCount(emaildetails.map(x=>x._id));
+        let emaildetails = await EmailDetail.getMultiple({ "status": "unused", "user_id": token.user_id },  { from_email: 1, from_email_name: 1 })
+        let senddata = await EmailInfo.getBulkCount([{
+                $match: {from_email_id:{$in: emaildetails.map(x=>x._id)}},
+            }, {
+                $group:{_id: "$from_email_id", count:{$sum:1}}
+        }]);
         let mapper = {};
         emaildetails.forEach(x=> mapper[x._id] = {a: x.from_email_name, b: x.from_email });
         senddata.forEach(x=> {
             x.from_email_name=mapper[x._id].a;
             x.from_email=mapper[x._id].b;
-        })
+            x._id = {from_email: mapper[x._id].b, _id: x._id}
+        });
         return senddata;
+    };
+
+    Static.getUnreadCount = async function (emaildetails) {
+        
     }
 
-    Static.handleRedis = async function(user_id){
+    Static.handleRedis = async function(user_id, del_data=true){
         let keylist = await RedisDB.getKEYS(user_id);
         if (keylist && keylist.length != 0) {
-            keylist.forEach(async element => {
+            await keylist.asyncForEach(async element => {
                 let mail = await RedisDB.popData(element);
                 if (mail.length != 0) {
                     let result = await RedisDB.findPercent(mail);
@@ -91,7 +100,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo) {
                     }
                 }
             });
-            await RedisDB.delKEY(keylist);
+            del_data && await RedisDB.delKEY(keylist);
         }
     }
 });

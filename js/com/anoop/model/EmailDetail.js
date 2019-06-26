@@ -23,7 +23,7 @@ fm.Class("EmailDetail>.BaseModel", function(me){
         return await mongo_emaildetail.findOne(query);
     };
 
-    Static.getUnused = async function(query, filter){
+    Static.getMultiple = async function(query, filter){
         me.updateQueryValidation(query, filter);
         return await mongo_emaildetail.find(query).exec();
     };

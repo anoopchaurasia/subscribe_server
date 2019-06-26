@@ -1,7 +1,6 @@
 'use strict'
 const express = require('express');
 
-const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 const router = express.Router();
@@ -76,7 +75,7 @@ router.post('/getMailInfo', async (req, res) => {
 router.post('/manualUnsubEmailFromUser', async (req, res) => {
     try {
 
-        Controller.unsubBySender(req.token, req.body.sender_email);
+        Controller.inboxToUnsubBySender(req.token, req.body.sender_email);
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -90,13 +89,7 @@ router.post('/manualUnsubEmailFromUser', async (req, res) => {
 
 router.post('/manualTrashEmailFromUser', async (req, res) => {
     try {
-        const token = req.token;
-        let sender_email = req.body.sender_email;
-        const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack, "5"));
-        const oauth2Client = await TokenHandler.createAuthCleint(authToken);
-        Expensebit.createEmailLabel(token.user_id, oauth2Client);
-        let label = await Expensebit.findLabelId(oauth2Client);
-        await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, sender_email, false);
+        Controller.inboxToTrashBySender(req.token, req.body.sender_email);
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -131,21 +124,9 @@ This will get Filter subcription(new subscription only), unread Mail Info and to
 router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
-        let keylist = await RedisDB.getKEYS(doc.user_id);
-        if (keylist && keylist.length != 0) {
-            keylist.forEach(async element => {
-                let mail = await RedisDB.popData(element);
-                if (mail.length != 0) {
-                    let result = await RedisDB.findPercent(mail);
-                    if (result) {
-                        let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
-                        console.log(from_email_id)
-                        await Expensebit.storeBulkEmailInDB(mail,from_email_id);
-                    }
-                }
-            });
-        }
-        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
+        Controller.handleRedis(req.token.user_id, false);
+        
+        const emailinfos = await Controller.getUnusedEmails(req.token);;
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
         res.status(200).json({

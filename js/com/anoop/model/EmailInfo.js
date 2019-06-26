@@ -31,14 +31,9 @@ fm.Class("EmailInfo>.BaseModel", function(me){
         //bulkdata
     };
 
-    Static.getBulkCount = async function(emaildetail_ids) {
-        return await mongo_emailInfo.aggregate([
-            {
-                $match: {from_email_id:{$in: emaildetail_ids}},
-            },
-            {
-                $group:{_id: "$from_email_id", count:{$sum:1}}
-            }
-        ]).exec();
+    Static.getBulkCount = async function(emaildetail_ids, aggregatedat) {
+        let steps = [];
+
+        return await mongo_emailInfo.aggregate(aggregateQuery).exec();
     };
 });
