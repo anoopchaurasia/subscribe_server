@@ -21,6 +21,10 @@ var emailInfo = new Schema({
     unsubscribe: {
         type: String,
     },
+    msg_uid: {
+        type: String,
+        index: true,
+    },
     labelIds: {
         type: Array,
         index: true
