@@ -28,6 +28,12 @@
     "redis": "^2.8.0",
     "request": "^2.88.0",
     "simple-oauth2": "^2.2.1",
-    "uniqid": "^5.0.3"
+    "uniqid": "^5.0.3",
+    "crypto": "^1.0.1",
+    "dns": "^0.2.2",
+    "imap": "^0.8.19",
+    "legit": "^1.0.5",
+    "mail-notifier": "^0.5.0",
+    "randomstring": "^1.1.5"
   }
 }

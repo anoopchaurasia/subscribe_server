@@ -15,6 +15,10 @@ var emailInfo = new Schema({
         type: String,
         index: true
     },
+    msg_uid: {
+        type: String,
+        index: true,
+    },
     mail_data: {
         type: Object,
     },
