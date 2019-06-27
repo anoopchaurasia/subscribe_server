@@ -62,7 +62,7 @@ class Outlook {
     }
 
     static async  MoveSingleMailFromInBOX(accessToken, emailId, label_id) {
-
+        // console.log(emailId,"came here for move")
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + emailId + "/move"),
             "method": "POST",
@@ -77,9 +77,30 @@ class Outlook {
             if (error) {
                 return console.log(error);
             }
+<<<<<<< HEAD
             if (body) {
                 console.log("here")
                 return
+=======
+            if (response) {
+                let element = JSON.parse(response.body);
+                if (element['id']) {
+                    var oldvalue = {
+                        "email_id": emailId
+                    };
+                    var newvalues = {
+                        $set: {
+                            "email_id": element.id
+                        }
+                    };
+                    let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                        console.error(err.message, err.stack);
+                    });
+                    // if (check) {
+                    //     console.log(check)
+                    // }
+                }
+>>>>>>> master
             }
         });
     }
@@ -87,11 +108,19 @@ class Outlook {
     static async check_Token_info(user_id, token) {
         if (token) {
             const expiration = new Date(token.expiry_date);
+<<<<<<< HEAD
+=======
+            let accessToken;
+>>>>>>> master
             if (expiration > new Date()) {
                 accessToken = token.access_token;
                 return accessToken;
             } else {
+<<<<<<< HEAD
                 console.log("expired token")
+=======
+                // console.log("expired token")
+>>>>>>> master
                 const refresh_token = token.refresh_token;
                 let authToken = {};
                 if (refresh_token) {
@@ -129,10 +158,18 @@ class Outlook {
 
 
     static async sendMailToBatchProcess(accessToken, mailIds, label_id) {
+<<<<<<< HEAD
         console.log(mailIds.length);
         if (mailIds.length <= 0) return;
         var msgIDS = mailIds.splice(0, 18);
         var batchRequest = [];
+=======
+        // console.log(mailIds.length);
+        if (mailIds.length <= 0) return;
+        var msgIDS = mailIds.splice(0, 18);
+        var batchRequest = [];
+        // console.log(msgIDS)
+>>>>>>> master
         for (let i = 0; i < msgIDS.length; i++) {
             var settings = {
                 "id": msgIDS[i],
@@ -146,11 +183,21 @@ class Outlook {
             }
             batchRequest.push(settings);
         }
+<<<<<<< HEAD
         await Outlook.sendRequestInBatch(accessToken, batchRequest)
+=======
+        if(batchRequest.length>0){
+            await Outlook.sendRequestInBatch(accessToken, batchRequest)
+        }
+>>>>>>> master
         return await Outlook.sendMailToBatchProcess(accessToken, mailIds, label_id);
     }
 
     static async sendRequestInBatch(accessToken, reqArray) {
+<<<<<<< HEAD
+=======
+        // console.log(reqArray)
+>>>>>>> master
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
             "method": "POST",
@@ -166,12 +213,18 @@ class Outlook {
                 return console.log(error);
             }
             if (response) {
+<<<<<<< HEAD
                 console.log(JSON.parse(response.body))
                 let rsp = JSON.parse(response.body);
                 await rsp.responses.asynForEach(async element => {
                     console.log(element.status)
                     if (element.status == 201) {
                         console.log(element.body.id)
+=======
+                let rsp = JSON.parse(response.body);
+                await rsp.responses.asynForEach(async element => {
+                    if (element.status == 201) {
+>>>>>>> master
                         var oldvalue = {
                             "email_id": element.id
                         };
@@ -297,14 +350,24 @@ class Outlook {
 
 
 
+<<<<<<< HEAD
     static async  sendRevertMailToBatchProcess(accessToken, mailIds, label_id) {
         console.log(mailIds.length);
+=======
+    static async  sendRevertMailToBatchProcess(accessToken, mailIds,source, label_id) {
+        // console.log(mailIds.length);
+>>>>>>> master
         if (mailIds.length <= 0) return;
         var msgIDS = mailIds.splice(0, 18);
         var batchRequest = [];
         for (let i = 0; i < msgIDS.length; i++) {
             var settings = {
+<<<<<<< HEAD
                 "url": encodeURI("/me/mailFolders/" + source + "/messages/" + email_id + "/move"),
+=======
+                "id": msgIDS[i],
+                "url": encodeURI("/me/mailFolders/" + source + "/messages/" + msgIDS[i] + "/move"),
+>>>>>>> master
                 "method": "POST",
                 "headers": {
                     'Content-Type': 'application/json',
@@ -314,8 +377,15 @@ class Outlook {
             }
             batchRequest.push(settings);
         }
+<<<<<<< HEAD
         await Outlook.sendRequestInBatch(accessToken, batchRequest);
         return await Outlook.sendMailToBatchProcess(accessToken, mailIds, label_id);
+=======
+        if (batchRequest.length > 0) {
+            await Outlook.sendRequestInBatch(accessToken, batchRequest);
+        }
+        return await Outlook.sendMailToBatchProcess(accessToken, mailIds,source, label_id);
+>>>>>>> master
     }
 
     static async  MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
@@ -341,9 +411,12 @@ class Outlook {
     }
 
 
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> master
     static async trashSingleMailFromInBOX(accessToken, emailId, label_id) {
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + emailId + "/move"),
@@ -359,8 +432,26 @@ class Outlook {
             if (error) {
                 return console.log(error);
             }
+<<<<<<< HEAD
             if (body) {
                 console.log("here")
+=======
+            if (response) {
+                let element = JSON.parse(response.body);
+                if (element['id']) {
+                    var oldvalue = {
+                        "email_id": emailId
+                    };
+                    var newvalues = {
+                        $set: {
+                            "email_id": element.id
+                        }
+                    };
+                    let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+                        console.error(err.message, err.stack);
+                    });
+                }
+>>>>>>> master
             }
         });
     }
@@ -464,7 +555,11 @@ static async getFolderListForScrapping(accessToken, user_id, link, emailId){
             });
             if (count == length) {
                 if (res['@odata.nextLink']) {
+<<<<<<< HEAD
                     await getFolderListForScrapping(accessToken, user_id, res['@odata.nextLink'], emailId)
+=======
+                    await Outlook.getFolderListForScrapping(accessToken, user_id, res['@odata.nextLink'], emailId)
+>>>>>>> master
                 } else {
                     let lbl = await Outlook.createFolderOutlook(accessToken, user_id)
                     return await Outlook.MoveSingleMailFromInBOX(accessToken, emailId, lbl);
@@ -491,6 +586,7 @@ static async getFolderListForTrashScrapping(accessToken, user_id, link, emailId)
         }
         if (body) {
             const res = JSON.parse(body);
+<<<<<<< HEAD
             let length = res.value.length;
             let count = 0;
             await res.value.asynForEach(async folder => {
@@ -518,6 +614,38 @@ static async getFolderListForTrashScrapping(accessToken, user_id, link, emailId)
                     await Outlook.getFolderListForTrashScrapping(accessToken, user_id, res['@odata.nextLink'], emailId)
                 }
             }
+=======
+            if(res['value']){
+                let length = res.value.length;
+                let count = 0;
+                await res.value.asynForEach(async folder => {
+                    count++;
+                    if (folder.displayName == 'Junk Email') {
+                        var oldvalue = {
+                            user_id: user_id
+                        };
+                        var newvalues = {
+                            $set: {
+                                "label_id": folder.id
+                            }
+                        };
+                        var upsert = {
+                            upsert: true
+                        };
+                        await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+                            console.log(err);
+                        });
+                        return await Outlook.trashSingleMailFromInBOX(accessToken, emailId, folder.id);
+                    }
+                });
+                if (count == length) {
+                    if (res['@odata.nextLink']) {
+                        await Outlook.getFolderListForTrashScrapping(accessToken, user_id, res['@odata.nextLink'], emailId)
+                    }
+                }
+            }
+            
+>>>>>>> master
         }
     });
 }

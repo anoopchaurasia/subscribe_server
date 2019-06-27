@@ -50,6 +50,12 @@ var DeviceInfoSchema = new Schema({
     istablet:{
         type:Boolean
     },
+    deviceIpAddress:{
+        type:Object
+    },
+    timeZoneOffset:{
+        type:String
+    },
     created_at: Date
 });
 

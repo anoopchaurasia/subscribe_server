@@ -19,7 +19,7 @@ class TokenHandler {
     */
     static async checkTokenExpiry(user_id) {
         let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message, err.stack,"31");
         });
         if (!authToken){
             return true;
@@ -50,7 +50,7 @@ class TokenHandler {
             }
         }
         let response = await axios(settings).catch(e=>{
-            console.error(e.message, e.stack);
+            console.error(e.message, e.stack,"32");
             return true
         });
         if(response && response.data && response.data['access_token']) {
@@ -72,11 +72,10 @@ class TokenHandler {
     */
     static  async getAccessToken(user_id){
         let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message, err.stack,"33");
         });
         if(authToken && authToken.expiry_date < new Date())
          {
-            console.log("token expire")
             let authTokenInfo = await TokenHandler.refreshToken(authToken);
             return authTokenInfo;
         }else{
@@ -90,7 +89,6 @@ class TokenHandler {
         Also update that token into database.
     */
     static async refreshToken(authToken){
-        console.log("came here");
         let body = {...request_payload};
         body.refresh_token = authToken.refresh_token;
         body = JSON.stringify(body);
@@ -103,7 +101,7 @@ class TokenHandler {
                 "access_type": 'offline'
             }
         }
-        let response = await axios(settings).catch(e => console.error(e.message, e.stack));
+        let response = await axios(settings).catch(e => console.error(e.message, e.stack,"34"));
         
         if (response && response.data && response.data['access_token']) {
             body = response.data;
@@ -133,7 +131,7 @@ class TokenHandler {
   
     static async getTokenFromCode(code) {
         var oauth2Client =await TokenHandler.createAuthCleint();
-        return await oauth2Client.getToken(code).catch(e => console.error(e.message, e.stack));
+        return await oauth2Client.getToken(code).catch(e => console.error(e.message, e.stack,"35"));
     }
 
     /*
@@ -152,7 +150,7 @@ class TokenHandler {
     /*
         This function will update or create Token information Into database.
     */
-    static async create_or_update(user,token) {         
+    static async create_or_update(user,token,app_version) {         
         const tokedata = {
             "access_token": token.access_token,
             "refresh_token": token.refresh_token,
@@ -161,10 +159,12 @@ class TokenHandler {
             "token_type": token.token_type,
             "expiry_date": token.expiry_date,
             "user_id": user._id,
-            "created_at": new Date()
+            "created_at": new Date(),
+            "app_version": app_version,
+            "is_valid":true
         };
         await AuthToken.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
-            console.error(err.message, err.stack);
+            console.error(err.message, err.stack,"36");
         });
     }
 }

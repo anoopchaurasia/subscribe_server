@@ -34,6 +34,7 @@ var UserSchema = new Schema({
     email_client: {
         type: String,
     }
+
 });
 
 

@@ -16,7 +16,6 @@ class DeleteEmail {
     static async deleteEmails(authToken, bodyData) {
         const emails = await email.find({ user_id: authToken.user_id, "from_email": bodyData.from_email })
         const emailIdList = emails.map(x => x.email_id);
-        console.log(emailIdList)
         if (emailIdList) {
             let response = await GmaiilApi.deleteEmailApi(authToken,emailIdList);
             if(response){
@@ -31,7 +30,7 @@ class DeleteEmail {
         Using Accesstoken Infor and Credential Gmail Instance will be created.
     */
     static async getGmailInstance(auth) {
-        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e.message, e.stack));
+        const authToken = await TokenHandler.getAccessToken(auth.user_id).catch(e => console.error(e.message, e.stack,"132"));
         let oauth2Client = await TokenHandler.createAuthCleint();
         oauth2Client.credentials = authToken;
         return google.gmail({
@@ -56,7 +55,7 @@ class DeleteEmail {
                 }
             };
             await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                console.error(err.message, err.stack);
+                console.error(err.message, err.stack,"131");
             });
     }
 }
