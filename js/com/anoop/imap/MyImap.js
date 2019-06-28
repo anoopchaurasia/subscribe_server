@@ -1,12 +1,12 @@
 fm.Package("com.anoop.imap");
 var legit = require('legit');
+var crypto = require('crypto');
 const Imap = require('imap');
-const mongo_user = require("./../../../../models/users");
 fm.Class("MyImap", function(me){
     this.setMe=_me=> me=_me;
     this.init = function(){
         Static.Const.PASSWORD_ENCRYPT_ALGO = process.env.PASSWORD_ENCRYPT_ALGO || "aes256";
-        Static.CONST.PASSWORD_ENCRYPT_KEY =  process.env.PASSWORD_ENCRYPT_KEY || "donnottrytodecryptthisone";
+        Static.Const.PASSWORD_ENCRYPT_KEY =  process.env.PASSWORD_ENCRYPT_KEY || "donnottrytodecryptthisone";
     }
     this.MyImap = function(user){
         this.imap = null;
@@ -68,7 +68,7 @@ fm.Class("MyImap", function(me){
     this.connect = async function() {
         let {password, email} = me.user;
         let original_password = me.decryptPassword(password);
-        let imaphost = await me.getProvider(EMAIL);
+        let imaphost = await me.getProvider(email);
         return new Promise((resolve, reject) => {
             me.imap = new Imap({
                 user: email,

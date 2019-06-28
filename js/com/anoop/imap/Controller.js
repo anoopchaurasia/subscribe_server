@@ -8,7 +8,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
     ///------------------------------------- from unused ---------------------///
     
     Static.unusedToKeep = async function(token, from_email){
-        let emaildetail = await me.getEmailDetail(token, from_email);
+        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
         me.updateEmailDetailStatus(emaildetail._id, "keep");
     };
 
@@ -17,41 +17,91 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         let myImap = await MyImap.new(user);
         await myImap.connect();
         await myImap.openFolder("INBOX");
-        await Label.moveInboxToTrash(myImap, from_email);
+        let { emaildetail, emailids } = await me.getEmailDetailAndInfos(token.user_id,from_email);
+        await Label.moveInboxToTrash(myImap,emailids);
         await myImap.closeFolder();
-        let emaildetail = await me.getEmailDetail(token, from_email);
-        me.updateEmailDetailStatus(emaildetail._id, "trash");
+        await me.updateEmailDetailStatus(emaildetail._id, "trash");
+        myImap.imap.end(myImap.imap);
     };
 
     Static.unusedToUnsub = async function(token, from_email){
-        let emaildetail = await me.getEmailDetail(token, from_email);
-        let gmailInstance = await MyImap.getInstanceForUser(token.user_id);
-        await Label.moveInboxToUnsub(gmailInstance, emailids);
-        me.updateEmailDetailStatus(emaildetail._id, "move");
+        let user = await me.getUserById(token.user_id);
+        let myImap = await MyImap.new(user);
+        await myImap.connect();
+        await myImap.openFolder("INBOX");
+        let { emaildetail, emailids } = await me.getEmailDetailAndInfos(token.user_id, from_email);
+        console.log(emailids)
+        await Label.moveInboxToUnsub(myImap, emailids);
+        await myImap.closeFolder();
+        await me.updateEmailDetailStatus(emaildetail._id, "move");
+        myImap.imap.end(myImap.imap);
+    };
+
+
+    ///------------------------------------- from keep ---------------------///
+
+    Static.keepToTrash = async function (token, from_email) {
+        let user = await me.getUserById(token.user_id);
+        let myImap = await MyImap.new(user);
+        await myImap.connect();
+        await myImap.openFolder("INBOX");
+        await Label.moveActiveToTrash(myImap, from_email);
+        await myImap.closeFolder();
+        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
+        await me.updateEmailDetailStatus(emaildetail._id, "trash");
+        myImap.imap.end(myImap.imap);
+    };
+
+    Static.keepToUnsub = async function (token, from_email) {
+        let user = await me.getUserById(token.user_id);
+        let myImap = await MyImap.new(user);
+        await myImap.connect();
+        await myImap.openFolder("INBOX");
+        await Label.moveActiveToUnsub(myImap, from_email);
+        await myImap.closeFolder();
+        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
+        await me.updateEmailDetailStatus(emaildetail._id, "move");
+        myImap.imap.end(myImap.imap);
     };
 
 ///---------------------------------------from unsub folder--------------------///
     
     Static.unsubToKeep = async function(token, from_email){
-        let emaildetail = await me.getEmailDetail(token, from_email);
-        let gmailInstance = await MyImap.getInstanceForUser(token.user_id);
-        await Label.moveUnsubToInbox(gmailInstance, emailids);
-        me.updateEmailDetailStatus(emaildetail._id, "keep");
+        let user = await me.getUserById(token.user_id);
+        let myImap = await MyImap.new(user);
+        await myImap.connect();
+        await myImap.openFolder("Unsubscribed Emails");
+        await Label.moveUnsubToInbox(myImap, from_email);
+        await myImap.closeFolder();
+        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
+        await me.updateEmailDetailStatus(emaildetail._id, "keep");
+        myImap.imap.end(myImap.imap);
     };
 
     Static.unsubToTrash = async function(token, from_email){
-        let emaildetail = await me.getEmailDetail(token, from_email);
-        let gmailInstance = await MyImap.getInstanceForUser(token.user_id);
-        await Label.moveUnsubToTrash(gmailInstance, emailids);
-        me.updateEmailDetailStatus(emaildetail._id, "trash");
+
+        let user = await me.getUserById(token.user_id);
+        let myImap = await MyImap.new(user);
+        await myImap.connect();
+        await myImap.openFolder("Unsubscribed Emails");
+        await Label.moveUnsubToTrash(myImap, from_email);
+        await myImap.closeFolder();
+        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
+        await me.updateEmailDetailStatus(emaildetail._id, "trash");
+        myImap.imap.end(myImap.imap);
     };
 ///------------------------------------from trash folder---------------------///
 
     Static.trashToKeep = async function(token, from_email){
-        let emaildetail = await me.getEmailDetail(token, from_email);
-        let gmailInstance = await MyImap.getInstanceForUser(token.user_id);
-        await Label.moveTrashToInbox(gmailInstance, emailids);
-        me.updateEmailDetailStatus(emaildetail._id, "keep");
+        let user = await me.getUserById(token.user_id);
+        let myImap = await MyImap.new(user);
+        await myImap.connect();
+        await myImap.openFolder(myImap.user.trash_label);
+        await Label.moveTrashToInbox(myImap, from_email);
+        await myImap.closeFolder();
+        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
+        await me.updateEmailDetailStatus(emaildetail._id, "keep");
+        myImap.imap.end(myImap.imap);
     };
 
     Static.trashToUnsub = async function(token, from_email){
@@ -93,11 +143,13 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
     ////---------------------scrap fresh ==================
 
     Static.extractEmail = async function(token){
-        let gmailInstance = await MyImap.getInstanceForUser(token.user_id);
-        let scraper = Scraper.new(gmailInstance);
-        scraper.start(me, async function afterEnd(){
-           await me.handleRedis(token.user_id);
-        });
+        let user = await me.getUserById(token.user_id);
+        let myImap = await MyImap.new(user);
+        await myImap.connect();
+        await myImap.openFolder("INBOX");
+        let scraper = Scraper.new(myImap);
+        await scraper.start();
+       // myImap.imap.end(myImap.imap);
     }
 
     Static.getUnusedEmails = async function (token) {
@@ -111,6 +163,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         // })
         // return senddata;
     }
+
+
 
     
 });

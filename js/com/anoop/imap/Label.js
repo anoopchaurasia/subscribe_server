@@ -3,18 +3,16 @@ fm.Class("Label>.Message", function(me){
     this.setMe=_me=>me=_me;
 
     ///---------------from inbox ------------
-    Static.moveInboxToTrash =async function(myImap, from_email){
-        let ids = await me.getAllEmailIdList(myImap.imap, from_email);
-        return await me.changeFolder(myImap.user.trash_label, ids);
+    Static.moveInboxToTrash =async function(myImap, ids){
+        return await me.changeFolder(myImap.imap,myImap.user.trash_label, ids);
     };
 
-    Static.moveInboxToUnsub = async function(myImap, from_email){
-        let ids = await me.getAllEmailIdList(myImap.imap, from_email);
+    Static.moveInboxToUnsub = async function(myImap, ids){
         try{
-            return await me.changeFolder("Unsubscribe Emails", ids);
+            return await me.changeFolder(myImap.imap,"Unsubscribed Emails", ids);
         } catch(e) {
             await me.create(myImap);
-            return await me.changeFolder("Unsubscribe Emails", ids);
+            return await me.changeFolder(myImap.imap,"Unsubscribed Emails", ids);
         }
     };
 
@@ -22,28 +20,46 @@ fm.Class("Label>.Message", function(me){
 
     Static.moveUnsubToInbox = async function(myImap, from_email){
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
-        return await me.changeFolder("Inbox", ids);
+        return await me.changeFolder(myImap.imap,"Inbox", ids);
     };
 
     Static.moveUnsubToTrash = async function(myImap, from_email){
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
-        return await me.changeFolder("Trash", ids);
+        return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
     };
 
     ////--------------------------trash
 
     Static.moveTrashToInbox = async function(myImap, from_email){
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
-        return await me.changeFolder("Inbox", ids);
+        return await me.changeFolder(myImap.imap,"Inbox", ids);
     };
 
     Static.moveTrashToUnsub = async function(myImap, from_email){
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         try{
-            return await me.changeFolder("Unsubscribe Emails", ids);
+            return await me.changeFolder("Unsubscribed Emails", ids);
         } catch(e) {
             await me.create(myImap);
-            return await  me.changeFolder("Unsubscribe Emails", ids);
+            return await  me.changeFolder("Unsubscribed Emails", ids);
+        }
+    };
+
+
+    ////--------------------------Active
+
+    Static.moveActiveToTrash= async function (myImap, from_email) {
+        let ids = await me.getAllEmailIdList(myImap.imap, from_email);
+        return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+    };
+
+    Static.moveActiveToUnsub = async function (myImap, from_email) {
+        let ids = await me.getAllEmailIdList(myImap.imap, from_email);
+        try {
+            return await me.changeFolder(myImap.imap,"Unsubscribed Emails", ids);
+        } catch (e) {
+            await me.create(myImap);
+            return await me.changeFolder(myImap.imap,"Unsubscribed Emails", ids);
         }
     };
 

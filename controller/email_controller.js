@@ -12,7 +12,7 @@ const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const APPROX_TWO_MONTH_IN_MS = 4 * 30 * 24 * 60 * 60 * 1000;
 const MailScraper = require("../helper/mailScraper").MailScraper;
-fm.Include("com.anoop.email.Parser");
+// fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
 Array.prototype.asyncForEach = async function (cb) {

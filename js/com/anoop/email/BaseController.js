@@ -44,7 +44,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
     };
 
     Static.updateEmailDetailStatus = async function(_id, status) {
-        return await EmailDetail.updateStatus({_id: emaildetail._id},  status);
+        return await EmailDetail.updateStatus({_id: _id},  status);
     };
 
     Static.inboxToUnsubBySender = async function(token, sender_email){

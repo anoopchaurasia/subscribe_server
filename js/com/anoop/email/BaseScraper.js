@@ -1,5 +1,5 @@
 fm.Package('com.anoop.email');
-fm.IMport(".BaseController")
+fm.Import(".BaseController")
 fm.Class('BaseScraper', function (me, BaseController) {
     'use strict';
     this.setMe = function (_me) {
