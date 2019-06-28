@@ -17,7 +17,7 @@ Thsi api for Reverting Back Trash Email from Trash folder to Inbox.
 */
 router.post('/revertTrashMailToInbox', async (req, res) => {
     try {
-        Controller.trashToInbox(req.token, req.body.from_email);
+        Controller.trashToKeep(req.token, req.body.from_email);
         res.status(200).json({
             error: false,
             data: "moving"
