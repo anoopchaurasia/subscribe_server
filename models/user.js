@@ -34,9 +34,22 @@ var UserSchema = new Schema({
     },
     email_client: {
         type: String,
+    },
+    password: {
+        type: String
+    },
+    last_name: {
+        type: String
+    },
+    mobile_no: {
+        type: String
+    },
+    trash_label: {
+        type: String
     }
 
 });
+
 
 
 module.exports = mongoose.model('User', UserSchema);

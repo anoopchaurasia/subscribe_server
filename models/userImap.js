@@ -20,6 +20,9 @@ var UserSchema = new Schema({
     },
     mobile_no:{
         type:String
+    },
+    trash_label:{
+        type:String
     }
 });
 
