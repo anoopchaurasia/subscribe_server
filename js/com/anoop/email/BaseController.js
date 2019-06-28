@@ -1,7 +1,8 @@
 fm.Package('com.anoop.email');
 fm.Import("..model.EmailDetail");
 fm.Import("..model.EmailInfo");
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo) {
+fm.Import("..model.User");
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -16,10 +17,18 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo) {
         return await EmailInfo.updateOrCreateAndGet({from_email_id: emaildetail._id, email_id: emailinforaw.email_id}, emailinforaw);
     };
 
-    Static.getEmailDetailAndInfosFrom = async function (user_id, from_email) {
+    Static.getEmailDetailAndInfos = async function (user_id, from_email) {
         let emaildetail = await EmailDetail.get({user_id: user_id, from_email: from_email});
         let emailids = await EmailInfo.getEmailIdsByEmailDetail(emaildetail);
         return {emaildetail, emailids};
+    };
+
+    Static.getUserById = async function(user_id) {
+        return await User.get({_id: user_id});
+    };
+
+    Static.getEmailDetail = async function (user_id, from_email) {
+        return await EmailDetail.get({user_id: user_id, from_email: from_email});
     };
 
     Static.isEmailMovable = async function(from_email){

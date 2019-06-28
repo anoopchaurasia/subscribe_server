@@ -520,9 +520,9 @@ async function connect(loginCred, err, cb) {
 
 router.post('/trashZohoMail', async (req, res) => {
     try {
-        let tokenInfo = await token_model.findOne({ "token": req.body.token }).catch(err => {
-            console.error(err.message, err.stack);
-        });
+        
+        Controller.unusedToTrash(req.token, req.body.fromEmail);
+
         let user = await UserModel.findOne({ _id: tokenInfo.user_id }).catch(err => {
             console.error(err.message, err.stack);
         });

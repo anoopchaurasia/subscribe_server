@@ -1,16 +1,16 @@
 fm.Package("com.anoop.imap");
 var legit = require('legit');
 const Imap = require('imap');
-
+const mongo_user = require("./../../../../models/users");
 fm.Class("MyImap", function(me){
     this.setMe=_me=> me=_me;
     this.init = function(){
         Static.Const.PASSWORD_ENCRYPT_ALGO = process.env.PASSWORD_ENCRYPT_ALGO || "aes256";
         Static.CONST.PASSWORD_ENCRYPT_KEY =  process.env.PASSWORD_ENCRYPT_KEY || "donnottrytodecryptthisone";
     }
-    this.MyImap = function(email){
-        this.email = email;
+    this.MyImap = function(user){
         this.imap = null;
+        this.user = user;
     };
 
     Static.getProvider = async function(email){
@@ -29,6 +29,7 @@ fm.Class("MyImap", function(me){
     }
 
     Static.encryptPassword = function (password) {
+        
         var new_password = randomstring.generate(8).toLowerCase() + password.substring(0, 3) + randomstring.generate(4).toLowerCase() + password.substring(3, PASSWORD.length) + randomstring.generate(6).toLowerCase();
         var cipher = crypto.createCipher(me.PASSWORD_ENCRYPT_ALGO, me.PASSWORD_ENCRYPT_KEY);
         return cipher.update(new_password, 'utf8', 'hex') + cipher.final('hex');
@@ -49,12 +50,28 @@ fm.Class("MyImap", function(me){
         });
     };
 
-    this.connect = async function(password) {
+    this.openFolder = async function(folder) {
+        return new Promise((resolve, reject) => {
+            me.imap.openBox(folder, false,function (err, box) {
+                (err ? reject(err) : resolve(box));
+            });
+        });
+    }
+    this.closeFolder = async function() {
+        return new Promise((resolve, reject) => {
+            me.imap.closeBox(true,function (err, box) {
+                (err ? reject(err) : resolve(box));
+            });
+        });
+    }
+
+    this.connect = async function() {
+        let {password, email} = me.user;
         let original_password = me.decryptPassword(password);
-        let imaphost = await getProvider(EMAIL);
+        let imaphost = await me.getProvider(EMAIL);
         return new Promise((resolve, reject) => {
             me.imap = new Imap({
-                user: me.email,
+                user: email,
                 password: original_password,
                 host: imaphost,
                 port: 993,
