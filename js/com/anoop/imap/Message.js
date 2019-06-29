@@ -4,8 +4,6 @@ const TWO_MONTH_TIME_IN_MILI = 2 * 30 * 24 * 60 * 60 * 1000;
 fm.Class("Message", function(me){
     this.setMe=_me=>me=_me;
    
-    Static.search
-   
     Static.getAllEmailIdList = async function (imap, from_email){
         let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
         return await search(imap, [["FROM", from_email], ['SINCE', since]]);
@@ -36,10 +34,6 @@ fm.Class("Message", function(me){
                 (err ? reject(err) : resolve());
             });
         });
-    };
-
-    Static.getEmailsBySender = async function(gmail, sender, formatted_date){
-        
     };
 
     Static.getBatchMessage = async function(imap, message_ids, detector) {

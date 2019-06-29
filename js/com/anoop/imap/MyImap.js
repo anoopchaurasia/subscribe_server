@@ -63,7 +63,11 @@ fm.Class("MyImap", function(me){
                 (err ? reject(err) : resolve(box));
             });
         });
-    }
+    };
+
+    this.end = async function(){
+        return me.imap.end(me.imap);
+    };
 
     this.connect = async function() {
         let {password, email} = me.user;

@@ -21,7 +21,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         await Label.moveInboxToTrash(myImap,emailids);
         await myImap.closeFolder();
         await me.updateEmailDetailStatus(emaildetail._id, "trash");
-        myImap.imap.end(myImap.imap);
+        myImap.end();
     };
 
     Static.unusedToUnsub = async function(token, from_email){
@@ -34,7 +34,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         await Label.moveInboxToUnsub(myImap, emailids);
         await myImap.closeFolder();
         await me.updateEmailDetailStatus(emaildetail._id, "move");
-        myImap.imap.end(myImap.imap);
+        myImap.end();
     };
 
 
@@ -49,7 +49,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         await myImap.closeFolder();
         let emaildetail = await me.getEmailDetail(token.user_id, from_email);
         await me.updateEmailDetailStatus(emaildetail._id, "trash");
-        myImap.imap.end(myImap.imap);
+        myImap.end();
     };
 
     Static.keepToUnsub = async function (token, from_email) {
@@ -61,7 +61,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         await myImap.closeFolder();
         let emaildetail = await me.getEmailDetail(token.user_id, from_email);
         await me.updateEmailDetailStatus(emaildetail._id, "move");
-        myImap.imap.end(myImap.imap);
+        myImap.end();
     };
 
 ///---------------------------------------from unsub folder--------------------///
@@ -75,7 +75,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         await myImap.closeFolder();
         let emaildetail = await me.getEmailDetail(token.user_id, from_email);
         await me.updateEmailDetailStatus(emaildetail._id, "keep");
-        myImap.imap.end(myImap.imap);
+        myImap.end();
     };
 
     Static.unsubToTrash = async function(token, from_email){
@@ -88,7 +88,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         await myImap.closeFolder();
         let emaildetail = await me.getEmailDetail(token.user_id, from_email);
         await me.updateEmailDetailStatus(emaildetail._id, "trash");
-        myImap.imap.end(myImap.imap);
+        myImap.end();
     };
 ///------------------------------------from trash folder---------------------///
 
@@ -101,7 +101,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         await myImap.closeFolder();
         let emaildetail = await me.getEmailDetail(token.user_id, from_email);
         await me.updateEmailDetailStatus(emaildetail._id, "keep");
-        myImap.imap.end(myImap.imap);
+        myImap.end();
     };
 
     Static.trashToUnsub = async function(token, from_email){
@@ -149,7 +149,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         await myImap.openFolder("INBOX");
         let scraper = Scraper.new(myImap);
         await scraper.start();
-       // myImap.imap.end(myImap.imap);
+       // myImap.end();
     }
 
     Static.getUnusedEmails = async function (token) {
