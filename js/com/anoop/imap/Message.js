@@ -1,5 +1,7 @@
 fm.Package("com.anoop.imap");
 const MailParser = require('mailparser').MailParser
+const Imap = require('imap');
+const simpleParser = require('mailparser').simpleParser;
 const TWO_MONTH_TIME_IN_MILI = 2 * 30 * 24 * 60 * 60 * 1000;
 fm.Class("Message", function(me){
     this.setMe=_me=>me=_me;
@@ -18,7 +20,8 @@ fm.Class("Message", function(me){
     Static.getEmailList = async function (imap) {
         let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
        return {
-            seen:await search(imap, ["SEEN", ['SINCE', since]])
+            seen:await search(imap, ["SEEN", ['SINCE', since]]),
+            unseen: await search(imap, ["UNSEEN", ['SINCE', since]])
         }
     };
 
@@ -48,12 +51,12 @@ fm.Class("Message", function(me){
             const fetch = imap.fetch(message_ids, {
                 bodies: ['HEADER.FIELDS (FROM SUBJECT)', 'TEXT']
             });
-            console.log(fetch)
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
                 console.log("getBatchMessage", seqNo)
                 const parsed = await parseMessage(msg, 'utf8').catch(err=>console.error(err));
-               // if (detector(parsed)) msgs.push(parsed);
+                // console.log(parsed)
+               if (detector(parsed)) msgs.push(parsed);
             });
             fetch.on('end', async function () {
                 console.log("end")
@@ -65,33 +68,42 @@ fm.Class("Message", function(me){
 
     async function parseMessage(msg) {
 
-        // console.log(msg);
-
-        var parser = new MailParser();
-        parser.on("headers", function (headers) {
-            console.log("Header: " + JSON.stringify(headers));
-        });
-
-        parser.on('data', data => {
-  
-       //     console.log(data);  /* data.html*/
-
-            // if (data.type === 'attachment') {
-            //     console.log(data.filename);
-            //     data.content.pipe(process.stdout);
-            //     // data.content.on('end', () => data.release());
-            // }
-        });
-
-        msg.on("body", function (stream) {
-            stream.on("data", function (chunk) {
-                parser.write(chunk.toString("utf8"));
-            });
-        });
-        msg.once("end", function () {
-            // console.log("Finished msg #" + seqno);
-            parser.end();
-        });
+        const [atts, parsed] = await Promise.all([
+            new Promise(resolve => {
+                msg.on('attributes', atts => {
+                    resolve(atts)
+                });
+                msg.on('error', atts => reject(err));
+            }),
+            new Promise((resolve, reject) => {
+                let result;
+                msg.on('body', (stream, info) => {
+                    const chunks = [];
+                    stream.once('error', reject);
+                    stream.on('data', chunk => chunks.push(chunk));
+                    stream.once('end', async () => {
+                        const raw = Buffer.concat(chunks).toString('utf8');
+                        let parsed = await simpleParser(raw);
+                        if (!result) {
+                            result = Imap.parseHeader(raw);
+                            for (let k in result) {
+                                if (Array.isArray(result[k])) result[k] = result[k][0];
+                            }
+                        }
+                        // console.log(parsed)
+                        if (result != {} && parsed['textAsHtml'] != undefined) {
+                            resolve({ "header": result,parseBuff:parsed })
+                            // let url = await getUrlFromEmail(parsed['textAsHtml']);
+                            // if (url != null) {
+                            //     console.log(url)
+                            // }
+                        }
+                    });
+                });
+            })
+        ]);
+        parsed.uid = atts.uid;
+        return parsed;
 
         // let isset=false;
         // const [atts, bufferdata] = await Promise.all([
@@ -118,6 +130,44 @@ fm.Class("Message", function(me){
         // ]);
         // return { bufferdata, atts};
     }
+
+
+    async function getUrlFromEmail(body) {
+        if (!body) {
+            return null;
+        }
+        let $ = cheerio.load(body);
+        let url = null;
+        $('a').each(async function (i, elem) {
+            let fa = $(this).text();
+            let anchortext = fa.toLowerCase();
+            let anchorParentText = $(this).parent().text().toLowerCase();
+            if (anchortext.indexOf("unsubscribe") != -1 ||
+                anchortext.indexOf("preferences") != -1 ||
+                anchortext.indexOf("subscription") != -1 ||
+                anchortext.indexOf("visit this link") != -1 ||
+                anchortext.indexOf("do not wish to receive our mails") != -1 ||
+                anchortext.indexOf("not receiving our emails") != -1) {
+                url = $(this).attr().href;
+                console.log(url)
+                return url;
+            } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
+                anchorParentText.indexOf("stop receiving emails") != -1 ||
+                anchorParentText.indexOf("unsubscribe") != -1 ||
+                anchorParentText.indexOf("subscription") != -1 ||
+                anchorParentText.indexOf("preferences") != -1 ||
+                anchorParentText.indexOf("mailing list") != -1 ||
+                (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
+                ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
+                anchorParentText.indexOf("Don't want this") != -1) {
+                url = $(this).attr().href;
+                console.log(url)
+                return url;
+            }
+        })
+        return url;
+    }
+
 
     function getBatch(access_token) {
         

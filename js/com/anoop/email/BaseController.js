@@ -13,7 +13,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
         return await EmailDetail.updateOrCreateAndGet({from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id}, emaildetailraw);
     }
     Static.updateOrCreateAndGetEMailInfoFromData = async function(emaildetail, data, url){
-        let emailinforaw = EmalInfo.fromEamil(data, emaildetail._id, url);
+        let emailinforaw =await  EmailInfo.fromEamil(data, emaildetail._id, url);
         return await EmailInfo.updateOrCreateAndGet({from_email_id: emaildetail._id, email_id: emailinforaw.email_id}, emailinforaw);
     };
 
@@ -39,8 +39,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
         return EmailDetail.fromEamil(data, user_id);
     }
 
-    Static.getEmailDetailFromRaw = async function(emaildetailraw) {
-        return await EmailDetail.get({user_id: emaildetailraw.user_id, from_email: emaildetailraw.from_email});
+    Static.getEmailDetailFromData = async function(emaildetailraw) {
+        return await EmailDetail.get({ user_id: emaildetailraw.user_id, from_email: emaildetailraw.from_email});
     };
 
     Static.updateEmailDetailStatus = async function(_id, status) {

@@ -11,11 +11,12 @@ fm.Class("EmailInfo>.BaseModel", function(me){
 
     Static.updateOrCreateAndGet = async function(query, set) {
         me.updateQueryValidation(query, 'from_email_id');
-        return await mongo_emaildetail.findOneAndUpdate(query, {$setOnInsert: set}, {new: true, upsert: true});
+        return await mongo_emailInfo.findOneAndUpdate(query, {$setOnInsert: set}, {new: true, upsert: true});
     };
 
 
     Static.fromEamil = async function(data, from_email_id, url) {
+        // console.log(data)
         return {
             from_email_id,
             email_id: data.email_id,
