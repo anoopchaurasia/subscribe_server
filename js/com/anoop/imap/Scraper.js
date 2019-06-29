@@ -11,29 +11,32 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
 
     this.Scraper = function (myImap) {
         this.myImap = myImap;
-        me.base(myImap.user_id);
+        me.base(myImap.user._id);
     }
     this.start = async function (cb) {
         console.log("start")
         let { seen, unseen} = await Message.getEmailList(me.myImap.imap);
         console.log(seen, "sdsds")
-        await Message.getBatchMessage(me.myImap.imap, seen, 
-            async function detector({ bufferdata, atts}) {
-                console.log("at")
-                let emailbody = await Parser.getEmailBody(bufferdata, atts, ["READ"]);
-                // console.log(parsed)
-                // if (result != {} && parsed['textAsHtml'] != undefined) {
-                //     let url = await getUrlFromEmail(parsed['textAsHtml']);
-                //     if (url != null) {
-                //         console.log(url)
-                //         resolve({ "header": result, "url": url })
-                //     }
+        await Message.getBatchMessage(me.myImap.imap, unseen, 
+            async ( parsed) => {
+                let emailbody = await Parser.getEmailBody(parsed.header,parsed.parseBuff, parsed.uid, ["UNREAD"]);
+                // console.log(emailbody)
+               
+                // if (emailbody.header["list-unsubscribe"]) {
+                //     return await me.inboxToUnused(emailbody, emailbody.header["list-unsubscribe"]);
                 // }
-                if (emailbody.header["list-unsubscribe"]) {
-                    return await me.inboxToUnused(emailbody, emailbody.header["list-unsubscribe"]);
-                }
-                await me.handleEamil(x);
+                await me.handleEamil(emailbody);
         });
+        await Message.getBatchMessage(me.myImap.imap, seen,
+            async (parsed) => {
+                let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
+                // console.log(emailbody)
+
+                // if (emailbody.header["list-unsubscribe"]) {
+                //     return await me.inboxToUnused(emailbody, emailbody.header["list-unsubscribe"]);
+                // }
+                await me.handleEamil(emailbody);
+            });
 
     
     };
