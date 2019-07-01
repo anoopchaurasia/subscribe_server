@@ -224,152 +224,17 @@ async function create_token(user) {
 
 
 router.post('/readZohoMail', async (req, res) => {
-
     try {
         Controller.extractEmail(req.token);
         res.status(200).json({
             error: false,
             data: "scrape"
-        })
+        });
     } catch (ex) {
         console.error(ex.message, ex.stack, "6");
         res.sendStatus(400);
     }
     return;
-    let tokenInfo = await token_model.findOne({ "token": req.body.token });
-    let user = await UserModel.findOne({ _id: req.token.user_id });
-    let EMAIL = user.email;
-    let PASSWORD = user.password;
-    console.log(user)
-    const imap = await connect({ EMAIL, PASSWORD });
-    console.log('Connected');
-    const box = await openBox(imap, 'INBOX');
-    console.log('Box', box);
-    let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
-    const ids = await search(imap, ["UNSEEN", ['SINCE', since]]);
-    const ids2 = await search(imap, ["SEEN", ['SINCE', since]]);
-    console.log('Ids', ids, ids2);
-
-
-
-    if (ids.length != 0) {
-        await fetchAndFilter(imap, ids, async (msg, i) => {
-            let emailInfo = {};
-            let from_data = msg.header.from.indexOf("<") != -1 ? msg.header.from.split("<")[1].replace(">", "") : msg.header.from;
-            emailInfo['from_email_name'] = msg.header.from;
-            emailInfo['from_email'] = from_data;
-            emailInfo['status'] = "unused";
-            emailInfo['status_date'] = new Date();
-            let emailInfoNew = {
-                email_id: msg.uid,
-                unsubscribe: msg.url,
-                subject: msg.header.subject
-            };
-            let userInfo = await UserModel.findOne({ "_id": req.token.user_id });
-            console.log(emailInfo);
-            let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": userInfo._id }).catch(err => {
-                console.error(err.message, err.stack);
-            });
-            if (!fromEmail) {
-                await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": userInfo._id }, emailInfo, { upsert: true }).catch(err => {
-                    console.error(err.message, err.stack);
-                });
-                fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": userInfo._id }).catch(err => {
-                    console.error(err.message, err.stack);
-                });
-            }
-            if (fromEmail) {
-                let doc = await emailInformation.findOne({ "email_id": emailInfoNew.email_id, "from_email_id": fromEmail._id }).catch(err => {
-                    console.error(err.message, err.stack);
-                });
-                if (!doc) {
-                    emailInfoNew['from_email_id'] = fromEmail._id;
-                    emailInfoNew['labelIds'] = ["UNREAD"];
-                    console.log(emailInfoNew);
-                    await emailInformation.findOneAndUpdate({ "msg_uid": emailInfoNew.email_id, 'from_email_id': fromEmail._id }, emailInfoNew, { upsert: true }).catch(err => {
-                        console.error(err.message, err.stack);
-                    });
-                    let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": userInfo._id }).catch(err => {
-                        console.error(err.message, err.stack);
-                    });
-                    if (mailList) {
-                        let msgids = [];
-                        msgids.push(emailInfoNew.email_id);
-                        await unsubscribe(imap, msgids);
-                    }
-                    let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": userInfo._id }).catch(err => { console.error(err.message); });
-                    if (mailInfo) {
-                        let msgids = [];
-                        msgids.push(emailInfoNew.email_id);
-                        await trashzoho(imap, msgids, user.trash_label);
-                    }
-                }
-            }
-            return msg;
-        });
-    }
-    let spam = await fetchAndFilter(imap, ids2, async (msg, i) => {
-        let emailInfo = {};
-        let from_data = msg.header.from.indexOf("<") != -1 ? msg.header.from.split("<")[1].replace(">", "") : msg.header.from;
-        emailInfo['from_email_name'] = msg.header.from;
-        emailInfo['from_email'] = from_data;
-        emailInfo['status'] = "unused";
-        emailInfo['status_date'] = new Date();
-        let emailInfoNew = {
-            msg_uid: msg.uid,
-            unsubscribe: msg.url,
-            subject: msg.header.subject
-        };
-        let userInfo = await UserModel.findOne({ "_id": req.token.user_id });
-        console.log(emailInfo);
-        let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": userInfo._id }).catch(err => {
-            console.error(err.message, err.stack);
-        });
-        if (!fromEmail) {
-            await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": userInfo._id }, emailInfo, { upsert: true }).catch(err => {
-                console.error(err.message, err.stack);
-            });
-            fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": userInfo._id }).catch(err => {
-                console.error(err.message, err.stack);
-            });
-        }
-        if (fromEmail) {
-            let doc = await emailInformation.findOne({ "email_id": emailInfoNew.email_id, "from_email_id": fromEmail._id }).catch(err => {
-                console.error(err.message, err.stack);
-            });
-            if (!doc) {
-                emailInfoNew['from_email_id'] = fromEmail._id;
-                emailInfoNew['labelIds'] = ["READ"];
-                await emailInformation.findOneAndUpdate({ "msg_uid": emailInfoNew.email_id, 'from_email_id': fromEmail._id }, emailInfoNew, { upsert: true }).catch(err => {
-                    console.error(err.message, err.stack);
-                });
-                let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": userInfo._id }).catch(err => {
-                    console.error(err.message, err.stack);
-                });
-                if (mailList) {
-                    let msgids = [];
-                    msgids.push(emailInfoNew.email_id);
-                    await unsubscribe(imap, msgids);
-                }
-                let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": userInfo._id }).catch(err => { console.error(err.message); });
-                if (mailInfo) {
-                    let msgids = [];
-                    msgids.push(emailInfoNew.msg_uid);
-                    await trashzoho(imap, msgids, user.trash_label);
-                }
-            }
-        }
-        return msg;
-    });
-    const spamIds = spam.map(msg => msg.uid);
-    console.log(spamIds)
-    imap.end(imap);
-    res.status(200).json({
-        error: false,
-        status: 200,
-        data: "success"
-    })
-
 });
 
 router.post('/getMailInfo', async (req, res) => {
@@ -484,7 +349,7 @@ router.post('/saveProfileInfo', async (req, res) => {
         const doc = await token_model.findOne({ "token": req.body.token });
         if (doc) {
             let userObj = {
-                name: req.body.first_name,
+                 name: req.body.first_name,
                 "last_name": req.body.last_name,
                 "dob": req.body.dob,
                 "mobile_no": req.body.mobile_no
@@ -725,7 +590,7 @@ router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
             error: false,
             data: "unsubtotrash"
         })
-       
+
     } catch (error) {
         console.log(error)
         res.status(401).json({
@@ -902,9 +767,9 @@ async function fetchAndFilter(imap, msgIds, detector) {
         fetch.on('message', async function (msg, seqNo) {
             const parsed = await parseMessage(msg, 'utf8');
             if (detector(parsed)) msgs.push(parsed);
-         });
+        });
         fetch.on('end', async function () {
-             resolve(msgs);
+            resolve(msgs);
         });
     });
 }

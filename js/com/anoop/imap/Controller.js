@@ -146,7 +146,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         let user = await me.getUserById(token.user_id);
         let myImap = await MyImap.new(user);
         await myImap.connect();
-        await myImap.openFolder("INBOX");
+        let box = await myImap.openFolder("INBOX");
+        console.log(box);
         let scraper = Scraper.new(myImap);
         await scraper.start();
        // myImap.imap.end(myImap.imap);
