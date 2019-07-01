@@ -9,7 +9,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
     };
 
     Static.updateOrCreateAndGetEMailDetailFromData = async function(data, user_id){
-        let emaildetailraw = EmailDetail.fromEamil(data, user_id);
+        let emaildetailraw =await EmailDetail.fromEamil(data, user_id);
+        // console.log(emaildetailraw,"new record saving")
         return await EmailDetail.updateOrCreateAndGet({from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id}, emaildetailraw);
     }
     Static.updateOrCreateAndGetEMailInfoFromData = async function(emaildetail, data, url){

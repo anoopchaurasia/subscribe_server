@@ -46,6 +46,9 @@ var UserSchema = new Schema({
     },
     trash_label: {
         type: String
+    },
+    last_msgId:{
+        type:Number
     }
 
 });

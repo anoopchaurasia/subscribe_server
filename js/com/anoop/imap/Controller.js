@@ -2,6 +2,7 @@ fm.Package("com.anoop.imap");
 fm.Import(".MyImap");
 fm.Import(".Scraper");
 fm.Import(".Label");
+const mongouser = require('../../../../models/user');
 fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scraper, Label){
     this.setMe=_me=>me=_me;
 
@@ -34,6 +35,31 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         await Label.moveInboxToUnsub(myImap, emailids);
         await myImap.closeFolder();
         await me.updateEmailDetailStatus(emaildetail._id, "move");
+        myImap.imap.end(myImap.imap);
+    };
+
+    Static.automaticInboxToUnsub = async function (user_id, email_id) {
+        let user = await me.getUserById(user_id);
+        let myImap = await MyImap.new(user);
+        await myImap.connect();
+        await myImap.openFolder("INBOX");
+        console.log(email_id,"here automatic move")
+        let email_id_arr = [email_id];
+        await Label.moveInboxToUnsub(myImap, email_id_arr);
+        await myImap.closeFolder();
+        myImap.imap.end(myImap.imap);
+    };
+
+
+    Static.automaticInboxToTrash = async function (user_id, email_id) {
+        let user = await me.getUserById(user_id);
+        let myImap = await MyImap.new(user);
+        await myImap.connect();
+        await myImap.openFolder("INBOX");
+        console.log(email_id, "here automatic move")
+        let email_id_arr = [email_id];
+        await Label.moveInboxToTrash(myImap, emailids);
+        await myImap.closeFolder();
         myImap.imap.end(myImap.imap);
     };
 
@@ -148,6 +174,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         await myImap.connect();
         let box = await myImap.openFolder("INBOX");
         console.log(box);
+        await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         await scraper.start();
        // myImap.imap.end(myImap.imap);

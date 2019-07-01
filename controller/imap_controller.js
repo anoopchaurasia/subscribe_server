@@ -64,7 +64,8 @@ router.post('/loginWithImap', async (req, res) => {
                 var newUser = new UserModel({
                     "email": EMAIL,
                     "password": PASSWORD,
-                    "trash_label": trash_label
+                    "trash_label": trash_label,
+                    "email_client":"imap"
                 });
                 user = await newUser.save().catch(err => {
                     console.error(err.message, err.stack);
@@ -225,7 +226,9 @@ async function create_token(user) {
 
 router.post('/readZohoMail', async (req, res) => {
     try {
-        Controller.extractEmail(req.token);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        console.log(doc)
+        Controller.extractEmail(doc);
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -519,7 +522,8 @@ async function connect(loginCred, err, cb) {
 
 router.post('/trashZohoMail', async (req, res) => {
     try {
-        await Controller.unusedToTrash(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.unusedToTrash(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -538,7 +542,8 @@ router.post('/trashZohoMail', async (req, res) => {
 
 router.post('/keepZohoMail', async (req, res) => {
     try {
-        await Controller.unusedToKeep(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.unusedToKeep(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "keep"
@@ -552,7 +557,8 @@ router.post('/keepZohoMail', async (req, res) => {
 
 router.post('/unsubscribeZohoMail', async (req, res) => {
     try {
-        await Controller.unusedToUnsub(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.unusedToUnsub(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -568,7 +574,8 @@ router.post('/unsubscribeZohoMail', async (req, res) => {
 
 router.post('/revertUnsubscribeZohoMail', async (req, res) => {
     try {
-        await Controller.unsubToKeep(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.unsubToKeep(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtokeep"
@@ -585,7 +592,8 @@ router.post('/revertUnsubscribeZohoMail', async (req, res) => {
 
 router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
     try {
-        await Controller.unsubToTrash(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.unsubToTrash(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtotrash"
@@ -602,7 +610,8 @@ router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
 
 router.post('/leftInboxToTrashZohoMail', async (req, res) => {
     try {
-        await Controller.keepToTrash(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.keepToTrash(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -619,7 +628,8 @@ router.post('/leftInboxToTrashZohoMail', async (req, res) => {
 
 router.post('/revertTrashZohoMail', async (req, res) => {
     try {
-        await Controller.trashToKeep(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.trashToKeep(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -636,7 +646,8 @@ router.post('/revertTrashZohoMail', async (req, res) => {
 
 router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
     try {
-        await Controller.keepToUnsub(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.keepToUnsub(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
