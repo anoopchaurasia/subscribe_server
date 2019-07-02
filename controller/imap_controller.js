@@ -413,10 +413,9 @@ router.post('/saveProfileInfo', async (req, res) => {
         const doc = await token_model.findOne({ "token": req.body.token });
         if (doc) {
             let userObj = {
-                 name: req.body.first_name,
-                "last_name": req.body.last_name,
+                 name: req.body.name,
                 "dob": req.body.dob,
-                "mobile_no": req.body.mobile_no
+                "gender": req.body.sex
             };
             await UserModel.findOneAndUpdate({ "_id": doc.user_id }, userObj, { upsert: true }).catch(err => {
                 console.error(err.message, err.stack);
