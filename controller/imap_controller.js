@@ -31,11 +31,19 @@ router.post('/loginWithImap', async (req, res) => {
         await saveProviderInfo(EMAIL);
         const imap = await connect({ EMAIL, PASSWORD }).catch(err => {
             console.error(err.message, err, "imap_connect_error");
-            return res.status(401).json({
-                error: true,
-                status: 401,
-                data: err.message
-            })
+            if (err.message.includes("Invalid credentials")){
+                return res.status(401).json({
+                    error: true,
+                    status: 401,
+                    data: err.message
+                })
+            }else{
+                return res.status(403).json({
+                    error: true,
+                    status: 403,
+                    data: err.message
+                })
+            }
         });
         console.log('Connected');
         if (imap) {
@@ -64,7 +72,8 @@ router.post('/loginWithImap', async (req, res) => {
                 var newUser = new UserModel({
                     "email": EMAIL,
                     "password": PASSWORD,
-                    "trash_label": trash_label
+                    "trash_label": trash_label,
+                    "email_client":"imap"
                 });
                 user = await newUser.save().catch(err => {
                     console.error(err.message, err.stack);
@@ -124,6 +133,48 @@ let getImapEnableUrl = async (email) => {
 
 
 
+router.post('/getTwoStepUrl', async (req, res) => {
+    try {
+        let email = req.body.email_id;
+        let response = await getTwoStepVerificationUrl(email);
+        res.status(200).json({
+            error: false,
+            status: 200,
+            data: response.two_step_url
+        })
+    } catch (error) {
+        console.log("here", error)
+        res.status(401).json({
+            error: true,
+            data: null
+        })
+    }
+});
+
+router.post('/getImapEnableUrl', async (req, res) => {
+    try {
+        let email = req.body.email_id;
+        let response = await getImapEnableUrl(email);
+        res.status(200).json({
+            error: false,
+            status: 200,
+            data: response.imap_enable_url
+        })
+    } catch (error) {
+        console.log("here", error)
+        res.status(401).json({
+            error: true,
+            data: null
+        })
+    }
+});
+
+
+
+
+
+
+
 let saveProviderInfo = async (email) => {
     try {
         var domain = email.split('@')[1];
@@ -148,14 +199,26 @@ let saveProviderInfo = async (email) => {
                     provider = "zoho";
                     login_url = "https://accounts.zoho.com/u/h#home";
                     imap_host = "imappro.zoho.com";
+                    two_step_url = "https://accounts.zoho.com/signin?servicename=AaaServer&serviceurl=%2Fu%2Fh";
+                    imap_enable_url = "https://accounts.zoho.com/signin?servicename=VirtualOffice&signupurl=https://www.zoho.com//mail/zohomail-pricing.html?src=zmail-signup&serviceurl=https%3A%2F%2Fmail.zoho.com%2Fzm%2F"
                 } else if (mxr.includes("yahoo")) {
                     provider = "yahoo";
                     login_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
                     imap_host = "imap.mail.yahoo.com";
+                    two_step_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
+                    imap_enable_url = "https://login.yahoo.com/";
                 } else if (mxr.includes("google")) {
                     provider = "gmail";
                     login_url = "https://accounts.google.com/signin/v2/identifier";
                     imap_host = "imap.gmail.com";
+                    two_step_url = "https://accounts.google.com/signin/v2/sl/pwd?service=accountsettings&hl=en-US&continue=https%3A%2F%2Fmyaccount.google.com%2Fintro%2Fsecurity&csig=AF-SEnaOyCyBzaeOOzFJ%3A1561794482&flowName=GlifWebSignIn&flowEntry=ServiceLogin";
+                    imap_enable_url = "https://accounts.google.com/signin/v2/identifier";
+                } else if (mxr.includes("outlook")) {
+                    provider = "outlook";
+                    login_url = "https://login.live.com/login.srf";
+                    imap_host = "imap-mail.outlook.com	";
+                    two_step_url = "https://login.live.com/login.srf?wa=wsignin1.0&rpsnv=13&ct=1562045255&rver=7.0.6738.0&wp=MBI_SSL&wreply=https%3A%2F%2Faccount.microsoft.com%2Fauth%2Fcomplete-signin%3Fru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Daccount.microsoft.com%2526ru%253Dhttps%25253A%25252F%25252Faccount.microsoft.com%25252Fsecurity%25253Frefd%25253Dsupport.microsoft.com%2526destrt%253Dsecurity-landing%2526refp%253Dsignedout-index&lc=1033&id=292666&lw=1&fl=easi2&ru=https%3A%2F%2Faccount.microsoft.com%2Faccount%2FManageMyAccount%3Frefd%3Dsupport.microsoft.com%26ru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Dsupport.microsoft.com%26destrt%3Dsecurity-landing";
+                    imap_enable_url = "https://login.live.com/login.srf";
                 } else if (mxr.includes("yandex")) {
                     provider = "yandex";
                     login_url = "https://passport.yandex.com/auth";
@@ -184,7 +247,6 @@ let saveProviderInfo = async (email) => {
         console.log(e);
     }
 }
-
 
 
 router.post('/findEmailProvider', async (req, res) => {
@@ -224,152 +286,19 @@ async function create_token(user) {
 
 
 router.post('/readZohoMail', async (req, res) => {
-
     try {
-        Controller.extractEmail(req.token);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        console.log(doc)
+        Controller.extractEmail(doc);
         res.status(200).json({
             error: false,
             data: "scrape"
-        })
+        });
     } catch (ex) {
         console.error(ex.message, ex.stack, "6");
         res.sendStatus(400);
     }
     return;
-    let tokenInfo = await token_model.findOne({ "token": req.body.token });
-    let user = await UserModel.findOne({ _id: req.token.user_id });
-    let EMAIL = user.email;
-    let PASSWORD = user.password;
-    console.log(user)
-    const imap = await connect({ EMAIL, PASSWORD });
-    console.log('Connected');
-    const box = await openBox(imap, 'INBOX');
-    console.log('Box', box);
-    let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
-    const ids = await search(imap, ["UNSEEN", ['SINCE', since]]);
-    const ids2 = await search(imap, ["SEEN", ['SINCE', since]]);
-    console.log('Ids', ids, ids2);
-
-
-
-    if (ids.length != 0) {
-        await fetchAndFilter(imap, ids, async (msg, i) => {
-            let emailInfo = {};
-            let from_data = msg.header.from.indexOf("<") != -1 ? msg.header.from.split("<")[1].replace(">", "") : msg.header.from;
-            emailInfo['from_email_name'] = msg.header.from;
-            emailInfo['from_email'] = from_data;
-            emailInfo['status'] = "unused";
-            emailInfo['status_date'] = new Date();
-            let emailInfoNew = {
-                email_id: msg.uid,
-                unsubscribe: msg.url,
-                subject: msg.header.subject
-            };
-            let userInfo = await UserModel.findOne({ "_id": req.token.user_id });
-            console.log(emailInfo);
-            let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": userInfo._id }).catch(err => {
-                console.error(err.message, err.stack);
-            });
-            if (!fromEmail) {
-                await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": userInfo._id }, emailInfo, { upsert: true }).catch(err => {
-                    console.error(err.message, err.stack);
-                });
-                fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": userInfo._id }).catch(err => {
-                    console.error(err.message, err.stack);
-                });
-            }
-            if (fromEmail) {
-                let doc = await emailInformation.findOne({ "email_id": emailInfoNew.email_id, "from_email_id": fromEmail._id }).catch(err => {
-                    console.error(err.message, err.stack);
-                });
-                if (!doc) {
-                    emailInfoNew['from_email_id'] = fromEmail._id;
-                    emailInfoNew['labelIds'] = ["UNREAD"];
-                    console.log(emailInfoNew);
-                    await emailInformation.findOneAndUpdate({ "msg_uid": emailInfoNew.email_id, 'from_email_id': fromEmail._id }, emailInfoNew, { upsert: true }).catch(err => {
-                        console.error(err.message, err.stack);
-                    });
-                    let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": userInfo._id }).catch(err => {
-                        console.error(err.message, err.stack);
-                    });
-                    if (mailList) {
-                        let msgids = [];
-                        msgids.push(emailInfoNew.email_id);
-                        await unsubscribe(imap, msgids);
-                    }
-                    let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": userInfo._id }).catch(err => { console.error(err.message); });
-                    if (mailInfo) {
-                        let msgids = [];
-                        msgids.push(emailInfoNew.email_id);
-                        await trashzoho(imap, msgids, user.trash_label);
-                    }
-                }
-            }
-            return msg;
-        });
-    }
-    let spam = await fetchAndFilter(imap, ids2, async (msg, i) => {
-        let emailInfo = {};
-        let from_data = msg.header.from.indexOf("<") != -1 ? msg.header.from.split("<")[1].replace(">", "") : msg.header.from;
-        emailInfo['from_email_name'] = msg.header.from;
-        emailInfo['from_email'] = from_data;
-        emailInfo['status'] = "unused";
-        emailInfo['status_date'] = new Date();
-        let emailInfoNew = {
-            msg_uid: msg.uid,
-            unsubscribe: msg.url,
-            subject: msg.header.subject
-        };
-        let userInfo = await UserModel.findOne({ "_id": req.token.user_id });
-        console.log(emailInfo);
-        let fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": userInfo._id }).catch(err => {
-            console.error(err.message, err.stack);
-        });
-        if (!fromEmail) {
-            await email.findOneAndUpdate({ "from_email": emailInfo.from_email, "user_id": userInfo._id }, emailInfo, { upsert: true }).catch(err => {
-                console.error(err.message, err.stack);
-            });
-            fromEmail = await email.findOne({ "from_email": emailInfo.from_email, "user_id": userInfo._id }).catch(err => {
-                console.error(err.message, err.stack);
-            });
-        }
-        if (fromEmail) {
-            let doc = await emailInformation.findOne({ "email_id": emailInfoNew.email_id, "from_email_id": fromEmail._id }).catch(err => {
-                console.error(err.message, err.stack);
-            });
-            if (!doc) {
-                emailInfoNew['from_email_id'] = fromEmail._id;
-                emailInfoNew['labelIds'] = ["READ"];
-                await emailInformation.findOneAndUpdate({ "msg_uid": emailInfoNew.email_id, 'from_email_id': fromEmail._id }, emailInfoNew, { upsert: true }).catch(err => {
-                    console.error(err.message, err.stack);
-                });
-                let mailList = await email.findOne({ "from_email": emailInfo['from_email'], "status": "move", "user_id": userInfo._id }).catch(err => {
-                    console.error(err.message, err.stack);
-                });
-                if (mailList) {
-                    let msgids = [];
-                    msgids.push(emailInfoNew.email_id);
-                    await unsubscribe(imap, msgids);
-                }
-                let mailInfo = await email.findOne({ "from_email": emailInfo['from_email'], "status": "trash", "user_id": userInfo._id }).catch(err => { console.error(err.message); });
-                if (mailInfo) {
-                    let msgids = [];
-                    msgids.push(emailInfoNew.msg_uid);
-                    await trashzoho(imap, msgids, user.trash_label);
-                }
-            }
-        }
-        return msg;
-    });
-    const spamIds = spam.map(msg => msg.uid);
-    console.log(spamIds)
-    imap.end(imap);
-    res.status(200).json({
-        error: false,
-        status: 200,
-        data: "success"
-    })
-
 });
 
 router.post('/getMailInfo', async (req, res) => {
@@ -484,10 +413,9 @@ router.post('/saveProfileInfo', async (req, res) => {
         const doc = await token_model.findOne({ "token": req.body.token });
         if (doc) {
             let userObj = {
-                name: req.body.first_name,
-                "last_name": req.body.last_name,
+                 name: req.body.name,
                 "dob": req.body.dob,
-                "mobile_no": req.body.mobile_no
+                "gender": req.body.sex
             };
             await UserModel.findOneAndUpdate({ "_id": doc.user_id }, userObj, { upsert: true }).catch(err => {
                 console.error(err.message, err.stack);
@@ -641,7 +569,8 @@ async function connect(loginCred, err, cb) {
             password: your_password,
             host: provider.imap_host,
             port: 993,
-            tls: true
+            tls: true,
+            ssl:true
         });
         imap.once('ready', async () => {
             resolve(imap)
@@ -654,7 +583,8 @@ async function connect(loginCred, err, cb) {
 
 router.post('/trashZohoMail', async (req, res) => {
     try {
-        await Controller.unusedToTrash(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.unusedToTrash(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -673,7 +603,8 @@ router.post('/trashZohoMail', async (req, res) => {
 
 router.post('/keepZohoMail', async (req, res) => {
     try {
-        await Controller.unusedToKeep(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.unusedToKeep(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "keep"
@@ -687,7 +618,8 @@ router.post('/keepZohoMail', async (req, res) => {
 
 router.post('/unsubscribeZohoMail', async (req, res) => {
     try {
-        await Controller.unusedToUnsub(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.unusedToUnsub(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -703,7 +635,8 @@ router.post('/unsubscribeZohoMail', async (req, res) => {
 
 router.post('/revertUnsubscribeZohoMail', async (req, res) => {
     try {
-        await Controller.unsubToKeep(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.unsubToKeep(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtokeep"
@@ -720,12 +653,13 @@ router.post('/revertUnsubscribeZohoMail', async (req, res) => {
 
 router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
     try {
-        await Controller.unsubToTrash(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.unsubToTrash(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtotrash"
         })
-       
+
     } catch (error) {
         console.log(error)
         res.status(401).json({
@@ -737,7 +671,8 @@ router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
 
 router.post('/leftInboxToTrashZohoMail', async (req, res) => {
     try {
-        await Controller.keepToTrash(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.keepToTrash(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -754,7 +689,8 @@ router.post('/leftInboxToTrashZohoMail', async (req, res) => {
 
 router.post('/revertTrashZohoMail', async (req, res) => {
     try {
-        await Controller.trashToKeep(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.trashToKeep(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -771,7 +707,8 @@ router.post('/revertTrashZohoMail', async (req, res) => {
 
 router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
     try {
-        await Controller.keepToUnsub(req.token, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token });
+        await Controller.keepToUnsub(doc,req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -902,9 +839,9 @@ async function fetchAndFilter(imap, msgIds, detector) {
         fetch.on('message', async function (msg, seqNo) {
             const parsed = await parseMessage(msg, 'utf8');
             if (detector(parsed)) msgs.push(parsed);
-         });
+        });
         fetch.on('end', async function () {
-             resolve(msgs);
+            resolve(msgs);
         });
     });
 }

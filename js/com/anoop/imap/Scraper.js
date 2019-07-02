@@ -1,7 +1,8 @@
 fm.Package("com.anoop.imap");
 fm.Import(".Message");
-fm.Import(".Parser")
-fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
+fm.Import(".Parser");
+fm.Import(".Label");
+fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     'use strict';
     this.setMe = _me => me = _me;
     Static.APPROX_TWO_MONTH_IN_MS = process.env.APPROX_TWO_MONTH_IN_MS || 4 * 30 * 24 * 60 * 60 * 1000;
@@ -17,26 +18,33 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         console.log("start")
         let { seen, unseen} = await Message.getEmailList(me.myImap.imap);
         console.log(seen, "sdsds")
-        await Message.getBatchMessage(me.myImap.imap, unseen, 
-            async ( parsed) => {
-                let emailbody = await Parser.getEmailBody(parsed.header,parsed.parseBuff, parsed.uid, ["UNREAD"]);
-                // console.log(emailbody)
-               
-                // if (emailbody.header["list-unsubscribe"]) {
-                //     return await me.inboxToUnused(emailbody, emailbody.header["list-unsubscribe"]);
-                // }
-                await me.handleEamil(emailbody);
-        });
-        await Message.getBatchMessage(me.myImap.imap, seen,
-            async (parsed) => {
-                let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
-                // console.log(emailbody)
-
-                // if (emailbody.header["list-unsubscribe"]) {
-                //     return await me.inboxToUnused(emailbody, emailbody.header["list-unsubscribe"]);
-                // }
-                await me.handleEamil(emailbody);
+        if(unseen.length!=0){
+            await Message.getBatchMessage(me.myImap.imap, unseen, 
+                async ( parsed) => {
+                    let emailbody = await Parser.getEmailBody(parsed.header,parsed.parseBuff, parsed.uid, ["UNREAD"]);
+                    await me.handleEamil(emailbody,async (data,status)=> {
+                        if(status=="move"){
+                            await Label.moveInboxToUnsub(me.myImap,[data.email_id]);
+                        }else if(status=="trash"){
+                            await Label.moveInboxToTrash(me.myImap, [data.email_id]);
+                        }
+                    });
             });
+        }
+        if(seen.length!=0){
+
+            await Message.getBatchMessage(me.myImap.imap, seen,
+                async (parsed) => {
+                    let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
+                    await me.handleEamil(emailbody,async (data, status)=> {
+                        if (status == "move") {
+                            await Label.moveInboxToUnsub(me.myImap, [data.email_id]);
+                        } else if (status == "trash") {
+                            await Label.moveInboxToTrash(me.myImap, [data.email_id]);
+                        }
+                    });
+                });
+        }
 
     
     };

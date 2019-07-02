@@ -9,6 +9,7 @@ fm.Class("Message", function(me){
     Static.getAllEmailIdList = async function (imap, from_email){
         let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
         return await search(imap, [["FROM", from_email], ['SINCE', since]]);
+        
     };
 
     Static.getInboxEmailIdByLabel = async function (imap,label_name){
@@ -18,6 +19,8 @@ fm.Class("Message", function(me){
     Static.getEmailList = async function (imap) {
         let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
        return {
+        //    seen: await search(imap, [10500 + ':' + 10593]),
+        //    unseen:await search(imap, [10500 + ':' + 10593])
             seen:await search(imap, ["SEEN", ['SINCE', since]]),
             unseen: await search(imap, ["UNSEEN", ['SINCE', since]])
         }

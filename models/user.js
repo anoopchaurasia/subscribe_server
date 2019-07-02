@@ -41,11 +41,17 @@ var UserSchema = new Schema({
     last_name: {
         type: String
     },
-    mobile_no: {
+    gender: {
         type: String
     },
     trash_label: {
         type: String
+    },
+    last_msgId:{
+        type:Number
+    },
+    dob:{
+        type:Number
     }
 
 });
