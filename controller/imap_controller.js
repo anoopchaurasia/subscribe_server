@@ -683,6 +683,40 @@ router.post('/leftInboxToTrashZohoMail', async (req, res) => {
 });
 
 
+router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let sender_email = req.body.sender_email;
+        await Controller.unusedToUnsub(doc, sender_email);
+        res.status(200).json({
+            error: false,
+            data: "scrape"
+        })
+
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+});
+
+
+router.post('/imapManualTrashEmailFromUser', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let sender_email = req.body.sender_email;
+        await Controller.unusedToTrash(doc, sender_email);
+        res.status(200).json({
+            error: false,
+            data: "scrape"
+        })
+
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+});
+
+
 router.post('/revertTrashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
