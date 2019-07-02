@@ -31,7 +31,7 @@ router.post('/loginWithImap', async (req, res) => {
         await saveProviderInfo(EMAIL);
         const imap = await connect({ EMAIL, PASSWORD }).catch(err => {
             console.error(err.message, err, "imap_connect_error");
-            if (err.message.includes("Invalid credentials")!=-1){
+            if (err.message.includes("Invalid credentials")){
                 return res.status(401).json({
                     error: true,
                     status: 401,
