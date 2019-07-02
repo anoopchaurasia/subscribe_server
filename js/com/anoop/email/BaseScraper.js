@@ -34,6 +34,7 @@ fm.Class('BaseScraper', function (me, BaseController) {
         let isEmailMovable = await BaseController.isEmailMovable(emaildetailraw.from_email);
 
         if(isEmailMovable) {
+            data['source'] = "count";
             return await me.inboxToUnused(data, "");
         }
         let url =await getUrlFromEmail(data.payload);
@@ -43,7 +44,8 @@ fm.Class('BaseScraper', function (me, BaseController) {
         }
         if (data.labelIds.length != 0) {
             delete data.payload;
-            await com.jeet.memdb.RedisDB.pushData(emaildetailraw.user_id, emaildetailraw.from_email, emaildetailraw);
+            data['source'] = "redis"
+            await com.jeet.memdb.RedisDB.pushData(emaildetailraw.user_id, emaildetailraw.from_email, data);
         }
     }
 

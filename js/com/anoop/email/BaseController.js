@@ -2,6 +2,8 @@ fm.Package('com.anoop.email');
 fm.Import("..model.EmailDetail");
 fm.Import("..model.EmailInfo");
 fm.Import("..model.User");
+fm.Include("com.jeet.memdb.RedisDB");
+let RedisDB = com.jeet.memdb.RedisDB;
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
     'use strict';
     this.setMe = function (_me) {
@@ -11,6 +13,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
     Static.updateOrCreateAndGetEMailDetailFromData = async function(data, user_id){
         let emaildetailraw =await EmailDetail.fromEamil(data, user_id);
         // console.log(emaildetailraw,"new record saving")
+
         return await EmailDetail.updateOrCreateAndGet({from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id}, emaildetailraw);
     }
     Static.updateOrCreateAndGetEMailInfoFromData = async function(emaildetail, data, url){
@@ -23,6 +26,11 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
         let emailids = await EmailInfo.getEmailIdsByEmailDetail(emaildetail);
         return {emaildetail, emailids};
     };
+
+
+    Static.updateLastMsgId = async function (_id, msg_id) {
+        return await User.updatelastMsgId({ _id: _id }, { last_msgId: msg_id });
+    }
 
     Static.getUserById = async function(user_id) {
         return await User.get({_id: user_id});
@@ -105,12 +113,13 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
                 if (mail.length != 0) {
                     let result = await RedisDB.findPercent(mail);
                     if (result) {
-                        let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), user_id)
-                        await Expensebit.storeBulkEmailInDB(mail,from_email_id);
+                        let from_email_id = await me.updateOrCreateAndGetEMailDetailFromData(JSON.parse(mail[0]), user_id)
+                        console.log(from_email_id)
+                        await EmailInfo.bulkInsert(mail,from_email_id._id);
                     }
                 }
             });
-            del_data && await RedisDB.delKEY(keylist);
+            // del_data && await RedisDB.delKEY(keylist);
         }
     }
 });

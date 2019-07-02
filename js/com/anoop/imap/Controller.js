@@ -18,9 +18,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         let myImap = await MyImap.new(user);
         await myImap.connect();
         await myImap.openFolder("INBOX");
-        let { emaildetail, emailids } = await me.getEmailDetailAndInfos(token.user_id,from_email);
-        await Label.moveInboxToTrash(myImap,emailids);
+        // let { emaildetail, emailids } = await me.getEmailDetailAndInfos(token.user_id,from_email);
+        await Label.moveInboxToTrash(myImap, from_email);
         await myImap.closeFolder();
+        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
         await me.updateEmailDetailStatus(emaildetail._id, "trash");
         myImap.imap.end(myImap.imap);
     };
@@ -30,10 +31,11 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
         let myImap = await MyImap.new(user);
         await myImap.connect();
         await myImap.openFolder("INBOX");
-        let { emaildetail, emailids } = await me.getEmailDetailAndInfos(token.user_id, from_email);
-        console.log(emailids)
-        await Label.moveInboxToUnsub(myImap, emailids);
+        // let { emaildetail, emailids } = await me.getEmailDetailAndInfos(token.user_id, from_email);
+        // console.log(emailids)
+        await Label.moveInboxToUnsub(myImap, from_email);
         await myImap.closeFolder();
+        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
         await me.updateEmailDetailStatus(emaildetail._id, "move");
         myImap.imap.end(myImap.imap);
     };
@@ -180,19 +182,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
        // myImap.imap.end(myImap.imap);
     }
 
-    Static.getUnusedEmails = async function (token) {
-        // let emaildetails = await EmailDetail.getUnused({ "status": "unused", "user_id": user_id },  { from_email: 1, from_email_name: 1 })
-        // let senddata = await EmailInfo.getBulkCount(emaildetails.map(x=>x._id));
-        // let mapper = {};
-        // emaildetails.forEach(x=> mapper[x._id] = {a: x.from_email_name, b: x.from_email });
-        // senddata.forEach(x=> {
-        //     x.from_email_name=mapper[x._id].a;
-        //     x.from_email=mapper[x._id].b;
-        // })
-        // return senddata;
+    Static.extractEmailForCronJob = async function (user) {
+        console.log(user)
+        let myImap = await MyImap.new(user);
+        await myImap.connect();
+        let box = await myImap.openFolder("INBOX");
+        console.log(box)
+        await me.updateLastMsgId(user._id, box.uidnext)
+        let scraper = Scraper.new(myImap);
+        await scraper.update();
+        myImap.imap.end(myImap.imap);
     }
-
-
-
     
 });

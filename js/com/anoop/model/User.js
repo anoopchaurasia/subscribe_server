@@ -8,4 +8,9 @@ fm.Class("User>.BaseModel", function(me){
         return await mongouser.findOne(query).exec();
     };
 
+    Static.updatelastMsgId = async function (query, set) {
+        me.updateQueryValidation(query, "_id");
+        return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec();
+    };
+
 });

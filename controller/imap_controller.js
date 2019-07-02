@@ -31,13 +31,13 @@ router.post('/loginWithImap', async (req, res) => {
         await saveProviderInfo(EMAIL);
         const imap = await connect({ EMAIL, PASSWORD }).catch(err => {
             console.error(err.message, err, "imap_connect_error");
-            if (err.message.includes("Invalid credentials")){
+            if (err.message.includes("Invalid credentials")) {
                 return res.status(401).json({
                     error: true,
                     status: 401,
                     data: err.message
                 })
-            }else{
+            } else {
                 return res.status(403).json({
                     error: true,
                     status: 403,
@@ -73,7 +73,7 @@ router.post('/loginWithImap', async (req, res) => {
                     "email": EMAIL,
                     "password": PASSWORD,
                     "trash_label": trash_label,
-                    "email_client":"imap"
+                    "email_client": "imap"
                 });
                 user = await newUser.save().catch(err => {
                     console.error(err.message, err.stack);
@@ -171,10 +171,6 @@ router.post('/getImapEnableUrl', async (req, res) => {
 
 
 
-
-
-
-
 let saveProviderInfo = async (email) => {
     try {
         var domain = email.split('@')[1];
@@ -216,7 +212,7 @@ let saveProviderInfo = async (email) => {
                 } else if (mxr.includes("outlook")) {
                     provider = "outlook";
                     login_url = "https://login.live.com/login.srf";
-                    imap_host = "imap-mail.outlook.com	";
+                    imap_host = "imap-mail.outlook.com";
                     two_step_url = "https://login.live.com/login.srf?wa=wsignin1.0&rpsnv=13&ct=1562045255&rver=7.0.6738.0&wp=MBI_SSL&wreply=https%3A%2F%2Faccount.microsoft.com%2Fauth%2Fcomplete-signin%3Fru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Daccount.microsoft.com%2526ru%253Dhttps%25253A%25252F%25252Faccount.microsoft.com%25252Fsecurity%25253Frefd%25253Dsupport.microsoft.com%2526destrt%253Dsecurity-landing%2526refp%253Dsignedout-index&lc=1033&id=292666&lw=1&fl=easi2&ru=https%3A%2F%2Faccount.microsoft.com%2Faccount%2FManageMyAccount%3Frefd%3Dsupport.microsoft.com%26ru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Dsupport.microsoft.com%26destrt%3Dsecurity-landing";
                     imap_enable_url = "https://login.live.com/login.srf";
                 } else if (mxr.includes("yandex")) {
@@ -413,7 +409,7 @@ router.post('/saveProfileInfo', async (req, res) => {
         const doc = await token_model.findOne({ "token": req.body.token });
         if (doc) {
             let userObj = {
-                 name: req.body.name,
+                name: req.body.name,
                 "dob": req.body.dob,
                 "gender": req.body.sex
             };
@@ -570,7 +566,7 @@ async function connect(loginCred, err, cb) {
             host: provider.imap_host,
             port: 993,
             tls: true,
-            ssl:true
+            ssl: true
         });
         imap.once('ready', async () => {
             resolve(imap)
@@ -584,7 +580,7 @@ async function connect(loginCred, err, cb) {
 router.post('/trashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.unusedToTrash(doc,req.body.fromEmail);
+        await Controller.unusedToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -604,7 +600,7 @@ router.post('/trashZohoMail', async (req, res) => {
 router.post('/keepZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.unusedToKeep(doc,req.body.fromEmail);
+        await Controller.unusedToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "keep"
@@ -619,7 +615,7 @@ router.post('/keepZohoMail', async (req, res) => {
 router.post('/unsubscribeZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.unusedToUnsub(doc,req.body.fromEmail);
+        await Controller.unusedToUnsub(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -636,7 +632,7 @@ router.post('/unsubscribeZohoMail', async (req, res) => {
 router.post('/revertUnsubscribeZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.unsubToKeep(doc,req.body.fromEmail);
+        await Controller.unsubToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtokeep"
@@ -654,7 +650,7 @@ router.post('/revertUnsubscribeZohoMail', async (req, res) => {
 router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.unsubToTrash(doc,req.body.fromEmail);
+        await Controller.unsubToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtotrash"
@@ -672,7 +668,7 @@ router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
 router.post('/leftInboxToTrashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.keepToTrash(doc,req.body.fromEmail);
+        await Controller.keepToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -690,7 +686,7 @@ router.post('/leftInboxToTrashZohoMail', async (req, res) => {
 router.post('/revertTrashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.trashToKeep(doc,req.body.fromEmail);
+        await Controller.trashToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -708,7 +704,7 @@ router.post('/revertTrashZohoMail', async (req, res) => {
 router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.keepToUnsub(doc,req.body.fromEmail);
+        await Controller.keepToUnsub(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"

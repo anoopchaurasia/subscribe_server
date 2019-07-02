@@ -46,7 +46,8 @@ fm.Class("EmailDetail>.BaseModel", function(me){
             from_email_name: emaildata.from_email_name,
             to_email: emaildata.to_email,
             status: "unused",
-            status_date: new Date
+            status_date: new Date,
+            source: emaildata['source'] ? emaildata.source : ""
         }
     }
 

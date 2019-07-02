@@ -3,12 +3,14 @@ fm.Class("Label>.Message", function(me){
     this.setMe=_me=>me=_me;
 
     ///---------------from inbox ------------
-    Static.moveInboxToTrash =async function(myImap, ids){
+    Static.moveInboxToTrash =async function(myImap, from_email){
+        let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         return await me.changeFolder(myImap.imap,myImap.user.trash_label, ids);
     };
 
-    Static.moveInboxToUnsub = async function(myImap, ids){
+    Static.moveInboxToUnsub = async function(myImap, from_email){
         try{
+            let ids = await me.getAllEmailIdList(myImap.imap, from_email);
             return await me.changeFolder(myImap.imap,"Unsubscribed Emails", ids);
         } catch(e) {
             await me.create(myImap);
@@ -20,6 +22,7 @@ fm.Class("Label>.Message", function(me){
 
     Static.moveUnsubToInbox = async function(myImap, from_email){
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
+        
         return await me.changeFolder(myImap.imap,"Inbox", ids);
     };
 
@@ -32,6 +35,7 @@ fm.Class("Label>.Message", function(me){
 
     Static.moveTrashToInbox = async function(myImap, from_email){
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
+        console.log(ids)
         return await me.changeFolder(myImap.imap,"Inbox", ids);
     };
 
