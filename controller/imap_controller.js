@@ -570,7 +570,8 @@ async function connect(loginCred, err, cb) {
             password: your_password,
             host: provider.imap_host,
             port: 993,
-            tls: true
+            tls: true,
+            ssl:true
         });
         imap.once('ready', async () => {
             resolve(imap)
