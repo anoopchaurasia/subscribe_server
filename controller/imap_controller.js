@@ -31,11 +31,19 @@ router.post('/loginWithImap', async (req, res) => {
         await saveProviderInfo(EMAIL);
         const imap = await connect({ EMAIL, PASSWORD }).catch(err => {
             console.error(err.message, err, "imap_connect_error");
-            return res.status(401).json({
-                error: true,
-                status: 401,
-                data: err.message
-            })
+            if (err.message.includes("Invalid credentials")!=-1){
+                return res.status(401).json({
+                    error: true,
+                    status: 401,
+                    data: err.message
+                })
+            }else{
+                return res.status(403).json({
+                    error: true,
+                    status: 403,
+                    data: err.message
+                })
+            }
         });
         console.log('Connected');
         if (imap) {
@@ -125,6 +133,48 @@ let getImapEnableUrl = async (email) => {
 
 
 
+router.post('/getTwoStepUrl', async (req, res) => {
+    try {
+        let email = req.body.email_id;
+        let response = await getTwoStepVerificationUrl(email);
+        res.status(200).json({
+            error: false,
+            status: 200,
+            data: response.two_step_url
+        })
+    } catch (error) {
+        console.log("here", error)
+        res.status(401).json({
+            error: true,
+            data: null
+        })
+    }
+});
+
+router.post('/getImapEnableUrl', async (req, res) => {
+    try {
+        let email = req.body.email_id;
+        let response = await getImapEnableUrl(email);
+        res.status(200).json({
+            error: false,
+            status: 200,
+            data: response.imap_enable_url
+        })
+    } catch (error) {
+        console.log("here", error)
+        res.status(401).json({
+            error: true,
+            data: null
+        })
+    }
+});
+
+
+
+
+
+
+
 let saveProviderInfo = async (email) => {
     try {
         var domain = email.split('@')[1];
@@ -149,14 +199,26 @@ let saveProviderInfo = async (email) => {
                     provider = "zoho";
                     login_url = "https://accounts.zoho.com/u/h#home";
                     imap_host = "imappro.zoho.com";
+                    two_step_url = "https://accounts.zoho.com/signin?servicename=AaaServer&serviceurl=%2Fu%2Fh";
+                    imap_enable_url = "https://accounts.zoho.com/signin?servicename=VirtualOffice&signupurl=https://www.zoho.com//mail/zohomail-pricing.html?src=zmail-signup&serviceurl=https%3A%2F%2Fmail.zoho.com%2Fzm%2F"
                 } else if (mxr.includes("yahoo")) {
                     provider = "yahoo";
                     login_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
                     imap_host = "imap.mail.yahoo.com";
+                    two_step_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
+                    imap_enable_url = "https://login.yahoo.com/";
                 } else if (mxr.includes("google")) {
                     provider = "gmail";
                     login_url = "https://accounts.google.com/signin/v2/identifier";
                     imap_host = "imap.gmail.com";
+                    two_step_url = "https://accounts.google.com/signin/v2/sl/pwd?service=accountsettings&hl=en-US&continue=https%3A%2F%2Fmyaccount.google.com%2Fintro%2Fsecurity&csig=AF-SEnaOyCyBzaeOOzFJ%3A1561794482&flowName=GlifWebSignIn&flowEntry=ServiceLogin";
+                    imap_enable_url = "https://accounts.google.com/signin/v2/identifier";
+                } else if (mxr.includes("outlook")) {
+                    provider = "outlook";
+                    login_url = "https://login.live.com/login.srf";
+                    imap_host = "imap-mail.outlook.com	";
+                    two_step_url = "https://login.live.com/login.srf?wa=wsignin1.0&rpsnv=13&ct=1562045255&rver=7.0.6738.0&wp=MBI_SSL&wreply=https%3A%2F%2Faccount.microsoft.com%2Fauth%2Fcomplete-signin%3Fru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Daccount.microsoft.com%2526ru%253Dhttps%25253A%25252F%25252Faccount.microsoft.com%25252Fsecurity%25253Frefd%25253Dsupport.microsoft.com%2526destrt%253Dsecurity-landing%2526refp%253Dsignedout-index&lc=1033&id=292666&lw=1&fl=easi2&ru=https%3A%2F%2Faccount.microsoft.com%2Faccount%2FManageMyAccount%3Frefd%3Dsupport.microsoft.com%26ru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Dsupport.microsoft.com%26destrt%3Dsecurity-landing";
+                    imap_enable_url = "https://login.live.com/login.srf";
                 } else if (mxr.includes("yandex")) {
                     provider = "yandex";
                     login_url = "https://passport.yandex.com/auth";
@@ -185,7 +247,6 @@ let saveProviderInfo = async (email) => {
         console.log(e);
     }
 }
-
 
 
 router.post('/findEmailProvider', async (req, res) => {
