@@ -257,8 +257,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://passport.yandex.com/auth";
                     explain_url = "https://yandex.com/support/passport/authorization/twofa-on.html";
                     port = 993;
-                }
-                else {
+                }else {
                     provider = "null";
                     login_url = "null";
                     imap_host = "null";
