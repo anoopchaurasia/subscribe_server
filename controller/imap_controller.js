@@ -17,6 +17,8 @@ var legit = require('legit');
 const TWO_MONTH_TIME_IN_MILI = 2 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
+fm.Include("com.anoop.email.Email");
+let EmailValidate = com.anoop.email.Email;
 
 router.post('/loginWithImap', async (req, res) => {
     try {
@@ -687,7 +689,11 @@ router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
         let sender_email = req.body.sender_email;
-        await Controller.unusedToUnsub(doc, sender_email);
+        let validate = await EmailValidate.validate(sender_email);
+        console.log("is valid",validate)
+        if(validate){
+            await Controller.unusedToUnsub(doc, sender_email);
+        }
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -704,6 +710,11 @@ router.post('/imapManualTrashEmailFromUser', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
         let sender_email = req.body.sender_email;
+        let validate = await EmailValidate.validate(sender_email);
+        console.log("is valid", validate)
+        if (validate) {
+            await Controller.unusedToUnsub(doc, sender_email);
+        }
         await Controller.unusedToTrash(doc, sender_email);
         res.status(200).json({
             error: false,

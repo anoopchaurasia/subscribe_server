@@ -5,13 +5,19 @@ fm.Class("Label>.Message", function(me){
     ///---------------from inbox ------------
     Static.moveInboxToTrash =async function(myImap, from_email){
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
-        return await me.changeFolder(myImap.imap,myImap.user.trash_label, ids);
+        if(ids.length!=0){
+            return await me.changeFolder(myImap.imap,myImap.user.trash_label, ids);
+        }
+        return
     };
 
     Static.moveInboxToUnsub = async function(myImap, from_email){
         try{
             let ids = await me.getAllEmailIdList(myImap.imap, from_email);
-            return await me.changeFolder(myImap.imap,"Unsubscribed Emails", ids);
+            if (ids.length != 0) {
+                return await me.changeFolder(myImap.imap,"Unsubscribed Emails", ids);
+            }
+            return
         } catch(e) {
             await me.create(myImap);
             return await me.changeFolder(myImap.imap,"Unsubscribed Emails", ids);
