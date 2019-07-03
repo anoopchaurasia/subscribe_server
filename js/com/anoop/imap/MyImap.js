@@ -65,17 +65,17 @@ fm.Class("MyImap", function(me){
         });
     }
 
-    this.connect = async function() {
+    this.connect = async function (provider) {
         let {password, email} = me.user;
         let original_password = me.decryptPassword(password);
-        let imaphost = await me.getProvider(email);
         return new Promise((resolve, reject) => {
             me.imap = new Imap({
                 user: email,
                 password: original_password,
-                host: imaphost,
-                port: 993,
-                tls: true
+                host: provider.imap_host,
+                port: provider.port,
+                tls: true,
+                ssl:true
             });
             me.imap.once('ready', async () => {
                 resolve(me.imap);

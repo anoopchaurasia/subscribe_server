@@ -6,7 +6,8 @@ fm.Class('Email', function (me, EmailDetail, EmailInfo) {
     };
     Static.validate = function (email){
         if(me.email_reg.test(email)) return true;
-        throw new Error("Sender emailid is incorrect");
+        // throw new Error("Sender emailid is incorrect");
+        return false
     }
     Static.email_reg = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 })

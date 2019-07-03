@@ -23,6 +23,12 @@ var Provider = new Schema({
     },
     imap_host:{
         type: String
+    },
+    port:{
+        type:Number
+    },
+    explain_url:{
+        type:String
     }
 });
 

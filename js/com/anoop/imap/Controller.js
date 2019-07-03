@@ -15,8 +15,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
 
     Static.unusedToTrash = async function(token, from_email){
         let user = await me.getUserById(token.user_id);
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         await myImap.openFolder("INBOX");
         // let { emaildetail, emailids } = await me.getEmailDetailAndInfos(token.user_id,from_email);
         await Label.moveInboxToTrash(myImap, from_email);
@@ -28,8 +32,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
 
     Static.unusedToUnsub = async function(token, from_email){
         let user = await me.getUserById(token.user_id);
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         await myImap.openFolder("INBOX");
         // let { emaildetail, emailids } = await me.getEmailDetailAndInfos(token.user_id, from_email);
         // console.log(emailids)
@@ -42,8 +50,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
 
     Static.automaticInboxToUnsub = async function (user_id, email_id) {
         let user = await me.getUserById(user_id);
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         await myImap.openFolder("INBOX");
         console.log(email_id,"here automatic move")
         let email_id_arr = [email_id];
@@ -55,8 +67,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
 
     Static.automaticInboxToTrash = async function (user_id, email_id) {
         let user = await me.getUserById(user_id);
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         await myImap.openFolder("INBOX");
         console.log(email_id, "here automatic move")
         let email_id_arr = [email_id];
@@ -70,8 +86,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
 
     Static.keepToTrash = async function (token, from_email) {
         let user = await me.getUserById(token.user_id);
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         await myImap.openFolder("INBOX");
         await Label.moveActiveToTrash(myImap, from_email);
         await myImap.closeFolder();
@@ -82,8 +102,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
 
     Static.keepToUnsub = async function (token, from_email) {
         let user = await me.getUserById(token.user_id);
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         await myImap.openFolder("INBOX");
         await Label.moveActiveToUnsub(myImap, from_email);
         await myImap.closeFolder();
@@ -96,8 +120,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
     
     Static.unsubToKeep = async function(token, from_email){
         let user = await me.getUserById(token.user_id);
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         await myImap.openFolder("Unsubscribed Emails");
         await Label.moveUnsubToInbox(myImap, from_email);
         await myImap.closeFolder();
@@ -109,8 +137,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
     Static.unsubToTrash = async function(token, from_email){
 
         let user = await me.getUserById(token.user_id);
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         await myImap.openFolder("Unsubscribed Emails");
         await Label.moveUnsubToTrash(myImap, from_email);
         await myImap.closeFolder();
@@ -122,8 +154,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
 
     Static.trashToKeep = async function(token, from_email){
         let user = await me.getUserById(token.user_id);
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         await myImap.openFolder(myImap.user.trash_label);
         await Label.moveTrashToInbox(myImap, from_email);
         await myImap.closeFolder();
@@ -172,20 +208,29 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, MyImap, Scrap
 
     Static.extractEmail = async function(token){
         let user = await me.getUserById(token.user_id);
+        console.log(user);
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         let box = await myImap.openFolder("INBOX");
         console.log(box);
         await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         await scraper.start();
-       // myImap.imap.end(myImap.imap);
+        myImap.imap.end(myImap.imap);
     }
 
     Static.extractEmailForCronJob = async function (user) {
         console.log(user)
+        let domain = user.email.split("@")[1];
+        let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect();
+        await myImap.connect(provider).catch(err => {
+            console.error(err.message, err.stack,"imap connect here");
+        });
         let box = await myImap.openFolder("INBOX");
         console.log(box)
         await me.updateLastMsgId(user._id, box.uidnext)

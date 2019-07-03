@@ -104,7 +104,7 @@ router.post('/getMailInfo', async (req, res) => {
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             let label = await Expensebit.findLabelId(oauth2Client);
-            getRecentEmail(token.user_id, oauth2Client, null,label,async function afterEnd(){
+            getRecentEmail(token.user_id, oauth2Client, null, label, async function afterEnd() {
                 let doc = token;
                 let keylist = await RedisDB.getKEYS(doc.user_id);
                 if (keylist && keylist.length != 0) {
@@ -114,7 +114,7 @@ router.post('/getMailInfo', async (req, res) => {
                             let result = await RedisDB.findPercent(mail);
                             if (result) {
                                 let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
-                                await Expensebit.storeBulkEmailInDB(mail,from_email_id);
+                                await Expensebit.storeBulkEmailInDB(mail, from_email_id);
                             }
                         }
                     });
@@ -144,7 +144,10 @@ router.post('/manualUnsubEmailFromUser', async (req, res) => {
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             let label = await Expensebit.findLabelId(oauth2Client);
             console.log(sender_email)
-            await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, sender_email,true);
+            let array = sender_email.split(",") || sender_email.split(";");
+            await array.asyncForEach(async element => {
+                await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, element, true);
+            });
             res.status(200).json({
                 error: false,
                 data: "scrape"
@@ -166,8 +169,10 @@ router.post('/manualTrashEmailFromUser', async (req, res) => {
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             let label = await Expensebit.findLabelId(oauth2Client);
-            console.log(sender_email)
-            await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, sender_email, false);
+            let array = sender_email.split(",") || sender_email.split(";");
+            await array.asyncForEach(async element => {
+                await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, element, false);
+            });
             res.status(200).json({
                 error: false,
                 data: "scrape"
@@ -217,7 +222,7 @@ router.post('/readMailInfo', async (req, res) => {
         //         }
         //     });
         // }
-        
+
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
@@ -343,7 +348,7 @@ router.post('/getEmailSubscription', async (req, res) => {
 This for function for scrapping Inbox for particular user.
 This will Get List of email in Batch of 100 for given Time period and will parsed mail.
 */
-async function getRecentEmail(user_id, auth, nextPageToken,label, afterFinishCB) {
+async function getRecentEmail(user_id, auth, nextPageToken, label, afterFinishCB) {
     let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
     let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
     let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
@@ -382,7 +387,7 @@ async function getRecentEmail(user_id, auth, nextPageToken,label, afterFinishCB)
     }
     nextPageToken = responseList['data'].nextPageToken;
     if (responseList['data'].nextPageToken) {
-        await getRecentEmail(user_id, auth, responseList['data'].nextPageToken,label, afterFinishCB);
+        await getRecentEmail(user_id, auth, responseList['data'].nextPageToken, label, afterFinishCB);
     } else {
         afterFinishCB()
     }
@@ -550,7 +555,7 @@ function getParts(payload) {
 
 
 
-async function getEmailFromSpecificSender(user_id, auth, nextPageToken, label, sender_email,is_move) {
+async function getEmailFromSpecificSender(user_id, auth, nextPageToken, label, sender_email, is_move) {
     let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
     let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
     let responseList = await gmail.users.messages.list({
@@ -564,9 +569,9 @@ async function getEmailFromSpecificSender(user_id, auth, nextPageToken, label, s
             if (response) {
                 if (response.data.payload || response.data.payload['parts']) {
                     try {
-                        if(is_move){
+                        if (is_move) {
                             await Expensebit.manualMoveMail(response['data'], user_id, auth, label);
-                        }else{
+                        } else {
                             await Expensebit.manualTrashMail(response['data'], user_id, auth, label);
                         }
                     } catch (e) {
@@ -579,7 +584,7 @@ async function getEmailFromSpecificSender(user_id, auth, nextPageToken, label, s
     }
     nextPageToken = responseList['data'].nextPageToken;
     if (responseList['data'].nextPageToken) {
-        await getEmailFromSpecificSender(user_id, auth, responseList['data'].nextPageToken, label, sender_email,is_move);
+        await getEmailFromSpecificSender(user_id, auth, responseList['data'].nextPageToken, label, sender_email, is_move);
     }
 }
 

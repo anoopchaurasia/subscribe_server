@@ -2,9 +2,10 @@ fm.Package('com.anoop.email');
 fm.Import("..model.EmailDetail");
 fm.Import("..model.EmailInfo");
 fm.Import("..model.User");
+fm.Import("..model.Provider");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Provider) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -34,6 +35,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User) {
 
     Static.getUserById = async function(user_id) {
         return await User.get({_id: user_id});
+    };
+
+    Static.getProvider = async function (domain) {
+        return await Provider.get({ "domain_name": domain });
     };
 
     Static.getEmailDetail = async function (user_id, from_email) {
