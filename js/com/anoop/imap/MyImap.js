@@ -2,18 +2,18 @@ fm.Package("com.anoop.imap");
 var legit = require('legit');
 var crypto = require('crypto');
 const Imap = require('imap');
-fm.Class("MyImap", function(me){
-    this.setMe=_me=> me=_me;
-    this.init = function(){
+fm.Class("MyImap", function (me) {
+    this.setMe = _me => me = _me;
+    this.init = function () {
         Static.Const.PASSWORD_ENCRYPT_ALGO = process.env.PASSWORD_ENCRYPT_ALGO || "aes256";
-        Static.Const.PASSWORD_ENCRYPT_KEY =  process.env.PASSWORD_ENCRYPT_KEY || "donnottrytodecryptthisone";
+        Static.Const.PASSWORD_ENCRYPT_KEY = process.env.PASSWORD_ENCRYPT_KEY || "donnottrytodecryptthisone";
     }
-    this.MyImap = function(user){
+    this.MyImap = function (user) {
         this.imap = null;
         this.user = user;
     };
 
-    Static.getProvider = async function(email){
+    Static.getProvider = async function (email) {
         const response = await legit(email);
         if (response.isValid) {
             let mxr = response.mxArray[0].exchange;
@@ -29,20 +29,19 @@ fm.Class("MyImap", function(me){
     }
 
     Static.encryptPassword = function (password) {
-        
         var new_password = randomstring.generate(8).toLowerCase() + password.substring(0, 3) + randomstring.generate(4).toLowerCase() + password.substring(3, PASSWORD.length) + randomstring.generate(6).toLowerCase();
         var cipher = crypto.createCipher(me.PASSWORD_ENCRYPT_ALGO, me.PASSWORD_ENCRYPT_KEY);
         return cipher.update(new_password, 'utf8', 'hex') + cipher.final('hex');
     };
 
-    Static.decryptPassword = function(password){
+    Static.decryptPassword = function (password) {
         var decipher = crypto.createDecipher(me.PASSWORD_ENCRYPT_ALGO, me.PASSWORD_ENCRYPT_KEY);
         var decrypted = decipher.update(password, 'hex', 'utf8') + decipher.final('utf8');
         var remove_padding = decrypted.slice(8, decrypted.length - 6)
         return remove_padding.substring(0, 3) + remove_padding.substring(7, remove_padding.length);
     };
 
-    Static.getLabels = async function(){
+    Static.getLabels = async function () {
         return new Promise((resolve, reject) => {
             imap.getBoxes(function (err, boxes) {
                 (err ? reject(err) : resolve(boxes));
@@ -50,24 +49,26 @@ fm.Class("MyImap", function(me){
         });
     };
 
-    this.openFolder = async function(folder) {
+    this.openFolder = async function (folder) {
         return new Promise((resolve, reject) => {
-            me.imap.openBox(folder, false,function (err, box) {
+            me.imap.openBox(folder, false, function (err, box) {
                 (err ? reject(err) : resolve(box));
             });
         });
     }
-    this.closeFolder = async function() {
+
+    this.closeFolder = async function () {
         return new Promise((resolve, reject) => {
-            me.imap.closeBox(true,function (err, box) {
+            me.imap.closeBox(true, function (err, box) {
                 (err ? reject(err) : resolve(box));
             });
         });
     }
 
     this.connect = async function (provider) {
-        let {password, email} = me.user;
+        let { password, email } = me.user;
         let original_password = me.decryptPassword(password);
+        console.log(provider)
         return new Promise((resolve, reject) => {
             me.imap = new Imap({
                 user: email,
@@ -75,9 +76,10 @@ fm.Class("MyImap", function(me){
                 host: provider.imap_host,
                 port: provider.port,
                 tls: true,
-                ssl:true
+                ssl: true
             });
             me.imap.once('ready', async () => {
+                console.log("ready")
                 resolve(me.imap);
             });
             me.imap.once('error', err => reject(err));

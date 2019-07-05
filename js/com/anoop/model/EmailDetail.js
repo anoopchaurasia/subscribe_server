@@ -51,4 +51,17 @@ fm.Class("EmailDetail>.BaseModel", function(me){
         }
     }
 
+    Static.storeEamil = function (emaildata, user_id) {
+        return {
+            user_id,
+            labelIds: [],
+            from_email: emaildata.from_email,
+            from_email_name: emaildata.from_email,
+            to_email: null,
+            status: emaildata.status,
+            status_date: new Date,
+            source: "manual"
+        }
+    }
+
 });

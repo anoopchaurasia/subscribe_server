@@ -19,7 +19,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     this.start = async function (cb) {
         console.log("start")
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
-        console.log(seen, "sdsds")
+        console.log(seen,unseen, "sdsds")
         if (unseen.length != 0) {
             await unseenMailScrap(unseen);
         }
@@ -32,7 +32,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     this.update = async function (cb) {
         console.log("start")
         let { seen, unseen } = await Message.getLatestMessages(me.myImap.imap, me.myImap.user);
-        console.log(seen, unseen, "sdsds")
+        console.log(seen, unseen)
         if (unseen.length != 0) {
             await unseenMailScrap(unseen);
         }
@@ -58,7 +58,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
 
 
     async function seenMailScrap(seen) {
-        console.log(seen, "seen data")
         await Message.getBatchMessage(me.myImap.imap, seen,
             async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
@@ -86,6 +85,5 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         }
         return idlist;
     }
-
 
 });

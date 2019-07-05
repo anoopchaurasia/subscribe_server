@@ -31,12 +31,9 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
 
     Static.bulkInsert = async function (bulkdata, from_email_id) {
         var bulk = mongo_emailInfo.collection.initializeUnorderedBulkOp();
-        //bulkdata
         await bulkdata.asynForEach(async emailInfo => {
             emailInfo = JSON.parse(emailInfo);
-            // console.log("email here",emailInfo)
             let emailInfoNew = await me.fromEamil(emailInfo, from_email_id, "");
-            // console.log(emailInfoNew,"here come")
             try {
                 bulk.find({ "email_id": emailInfo.email_id }).upsert().update({ $set: emailInfoNew });
             } catch (err) {

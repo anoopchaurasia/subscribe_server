@@ -7,4 +7,5 @@ fm.Class("Header", function (me) {
             me[x.name.toLowerCase()] = x.value;
         });
     };
+
 });

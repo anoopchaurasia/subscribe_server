@@ -13,10 +13,14 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Provider)
 
     Static.updateOrCreateAndGetEMailDetailFromData = async function(data, user_id){
         let emaildetailraw =await EmailDetail.fromEamil(data, user_id);
-        // console.log(emaildetailraw,"new record saving")
-
         return await EmailDetail.updateOrCreateAndGet({from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id}, emaildetailraw);
     }
+
+    Static.saveManualEmailData = async function (user_id, data) {
+        let emaildetailraw = await EmailDetail.storeEamil(data, user_id);
+        return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
+    }
+
     Static.updateOrCreateAndGetEMailInfoFromData = async function(emaildetail, data, url){
         let emailinforaw =await  EmailInfo.fromEamil(data, emaildetail._id, url);
         return await EmailInfo.updateOrCreateAndGet({from_email_id: emaildetail._id, email_id: emailinforaw.email_id}, emailinforaw);
@@ -27,7 +31,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Provider)
         let emailids = await EmailInfo.getEmailIdsByEmailDetail(emaildetail);
         return {emaildetail, emailids};
     };
-
 
     Static.updateLastMsgId = async function (_id, msg_id) {
         return await User.updatelastMsgId({ _id: _id }, { last_msgId: msg_id });
@@ -76,7 +79,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Provider)
         let emaildetail_raw = EmailDetail.fromEamil({from_email: sender_email, from_email_name: sender_email, to_email: null}, user_id);
         emaildetail_raw.status = status;
         let emaildetail = await EmailDetail.updateOrCreateAndGet({user_id: user_id, from_email: sender_email}, emaildetail_raw);
-        
         return  ids.map(x=> {
             return Emailinfo.fromEamil({email_id: x, labelIds:[]}, emaildetail._id);
         });

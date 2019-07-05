@@ -8,5 +8,4 @@ fm.Class("Provider>.BaseModel", function(me){
         return await mongoprovider.findOne(query).exec();
     };
 
-
 });

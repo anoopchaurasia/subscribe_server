@@ -8,38 +8,37 @@ fm.Class('BaseScraper', function (me, BaseController) {
     };
 
     Static.UNSUB_REGEX = /unsubscribe|mailing list|Don't want this|preferences|subscription|visit this link|stop receiving email|do not wish to receive our mails|not receiving our emails/i;
-    this.BaseScraper = function (user_id){
+    this.BaseScraper = function (user_id) {
         this.user_id = user_id;
     };
 
-    this.inboxToUnused =  async function (data, url){
+    this.inboxToUnused = async function (data, url) {
         let emaildetail = await BaseController.updateOrCreateAndGetEMailDetailFromData(data, me.user_id);
         await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, url);
     }
 
-    this.handleEamil = async function (data,automatic) {
-        let emaildetailraw =await BaseController.dataToEmailDetailRaw(data, me.user_id);
+    this.handleEamil = async function (data, automatic) {
+        let emaildetailraw = await BaseController.dataToEmailDetailRaw(data, me.user_id);
         let emaildetail = await BaseController.getEmailDetailFromData(emaildetailraw);
-        if (emaildetail && emaildetail.status=="move"){
+        if (emaildetail && emaildetail.status == "move") {
             await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
-            return automatic(data,"move")
+            return automatic(data, "move")
         }
-        if(emaildetail && emaildetail.status == "trash") {
+        if (emaildetail && emaildetail.status == "trash") {
             await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
-            return automatic(data,"trash")
+            return automatic(data, "trash")
         }
-        if(emaildetail) {
-           return await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
+        if (emaildetail) {
+            return await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
         }
         let isEmailMovable = await BaseController.isEmailMovable(emaildetailraw.from_email);
 
-        if(isEmailMovable) {
+        if (isEmailMovable) {
             data['source'] = "count";
             return await me.inboxToUnused(data, "");
         }
-        let url =await getUrlFromEmail(data.payload);
-        // console.log(url)
-        if(url) {
+        let url = await getUrlFromEmail(data.payload);
+        if (url) {
             return await me.inboxToUnused(data, url);
         }
         if (data.labelIds.length != 0) {
@@ -49,16 +48,16 @@ fm.Class('BaseScraper', function (me, BaseController) {
         }
     }
 
-    
+
     function findUrlFromBody(body) {
         if (!body) {
             return null;
         }
-         let   bodydata = new Buffer(body, 'base64').toString('utf-8')
+        let bodydata = new Buffer(body, 'base64').toString('utf-8')
         let $ = cheerio.load(bodydata);
         let matched = $('a').reverse().find(async function (elem) {
             let $this = $(elem);
-            if($this.text().match(me.UNSUB_REGEX) || $this.parent().text().match(me.UNSUB_REGEX)) {
+            if ($this.text().match(me.UNSUB_REGEX) || $this.parent().text().match(me.UNSUB_REGEX)) {
                 return true;
             }
         })
@@ -66,41 +65,83 @@ fm.Class('BaseScraper', function (me, BaseController) {
     };
 
     async function getUrlFromEmail(body) {
-        if (body['textAsHtml'] != undefined) {
-            body = body['textAsHtml'];
-        if (!body) {
-            return null;
-        }
-        let $ = cheerio.load(body);
         let url = null;
-        $('a').each(async function (i, elem) {
-            let fa = $(this).text();
-            let anchortext = fa.toLowerCase();
-            let anchorParentText = $(this).parent().text().toLowerCase();
-            if (anchortext.indexOf("unsubscribe") != -1 ||
-                anchortext.indexOf("preferences") != -1 ||
-                anchortext.indexOf("subscription") != -1 ||
-                anchortext.indexOf("visit this link") != -1 ||
-                anchortext.indexOf("do not wish to receive our mails") != -1 ||
-                anchortext.indexOf("not receiving our emails") != -1) {
-                url = $(this).attr().href;
-                // console.log(url)
-                return url;
-            } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
-                anchorParentText.indexOf("stop receiving emails") != -1 ||
-                anchorParentText.indexOf("unsubscribe") != -1 ||
-                anchorParentText.indexOf("subscription") != -1 ||
-                anchorParentText.indexOf("preferences") != -1 ||
-                anchorParentText.indexOf("mailing list") != -1 ||
-                (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
-                ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
-                anchorParentText.indexOf("Don't want this") != -1) {
-                url = $(this).attr().href;
-                // console.log(url)
+        if (body['text'] != undefined) {
+            body = body['text'];
+            if (!body) {
+                return null;
+            }
+            let $ = cheerio.load(body);
+            $('a').each(async function (i, elem) {
+                let fa = $(this).text();
+                let anchortext = fa.toLowerCase();
+                let anchorParentText = $(this).parent().text().toLowerCase();
+                if (anchortext.indexOf("unsubscribe") != -1 ||
+                    anchortext.indexOf("preferences") != -1 ||
+                    anchortext.indexOf("subscription") != -1 ||
+                    anchortext.indexOf("visit this link") != -1 ||
+                    anchortext.indexOf("do not wish to receive our mails") != -1 ||
+                    anchortext.indexOf("not receiving our emails") != -1) {
+                    url = $(this).attr().href;
+                    console.log(url, "1")
+                    return url;
+                } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
+                    anchorParentText.indexOf("stop receiving emails") != -1 ||
+                    anchorParentText.indexOf("unsubscribe") != -1 ||
+                    anchorParentText.indexOf("subscription") != -1 ||
+                    anchorParentText.indexOf("preferences") != -1 ||
+                    anchorParentText.indexOf("mailing list") != -1 ||
+                    (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
+                    ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
+                    anchorParentText.indexOf("Don't want this") != -1) {
+                    url = $(this).attr().href;
+                    console.log(url, "2")
+                    return url;
+                }
+            })
+            if (url) {
                 return url;
             }
-        })
-        return url;
-    }
+            if (!url) {
+                if (body['textAsHtml'] != undefined) {
+                    body = body['textAsHtml'];
+                    if (!body) {
+                        return null;
+                    }
+                    let $ = cheerio.load(body);
+                    let url = null;
+                    $('a').each(async function (i, elem) {
+                        let fa = $(this).text();
+                        let anchortext = fa.toLowerCase();
+                        let anchorParentText = $(this).parent().text().toLowerCase();
+                        if (anchortext.indexOf("unsubscribe") != -1 ||
+                            anchortext.indexOf("preferences") != -1 ||
+                            anchortext.indexOf("subscription") != -1 ||
+                            anchortext.indexOf("visit this link") != -1 ||
+                            anchortext.indexOf("do not wish to receive our mails") != -1 ||
+                            anchortext.indexOf("not receiving our emails") != -1) {
+                            url = $(this).attr().href;
+                            console.log(url, "3")
+                            return url;
+                        } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
+                            anchorParentText.indexOf("stop receiving emails") != -1 ||
+                            anchorParentText.indexOf("unsubscribe") != -1 ||
+                            anchorParentText.indexOf("subscription") != -1 ||
+                            anchorParentText.indexOf("preferences") != -1 ||
+                            anchorParentText.indexOf("mailing list") != -1 ||
+                            (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
+                            ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
+                            anchorParentText.indexOf("Don't want this") != -1) {
+                            url = $(this).attr().href;
+                            console.log(url, "4")
+                            return url;
+                        }
+                    })
+                    return url;
+                }
+            }
+        }
+
+
     }
 });

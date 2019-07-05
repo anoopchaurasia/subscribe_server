@@ -2,11 +2,9 @@ fm.Package("com.anoop.imap");
 const MailParser = require('mailparser').MailParser
 const Imap = require('imap');
 const simpleParser = require('mailparser').simpleParser;
-const TWO_MONTH_TIME_IN_MILI = 2 * 30  * 24 * 60 * 60 * 1000;
+const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
 fm.Class("Message", function (me) {
     this.setMe = _me => me = _me;
-
-    Static.search
 
     Static.getAllEmailIdList = async function (imap, from_email) {
         let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
@@ -53,7 +51,6 @@ fm.Class("Message", function (me) {
     };
 
     Static.getBatchMessage = async function (imap, message_ids, detector) {
-        console.log("getBatchMessage", message_ids)
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
                 bodies: ['HEADER.FIELDS (FROM SUBJECT)', 'TEXT']
