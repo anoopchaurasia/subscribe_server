@@ -68,7 +68,6 @@ fm.Class("MyImap", function (me) {
     this.connect = async function (provider) {
         let { password, email } = me.user;
         let original_password = me.decryptPassword(password);
-        console.log(provider)
         return new Promise((resolve, reject) => {
             me.imap = new Imap({
                 user: email,
@@ -79,7 +78,6 @@ fm.Class("MyImap", function (me) {
                 ssl: true
             });
             me.imap.once('ready', async () => {
-                console.log("ready")
                 resolve(me.imap);
             });
             me.imap.once('error', err => reject(err));

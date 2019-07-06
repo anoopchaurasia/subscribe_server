@@ -30,7 +30,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
 
 
     this.update = async function (cb) {
-        console.log("start")
+        console.log("update")
         let { seen, unseen } = await Message.getLatestMessages(me.myImap.imap, me.myImap.user);
         console.log(seen, unseen)
         if (unseen.length != 0) {
@@ -54,8 +54,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                 });
             });
     }
-
-
 
     async function seenMailScrap(seen) {
         await Message.getBatchMessage(me.myImap.imap, seen,

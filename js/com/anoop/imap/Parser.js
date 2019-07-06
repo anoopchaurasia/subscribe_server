@@ -5,7 +5,6 @@ const simpleParser = require('mailparser').simpleParser;
 fm.Class("Parser>.Message", function (me, Header) {
     this.setMe = _me => me = _me;
 
-
     Static.getEmailBody = function (header,bufferdata, atts, labels) {
         let from = header.from.indexOf("<") != -1 ? header.from.split("<")[1].replace(">", "") : header.from;
         return {
@@ -18,6 +17,5 @@ fm.Class("Parser>.Message", function (me, Header) {
             subject: header.subject
         };
     };
-
 
 });

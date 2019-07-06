@@ -144,7 +144,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             console.error(err.message, err.stack, "imap connect here");
         });
         let f = await myImap.openFolder("INBOX");
-        console.log(f)
         await Label.moveActiveToUnsub(myImap, from_email);
         await myImap.closeFolder();
         let emaildetail = await me.getEmailDetail(token.user_id, from_email);

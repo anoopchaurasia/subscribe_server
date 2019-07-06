@@ -14,9 +14,7 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
         return await mongo_emailInfo.findOneAndUpdate(query, { $setOnInsert: set }, { new: true, upsert: true });
     };
 
-
     Static.fromEamil = async function (data, from_email_id, url) {
-        // console.log(data)
         return {
             from_email_id,
             email_id: data.email_id,
@@ -26,8 +24,6 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
             labelIds: data.labelIds
         }
     };
-
-
 
     Static.bulkInsert = async function (bulkdata, from_email_id) {
         var bulk = mongo_emailInfo.collection.initializeUnorderedBulkOp();
@@ -54,4 +50,5 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
 
         return await mongo_emailInfo.aggregate(aggregateQuery).exec();
     };
+    
 });

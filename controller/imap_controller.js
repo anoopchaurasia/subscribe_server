@@ -14,7 +14,7 @@ var crypto = require('crypto');
 var randomstring = require("randomstring");
 var dns = require('dns');
 var legit = require('legit');
-const TWO_MONTH_TIME_IN_MILI = 2 * 30 * 24 * 60 * 60 * 1000;
+const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 fm.Include("com.anoop.email.Email");
@@ -30,7 +30,7 @@ router.post('/loginWithImap', async (req, res) => {
         var cipher = crypto.createCipher(algorithm, key);
         var encrypted = cipher.update(new_password, 'utf8', 'hex') + cipher.final('hex');
         PASSWORD = encrypted;
-        await saveProviderInfo(EMAIL);
+        let profile = await saveProviderInfo(EMAIL);
         const imap = await connect({ EMAIL, PASSWORD }).catch(err => {
             console.error(err.message, err, "imap_connect_error");
             if (err.message.includes("Invalid credentials")) {
@@ -72,7 +72,6 @@ router.post('/loginWithImap', async (req, res) => {
                     });
                 }
             });
-            console.log(names)
             if (!names.includes("Unsubscribed Emails")) {
                 await createInbox(imap).catch(err => {
                     console.error(err.message, err.stack, "inbox creation");
@@ -102,7 +101,8 @@ router.post('/loginWithImap', async (req, res) => {
                 return res.status(200).json({
                     error: false,
                     status: 200,
-                    data: response
+                    data: response,
+                    provider : profile.provider
                 })
             } else {
                 return res.status(404).json({
@@ -200,7 +200,6 @@ let saveProviderInfo = async (email) => {
             return resp;
         } else {
             const response = await legit(email);
-            console.log(response)
             if (response.isValid) {
                 let mxString = response.mxArray.map(x => { return x.exchange }).toString();
                 let mxr = response.mxArray[0].exchange;
@@ -321,7 +320,6 @@ let saveProviderInfo = async (email) => {
                 let resp = await providerModel.findOneAndUpdate({ "domain_name": domain }, { $set: { explain_url,port,imap_host, mxString, provider, login_url, two_step_url, imap_enable_url } }, { upsert: true, new: true }).catch(err => {
                     console.error(err.message, err.stack, "provider_2");
                 });
-                console.log("response here", resp)
                 return resp;
             }
         }
@@ -633,7 +631,6 @@ router.post('/loginImap', async (req, res) => {
 });
 
 async function connect(loginCred, err, cb) {
-    console.log(loginCred)
     let { EMAIL, PASSWORD } = loginCred;
     var algorithm = 'aes256';
     // secret key
@@ -644,8 +641,6 @@ async function connect(loginCred, err, cb) {
     var remove_padding = decrypted.slice(8, decrypted.length - 6)
     var your_password = remove_padding.substring(0, 3) + remove_padding.substring(7, remove_padding.length);
     let provider = await getProviderName(EMAIL);
-    console.log(provider.imap_host,provider.port)
-    // console.log(EMAIL, your_password)
     return new Promise((resolve, reject) => {
 
         const imap = new Imap({
@@ -906,7 +901,6 @@ async function getUrlFromEmail(body) {
             anchortext.indexOf("do not wish to receive our mails") != -1 ||
             anchortext.indexOf("not receiving our emails") != -1) {
             url = $(this).attr().href;
-            console.log(url)
             return url;
         } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
             anchorParentText.indexOf("stop receiving emails") != -1 ||
@@ -918,7 +912,6 @@ async function getUrlFromEmail(body) {
             ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
             anchorParentText.indexOf("Don't want this") != -1) {
             url = $(this).attr().href;
-            console.log(url)
             return url;
         }
     })
@@ -949,7 +942,6 @@ async function parseMessage(msg) {
                             if (Array.isArray(result[k])) result[k] = result[k][0];
                         }
                     }
-                    // console.log(parsed)
                     if (result != {} && parsed['textAsHtml'] != undefined) {
                         let url = await getUrlFromEmail(parsed['textAsHtml']);
                         if (url != null) {

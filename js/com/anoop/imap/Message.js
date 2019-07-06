@@ -57,9 +57,7 @@ fm.Class("Message", function (me) {
             });
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
-                console.log("getBatchMessage", seqNo)
                 const parsed = await parseMessage(msg, 'utf8').catch(err => console.error(err));
-                // console.log(parsed)
                 if (detector(parsed)) msgs.push(parsed);
             });
             fetch.on('end', async function () {
