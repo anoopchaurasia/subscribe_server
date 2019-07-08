@@ -9,7 +9,6 @@ fm.Class("Label>.Message", function (me) {
             return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
         }
         return
-
     };
 
     Static.checkIds = async function (ids) {

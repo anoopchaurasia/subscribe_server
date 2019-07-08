@@ -20,6 +20,7 @@ fm.Class('BaseScraper', function (me, BaseController) {
     this.handleEamil = async function (data, automatic) {
         let emaildetailraw = await BaseController.dataToEmailDetailRaw(data, me.user_id);
         let emaildetail = await BaseController.getEmailDetailFromData(emaildetailraw);
+        
         if (emaildetail && emaildetail.status == "move") {
             await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
             return automatic(data, "move")
@@ -37,6 +38,7 @@ fm.Class('BaseScraper', function (me, BaseController) {
             data['source'] = "count";
             return await me.inboxToUnused(data, "");
         }
+        // console.log(data)
         let url = await getUrlFromEmail(data.payload);
         if (url) {
             return await me.inboxToUnused(data, url);

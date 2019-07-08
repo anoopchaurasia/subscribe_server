@@ -174,6 +174,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
         let myImap =await MyImap.new(user);
+        
         await myImap.connect(provider).catch(err => {
             console.error(err.message, err.stack, "imap connect here");
         });

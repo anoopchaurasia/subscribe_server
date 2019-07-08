@@ -33,7 +33,13 @@ router.post('/loginWithImap', async (req, res) => {
         let profile = await saveProviderInfo(EMAIL);
         const imap = await connect({ EMAIL, PASSWORD }).catch(err => {
             console.error(err.message, err, "imap_connect_error");
-            if (err.message.includes("Invalid credentials")) {
+            if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
+                return res.status(403).json({
+                    error: true,
+                    status: 403,
+                    data: err.message
+                })
+            } else if (err.message.includes("Invalid credentials")) {
                 return res.status(401).json({
                     error: true,
                     status: 401,
@@ -77,7 +83,11 @@ router.post('/loginWithImap', async (req, res) => {
                     console.error(err.message, err.stack, "inbox creation");
                 });
             }
-            let labels = names.filter(s => s.toLowerCase().includes('trash'));
+            console.log(names)
+            let labels = names.filter(s => s.toLowerCase().includes('trash')) || names.filter(x => x.toLowerCase().includes('junk'));
+            if (labels.length == 0) {
+                labels = names.filter(x => x.toLowerCase().includes('junk'));
+            }
             let trash_label = "";
             if (labels.length != 0) {
                 trash_label = labels[0];
@@ -94,7 +104,7 @@ router.post('/loginWithImap', async (req, res) => {
                     console.error(err.message, err.stack);
                 });
             }
-            await UserModel.findOneAndUpdate({ "email": EMAIL }, { "trash_label": trash_label, "password": PASSWORD, "email_client": "imap"},{upsert:true});
+            await UserModel.findOneAndUpdate({ "email": EMAIL }, { "trash_label": trash_label, "password": PASSWORD, "email_client": "imap" }, { upsert: true });
             let response = await create_token(user);
             if (response) {
                 imap.end(imap);
@@ -102,7 +112,7 @@ router.post('/loginWithImap', async (req, res) => {
                     error: false,
                     status: 200,
                     data: response,
-                    provider : profile.provider
+                    provider: profile.provider
                 })
             } else {
                 return res.status(404).json({
@@ -122,7 +132,7 @@ router.post('/loginWithImap', async (req, res) => {
 
 let getProviderName = async (email) => {
     let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { imap_host: 1,port:1 }).catch(err => {
+    return await providerModel.findOne({ "domain_name": domain }, { imap_host: 1, port: 1 }).catch(err => {
         console.error(err.message, err.stack, "provider_3");
     });
 }
@@ -203,13 +213,16 @@ let saveProviderInfo = async (email) => {
             if (response.isValid) {
                 let mxString = response.mxArray.map(x => { return x.exchange }).toString();
                 let mxr = response.mxArray[0].exchange;
+                console.log(mxr)
                 let provider = "";
                 let login_url = "";
                 let two_step_url = "";
                 let imap_enable_url = "";
                 let imap_host = "";
-                let port="";
-                let explain_url="";
+                let port = "";
+                let explain_url = "";
+                let video_url = "";
+                // let less_secure_url = "";
 
                 if (mxr.includes("zoho")) {
                     provider = "zoho";
@@ -217,49 +230,50 @@ let saveProviderInfo = async (email) => {
                     imap_host = "imappro.zoho.com";
                     two_step_url = "https://accounts.zoho.com/signin?servicename=AaaServer&serviceurl=%2Fu%2Fh";
                     imap_enable_url = "https://accounts.zoho.com/signin?servicename=VirtualOffice&signupurl=https://www.zoho.com//mail/zohomail-pricing.html?src=zmail-signup&serviceurl=https%3A%2F%2Fmail.zoho.com%2Fzm%2F"
-                    explain_url ="https://www.zoho.com/mail/help/adminconsole/two-factor-authentication.html";
-                    port=993;
+                    explain_url = "https://www.zoho.com/mail/help/adminconsole/two-factor-authentication.html";
+                    port = 993;
                 } else if (mxr.includes("aol.mail")) {
                     provider = "aol";
                     login_url = "https://login.aol.com/";
                     imap_host = "imap.aol.com";
                     two_step_url = "https://login.aol.com/account/security";
                     imap_enable_url = "https://login.aol.com/account/security";
-                    explain_url = "https://help.aol.com/articles/allow-apps-that-use-less-secure-sign-in";
+                    // explain_url = "https://help.aol.com/articles/allow-apps-that-use-less-secure-sign-in";
+                    explain_url = "https://help.aol.com/articles/2-step-verification-stronger-than-your-password-alone";
                     port = 993;
-                }   else if (mxr.includes("yahoo")) {
+                } else if (mxr.includes("yahoo")) {
                     provider = "yahoo";
                     login_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
                     imap_host = "imap.mail.yahoo.com";
                     two_step_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
                     imap_enable_url = "https://login.yahoo.com/";
-                    explain_url ="https://help.yahoo.com/kb/SLN15241.html";
-                    port=993;
+                    explain_url = "https://help.yahoo.com/kb/SLN15241.html";
+                    port = 993;
                 } else if (mxr.includes("google")) {
                     provider = "gmail";
                     login_url = "https://accounts.google.com/signin/v2/identifier";
                     imap_host = "imap.gmail.com";
                     two_step_url = "https://accounts.google.com/signin/v2/sl/pwd?service=accountsettings&hl=en-US&continue=https%3A%2F%2Fmyaccount.google.com%2Fintro%2Fsecurity&csig=AF-SEnaOyCyBzaeOOzFJ%3A1561794482&flowName=GlifWebSignIn&flowEntry=ServiceLogin";
                     imap_enable_url = "https://accounts.google.com/signin/v2/identifier";
-                    explain_url ="https://support.google.com/mail/answer/185833?hl=en";
-                    port=993;
+                    explain_url = "https://support.google.com/mail/answer/185833?hl=en";
+                    port = 993;
                 } else if (mxr.includes("outlook")) {
                     provider = "outlook";
                     login_url = "https://login.live.com/login.srf";
                     imap_host = "imap-mail.outlook.com";
                     two_step_url = "https://login.live.com/login.srf?wa=wsignin1.0&rpsnv=13&ct=1562045255&rver=7.0.6738.0&wp=MBI_SSL&wreply=https%3A%2F%2Faccount.microsoft.com%2Fauth%2Fcomplete-signin%3Fru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Daccount.microsoft.com%2526ru%253Dhttps%25253A%25252F%25252Faccount.microsoft.com%25252Fsecurity%25253Frefd%25253Dsupport.microsoft.com%2526destrt%253Dsecurity-landing%2526refp%253Dsignedout-index&lc=1033&id=292666&lw=1&fl=easi2&ru=https%3A%2F%2Faccount.microsoft.com%2Faccount%2FManageMyAccount%3Frefd%3Dsupport.microsoft.com%26ru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Dsupport.microsoft.com%26destrt%3Dsecurity-landing";
                     imap_enable_url = "https://login.live.com/login.srf";
-                    explain_url="";
-                    port=993;
-                } else if (mxr.includes("rediffmail")){
+                    explain_url = "https://support.microsoft.com/en-us/help/12408/";
+                    port = 993;
+                } else if (mxr.includes("rediffmail")) {
                     provider = "rediffmail";
                     login_url = "https://mail.rediff.com/cgi-bin/login.cgi";
                     imap_host = "imap.rediffmail.com";
                     two_step_url = "https://mail.rediff.com/cgi-bin/login.cgi";
                     imap_enable_url = "https://mail.rediff.com/cgi-bin/login.cgi";
-                    explain_url="";
-                    port=143;
-                }else if (mxr.includes("yandex")) {
+                    explain_url = "";
+                    port = 143;
+                } else if (mxr.includes("yandex")) {
                     provider = "yandex";
                     login_url = "https://passport.yandex.com/auth";
                     imap_host = "imap.yandex.ru";
@@ -281,32 +295,47 @@ let saveProviderInfo = async (email) => {
                     imap_host = "imap.mail.ru";
                     two_step_url = "https://e.mail.ru/login";
                     imap_enable_url = "https://e.mail.ru/login";
-                    explain_url = "https://e.mail.ru/login";
+                    explain_url = "https://help.mail.ru/mail-help/security/2auth/activate";
                     port = 993;
                 } else if (mxr.includes("protonmail")) {
                     provider = "protonmail";
-                    login_url = "https://e.mail.ru/login";
+                    login_url = "https://mail.protonmail.com/login";
                     imap_host = "imap.protonmail.com";
-                    two_step_url = "https://e.mail.ru/login";
-                    imap_enable_url = "https://e.mail.ru/login";
-                    explain_url = "https://e.mail.ru/login";
+                    two_step_url = "https://mail.protonmail.com/login";
+                    imap_enable_url = "https://mail.protonmail.com/login";
+                    explain_url = "https://protonmail.com/support/knowledge-base/two-factor-authentication/";
                     port = 993;
-                }
-                else if (mxr.includes("me.com")) {
-                    provider = "icloud";
-                    login_url = "https://www.icloud.com/";
+                } else if (mxr.includes("me.com")) {
+                    provider = "me.com";
+                    login_url = "https://appleid.apple.com/#!&page=signin";
                     imap_host = "imap.mail.me.com";
-                    two_step_url = "https://www.icloud.com/";
-                    imap_enable_url = "https://www.icloud.com/";
-                    explain_url = "https://www.icloud.com/";
+                    two_step_url = "https://appleid.apple.com/";
+                    imap_enable_url = "https://appleid.apple.com/#!&page=signin";
+                    explain_url = "https://support.apple.com/en-in/HT207198";
+                    port = 993;
+                } else if (mxr.includes("icloud.com")) {
+                    provider = "icloud";
+                    login_url = "https://appleid.apple.com/#!&page=signin";
+                    imap_host = "imap.mail.me.com";
+                    two_step_url = "https://appleid.apple.com/";
+                    imap_enable_url = "https://appleid.apple.com/#!&page=signin";
+                    explain_url = "https://support.apple.com/en-in/HT207198";
                     port = 993;
                 } else if (mxr.includes("inbox")) {
-                    provider = "inbox.lv    ";
+                    provider = "inbox.lv";
                     login_url = "https://www.inbox.lv/";
                     imap_host = "mail.inbox.lv";
                     two_step_url = "https://www.inbox.lv/";
                     imap_enable_url = "https://www.inbox.lv/";
                     explain_url = "https://www.inbox.lv/";
+                    port = 993;
+                } else if (mxr.includes("mail.com")) {
+                    provider = "mail.com";
+                    login_url = "https://www.mail.com/int/";
+                    imap_host = "imap.mail.com";
+                    two_step_url = "https://www.mail.com/int/";
+                    imap_enable_url = "https://www.mail.com/int/";
+                    explain_url = "https://www.mail.com/int/";
                     port = 993;
                 } else {
                     provider = "null";
@@ -314,10 +343,10 @@ let saveProviderInfo = async (email) => {
                     imap_host = "null";
                     two_step_url = "null";
                     imap_enable_url = "null";
-                    explain_url="";
-                    port=null;
-                } 
-                let resp = await providerModel.findOneAndUpdate({ "domain_name": domain }, { $set: { explain_url,port,imap_host, mxString, provider, login_url, two_step_url, imap_enable_url } }, { upsert: true, new: true }).catch(err => {
+                    explain_url = "";
+                    port = null;
+                }
+                let resp = await providerModel.findOneAndUpdate({ "domain_name": domain }, { $set: { explain_url, port, imap_host, mxString, provider, login_url, two_step_url, imap_enable_url } }, { upsert: true, new: true }).catch(err => {
                     console.error(err.message, err.stack, "provider_2");
                 });
                 return resp;
@@ -338,7 +367,7 @@ router.post('/findEmailProvider', async (req, res) => {
             error: false,
             status: 200,
             data: response.login_url,
-            provider:response.provider,
+            provider: response.provider,
             explain_url: response.explain_url
         })
     } catch (error) {
@@ -648,8 +677,8 @@ async function connect(loginCred, err, cb) {
             password: your_password,
             host: provider.imap_host,
             port: provider.port,
-            tls: true,
-            ssl: true
+            tls: true,//provider.provider == "rediffmail" ? true : false,
+            ssl: true//provider.provider == "rediffmail" ? true : false
         });
         imap.once('ready', async () => {
             resolve(imap)
@@ -774,10 +803,10 @@ router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
         array.forEach(async element => {
             console.log(element)
             let validate = await EmailValidate.validate(element);
-            console.log("is valid",validate)
-            if(validate){
+            console.log("is valid", validate)
+            if (validate) {
                 await Controller.manualUnusedToUnsub(doc, element);
-                
+
             }
         });
         res.status(200).json({
@@ -977,7 +1006,6 @@ async function fetchAndFilter(imap, msgIds, detector) {
 async function trashzoho(imap, msgIds, tarash_lbl) {
     if (!msgIds || msgIds.length <= 0) return;
     console.log("trash", msgIds);
-    //for gmail userd [Gmail]/Trash
     await new Promise((resolve, reject) => {
         imap.move(msgIds, tarash_lbl, function (err) {
             (err ? reject(err) : resolve());
