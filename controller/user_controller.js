@@ -6,6 +6,7 @@ const DeviceInfo = require('../models/deviceoInfo');
 const AuthTokenModel = require('../models/authoToken');
 const emailDetailsModel = require('../models/emailDetails');
 const emailInformationModel = require('../models/emailInfo');
+const AppVersionModel = require('../models/appVersion');
 const userModel = require('../models/user');
 const router = express.Router();
 
@@ -39,6 +40,57 @@ router.post('/saveDeviceInfo', async (req, res) => {
         message: "success"
     });
 });
+
+router.post('/saveAppVersion', async (req, res) => {
+    try {
+        let auth_id = req.body.authID;
+        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+            console.error(err.message, err.stack);
+        });
+        if (doc) {
+            let data = {
+                "version_name": req.body.version_name,
+                "created_at": new Date()
+            };
+            await AppVersionModel.findOneAndUpdate({ "version_name": req.body.version_name }, data, { upsert: true }).catch(err => {
+                console.error(err.message, err.stack);
+            });
+            return res.json({
+                message: "success"
+            });
+        }
+        return res.status(400).json({
+            message: "fail"
+        });
+    } catch (ex) {
+        console.error(ex.message, ex.stack);
+    }
+});
+
+router.get('/getAppVersion', async (req, res) => {
+    try {
+        let auth_id = req.body.authID;
+        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+            console.error(err.message, err.stack);
+        });
+        if (doc) {
+            let versionData = await AppVersionModel.findOne().sort({ version_name: -1 }).limit(1).catch(err => {
+                console.error(err.message, err.stack);
+            });
+            return res.json({
+                message: "success",
+                version: versionData.version_name
+            });
+        }
+        return res.status(400).json({
+            message: "fail"
+        });
+    } catch (ex) {
+        console.error(ex.message, ex.stack);
+    }
+});
+
+
 
 
 /*

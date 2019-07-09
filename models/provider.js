@@ -29,6 +29,9 @@ var Provider = new Schema({
     },
     explain_url:{
         type:String
+    },
+    video_url:{
+        type:String
     }
 });
 
