@@ -232,7 +232,7 @@ let saveProviderInfo = async (email) => {
                 let imap_host = "";
                 let port = "";
                 let explain_url = "";
-                let video_url = "";
+                let video_url = null;
                 // let less_secure_url = "";
 
                 if (mxr.includes("zoho")) {
@@ -243,7 +243,8 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://accounts.zoho.com/signin?servicename=VirtualOffice&signupurl=https://www.zoho.com//mail/zohomail-pricing.html?src=zmail-signup&serviceurl=https%3A%2F%2Fmail.zoho.com%2Fzm%2F"
                     explain_url = "https://www.zoho.com/mail/help/adminconsole/two-factor-authentication.html";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    video_url = "https://www.youtube.com/watch?v=zSOlY0lT_Q0&feature=youtu.be";
+                    
                 } else if (mxr.includes("aol.mail")) {
                     provider = "aol";
                     login_url = "https://login.aol.com/";
@@ -253,7 +254,7 @@ let saveProviderInfo = async (email) => {
                     // explain_url = "https://help.aol.com/articles/allow-apps-that-use-less-secure-sign-in";
                     explain_url = "https://help.aol.com/articles/2-step-verification-stronger-than-your-password-alone";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else if (mxr.includes("yahoo")) {
                     provider = "yahoo";
                     login_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
@@ -262,7 +263,8 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://login.yahoo.com/";
                     explain_url = "https://help.yahoo.com/kb/SLN15241.html";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    video_url = "https://www.youtube.com/watch?v=T_vwn1JWrWA&feature=youtu.be";
+                    
                 } else if (mxr.includes("google")) {
                     provider = "gmail";
                     login_url = "https://accounts.google.com/signin/v2/identifier";
@@ -271,7 +273,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://accounts.google.com/signin/v2/identifier";
                     explain_url = "https://support.google.com/mail/answer/185833?hl=en";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else if (mxr.includes("outlook")) {
                     provider = "outlook";
                     login_url = "https://login.live.com/login.srf";
@@ -280,7 +282,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://login.live.com/login.srf";
                     explain_url = "https://support.microsoft.com/en-us/help/12408/";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else if (mxr.includes("rediffmail")) {
                     provider = "rediffmail";
                     login_url = "https://mail.rediff.com/cgi-bin/login.cgi";
@@ -289,7 +291,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://mail.rediff.com/cgi-bin/login.cgi";
                     explain_url = "";
                     port = 143;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else if (mxr.includes("yandex")) {
                     provider = "yandex";
                     login_url = "https://passport.yandex.com/auth";
@@ -298,7 +300,8 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://passport.yandex.com/auth";
                     explain_url = "https://yandex.com/support/passport/authorization/twofa-on.html";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    video_url = "https://www.youtube.com/watch?v=fd92FquFodU&feature=youtu.be";
+                    
                 } else if (mxr.includes("gmx")) {
                     provider = "gmx";
                     login_url = "https://www.gmx.com/";
@@ -307,7 +310,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://www.gmx.com/";
                     explain_url = "https://www.gmx.com/";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else if (mxr.includes("mail.ru")) {
                     provider = "mail.ru";
                     login_url = "https://e.mail.ru/login";
@@ -316,7 +319,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://e.mail.ru/login";
                     explain_url = "https://help.mail.ru/mail-help/security/2auth/activate";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else if (mxr.includes("protonmail")) {
                     provider = "protonmail";
                     login_url = "https://mail.protonmail.com/login";
@@ -325,7 +328,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://mail.protonmail.com/login";
                     explain_url = "https://protonmail.com/support/knowledge-base/two-factor-authentication/";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else if (mxr.includes("me.com")) {
                     provider = "me.com";
                     login_url = "https://appleid.apple.com/#!&page=signin";
@@ -334,7 +337,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://appleid.apple.com/#!&page=signin";
                     explain_url = "https://support.apple.com/en-in/HT207198";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else if (mxr.includes("icloud.com")) {
                     provider = "icloud";
                     login_url = "https://appleid.apple.com/#!&page=signin";
@@ -343,7 +346,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://appleid.apple.com/#!&page=signin";
                     explain_url = "https://support.apple.com/en-in/HT207198";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else if (mxr.includes("inbox")) {
                     provider = "inbox.lv";
                     login_url = "https://www.inbox.lv/";
@@ -352,7 +355,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://www.inbox.lv/";
                     explain_url = "https://www.inbox.lv/";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else if (mxr.includes("mail.com")) {
                     provider = "mail.com";
                     login_url = "https://www.mail.com/int/";
@@ -361,7 +364,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://www.mail.com/int/";
                     explain_url = "https://www.mail.com/int/";
                     port = 993;
-                    video_url = "https://www.youtube.com/watch?v=y7Q1sic3czU";
+                    
                 } else {
                     provider = "null";
                     login_url = "null";
