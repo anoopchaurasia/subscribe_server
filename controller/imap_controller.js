@@ -83,7 +83,7 @@ router.post('/loginWithImap', async (req, res) => {
                     console.error(err.message, err.stack, "inbox creation");
                 });
             }
-            console.log(names)
+            // console.log(names)
             let labels = names.filter(s => s.toLowerCase().includes('trash')) || names.filter(x => x.toLowerCase().includes('junk'));
             if (labels.length == 0) {
                 labels = names.filter(x => x.toLowerCase().includes('junk'));
@@ -104,7 +104,7 @@ router.post('/loginWithImap', async (req, res) => {
                     console.error(err.message, err.stack);
                 });
             }
-            await UserModel.findOneAndUpdate({ "email": EMAIL }, { "trash_label": trash_label, "password": PASSWORD, "email_client": "imap" }, { upsert: true });
+            await UserModel.findOneAndUpdate({ "email": EMAIL }, { "unsub_label":"Unsubscribed Emails","trash_label": trash_label, "password": PASSWORD, "email_client": "imap" }, { upsert: true });
             let response = await create_token(user);
             if (response) {
                 imap.end(imap);
@@ -157,8 +157,6 @@ let getImapEnableUrl = async (email) => {
         console.error(err.message, err.stack, "provider_6");
     });
 }
-
-
 
 router.post('/getTwoStepUrl', async (req, res) => {
     try {

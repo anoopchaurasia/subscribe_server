@@ -15,7 +15,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         me.base(myImap.user._id);
     }
 
-
     this.start = async function (cb) {
         console.log("start")
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
@@ -27,7 +26,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             await seenMailScrap(seen);
         }
     };
-
 
     this.update = async function (cb) {
         console.log("update")

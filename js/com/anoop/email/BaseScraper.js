@@ -20,7 +20,7 @@ fm.Class('BaseScraper', function (me, BaseController) {
     this.handleEamil = async function (data, automatic) {
         let emaildetailraw = await BaseController.dataToEmailDetailRaw(data, me.user_id);
         let emaildetail = await BaseController.getEmailDetailFromData(emaildetailraw);
-        
+
         if (emaildetail && emaildetail.status == "move") {
             await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
             return automatic(data, "move")

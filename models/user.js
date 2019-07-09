@@ -52,6 +52,9 @@ var UserSchema = new Schema({
     },
     dob:{
         type:Number
+    },
+    unsub_label:{
+        type:String
     }
 
 });

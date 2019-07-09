@@ -82,7 +82,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Provider)
         return  ids.map(x=> {
             return Emailinfo.fromEamil({email_id: x, labelIds:[]}, emaildetail._id);
         });
-
     }
     
     Static.inboxToTrashBySender = async function(token, sender_email) {
@@ -129,4 +128,5 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Provider)
             del_data && await RedisDB.delKEY(keylist);
         }
     }
+    
 });

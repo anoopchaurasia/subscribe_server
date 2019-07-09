@@ -161,7 +161,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await myImap.connect(provider).catch(err => {
             console.error(err.message, err.stack, "imap connect here");
         });
-        await myImap.openFolder("Unsubscribed Emails");
+        await myImap.openFolder(myImap.user.unsub_label);
         await Label.moveUnsubToInbox(myImap, from_email);
         await myImap.closeFolder();
         let emaildetail = await me.getEmailDetail(token.user_id, from_email);
@@ -178,7 +178,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await myImap.connect(provider).catch(err => {
             console.error(err.message, err.stack, "imap connect here");
         });
-        await myImap.openFolder("Unsubscribed Emails");
+        await myImap.openFolder(myImap.user.unsub_label);
         await Label.moveUnsubToTrash(myImap, from_email);
         await myImap.closeFolder();
         let emaildetail = await me.getEmailDetail(token.user_id, from_email);

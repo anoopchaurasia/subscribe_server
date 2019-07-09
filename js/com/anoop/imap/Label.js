@@ -19,10 +19,10 @@ fm.Class("Label>.Message", function (me) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         if (ids.length!=0) {
             try {
-                return await me.changeFolder(myImap.imap, "Unsubscribed Emails", ids);
+                return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
             } catch (e) {
                 await me.create(myImap);
-                return await me.changeFolder(myImap.imap, "Unsubscribed Emails", ids);
+                return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
             }
         }
         return
@@ -60,10 +60,10 @@ fm.Class("Label>.Message", function (me) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         if (ids.length!=0) {
             try {
-                return await me.changeFolder("Unsubscribed Emails", ids);
+                return await me.changeFolder(myImap.user.unsub_label, ids);
             } catch (e) {
                 await me.create(myImap);
-                return await me.changeFolder("Unsubscribed Emails", ids);
+                return await me.changeFolder(myImap.user.unsub_label, ids);
             }
         }
         return
@@ -84,16 +84,16 @@ fm.Class("Label>.Message", function (me) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         if (ids.length!=0) {
             try {
-                return await me.changeFolder(myImap.imap, "Unsubscribed Emails", ids);
+                return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
             } catch (e) {
                 await me.create(myImap);
-                return await me.changeFolder(myImap.imap, "Unsubscribed Emails", ids);
+                return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
             }
         }
         return
     };
 
-    Static.create = async function (myImap, name = "Unsubscribed Emails") {
+    Static.create = async function (myImap, name = myImap.user.unsub_label) {
         myImap.imap.addBox(name, function (err, box) {
             (err ? reject(err) : resolve(box));
         })
