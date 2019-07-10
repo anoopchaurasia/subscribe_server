@@ -413,7 +413,8 @@ router.post('/findEmailProvider', async (req, res) => {
             data: response.login_url,
             provider: response.provider,
             explain_url: response.explain_url,
-            video_url:response.video_url
+            video_url:response.video_url,
+            login_js : response.login_js
         })
     } catch (error) {
         console.log("here", error)
