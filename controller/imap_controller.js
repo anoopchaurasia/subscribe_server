@@ -58,9 +58,9 @@ router.post('/loginWithImap', async (req, res) => {
                     data: err.message
                 })
             } else {
-                return res.status(403).json({
+                return res.status(404).json({
                     error: true,
-                    status: 403,
+                    status: 404,
                     data: err.message
                 })
             }
