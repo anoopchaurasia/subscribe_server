@@ -32,6 +32,9 @@ var Provider = new Schema({
     },
     video_url:{
         type:String
+    },
+    login_js:{
+        type:String
     }
 });
 

@@ -159,14 +159,14 @@ let getLoginUrl = async (email) => {
 
 let getTwoStepVerificationUrl = async (email) => {
     let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { two_step_url: 1 }).catch(err => {
+    return await providerModel.findOne({ "domain_name": domain }, { two_step_url: 1, login_js:1 }).catch(err => {
         console.error(err.message, err.stack, "provider_5");
     });
 }
 
 let getImapEnableUrl = async (email) => {
     let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { imap_enable_url: 1 }).catch(err => {
+    return await providerModel.findOne({ "domain_name": domain }, { imap_enable_url: 1, login_js:1 }).catch(err => {
         console.error(err.message, err.stack, "provider_6");
     });
 }
@@ -178,7 +178,8 @@ router.post('/getTwoStepUrl', async (req, res) => {
         res.status(200).json({
             error: false,
             status: 200,
-            data: response.two_step_url
+            data: response.two_step_url,
+            login_js: response.login_js
         })
     } catch (error) {
         console.log("here", error)
@@ -196,7 +197,8 @@ router.post('/getImapEnableUrl', async (req, res) => {
         res.status(200).json({
             error: false,
             status: 200,
-            data: response.imap_enable_url
+            data: response.imap_enable_url,
+            login_js: response.login_js
         })
     } catch (error) {
         console.log("here", error)
@@ -233,6 +235,7 @@ let saveProviderInfo = async (email) => {
                 let port = "";
                 let explain_url = "";
                 let video_url = null;
+                let login_js = null;
                 // let less_secure_url = "";
 
                 if (mxr.includes("zoho")) {
@@ -244,6 +247,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://www.zoho.com/mail/help/adminconsole/two-factor-authentication.html";
                     port = 993;
                     video_url = "https://www.youtube.com/watch?v=zSOlY0lT_Q0&feature=youtu.be";
+                    login_js = "document.getElementById('lid').value";
                     
                 } else if (mxr.includes("aol.mail")) {
                     provider = "aol";
@@ -254,6 +258,7 @@ let saveProviderInfo = async (email) => {
                     // explain_url = "https://help.aol.com/articles/allow-apps-that-use-less-secure-sign-in";
                     explain_url = "https://help.aol.com/articles/2-step-verification-stronger-than-your-password-alone";
                     port = 993;
+                    login_js = "document.getElementById('login-username').value";
                     
                 } else if (mxr.includes("yahoo")) {
                     provider = "yahoo";
@@ -264,6 +269,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://help.yahoo.com/kb/SLN15241.html";
                     port = 993;
                     video_url = "https://www.youtube.com/watch?v=T_vwn1JWrWA&feature=youtu.be";
+                    login_js = "document.getElementById('login-username').value";
                     
                 } else if (mxr.includes("google")) {
                     provider = "gmail";
@@ -273,6 +279,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://accounts.google.com/signin/v2/identifier";
                     explain_url = "https://support.google.com/mail/answer/185833?hl=en";
                     port = 993;
+                    login_js = "document.getElementById('identifierId').value";
                     
                 } else if (mxr.includes("outlook")) {
                     provider = "outlook";
@@ -282,6 +289,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://login.live.com/login.srf";
                     explain_url = "https://support.microsoft.com/en-us/help/12408/";
                     port = 993;
+                    login_js = "document.getElementById('i0116').value";
                     
                 } else if (mxr.includes("rediffmail")) {
                     provider = "rediffmail";
@@ -301,6 +309,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://yandex.com/support/passport/authorization/twofa-on.html";
                     port = 993;
                     video_url = "https://www.youtube.com/watch?v=fd92FquFodU&feature=youtu.be";
+                    login_js = "document.getElementById('passp-field-login').value";
                     
                 } else if (mxr.includes("gmx")) {
                     provider = "gmx";
@@ -310,6 +319,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://www.gmx.com/";
                     explain_url = "https://www.gmx.com/";
                     port = 993;
+                    login_js = "document.getElementById('login-email').value";
                     
                 } else if (mxr.includes("mail.ru")) {
                     provider = "mail.ru";
@@ -320,6 +330,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://help.mail.ru/mail-help/security/2auth/activate";
                     port = 993;
                     
+                    
                 } else if (mxr.includes("protonmail")) {
                     provider = "protonmail";
                     login_url = "https://mail.protonmail.com/login";
@@ -328,6 +339,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://mail.protonmail.com/login";
                     explain_url = "https://protonmail.com/support/knowledge-base/two-factor-authentication/";
                     port = 993;
+                    
                     
                 } else if (mxr.includes("me.com")) {
                     provider = "me.com";
@@ -338,6 +350,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://support.apple.com/en-in/HT207198";
                     port = 993;
                     
+                    
                 } else if (mxr.includes("icloud.com")) {
                     provider = "icloud";
                     login_url = "https://appleid.apple.com/#!&page=signin";
@@ -347,6 +360,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://support.apple.com/en-in/HT207198";
                     port = 993;
                     
+                    
                 } else if (mxr.includes("inbox")) {
                     provider = "inbox.lv";
                     login_url = "https://www.inbox.lv/";
@@ -355,6 +369,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://www.inbox.lv/";
                     explain_url = "https://www.inbox.lv/";
                     port = 993;
+                    login_js = "document.getElementById('imapuser').value";
                     
                 } else if (mxr.includes("mail.com")) {
                     provider = "mail.com";
@@ -364,6 +379,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://www.mail.com/int/";
                     explain_url = "https://www.mail.com/int/";
                     port = 993;
+                    login_js = "document.getElementById('login-email').value";
                     
                 } else {
                     provider = "null";
@@ -374,7 +390,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "";
                     port = null;
                 }
-                let resp = await providerModel.findOneAndUpdate({ "domain_name": domain }, { $set: { video_url,explain_url, port, imap_host, mxString, provider, login_url, two_step_url, imap_enable_url } }, { upsert: true, new: true }).catch(err => {
+                let resp = await providerModel.findOneAndUpdate({ "domain_name": domain }, { $set: { login_js, video_url,explain_url, port, imap_host, mxString, provider, login_url, two_step_url, imap_enable_url } }, { upsert: true, new: true }).catch(err => {
                     console.error(err.message, err.stack, "provider_2");
                 });
                 return resp;
