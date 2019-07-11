@@ -30,6 +30,9 @@ var emaildetail = new Schema({
     },
     main_label:{
         type:Array
+    },
+    source:{
+        type:String
     }
 });
 emaildetail.index({ from_email: 1, user_id: 1});

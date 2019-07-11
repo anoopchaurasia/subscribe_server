@@ -14,9 +14,11 @@ var crypto = require('crypto');
 var randomstring = require("randomstring");
 var dns = require('dns');
 var legit = require('legit');
-const TWO_MONTH_TIME_IN_MILI = 2 * 30 * 24 * 60 * 60 * 1000;
+const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
+fm.Include("com.anoop.email.Email");
+let EmailValidate = com.anoop.email.Email;
 
 router.post('/loginWithImap', async (req, res) => {
     try {
@@ -28,19 +30,37 @@ router.post('/loginWithImap', async (req, res) => {
         var cipher = crypto.createCipher(algorithm, key);
         var encrypted = cipher.update(new_password, 'utf8', 'hex') + cipher.final('hex');
         PASSWORD = encrypted;
-        await saveProviderInfo(EMAIL);
+        let profile = await saveProviderInfo(EMAIL);
         const imap = await connect({ EMAIL, PASSWORD }).catch(err => {
             console.error(err.message, err, "imap_connect_error");
-            if (err.message.includes("Invalid credentials")){
+            if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
+                return res.status(403).json({
+                    error: true,
+                    status: 403,
+                    data: err.message
+                })
+            } else if (err.message.includes("Invalid credentials")) {
                 return res.status(401).json({
                     error: true,
                     status: 401,
                     data: err.message
                 })
-            }else{
-                return res.status(403).json({
+            } else if (err.message.includes("Timed out")) {
+                return res.status(402).json({
                     error: true,
-                    status: 403,
+                    status: 402,
+                    data: err.message
+                })
+            } else if (err.message.includes("Application specific password")) {
+                return res.status(404).json({
+                    error: true,
+                    status: 404,
+                    data: err.message
+                })
+            } else {
+                return res.status(404).json({
+                    error: true,
+                    status: 404,
                     data: err.message
                 })
             }
@@ -60,9 +80,23 @@ router.post('/loginWithImap', async (req, res) => {
             });
             console.log(names)
             if (!names.includes("Unsubscribed Emails")) {
-                await createInbox(imap);
+                console.log(profile.provider)
+                if (profile.provider.includes("inbox.lv")) {
+                    console.log(profile.provider,"here came")
+                    await createInboxForLV(imap).catch(err => {
+                        console.error(err.message, err.stack, "inbox creation");
+                    });
+                }else{
+                    await createInbox(imap).catch(err => {
+                        console.error(err.message, err.stack, "inbox creation");
+                    });
+                }
             }
-            let labels = names.filter(s => s.toLowerCase().includes('trash'));
+            // console.log(names)
+            let labels = names.filter(s => s.toLowerCase().includes('trash')) || names.filter(x => x.toLowerCase().includes('junk'));
+            if (labels.length == 0) {
+                labels = names.filter(x => x.toLowerCase().includes('junk'));
+            }
             let trash_label = "";
             if (labels.length != 0) {
                 trash_label = labels[0];
@@ -73,11 +107,16 @@ router.post('/loginWithImap', async (req, res) => {
                     "email": EMAIL,
                     "password": PASSWORD,
                     "trash_label": trash_label,
-                    "email_client":"imap"
+                    "email_client": "imap"
                 });
                 user = await newUser.save().catch(err => {
                     console.error(err.message, err.stack);
                 });
+            }
+            if (profile.provider.includes("inbox.lv")) {
+                await UserModel.findOneAndUpdate({ "email": EMAIL }, { "unsub_label":"INBOX/Unsubscribed Emails","trash_label": trash_label, "password": PASSWORD, "email_client": "imap" }, { upsert: true });
+            }else{
+                await UserModel.findOneAndUpdate({ "email": EMAIL }, { "unsub_label": "Unsubscribed Emails", "trash_label": trash_label, "password": PASSWORD, "email_client": "imap" }, { upsert: true });
             }
             let response = await create_token(user);
             if (response) {
@@ -85,7 +124,8 @@ router.post('/loginWithImap', async (req, res) => {
                 return res.status(200).json({
                     error: false,
                     status: 200,
-                    data: response
+                    data: response,
+                    provider: profile.provider
                 })
             } else {
                 return res.status(404).json({
@@ -105,7 +145,7 @@ router.post('/loginWithImap', async (req, res) => {
 
 let getProviderName = async (email) => {
     let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { imap_host: 1 }).catch(err => {
+    return await providerModel.findOne({ "domain_name": domain }, { imap_host: 1, port: 1 }).catch(err => {
         console.error(err.message, err.stack, "provider_3");
     });
 }
@@ -119,19 +159,17 @@ let getLoginUrl = async (email) => {
 
 let getTwoStepVerificationUrl = async (email) => {
     let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { two_step_url: 1 }).catch(err => {
+    return await providerModel.findOne({ "domain_name": domain }, { two_step_url: 1, login_js:1 }).catch(err => {
         console.error(err.message, err.stack, "provider_5");
     });
 }
 
 let getImapEnableUrl = async (email) => {
     let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { imap_enable_url: 1 }).catch(err => {
+    return await providerModel.findOne({ "domain_name": domain }, { imap_enable_url: 1, login_js:1 }).catch(err => {
         console.error(err.message, err.stack, "provider_6");
     });
 }
-
-
 
 router.post('/getTwoStepUrl', async (req, res) => {
     try {
@@ -140,7 +178,8 @@ router.post('/getTwoStepUrl', async (req, res) => {
         res.status(200).json({
             error: false,
             status: 200,
-            data: response.two_step_url
+            data: response.two_step_url,
+            login_js: response.login_js
         })
     } catch (error) {
         console.log("here", error)
@@ -158,7 +197,8 @@ router.post('/getImapEnableUrl', async (req, res) => {
         res.status(200).json({
             error: false,
             status: 200,
-            data: response.imap_enable_url
+            data: response.imap_enable_url,
+            login_js: response.login_js
         })
     } catch (error) {
         console.log("here", error)
@@ -171,12 +211,9 @@ router.post('/getImapEnableUrl', async (req, res) => {
 
 
 
-
-
-
-
 let saveProviderInfo = async (email) => {
     try {
+        console.log(email)
         var domain = email.split('@')[1];
         let resp = await providerModel.findOne({ "domain_name": domain }).catch(err => {
             console.error(err.message, err.stack, "provider_1");
@@ -186,60 +223,176 @@ let saveProviderInfo = async (email) => {
             return resp;
         } else {
             const response = await legit(email);
-            console.log(response)
             if (response.isValid) {
                 let mxString = response.mxArray.map(x => { return x.exchange }).toString();
                 let mxr = response.mxArray[0].exchange;
+                console.log(mxr)
                 let provider = "";
                 let login_url = "";
                 let two_step_url = "";
                 let imap_enable_url = "";
                 let imap_host = "";
+                let port = "";
+                let explain_url = "";
+                let video_url = null;
+                let login_js = null;
+                // let less_secure_url = "";
+
                 if (mxr.includes("zoho")) {
                     provider = "zoho";
                     login_url = "https://accounts.zoho.com/u/h#home";
                     imap_host = "imappro.zoho.com";
                     two_step_url = "https://accounts.zoho.com/signin?servicename=AaaServer&serviceurl=%2Fu%2Fh";
                     imap_enable_url = "https://accounts.zoho.com/signin?servicename=VirtualOffice&signupurl=https://www.zoho.com//mail/zohomail-pricing.html?src=zmail-signup&serviceurl=https%3A%2F%2Fmail.zoho.com%2Fzm%2F"
+                    explain_url = "https://www.zoho.com/mail/help/adminconsole/two-factor-authentication.html";
+                    port = 993;
+                    video_url = "https://www.youtube.com/watch?v=zSOlY0lT_Q0&feature=youtu.be";
+                    login_js = "document.getElementById('lid').value";
+                    
+                } else if (mxr.includes("aol.mail")) {
+                    provider = "aol";
+                    login_url = "https://login.aol.com/";
+                    imap_host = "imap.aol.com";
+                    two_step_url = "https://login.aol.com/account/security";
+                    imap_enable_url = "https://login.aol.com/account/security";
+                    // explain_url = "https://help.aol.com/articles/allow-apps-that-use-less-secure-sign-in";
+                    explain_url = "https://help.aol.com/articles/2-step-verification-stronger-than-your-password-alone";
+                    port = 993;
+                    login_js = "document.getElementById('login-username').value";
+                    
                 } else if (mxr.includes("yahoo")) {
                     provider = "yahoo";
                     login_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
                     imap_host = "imap.mail.yahoo.com";
                     two_step_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
                     imap_enable_url = "https://login.yahoo.com/";
+                    explain_url = "https://help.yahoo.com/kb/SLN15241.html";
+                    port = 993;
+                    video_url = "https://www.youtube.com/watch?v=T_vwn1JWrWA&feature=youtu.be";
+                    login_js = "document.getElementById('login-username').value";
+                    
                 } else if (mxr.includes("google")) {
                     provider = "gmail";
                     login_url = "https://accounts.google.com/signin/v2/identifier";
                     imap_host = "imap.gmail.com";
                     two_step_url = "https://accounts.google.com/signin/v2/sl/pwd?service=accountsettings&hl=en-US&continue=https%3A%2F%2Fmyaccount.google.com%2Fintro%2Fsecurity&csig=AF-SEnaOyCyBzaeOOzFJ%3A1561794482&flowName=GlifWebSignIn&flowEntry=ServiceLogin";
                     imap_enable_url = "https://accounts.google.com/signin/v2/identifier";
+                    explain_url = "https://support.google.com/mail/answer/185833?hl=en";
+                    port = 993;
+                    login_js = "document.getElementById('identifierId').value";
+                    
                 } else if (mxr.includes("outlook")) {
                     provider = "outlook";
                     login_url = "https://login.live.com/login.srf";
-                    imap_host = "imap-mail.outlook.com	";
+                    imap_host = "imap-mail.outlook.com";
                     two_step_url = "https://login.live.com/login.srf?wa=wsignin1.0&rpsnv=13&ct=1562045255&rver=7.0.6738.0&wp=MBI_SSL&wreply=https%3A%2F%2Faccount.microsoft.com%2Fauth%2Fcomplete-signin%3Fru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Daccount.microsoft.com%2526ru%253Dhttps%25253A%25252F%25252Faccount.microsoft.com%25252Fsecurity%25253Frefd%25253Dsupport.microsoft.com%2526destrt%253Dsecurity-landing%2526refp%253Dsignedout-index&lc=1033&id=292666&lw=1&fl=easi2&ru=https%3A%2F%2Faccount.microsoft.com%2Faccount%2FManageMyAccount%3Frefd%3Dsupport.microsoft.com%26ru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Dsupport.microsoft.com%26destrt%3Dsecurity-landing";
                     imap_enable_url = "https://login.live.com/login.srf";
+                    explain_url = "https://support.microsoft.com/en-us/help/12408/";
+                    port = 993;
+                    login_js = "document.getElementById('i0116').value";
+                    
+                } else if (mxr.includes("rediffmail")) {
+                    provider = "rediffmail";
+                    login_url = "https://mail.rediff.com/cgi-bin/login.cgi";
+                    imap_host = "imap.rediffmail.com";
+                    two_step_url = "https://mail.rediff.com/cgi-bin/login.cgi";
+                    imap_enable_url = "https://mail.rediff.com/cgi-bin/login.cgi";
+                    explain_url = "";
+                    port = 143;
+                    
                 } else if (mxr.includes("yandex")) {
                     provider = "yandex";
                     login_url = "https://passport.yandex.com/auth";
                     imap_host = "imap.yandex.ru";
-                } else if (mxr.includes("mail")) {
-                    provider = "mail";
-                    login_url = "https://e.mail.ru/login";
-                    imap_host = "imap.mail.ru";
+                    two_step_url = "https://passport.yandex.com/profile/access/2fa?origin=passport_profile&uid=900317203";
+                    imap_enable_url = "https://passport.yandex.com/auth";
+                    explain_url = "https://yandex.com/support/passport/authorization/twofa-on.html";
+                    port = 993;
+                    video_url = "https://www.youtube.com/watch?v=fd92FquFodU&feature=youtu.be";
+                    login_js = "document.getElementById('passp-field-login').value";
+                    
                 } else if (mxr.includes("gmx")) {
                     provider = "gmx";
                     login_url = "https://www.gmx.com/";
-                    imap_host = "imap.gmx.net";
-                } else if (mxr.includes("icloud")) {
-                    provider = "icloud",
-                        login_url = "https://www.icloud.com/",
-                        imap_host = "imap.mail.me.com";
+                    imap_host = "imap.gmx.com";
+                    two_step_url = "https://www.gmx.com/";
+                    imap_enable_url = "https://www.gmx.com/";
+                    explain_url = "https://www.gmx.com/";
+                    port = 993;
+                    login_js = "document.getElementById('login-email').value";
+                    
+                } else if (mxr.includes("mail.ru")) {
+                    provider = "mail.ru";
+                    login_url = "https://e.mail.ru/login";
+                    imap_host = "imap.mail.ru";
+                    two_step_url = "https://e.mail.ru/login";
+                    imap_enable_url = "https://e.mail.ru/login";
+                    explain_url = "https://help.mail.ru/mail-help/security/2auth/activate";
+                    port = 993;
+                    
+                    
+                } else if (mxr.includes("protonmail")) {
+                    provider = "protonmail";
+                    login_url = "https://mail.protonmail.com/login";
+                    imap_host = "imap.protonmail.com";
+                    two_step_url = "https://mail.protonmail.com/login";
+                    imap_enable_url = "https://mail.protonmail.com/login";
+                    explain_url = "https://protonmail.com/support/knowledge-base/two-factor-authentication/";
+                    port = 993;
+                    
+                    
+                } else if (mxr.includes("me.com")) {
+                    provider = "me.com";
+                    login_url = "https://appleid.apple.com/#!&page=signin";
+                    imap_host = "imap.mail.me.com";
+                    two_step_url = "https://appleid.apple.com/";
+                    imap_enable_url = "https://appleid.apple.com/#!&page=signin";
+                    explain_url = "https://support.apple.com/en-in/HT207198";
+                    port = 993;
+                    
+                    
+                } else if (mxr.includes("icloud.com")) {
+                    provider = "icloud";
+                    login_url = "https://appleid.apple.com/#!&page=signin";
+                    imap_host = "imap.mail.me.com";
+                    two_step_url = "https://appleid.apple.com/";
+                    imap_enable_url = "https://appleid.apple.com/#!&page=signin";
+                    explain_url = "https://support.apple.com/en-in/HT207198";
+                    port = 993;
+                    
+                    
+                } else if (mxr.includes("inbox")) {
+                    provider = "inbox.lv";
+                    login_url = "https://www.inbox.lv/";
+                    imap_host = "mail.inbox.lv";
+                    two_step_url = "https://www.inbox.lv/";
+                    imap_enable_url = "https://www.inbox.lv/";
+                    explain_url = "https://www.inbox.lv/";
+                    port = 993;
+                    login_js = "document.getElementById('imapuser').value";
+                    
+                } else if (mxr.includes("mail.com")) {
+                    provider = "mail.com";
+                    login_url = "https://www.mail.com/int/";
+                    imap_host = "imap.mail.com";
+                    two_step_url = "https://www.mail.com/int/";
+                    imap_enable_url = "https://www.mail.com/int/";
+                    explain_url = "https://www.mail.com/int/";
+                    port = 993;
+                    login_js = "document.getElementById('login-email').value";
+                    
+                } else {
+                    provider = "null";
+                    login_url = "null";
+                    imap_host = "null";
+                    two_step_url = "null";
+                    imap_enable_url = "null";
+                    explain_url = "";
+                    port = null;
                 }
-                let resp = await providerModel.findOneAndUpdate({ "domain_name": domain }, { $set: { imap_host, mxString, provider, login_url, two_step_url, imap_enable_url } }, { upsert: true, new: true }).catch(err => {
+                let resp = await providerModel.findOneAndUpdate({ "domain_name": domain }, { $set: { login_js, video_url,explain_url, port, imap_host, mxString, provider, login_url, two_step_url, imap_enable_url } }, { upsert: true, new: true }).catch(err => {
                     console.error(err.message, err.stack, "provider_2");
                 });
-                console.log("response here", resp)
                 return resp;
             }
         }
@@ -257,7 +410,11 @@ router.post('/findEmailProvider', async (req, res) => {
         res.status(200).json({
             error: false,
             status: 200,
-            data: response.login_url
+            data: response.login_url,
+            provider: response.provider,
+            explain_url: response.explain_url,
+            video_url:response.video_url,
+            login_js : response.login_js
         })
     } catch (error) {
         console.log("here", error)
@@ -289,7 +446,7 @@ router.post('/readZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
         console.log(doc)
-        Controller.extractEmail(doc);
+        await Controller.extractEmail(doc);
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -413,7 +570,7 @@ router.post('/saveProfileInfo', async (req, res) => {
         const doc = await token_model.findOne({ "token": req.body.token });
         if (doc) {
             let userObj = {
-                 name: req.body.name,
+                name: req.body.name,
                 "dob": req.body.dob,
                 "gender": req.body.sex
             };
@@ -549,7 +706,6 @@ router.post('/loginImap', async (req, res) => {
 });
 
 async function connect(loginCred, err, cb) {
-    console.log(loginCred)
     let { EMAIL, PASSWORD } = loginCred;
     var algorithm = 'aes256';
     // secret key
@@ -560,17 +716,15 @@ async function connect(loginCred, err, cb) {
     var remove_padding = decrypted.slice(8, decrypted.length - 6)
     var your_password = remove_padding.substring(0, 3) + remove_padding.substring(7, remove_padding.length);
     let provider = await getProviderName(EMAIL);
-    console.log(provider.imap_host)
-    console.log(EMAIL, your_password)
     return new Promise((resolve, reject) => {
 
         const imap = new Imap({
             user: EMAIL,
             password: your_password,
             host: provider.imap_host,
-            port: 993,
-            tls: true,
-            ssl:true
+            port: provider.port,
+            tls: true,//provider.provider == "rediffmail" ? true : false,
+            ssl: true//provider.provider == "rediffmail" ? true : false
         });
         imap.once('ready', async () => {
             resolve(imap)
@@ -584,7 +738,7 @@ async function connect(loginCred, err, cb) {
 router.post('/trashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.unusedToTrash(doc,req.body.fromEmail);
+        await Controller.unusedToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -604,7 +758,7 @@ router.post('/trashZohoMail', async (req, res) => {
 router.post('/keepZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.unusedToKeep(doc,req.body.fromEmail);
+        await Controller.unusedToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "keep"
@@ -619,7 +773,7 @@ router.post('/keepZohoMail', async (req, res) => {
 router.post('/unsubscribeZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.unusedToUnsub(doc,req.body.fromEmail);
+        await Controller.unusedToUnsub(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -636,7 +790,7 @@ router.post('/unsubscribeZohoMail', async (req, res) => {
 router.post('/revertUnsubscribeZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.unsubToKeep(doc,req.body.fromEmail);
+        await Controller.unsubToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtokeep"
@@ -654,7 +808,7 @@ router.post('/revertUnsubscribeZohoMail', async (req, res) => {
 router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.unsubToTrash(doc,req.body.fromEmail);
+        await Controller.unsubToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtotrash"
@@ -672,7 +826,7 @@ router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
 router.post('/leftInboxToTrashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.keepToTrash(doc,req.body.fromEmail);
+        await Controller.keepToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -687,10 +841,61 @@ router.post('/leftInboxToTrashZohoMail', async (req, res) => {
 });
 
 
+router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let sender_email = req.body.sender_email;
+        let array = sender_email.split(",") || sender_email.split(";");
+        array.forEach(async element => {
+            console.log(element)
+            let validate = await EmailValidate.validate(element);
+            console.log("is valid", validate)
+            if (validate) {
+                await Controller.manualUnusedToUnsub(doc, element);
+
+            }
+        });
+        res.status(200).json({
+            error: false,
+            data: "scrape"
+        })
+
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+});
+
+
+router.post('/imapManualTrashEmailFromUser', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let sender_email = req.body.sender_email;
+        let array = sender_email.split(",") || sender_email.split(";");
+        array.forEach(async element => {
+            console.log(element)
+            let validate = await EmailValidate.validate(element);
+            console.log("is valid", validate)
+            if (validate) {
+                await Controller.manualUnusedToTrash(doc, element);
+            }
+        });
+        res.status(200).json({
+            error: false,
+            data: "scrape"
+        })
+
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+});
+
+
 router.post('/revertTrashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.trashToKeep(doc,req.body.fromEmail);
+        await Controller.trashToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -708,7 +913,7 @@ router.post('/revertTrashZohoMail', async (req, res) => {
 router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        await Controller.keepToUnsub(doc,req.body.fromEmail);
+        await Controller.keepToUnsub(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -733,6 +938,14 @@ function getBoxes(imap) {
 function createInbox(imap) {
     return new Promise((resolve, reject) => {
         imap.addBox("Unsubscribed Emails", function (err, box) {
+            (err ? reject(err) : resolve(box));
+        })
+    });
+}
+
+function createInboxForLV(imap) {
+    return new Promise((resolve, reject) => {
+        imap.addBox("INBOX/Unsubscribed Emails", function (err, box) {
             (err ? reject(err) : resolve(box));
         })
     });
@@ -771,7 +984,6 @@ async function getUrlFromEmail(body) {
             anchortext.indexOf("do not wish to receive our mails") != -1 ||
             anchortext.indexOf("not receiving our emails") != -1) {
             url = $(this).attr().href;
-            console.log(url)
             return url;
         } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
             anchorParentText.indexOf("stop receiving emails") != -1 ||
@@ -783,7 +995,6 @@ async function getUrlFromEmail(body) {
             ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
             anchorParentText.indexOf("Don't want this") != -1) {
             url = $(this).attr().href;
-            console.log(url)
             return url;
         }
     })
@@ -814,7 +1025,6 @@ async function parseMessage(msg) {
                             if (Array.isArray(result[k])) result[k] = result[k][0];
                         }
                     }
-                    // console.log(parsed)
                     if (result != {} && parsed['textAsHtml'] != undefined) {
                         let url = await getUrlFromEmail(parsed['textAsHtml']);
                         if (url != null) {
@@ -850,7 +1060,6 @@ async function fetchAndFilter(imap, msgIds, detector) {
 async function trashzoho(imap, msgIds, tarash_lbl) {
     if (!msgIds || msgIds.length <= 0) return;
     console.log("trash", msgIds);
-    //for gmail userd [Gmail]/Trash
     await new Promise((resolve, reject) => {
         imap.move(msgIds, tarash_lbl, function (err) {
             (err ? reject(err) : resolve());

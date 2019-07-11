@@ -4,6 +4,7 @@ const UserModel = require('../models/user');
 const axios = require("axios");
 const token_model = require('../models/tokeno');
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
+const AppVersionModel = require('../models/appVersion');
 const GmailApi = require("../helper/gmailApis").GmailApis;
 const router = express.Router();
 const uniqid = require('uniqid');
@@ -24,7 +25,7 @@ router.post('/signin', async (req, res) => {
         let user = await UserModel.findOne({
             'email': payload.email
         }).catch(err => {
-            console.error(err.message, err.stack,"22")
+            console.error(err.message, err.stack, "22")
         })
         let access_token = token.tokens.access_token;
         let oauth2Client = await TokenHandler.createAuthCleint();
@@ -35,26 +36,40 @@ router.post('/signin', async (req, res) => {
             let userInfoData = body.data;
             user = await create_user(userInfoData, payload);
         }
-        await TokenHandler.create_or_update(user, token.tokens,app_version);
+        await TokenHandler.create_or_update(user, token.tokens, app_version);
         let response = await create_token(user);
         if (response) {
             res.status(200).json({
                 error: false,
                 data: response
             })
-        }else{
+        } else {
             res.status(404).json({
-                error:true
+                error: true
             });
         }
     } catch (ex) {
-        console.error(ex.message, ex.stack,"23")
+        console.error(ex.message, ex.stack, "23")
         res.status(404).json({
-            error:true
+            error: true
         });
     }
 });
 
+
+router.get('/getAppVersion', async (req, res) => {
+    try {
+        let versionData = await AppVersionModel.findOne().sort({ version_name: -1 }).limit(1).catch(err => {
+            console.error(err.message, err.stack);
+        });
+        res.status(200).json({
+            message: "success",
+            version: versionData.version_name
+        })
+    } catch (ex) {
+        console.error(ex.message, ex.stack);
+    }
+});
 
 /*
 This function will create authentication token for user for Authenticating api.
@@ -68,7 +83,7 @@ async function create_token(user) {
         "created_at": new Date()
     });
     await tokmodel.save().catch(err => {
-        console.error(err.message, err.stack,"24");
+        console.error(err.message, err.stack, "24");
     });
     return {
         "tokenid": token_uniqueid,
@@ -94,7 +109,7 @@ async function create_user(userInfoData, payload) {
         // "is_logout": false
     });
     return await newUser.save().catch(err => {
-        console.error(err.message, err.stack,"25");
+        console.error(err.message, err.stack, "25");
     });
 }
 module.exports = router

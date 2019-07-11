@@ -14,40 +14,58 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         this.myImap = myImap;
         me.base(myImap.user._id);
     }
+
     this.start = async function (cb) {
         console.log("start")
-        let { seen, unseen} = await Message.getEmailList(me.myImap.imap);
-        console.log(seen, "sdsds")
-        if(unseen.length!=0){
-            await Message.getBatchMessage(me.myImap.imap, unseen, 
-                async ( parsed) => {
-                    let emailbody = await Parser.getEmailBody(parsed.header,parsed.parseBuff, parsed.uid, ["UNREAD"]);
-                    await me.handleEamil(emailbody,async (data,status)=> {
-                        if(status=="move"){
-                            await Label.moveInboxToUnsub(me.myImap,[data.email_id]);
-                        }else if(status=="trash"){
-                            await Label.moveInboxToTrash(me.myImap, [data.email_id]);
-                        }
-                    });
-            });
+        let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
+        console.log(seen,unseen, "sdsds")
+        if (unseen.length != 0) {
+            await unseenMailScrap(unseen);
         }
-        if(seen.length!=0){
-
-            await Message.getBatchMessage(me.myImap.imap, seen,
-                async (parsed) => {
-                    let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
-                    await me.handleEamil(emailbody,async (data, status)=> {
-                        if (status == "move") {
-                            await Label.moveInboxToUnsub(me.myImap, [data.email_id]);
-                        } else if (status == "trash") {
-                            await Label.moveInboxToTrash(me.myImap, [data.email_id]);
-                        }
-                    });
-                });
+        if (seen.length != 0) {
+            await seenMailScrap(seen);
         }
-
-    
     };
+
+    this.update = async function (cb) {
+        console.log("update")
+        let { seen, unseen } = await Message.getLatestMessages(me.myImap.imap, me.myImap.user);
+        console.log(seen, unseen)
+        if (unseen.length != 0) {
+            await unseenMailScrap(unseen);
+        }
+        if (seen.length != 0) {
+            await seenMailScrap(seen);
+        }
+    };
+
+    async function unseenMailScrap(unseen) {
+        await Message.getBatchMessage(me.myImap.imap, unseen,
+            async (parsed) => {
+                let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["UNREAD"]);
+                await me.handleEamil(emailbody, async (data, status) => {
+                    if (status == "move") {
+                        await Label.moveInboxToUnsub(me.myImap, [data.email_id]);
+                    } else if (status == "trash") {
+                        await Label.moveInboxToTrash(me.myImap, [data.email_id]);
+                    }
+                });
+            });
+    }
+
+    async function seenMailScrap(seen) {
+        await Message.getBatchMessage(me.myImap.imap, seen,
+            async (parsed) => {
+                let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
+                await me.handleEamil(emailbody, async (data, status) => {
+                    if (status == "move") {
+                        await Label.moveInboxToUnsub(me.myImap, [data.email_id]);
+                    } else if (status == "trash") {
+                        await Label.moveInboxToTrash(me.myImap, [data.email_id]);
+                    }
+                });
+            });
+    }
 
     this.getEmaiIdsBySender = async function (sender) {
         let date = new Date(Date.now() - me.APPROX_TWO_MONTH_IN_MS);
@@ -63,6 +81,5 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         }
         return idlist;
     }
-
 
 });
