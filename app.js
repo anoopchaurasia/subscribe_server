@@ -20,12 +20,7 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-let allowCrossDomain = function(req, res, next) {
-  res.header('Access-Control-Allow-Origin', "*");
-  res.header('Access-Control-Allow-Headers', "*");
-  next();
-}
-app.use(allowCrossDomain);
+
 app.use('/api/v2/mail', require('./routes/router'));
 app.get('/api/v2/setToken', function (req, res) {
     console.log(req)
