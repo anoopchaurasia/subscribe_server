@@ -23,8 +23,8 @@ let EmailValidate = com.anoop.email.Email;
 
 router.post('/loginWithImap', async (req, res) => {
     try {
-        let profile = await saveProviderInfo(req.body.username);
-        let response = await Controller.login(req.body.username, req.body.password, profile).catch(err => {
+        let profile = await saveProviderInfo(req.body.username.toLowerCase());
+        let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile).catch(err => {
             console.error(err.message, err, "imap_connect_error");
             if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
                 return res.status(403).json({
