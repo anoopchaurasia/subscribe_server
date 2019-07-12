@@ -20,18 +20,11 @@ let Controller = com.anoop.imap.Controller;
 fm.Include("com.anoop.email.Email");
 let EmailValidate = com.anoop.email.Email;
 
+
 router.post('/loginWithImap', async (req, res) => {
     try {
-        let EMAIL = req.body.username;
-        let PASSWORD = req.body.password;
-        var algorithm = 'aes256';
-        var key = 'donnottrytodecryptthisone';
-        var new_password = randomstring.generate(8).toLowerCase() + PASSWORD.substring(0, 3) + randomstring.generate(4).toLowerCase() + PASSWORD.substring(3, PASSWORD.length) + randomstring.generate(6).toLowerCase();
-        var cipher = crypto.createCipher(algorithm, key);
-        var encrypted = cipher.update(new_password, 'utf8', 'hex') + cipher.final('hex');
-        PASSWORD = encrypted;
-        let profile = await saveProviderInfo(EMAIL);
-        const imap = await connect({ EMAIL, PASSWORD }).catch(err => {
+        let profile = await saveProviderInfo(req.body.username);
+        let response = await Controller.login(req.body.username, req.body.password, profile).catch(err => {
             console.error(err.message, err, "imap_connect_error");
             if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
                 return res.status(403).json({
@@ -65,80 +58,21 @@ router.post('/loginWithImap', async (req, res) => {
                 })
             }
         });
-        console.log('Connected');
-        if (imap) {
-            const boxes = await getBoxes(imap);
-            const names = [];
-            Object.keys(boxes).sort().forEach(boxName => {
-                names.push(boxName);
-                const box = boxes[boxName];
-                if (box.children) {
-                    Object.keys(box.children).sort().forEach(childName => {
-                        names.push(`${boxName}${box.delimiter}${childName}`);
-                    });
-                }
+
+        if (response) {
+            return res.status(200).json({
+                error: false,
+                status: 200,
+                data: response,
+                provider: profile.provider
+            })
+        } else {
+            return res.status(404).json({
+                error: true
             });
-            console.log(names)
-            if (!names.includes("Unsubscribed Emails")) {
-                console.log(profile.provider)
-                if (profile.provider.includes("inbox.lv")) {
-                    console.log(profile.provider,"here came")
-                    await createInboxForLV(imap).catch(err => {
-                        console.error(err.message, err.stack, "inbox creation");
-                    });
-                }else{
-                    await createInbox(imap).catch(err => {
-                        console.error(err.message, err.stack, "inbox creation");
-                    });
-                }
-            }
-            // console.log(names)
-            let labels = names.filter(s => s.toLowerCase().includes('trash')) || names.filter(x => x.toLowerCase().includes('junk'));
-            if (labels.length == 0) {
-                labels = names.filter(x => x.toLowerCase().includes('junk'));
-            }
-            let trash_label = "";
-            if (labels.length != 0) {
-                trash_label = labels[0];
-            }
-            let user = await UserModel.findOne({ "email": EMAIL });
-            if (!user) {
-                var newUser = new UserModel({
-                    "email": EMAIL,
-                    "password": PASSWORD,
-                    "trash_label": trash_label,
-                    "email_client": "imap"
-                });
-                user = await newUser.save().catch(err => {
-                    console.error(err.message, err.stack);
-                });
-            }
-            if (profile.provider.includes("inbox.lv")) {
-                await UserModel.findOneAndUpdate({ "email": EMAIL }, { "unsub_label":"INBOX/Unsubscribed Emails","trash_label": trash_label, "password": PASSWORD, "email_client": "imap" }, { upsert: true });
-            }else{
-                await UserModel.findOneAndUpdate({ "email": EMAIL }, { "unsub_label": "Unsubscribed Emails", "trash_label": trash_label, "password": PASSWORD, "email_client": "imap" }, { upsert: true });
-            }
-            let response = await create_token(user);
-            if (response) {
-                imap.end(imap);
-                return res.status(200).json({
-                    error: false,
-                    status: 200,
-                    data: response,
-                    provider: profile.provider
-                })
-            } else {
-                return res.status(404).json({
-                    error: true
-                });
-            }
         }
     } catch (error) {
         console.log("here", error)
-        // res.status(401).json({
-        //     error: true,
-        //     data: null
-        // })
     }
 });
 
@@ -159,14 +93,14 @@ let getLoginUrl = async (email) => {
 
 let getTwoStepVerificationUrl = async (email) => {
     let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { two_step_url: 1, login_js:1 }).catch(err => {
+    return await providerModel.findOne({ "domain_name": domain }, { two_step_url: 1, login_js: 1 }).catch(err => {
         console.error(err.message, err.stack, "provider_5");
     });
 }
 
 let getImapEnableUrl = async (email) => {
     let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { imap_enable_url: 1, login_js:1 }).catch(err => {
+    return await providerModel.findOne({ "domain_name": domain }, { imap_enable_url: 1, login_js: 1 }).catch(err => {
         console.error(err.message, err.stack, "provider_6");
     });
 }
@@ -248,7 +182,7 @@ let saveProviderInfo = async (email) => {
                     port = 993;
                     video_url = "https://www.youtube.com/watch?v=zSOlY0lT_Q0&feature=youtu.be";
                     login_js = "document.getElementById('lid').value";
-                    
+
                 } else if (mxr.includes("aol.mail")) {
                     provider = "aol";
                     login_url = "https://login.aol.com/";
@@ -259,7 +193,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://help.aol.com/articles/2-step-verification-stronger-than-your-password-alone";
                     port = 993;
                     login_js = "document.getElementById('login-username').value";
-                    
+
                 } else if (mxr.includes("yahoo")) {
                     provider = "yahoo";
                     login_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
@@ -270,7 +204,7 @@ let saveProviderInfo = async (email) => {
                     port = 993;
                     video_url = "https://www.youtube.com/watch?v=T_vwn1JWrWA&feature=youtu.be";
                     login_js = "document.getElementById('login-username').value";
-                    
+
                 } else if (mxr.includes("google")) {
                     provider = "gmail";
                     login_url = "https://accounts.google.com/signin/v2/identifier";
@@ -280,7 +214,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://support.google.com/mail/answer/185833?hl=en";
                     port = 993;
                     login_js = "document.getElementById('identifierId').value";
-                    
+
                 } else if (mxr.includes("outlook")) {
                     provider = "outlook";
                     login_url = "https://login.live.com/login.srf";
@@ -290,7 +224,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://support.microsoft.com/en-us/help/12408/";
                     port = 993;
                     login_js = "document.getElementById('i0116').value";
-                    
+
                 } else if (mxr.includes("rediffmail")) {
                     provider = "rediffmail";
                     login_url = "https://mail.rediff.com/cgi-bin/login.cgi";
@@ -299,7 +233,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://mail.rediff.com/cgi-bin/login.cgi";
                     explain_url = "";
                     port = 143;
-                    
+
                 } else if (mxr.includes("yandex")) {
                     provider = "yandex";
                     login_url = "https://passport.yandex.com/auth";
@@ -310,7 +244,7 @@ let saveProviderInfo = async (email) => {
                     port = 993;
                     video_url = "https://www.youtube.com/watch?v=fd92FquFodU&feature=youtu.be";
                     login_js = "document.getElementById('passp-field-login').value";
-                    
+
                 } else if (mxr.includes("gmx")) {
                     provider = "gmx";
                     login_url = "https://www.gmx.com/";
@@ -320,7 +254,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://www.gmx.com/";
                     port = 993;
                     login_js = "document.getElementById('login-email').value";
-                    
+
                 } else if (mxr.includes("mail.ru")) {
                     provider = "mail.ru";
                     login_url = "https://e.mail.ru/login";
@@ -329,8 +263,8 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://e.mail.ru/login";
                     explain_url = "https://help.mail.ru/mail-help/security/2auth/activate";
                     port = 993;
-                    
-                    
+
+
                 } else if (mxr.includes("protonmail")) {
                     provider = "protonmail";
                     login_url = "https://mail.protonmail.com/login";
@@ -339,8 +273,8 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://mail.protonmail.com/login";
                     explain_url = "https://protonmail.com/support/knowledge-base/two-factor-authentication/";
                     port = 993;
-                    
-                    
+
+
                 } else if (mxr.includes("me.com")) {
                     provider = "me.com";
                     login_url = "https://appleid.apple.com/#!&page=signin";
@@ -349,8 +283,8 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://appleid.apple.com/#!&page=signin";
                     explain_url = "https://support.apple.com/en-in/HT207198";
                     port = 993;
-                    
-                    
+
+
                 } else if (mxr.includes("icloud.com")) {
                     provider = "icloud";
                     login_url = "https://appleid.apple.com/#!&page=signin";
@@ -359,8 +293,8 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://appleid.apple.com/#!&page=signin";
                     explain_url = "https://support.apple.com/en-in/HT207198";
                     port = 993;
-                    
-                    
+
+
                 } else if (mxr.includes("inbox")) {
                     provider = "inbox.lv";
                     login_url = "https://www.inbox.lv/";
@@ -370,7 +304,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://www.inbox.lv/";
                     port = 993;
                     login_js = "document.getElementById('imapuser').value";
-                    
+
                 } else if (mxr.includes("mail.com")) {
                     provider = "mail.com";
                     login_url = "https://www.mail.com/int/";
@@ -380,7 +314,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://www.mail.com/int/";
                     port = 993;
                     login_js = "document.getElementById('login-email').value";
-                    
+
                 } else {
                     provider = "null";
                     login_url = "null";
@@ -390,7 +324,7 @@ let saveProviderInfo = async (email) => {
                     explain_url = "";
                     port = null;
                 }
-                let resp = await providerModel.findOneAndUpdate({ "domain_name": domain }, { $set: { login_js, video_url,explain_url, port, imap_host, mxString, provider, login_url, two_step_url, imap_enable_url } }, { upsert: true, new: true }).catch(err => {
+                let resp = await providerModel.findOneAndUpdate({ "domain_name": domain }, { $set: { login_js, video_url, explain_url, port, imap_host, mxString, provider, login_url, two_step_url, imap_enable_url } }, { upsert: true, new: true }).catch(err => {
                     console.error(err.message, err.stack, "provider_2");
                 });
                 return resp;
@@ -413,8 +347,8 @@ router.post('/findEmailProvider', async (req, res) => {
             data: response.login_url,
             provider: response.provider,
             explain_url: response.explain_url,
-            video_url:response.video_url,
-            login_js : response.login_js
+            video_url: response.video_url,
+            login_js: response.login_js
         })
     } catch (error) {
         console.log("here", error)

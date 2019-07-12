@@ -45,9 +45,10 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                 let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["UNREAD"]);
                 await me.handleEamil(emailbody, async (data, status) => {
                     if (status == "move") {
-                        await Label.moveInboxToUnsub(me.myImap, [data.email_id]);
+                        await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
                     } else if (status == "trash") {
-                        await Label.moveInboxToTrash(me.myImap, [data.email_id]);
+                        // console.log("trash automaitc")
+                        await Label.moveInboxToTrashAuto(me.myImap, [data.email_id]);
                     }
                 });
             });
@@ -58,10 +59,12 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
                 await me.handleEamil(emailbody, async (data, status) => {
-                    if (status == "move") {
-                        await Label.moveInboxToUnsub(me.myImap, [data.email_id]);
+                    if(status == "move") {
+                        // console.log("move automaitc")
+                        await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
                     } else if (status == "trash") {
-                        await Label.moveInboxToTrash(me.myImap, [data.email_id]);
+                        // console.log("trash automaitc")
+                        await Label.moveInboxToTrashAuto(me.myImap, [data.email_id]);
                     }
                 });
             });

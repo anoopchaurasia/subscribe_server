@@ -2,15 +2,17 @@ fm.Package("com.anoop.imap");
 var legit = require('legit');
 var crypto = require('crypto');
 const Imap = require('imap');
+var randomstring = require("randomstring");
 fm.Class("MyImap", function (me) {
     this.setMe = _me => me = _me;
     this.init = function () {
         Static.Const.PASSWORD_ENCRYPT_ALGO = process.env.PASSWORD_ENCRYPT_ALGO || "aes256";
         Static.Const.PASSWORD_ENCRYPT_KEY = process.env.PASSWORD_ENCRYPT_KEY || "donnottrytodecryptthisone";
     }
-    this.MyImap = function (user) {
+    this.MyImap = function (user, provider) {
         this.imap = null;
         this.user = user;
+        this.provider = provider;
     };
 
     Static.getProvider = async function (email) {
@@ -29,7 +31,7 @@ fm.Class("MyImap", function (me) {
     }
 
     Static.encryptPassword = function (password) {
-        var new_password = randomstring.generate(8).toLowerCase() + password.substring(0, 3) + randomstring.generate(4).toLowerCase() + password.substring(3, PASSWORD.length) + randomstring.generate(6).toLowerCase();
+        var new_password = randomstring.generate(8).toLowerCase() + password.substring(0, 3) + randomstring.generate(4).toLowerCase() + password.substring(3, password.length) + randomstring.generate(6).toLowerCase();
         var cipher = crypto.createCipher(me.PASSWORD_ENCRYPT_ALGO, me.PASSWORD_ENCRYPT_KEY);
         return cipher.update(new_password, 'utf8', 'hex') + cipher.final('hex');
     };
@@ -41,13 +43,32 @@ fm.Class("MyImap", function (me) {
         return remove_padding.substring(0, 3) + remove_padding.substring(7, remove_padding.length);
     };
 
-    Static.getLabels = async function () {
+    this.getLabels = async function () {
         return new Promise((resolve, reject) => {
-            imap.getBoxes(function (err, boxes) {
-                (err ? reject(err) : resolve(boxes));
+            me.imap.getBoxes(function (err, boxes) {
+                let names = [];
+                Object.keys(boxes).sort().forEach(boxName => {
+                    names.push(boxName);
+                    const box = boxes[boxName];
+                    if (box.children) {
+                        Object.keys(box.children).sort().forEach(childName => {
+                            names.push(`${boxName}${box.delimiter}${childName}`);
+                        });
+                    }
+                });
+                (err ? reject(err) : resolve(names));
             });
         });
     };
+
+    this.createlabel = async function (label_name) {
+        return new Promise((resolve, reject) => {
+            me.imap.addBox(label_name, function (err, box) {
+                (err ? reject(err) : resolve(box));
+            })
+        });
+    };
+
 
     this.openFolder = async function (folder) {
         return new Promise((resolve, reject) => {
