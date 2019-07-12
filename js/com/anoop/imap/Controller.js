@@ -13,6 +13,34 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await me.updateEmailDetailStatus(emaildetail._id, "keep");
     };
 
+
+    Static.login = async function(email, password, provider){
+        let PASSWORD = MyImap.encryptPassword(password);
+        let myImap = await MyImap.new({
+            email,
+            password:PASSWORD
+        }, provider.provider);
+         await myImap.connect(provider);
+        let names = await myImap.getLabels();
+        if (!names.includes("Unsubscribed Emails")) {
+           await Label.create(imap, provider.provider);
+        }
+        let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
+        let trash_label = labels;
+        let user = await me.getUserByEmail(email);
+        if (!user) {
+            user = await me.createUser(email,PASSWORD,trash_label);
+        }
+        if (provider.provider.includes("inbox.lv")) {
+            await me.updateUser(email, "INBOX/Unsubscribed Emails",trash_label,PASSWORD);
+         } else {
+            await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
+        }
+        myImap.imap.end(myImap.imap);
+        return await me.createToken(user);
+    }
+
+
     Static.unusedToTrash = async function (token, from_email) {
         let user = await me.getUserById(token.user_id);
         let domain = user.email.split("@")[1];
