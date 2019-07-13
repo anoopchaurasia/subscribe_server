@@ -363,7 +363,8 @@ router.post('/findEmailProvider', async (req, res) => {
         console.log("here", error)
         res.status(401).json({
             error: true,
-            data: null
+            data: null,
+            message: "Invalid Email."
         })
     }
 });
@@ -532,6 +533,7 @@ router.post('/saveProfileInfo', async (req, res) => {
         res.send({ "status": 401, "data": error })
     }
 });
+
 
 
 async function getTotalEmailCount(user_id) {
