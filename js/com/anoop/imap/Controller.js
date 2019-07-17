@@ -14,26 +14,26 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
 
-    Static.login = async function(email, password, provider){
+    Static.login = async function (email, password, provider) {
         let PASSWORD = MyImap.encryptPassword(password);
         let myImap = await MyImap.new({
             email,
-            password:PASSWORD
+            password: PASSWORD
         }, provider.provider);
-         await myImap.connect(provider);
+        await myImap.connect(provider);
         let names = await myImap.getLabels();
         if (!names.includes("Unsubscribed Emails")) {
-           await Label.create(myImap, provider.provider);
+            await Label.create(myImap, "Unsubscribed Emails");
         }
         let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
         let trash_label = labels;
         let user = await me.getUserByEmail(email);
         if (!user) {
-            user = await me.createUser(email,PASSWORD,trash_label);
+            user = await me.createUser(email, PASSWORD, trash_label);
         }
         if (provider.provider.includes("inbox.lv")) {
-            await me.updateUser(email, "INBOX/Unsubscribed Emails",trash_label,PASSWORD);
-         } else {
+            await me.updateUser(email, "INBOX/Unsubscribed Emails", trash_label, PASSWORD);
+        } else {
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
         myImap.imap.end(myImap.imap);
@@ -61,7 +61,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let user = await me.getUserById(token.user_id);
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
-        let myImap =await MyImap.new(user);
+        let myImap = await MyImap.new(user);
         await myImap.connect(provider).catch(err => {
             console.error(err.message, err.stack, "imap connect here");
         });
@@ -180,12 +180,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     ///---------------------------------------from unsub folder--------------------///
- 
+
     Static.unsubToKeep = async function (token, from_email) {
         let user = await me.getUserById(token.user_id);
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
-        let myImap =await MyImap.new(user);
+        let myImap = await MyImap.new(user);
         await myImap.connect(provider).catch(err => {
             console.error(err.message, err.stack, "imap connect here");
         });
@@ -201,8 +201,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let user = await me.getUserById(token.user_id);
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
-        let myImap =await MyImap.new(user);
-        
+        let myImap = await MyImap.new(user);
+
         await myImap.connect(provider).catch(err => {
             console.error(err.message, err.stack, "imap connect here");
         });
@@ -219,7 +219,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let user = await me.getUserById(token.user_id);
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
-        let myImap =await MyImap.new(user);
+        let myImap = await MyImap.new(user);
         await myImap.connect(provider).catch(err => {
             console.error(err.message, err.stack, "imap connect here");
         });

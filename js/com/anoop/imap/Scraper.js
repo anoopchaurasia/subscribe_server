@@ -2,6 +2,7 @@ fm.Package("com.anoop.imap");
 fm.Import(".Message");
 fm.Import(".Parser");
 fm.Import(".Label");
+const MailScraper = require("./../../../../helper/mailScraper").MailScraper;
 fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     'use strict';
     this.setMe = _me => me = _me;
@@ -18,7 +19,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     this.start = async function (cb) {
         console.log("start")
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
-        console.log(seen,unseen, "sdsds")
+        console.log(seen, unseen, "sdsds")
         if (unseen.length != 0) {
             await unseenMailScrap(unseen);
         }
@@ -43,6 +44,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         await Message.getBatchMessage(me.myImap.imap, unseen,
             async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["UNREAD"]);
+                await MailScraper.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff), parsed.uid);
                 await me.handleEamil(emailbody, async (data, status) => {
                     if (status == "move") {
                         await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
@@ -58,12 +60,11 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         await Message.getBatchMessage(me.myImap.imap, seen,
             async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
+                await MailScraper.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff), parsed.uid);
                 await me.handleEamil(emailbody, async (data, status) => {
-                    if(status == "move") {
-                        // console.log("move automaitc")
+                    if (status == "move") {
                         await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
                     } else if (status == "trash") {
-                        // console.log("trash automaitc")
                         await Label.moveInboxToTrashAuto(me.myImap, [data.email_id]);
                     }
                 });

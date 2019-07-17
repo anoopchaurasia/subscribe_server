@@ -53,7 +53,7 @@ fm.Class("Message", function (me) {
     Static.getBatchMessage = async function (imap, message_ids, detector) {
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
-                bodies: ['HEADER.FIELDS (FROM SUBJECT)', 'TEXT']
+                bodies: ['HEADER.FIELDS (FROM TO SUBJECT DATE)', 'TEXT']
             });
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {

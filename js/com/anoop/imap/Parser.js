@@ -18,4 +18,18 @@ fm.Class("Parser>.Message", function (me, Header) {
         };
     };
 
+    Static.parse = function (json,id, data) {
+        
+        return {
+            payload: data,
+            date: new Date(json.header.date).toString(),
+            history_id: id,
+            timestamp: new Date(json.header.date).getTime(),
+            subject: json.header.subject,
+            from: json.header.from,
+            id: id,
+            to :json.header.to
+        }
+    };  
+
 });

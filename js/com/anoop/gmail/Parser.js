@@ -1,24 +1,24 @@
 fm.Package("com.anoop.gmail");
 fm.Import(".Header");
-fm.Class("Parser>.Message", function(me, Header){
-    this.setMe=_me=>me=_me;
+fm.Class("Parser>.Message", function (me, Header) {
+    this.setMe = _me => me = _me;
 
-    
-    Static.getEmailBody = function(messageBodies){
-        return messageBodies.map(x=>{
+
+    Static.getEmailBody = function (messageBodies) {
+        return messageBodies.map(x => {
             let header = Header.new(x.payload.headers);
             let payload = getParts(x.payload) || getPlainText(x.payload);
             let from = header.from.split(/<|>/);
-            from = from.length===1?from[0]: from[from.length-2];
+            from = from.length === 1 ? from[0] : from[from.length - 2];
             return {
-                header, payload, 
-                email_id: x.id, 
-                historyId: x.historyId, 
+                header, payload,
+                email_id: x.id,
+                historyId: x.historyId,
                 labelIds: x.labelIds,
                 from_email_name: header.from,
                 from_email: from,
                 to_email: x.to,
-                subject: x.subject 
+                subject: x.subject
             };
         });
     };
