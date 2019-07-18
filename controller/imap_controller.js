@@ -539,6 +539,9 @@ router.post('/saveProfileInfo', async (req, res) => {
 
 
 
+
+
+
 async function getTotalEmailCount(user_id) {
     let totalNL = await email.find({ "user_id": user_id }).catch(err => {
         console.error(err.message, err.stack);
