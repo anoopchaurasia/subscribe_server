@@ -135,13 +135,15 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
     Static.handleRedis = async function (user_id, del_data = true) {
         let keylist = await RedisDB.getKEYS(user_id);
         if (keylist && keylist.length != 0) {
+            console.log(keylist)
             await keylist.asyncForEach(async element => {
+                // console.log(element)
                 let mail = await RedisDB.popData(element);
                 if (mail.length != 0) {
                     let result = await RedisDB.findPercent(mail);
                     if (result) {
                         let from_email_id = await me.updateOrCreateAndGetEMailDetailFromData(JSON.parse(mail[0]), user_id)
-                        console.log(from_email_id)
+                        // console.log(from_email_id)
                         await EmailInfo.bulkInsert(mail, from_email_id._id);
                     }
                 }

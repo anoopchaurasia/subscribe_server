@@ -25,8 +25,16 @@ fm.Class("RedisDB>com.anoop.vendor.Redis", function(me) {
         me.base.pushData(createKey(user_id, from_email), data);
     };
 
+    Static.pushFlag= function(user_id, keyword, data) {
+        me.base.pushData(createKey(keyword,user_id), data);
+    };
+
     Static.getKEYS = function(user_id){
         return me.base.getKEYS(createKey(user_id,'*'));
+    }
+
+    Static.getFinishKey = function(key){
+        return me.base.getKEYS(key);
     }
     
 });

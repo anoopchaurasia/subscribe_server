@@ -25,6 +25,8 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         if (seen.length != 0) {
             await seenMailScrap(seen);
         }
+        console.log("cb called")
+        cb && await cb();
     };
 
     this.update = async function (cb) {

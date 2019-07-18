@@ -23,7 +23,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
          await myImap.connect(provider);
         let names = await myImap.getLabels();
         if (!names.includes("Unsubscribed Emails")) {
-           await Label.create(myImap, provider.provider);
+           await Label.create(myImap, "Unsubscribed Emails");
         }
         let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
         let trash_label = labels;
@@ -271,16 +271,22 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.extractEmail = async function (token) {
         let user = await me.getUserById(token.user_id);
+        await com.jeet.memdb.RedisDB.pushFlag(token.user_id,"is_finished", {"finish":false});
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
+        await myImap.connect(provider).catch(async err => {
             console.error(err.message, err.stack, "imap connect here");
+            await com.jeet.memdb.RedisDB.pushFlag(token.user_id,"is_finished", {"finish":true});
         });
         let box = await myImap.openFolder("INBOX");
         await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
-        await scraper.start();
+        await scraper.start(async function afterEnd(){
+            console.log("is_finished called")
+            await com.jeet.memdb.RedisDB.pushFlag(token.user_id,"is_finished", {"finish":true});
+            await me.handleRedis(token.user_id);
+         });
         myImap.imap.end(myImap.imap);
     }
 

@@ -516,8 +516,11 @@ router.post('/saveProfileInfo', async (req, res) => {
             let userObj = {
                 name: req.body.name,
                 "dob": req.body.dob,
-                "gender": req.body.sex
+                "gender": req.body.sex,
             };
+            if(req.body.email!=null){
+                userObj.primary_email=req.body.email;
+            }
             await UserModel.findOneAndUpdate({ "_id": doc.user_id }, userObj, { upsert: true }).catch(err => {
                 console.error(err.message, err.stack);
             })
