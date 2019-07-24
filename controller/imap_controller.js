@@ -390,7 +390,7 @@ router.post('/readZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
         console.log(doc)
-        await Controller.extractEmail(doc);
+        Controller.extractEmail(doc);
         res.status(200).json({
             error: false,
             data: "scrape"
