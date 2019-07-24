@@ -111,7 +111,7 @@ router.post('/getMailInfo', async (req, res) => {
                     keylist.forEach(async element => {
                         let mail = await RedisDB.popData(element);
                         if (mail.length != 0) {
-                            let result = await RedisDB.findPercent(mail);
+                            let result = await RedisDB.findPercent(mail, false);
                             if (result) {
                                 let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
                                 await Expensebit.storeBulkEmailInDB(mail, from_email_id);

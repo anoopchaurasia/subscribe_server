@@ -284,8 +284,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd(){
             console.log("is_finished called")
-            await com.jeet.memdb.RedisDB.pushFlag(token.user_id,"is_finished", {"finish":true});
             await me.handleRedis(token.user_id);
+            await com.jeet.memdb.RedisDB.pushFlag(token.user_id,"is_finished", {"finish":true});
          });
         myImap.imap.end(myImap.imap);
     }

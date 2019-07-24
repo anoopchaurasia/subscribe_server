@@ -1,7 +1,7 @@
 fm.Package("com.jeet.memdb");
 fm.Class("RedisDB>com.anoop.vendor.Redis", function(me) {
     this.setMe=_me=>me=_me;
-    Static.findPercent = function(data){
+    Static.findPercent = function(data, is_completed=true){
         var unread = 0;
         var read = 0;
         var count = 0;
@@ -14,7 +14,7 @@ fm.Class("RedisDB>com.anoop.vendor.Redis", function(me) {
                 read++;
             }
         });
-        return ((unread * 100) / count) > 90 && count>1;
+        return ((unread * 100) / count) > 80 && (count>=3 || (is_completed && count>=6)) ;
     };
 
     function createKey(user_id, from_email){
