@@ -14,6 +14,8 @@ var crypto = require('crypto');
 var randomstring = require("randomstring");
 var dns = require('dns');
 var legit = require('legit');
+var Raven = require('raven');
+
 const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
@@ -25,7 +27,8 @@ router.post('/loginWithImap', async (req, res) => {
     try {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
         let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile).catch(err => {
-            console.error(err.message, err, "imap_connect_error");
+            console.error(err.message, err, "imap_connect_error", req.body.username);
+            Raven.captureException(err, {email_domain: req.body.username.split("@")[1]});
             if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
                 return res.status(403).json({
                     error: true,
