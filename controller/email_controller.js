@@ -223,6 +223,8 @@ router.post('/readMailInfo', async (req, res) => {
                 finished = true;
                 // await RedisDB.delKEY(keylist);
             }
+        } else {
+            com.jeet.memdb.RedisDB.pushFlag(doc.user_id,"is_finished", {"finish":true}); 
         }
         await BaseController.handleRedis(doc.user_id, false);
         res.status(200).json({
