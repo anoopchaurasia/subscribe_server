@@ -28,7 +28,7 @@ router.post('/loginWithImap', async (req, res) => {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
         let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile).catch(err => {
             console.error(err.message, err, "imap_connect_error", req.body.username);
-            Raven.captureException(err, {tags: {email_domain: req.body.username.split("@")[1]}});
+            Raven.captureException(err, {tags: {email_domain: req.body.username.split("@")[1], pass_length:  req.body.password.length}});
             if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
                 return res.status(403).json({
                     error: true,
