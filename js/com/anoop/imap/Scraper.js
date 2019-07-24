@@ -1,4 +1,3 @@
-import { TIMEOUT } from "dns";
 
 fm.Package("com.anoop.imap");
 fm.Import(".Message");
