@@ -3,7 +3,8 @@ require("dotenv").config();
 require("jsfm");
 fm.basedir = process.cwd() + "/js";
 global.basedir = process.cwd();
-
+fm.Include("com.anoop.event.MyEvent");
+MyEvent.googleEvent({category:"test", action:"unknown", label: "label", value:2323});
 const express = require('express');
 const bodyParser = require('body-parser');
 var Raven = require('raven');

@@ -28,6 +28,7 @@
     "redis": "^2.8.0",
     "request": "^2.88.0",
     "simple-oauth2": "^2.2.1",
-    "uniqid": "^5.0.3"
+    "uniqid": "^5.0.3",
+    "universal-analytics": "^0.4.20"
   }
 }
