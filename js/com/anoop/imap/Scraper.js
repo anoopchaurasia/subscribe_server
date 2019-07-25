@@ -1,3 +1,4 @@
+
 fm.Package("com.anoop.imap");
 fm.Import(".Message");
 fm.Import(".Parser");
@@ -25,8 +26,10 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         if (seen.length != 0) {
             await seenMailScrap(seen);
         }
-        console.log("cb called")
-        cb && await cb();
+        console.log("cb called");
+        setTimeout(async x=>{
+            cb && await cb();
+        }, 15*1000);
     };
 
     this.update = async function (cb) {
@@ -43,17 +46,17 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
 
     async function unseenMailScrap(unseen) {
         await Message.getBatchMessage(me.myImap.imap, unseen,
-            async (parsed) => {
-                let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["UNREAD"]);
-                await me.handleEamil(emailbody, async (data, status) => {
-                    if (status == "move") {
-                        await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
-                    } else if (status == "trash") {
-                        // console.log("trash automaitc")
-                        await Label.moveInboxToTrashAuto(me.myImap, [data.email_id]);
-                    }
-                });
+        async (parsed) => {
+            let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["UNREAD"]);
+            await me.handleEamil(emailbody, async (data, status) => {
+                if (status == "move") {
+                    await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
+                } else if (status == "trash") {
+                    // console.log("trash automaitc")
+                    await Label.moveInboxToTrashAuto(me.myImap, [data.email_id]);
+                }
             });
+        });
     }
 
     async function seenMailScrap(seen) {

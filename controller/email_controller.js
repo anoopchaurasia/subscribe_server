@@ -111,7 +111,7 @@ router.post('/getMailInfo', async (req, res) => {
                     keylist.forEach(async element => {
                         let mail = await RedisDB.popData(element);
                         if (mail.length != 0) {
-                            let result = await RedisDB.findPercent(mail);
+                            let result = await RedisDB.findPercent(mail, false);
                             if (result) {
                                 let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
                                 await Expensebit.storeBulkEmailInDB(mail, from_email_id);
@@ -223,6 +223,8 @@ router.post('/readMailInfo', async (req, res) => {
                 finished = true;
                 // await RedisDB.delKEY(keylist);
             }
+        } else {
+            com.jeet.memdb.RedisDB.pushFlag(doc.user_id,"is_finished", {"finish":true}); 
         }
         await BaseController.handleRedis(doc.user_id, false);
         res.status(200).json({
