@@ -37,6 +37,14 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
         return await User.updatelastMsgId({ _id: _id }, { last_msgId: msg_id });
     }
 
+    Static.setRedisFinishTrue = async function(user_id){
+        await com.jeet.memdb.RedisDB.pushFlag(user_id,"is_finished", {"finish":true});
+    }
+
+    Static.setRedisFinishFalse = async function(user_id){
+        await com.jeet.memdb.RedisDB.pushFlag(user_id,"is_finished", {"finish":false});
+    }
+
     Static.createUser = async function(email,passsword,trash_label){
         return await User.create({email,passsword,trash_label});
     }

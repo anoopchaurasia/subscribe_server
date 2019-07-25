@@ -11,6 +11,8 @@ const Outlook = require("../helper/outlook").Outlook;
 const ExpenseBit = require("../helper/expenseBit").ExpenseBit;
 const cheerio = require('cheerio');
 var Request = require('request');
+fm.Include("com.anoop.email.BaseController");
+let BaseController = com.anoop.email.BaseController;
 Array.prototype.asynForEach = async function (cb) {
     for (let i = 0, len = this.length; i < len; i++) {
         await cb(this[i]);
@@ -194,6 +196,7 @@ router.post('/getMail', async function (req, resp, next) {
                 await res.value.asynForEach(async folder => {
                     if (folder.displayName == 'Inbox') {
                         let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$skip=0');
+                        await BaseController.setRedisFinishFalse(userInfo.user_id);
                         await getEmailInBulk(accessToken, link, userInfo.user_id);
                     }
                 });
@@ -232,6 +235,8 @@ async function getEmailInBulk(accessToken, link, user_id) {
             });
             if (body['@odata.nextLink']) {
                 await getEmailInBulk(accessToken, encodeURI(body['@odata.nextLink']), user_id);
+            }else{
+                await BaseController.setRedisFinishTrue(user_id);
             }
         }
     });
