@@ -59,7 +59,7 @@ var UserSchema = new Schema({
     primary_email:{
         type:String
     },
-    is_active:{
+    inactive_at:{
         type:Date
     },
     ipaddress:{

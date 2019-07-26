@@ -196,7 +196,7 @@ router.post('/getMail', async function (req, resp, next) {
                 await res.value.asynForEach(async folder => {
                     if (folder.displayName == 'Inbox') {
                         let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$skip=0');
-                        await BaseController.setRedisFinishFalse(userInfo.user_id);
+                        await BaseController.scanStarted(userInfo.user_id);
                         await getEmailInBulk(accessToken, link, userInfo.user_id);
                     }
                 });
@@ -236,7 +236,7 @@ async function getEmailInBulk(accessToken, link, user_id) {
             if (body['@odata.nextLink']) {
                 await getEmailInBulk(accessToken, encodeURI(body['@odata.nextLink']), user_id);
             }else{
-                await BaseController.setRedisFinishTrue(user_id);
+                await BaseController.scanFinished(user_id);
             }
         }
     });
@@ -249,7 +249,7 @@ router.post('/setPrimaryEmail', async (req, res) => {
         const doc = await token_model.findOne({ "token": req.body.authID });
         if (doc) {
             let email = req.body.email;
-            let ipaddress = req.body.ipaddress;
+            let ipaddress = req.header('x-forwarded-for') || req.connection.remoteAddress;
             if(email!=null){
                 let userObj = {
                     primary_email:email,
