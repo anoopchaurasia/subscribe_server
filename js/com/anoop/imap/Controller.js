@@ -290,6 +290,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.imap.end(myImap.imap);
     }
 
+    Static.setRedisTrue = async function(user_id){
+        await me.setRedisFinishTrue(user_id);
+    }
+
+    
+
     Static.extractEmailForCronJob = async function (user) {
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)

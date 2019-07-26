@@ -28,7 +28,7 @@ router.post('/loginWithImap', async (req, res) => {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
         let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile).catch(err => {
             console.error(err.message, err, "imap_connect_error", req.body.username);
-            Raven.captureException(err, {tags: {email_domain: req.body.username.split("@")[1], pass_length:  req.body.password.length}});
+            Raven.captureException(err, { tags: { email_domain: req.body.username.split("@")[1], pass_length: req.body.password.length } });
             if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
                 return res.status(403).json({
                     error: true,
@@ -344,7 +344,7 @@ router.post('/findEmailProvider', async (req, res) => {
         console.log("here")
         let email = req.body.emailId;
         let response = await saveProviderInfo(email);
-        if(response['provider'] != null && response['provider']!='null'){
+        if (response['provider'] != null && response['provider'] != 'null') {
             res.status(200).json({
                 error: false,
                 status: 200,
@@ -354,13 +354,13 @@ router.post('/findEmailProvider', async (req, res) => {
                 video_url: response.video_url,
                 login_js: response.login_js
             })
-        }else{
-             res.status(404).json({
-                    error: true,
-                    status: 404,
-                    data: response.login_url,
-                 message: "We Don't Support this " + email.split('@')[1] + " . Will provide support in future.."
-                })
+        } else {
+            res.status(404).json({
+                error: true,
+                status: 404,
+                data: response.login_url,
+                message: "We Don't Support this " + email.split('@')[1] + " . Will provide support in future.."
+            })
         }
     } catch (error) {
         console.log("here", error)
@@ -393,7 +393,10 @@ router.post('/readZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
         console.log(doc)
-        Controller.extractEmail(doc);
+        Controller.extractEmail(doc).catch(err => {
+            console.error(err.message, err.stack);
+            Controller.setRedisTrue(doc.user_id);
+        });;
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -520,9 +523,11 @@ router.post('/saveProfileInfo', async (req, res) => {
                 name: req.body.name,
                 "dob": req.body.dob,
                 "gender": req.body.sex,
+                "is_active": true,
+                "ipaddress": req.body.ipaddress
             };
-            if(req.body.email!=null){
-                userObj.primary_email=req.body.email;
+            if (req.body.email != null) {
+                userObj.primary_email = req.body.email;
             }
             await UserModel.findOneAndUpdate({ "_id": doc.user_id }, userObj, { upsert: true }).catch(err => {
                 console.error(err.message, err.stack);

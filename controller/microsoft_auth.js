@@ -249,9 +249,12 @@ router.post('/setPrimaryEmail', async (req, res) => {
         const doc = await token_model.findOne({ "token": req.body.authID });
         if (doc) {
             let email = req.body.email;
+            let ipaddress = req.body.ipaddress;
             if(email!=null){
                 let userObj = {
-                    primary_email:email
+                    primary_email:email,
+                    ipaddress,
+                    "is_active": true,
                 };
                 await users.findOneAndUpdate({ "_id": doc.user_id }, userObj, { upsert: true }).catch(err => {
                     console.error(err.message, err.stack);

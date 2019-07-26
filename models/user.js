@@ -58,6 +58,12 @@ var UserSchema = new Schema({
     },
     primary_email:{
         type:String
+    },
+    is_active:{
+        type:Boolean
+    },
+    ipaddress:{
+        type:Object
     }
 
 });
