@@ -523,8 +523,8 @@ router.post('/saveProfileInfo', async (req, res) => {
                 name: req.body.name,
                 "dob": req.body.dob,
                 "gender": req.body.sex,
-                "is_active": true,
-                "ipaddress": req.body.ipaddress
+                "ipaddress": req.body.ipaddress,
+                "is_active":null
             };
             if (req.body.email != null) {
                 userObj.primary_email = req.body.email;

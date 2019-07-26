@@ -142,31 +142,6 @@ router.post('/disconnectGdprAccount', async (req, res) => {
 });
 
 
-
-router.post('/logoutUserForAccount', async (req, res) => {
-    try {
-        let auth_id = req.body.authID;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.error(err.message, err.stack, "281");
-        });
-        await userModel.findOneAndUpdate({ "_id": doc.user_id }, {
-            "is_active": false
-        }, { upsert: true }).catch(err => {
-            console.error(err.message, err.stack);
-        });
-        res.status(200).send({
-            message: "success"
-        });
-    } catch (ex) {
-        res.status(401).send({
-            message: "reject"
-        });
-        console.error(ex.message, ex.stack, "29");
-    }
-});
-
-
-
 module.exports = router;
 
 

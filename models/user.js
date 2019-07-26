@@ -60,7 +60,7 @@ var UserSchema = new Schema({
         type:String
     },
     is_active:{
-        type:Boolean
+        type:Date
     },
     ipaddress:{
         type:Object
