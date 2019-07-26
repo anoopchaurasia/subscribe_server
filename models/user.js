@@ -63,7 +63,7 @@ var UserSchema = new Schema({
         type:Date
     },
     ipaddress:{
-        type:Object
+        type:String
     }
 
 });
