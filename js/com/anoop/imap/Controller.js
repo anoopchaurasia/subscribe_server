@@ -290,10 +290,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.imap.end(myImap.imap);
     }
 
-    Static.setRedisTrue = async function(user_id){
-        await me.scanFinished(user_id);
-    }
-
     
 
     Static.extractEmailForCronJob = async function (user) {

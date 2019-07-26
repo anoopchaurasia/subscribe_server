@@ -395,7 +395,7 @@ router.post('/readZohoMail', async (req, res) => {
         console.log(doc)
         Controller.extractEmail(doc).catch(err => {
             console.error(err.message, err.stack);
-            Controller.setRedisTrue(doc.user_id);
+            Controller.scanFinished(doc.user_id);
         });;
         res.status(200).json({
             error: false,
