@@ -807,6 +807,7 @@ router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
         let array = sender_email.split(",") || sender_email.split(";");
         array.forEach(async element => {
             console.log(element)
+            element = element.trim();
             let validate = await EmailValidate.validate(element);
             console.log("is valid", validate)
             if (validate) {
@@ -833,6 +834,7 @@ router.post('/imapManualTrashEmailFromUser', async (req, res) => {
         let array = sender_email.split(",") || sender_email.split(";");
         array.forEach(async element => {
             console.log(element)
+            element = element.trim();
             let validate = await EmailValidate.validate(element);
             console.log("is valid", validate)
             if (validate) {
