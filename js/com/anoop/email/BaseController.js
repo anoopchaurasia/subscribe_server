@@ -38,11 +38,15 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
     }
 
     Static.scanFinished = async function(user_id){
-        await com.jeet.memdb.RedisDB.pushFlag(user_id,"is_finished", {"finish":true});
+        await RedisDB.setData(user_id,"is_finished", true);
     }
 
     Static.scanStarted = async function(user_id){
-        await com.jeet.memdb.RedisDB.pushFlag(user_id,"is_finished", {"finish":false});
+        await RedisDB.setData(user_id,"is_finished", false);
+    }
+
+    Static.isScanFinished = async function(user_id){
+        return await RedisDB.getData(user_id,"is_finished");
     }
 
     Static.createUser = async function(email,passsword,trash_label){

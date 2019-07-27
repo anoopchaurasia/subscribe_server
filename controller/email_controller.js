@@ -213,18 +213,10 @@ router.post('/readMailInfo', async (req, res) => {
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
         let finished = false;
-        let keylist = await RedisDB.getFinishKey("is_finished-" + doc.user_id);
-        if (keylist.length != 0) {
-            let is_finished = await RedisDB.getData(keylist[0])
-            let finish_data = JSON.parse(is_finished);
-            console.log("is_finished -> ",finish_data.finish);
-            if (is_finished.length != 0 && finish_data.finish){
-                console.log("is_finished -> ",finish_data.finish);
-                finished = true;
-                // await RedisDB.delKEY(keylist);
-            }
-        } else {
-            com.jeet.memdb.RedisDB.pushFlag(doc.user_id,"is_finished", {"finish":true}); 
+        let is_finished =await BaseController.isScanFinished(doc.user_id);
+        if (is_finished && is_finished == "true") {
+            console.log("is_finished here-> ", is_finished);
+            finished = true;
         }
         await BaseController.handleRedis(doc.user_id, false);
         res.status(200).json({
