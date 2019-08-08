@@ -43,7 +43,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         await Message.getBatchMessage(me.myImap.imap, unseen,
             async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["UNREAD"]);
-                me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff));
+                me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff),me.myImap.user);
                 await me.handleEamil(emailbody, async (data, status) => {
                     if (status == "move") {
                         await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
@@ -59,7 +59,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         await Message.getBatchMessage(me.myImap.imap, seen,
             async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
-                me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff));
+                me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff),me.myImap.user);
                 await me.handleEamil(emailbody, async (data, status) => {
                     if(status == "move") {
                         // console.log("move automaitc")

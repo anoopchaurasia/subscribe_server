@@ -62,12 +62,13 @@ fm.Class('BaseScraper', function (me, BaseController) {
     }
 
 
-    this.sendMailToScraper = async function(data){
+    this.sendMailToScraper = async function(data,user){
         let domainList = await BaseController.getAllDomain();
         let companyNameReg = new RegExp(domainList.join("|"), 'i')
         var company = (data.from || "").match(companyNameReg);
         if (company && company[0]) {
             data.company = "imap";
+            data.user_id = ("0x" + `${user._id}`.slice(-8)) * 1 + 1000000000000;
             console.log(data)
             redis_client.lpush('raw_email_data', JSON.stringify(data));
         }
