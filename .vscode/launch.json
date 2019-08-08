@@ -15,7 +15,12 @@
             "request": "launch",
             "name": "Launch Program",
             "program": "${workspaceFolder}/app.js",
-           "useWSL": true,
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Imap cron",
+            "program": "${workspaceFolder}/imap_cron.js",
         },
         
         {

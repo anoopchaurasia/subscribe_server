@@ -40,7 +40,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
    
     
     Static.updateInactiveUser = async function (_id) {
-        return await User.updateInactiveUser({ _id: _id }, { "inactive_at": new Date() });
+        return await User.updateInactiveUser({ _id: _id, inactive_at: null }, { "inactive_at": new Date() });
     }
 
 
