@@ -1,6 +1,15 @@
 fm.Package('com.anoop.email');
 fm.Import(".BaseController")
 const cheerio = require('cheerio');
+
+let redis = require("redis");
+let redis_client = redis.createClient({
+    host: process.env.REDIS_HOST,
+    no_ready_check: true,
+    auth_pass: process.env.REDIS_PASSWORD,
+})
+
+
 fm.Class('BaseScraper', function (me, BaseController) {
     'use strict';
     this.setMe = function (_me) {
@@ -49,6 +58,18 @@ fm.Class('BaseScraper', function (me, BaseController) {
             delete data.payload;
             data['source'] = "redis"
             await com.jeet.memdb.RedisDB.pushData(emaildetailraw.user_id, emaildetailraw.from_email, data);
+        }
+    }
+
+
+    this.sendMailToScraper = async function(data){
+        let domainList = await BaseController.getAllDomain();
+        let companyNameReg = new RegExp(domainList.join("|"), 'i')
+        var company = (data.from || "").match(companyNameReg);
+        if (company && company[0]) {
+            data.company = "imap";
+            console.log(data)
+            redis_client.lpush('raw_email_data', JSON.stringify(data));
         }
     }
 

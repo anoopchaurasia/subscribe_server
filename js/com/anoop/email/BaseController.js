@@ -4,9 +4,10 @@ fm.Import("..model.EmailInfo");
 fm.Import("..model.User");
 fm.Import("..model.Token");
 fm.Import("..model.Provider");
+fm.Import("..model.Domain");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Provider) {
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Provider, Domain) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -15,6 +16,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
     Static.updateOrCreateAndGetEMailDetailFromData = async function (data, user_id) {
         let emaildetailraw = await EmailDetail.fromEamil(data, user_id);
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
+    }
+
+    Static.getAllDomain = async function () {
+        return await Domain.get();
     }
 
     Static.saveManualEmailData = async function (user_id, data) {
