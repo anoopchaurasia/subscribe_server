@@ -104,7 +104,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
         return await EmailDetail.updateStatus({ _id: _id }, status);
     };
 
-    Static.updateEmailDetailByFromEmail = function(user_id, from_email, status){
+    Static.updateEmailDetailByFromEmail = async function(user_id, from_email, status){
         return await EmailDetail.updateStatus({ user_id, from_email }, status);
     };
 
