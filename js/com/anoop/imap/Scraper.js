@@ -1,3 +1,4 @@
+
 fm.Package("com.anoop.imap");
 fm.Import(".Message");
 fm.Import(".Parser");
@@ -25,6 +26,10 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         if (seen.length != 0) {
             await seenMailScrap(seen);
         }
+        console.log("cb called");
+        setTimeout(async x=>{
+            cb && await cb();
+        }, 15*1000);
     };
 
     this.update = async function (cb) {
@@ -53,6 +58,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                     }
                 });
             });
+        });
     }
 
     async function seenMailScrap(seen) {

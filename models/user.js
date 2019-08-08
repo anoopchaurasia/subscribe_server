@@ -55,6 +55,15 @@ var UserSchema = new Schema({
     },
     unsub_label:{
         type:String
+    },
+    primary_email:{
+        type:String
+    },
+    inactive_at:{
+        type:Date
+    },
+    ipaddress:{
+        type:String
     }
 
 });

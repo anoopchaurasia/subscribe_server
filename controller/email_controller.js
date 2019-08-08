@@ -111,7 +111,7 @@ router.post('/getMailInfo', async (req, res) => {
                     keylist.forEach(async element => {
                         let mail = await RedisDB.popData(element);
                         if (mail.length != 0) {
-                            let result = await RedisDB.findPercent(mail);
+                            let result = await RedisDB.findPercent(mail, false);
                             if (result) {
                                 let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
                                 await Expensebit.storeBulkEmailInDB(mail, from_email_id);
@@ -208,30 +208,23 @@ This will get Filter subcription(new subscription only), unread Mail Info and to
 router.post('/readMailInfo', async (req, res) => {
     try {
         const doc = req.token;
-        // let keylist = await RedisDB.getKEYS(doc.user_id);
-        // if (keylist && keylist.length != 0) {
-        //     keylist.forEach(async element => {
-        //         let mail = await RedisDB.popData(element);
-        //         if (mail.length != 0) {
-        //             let result = await RedisDB.findPercent(mail);
-        //             if (result) {
-        //                 let from_email_id = await Expensebit.saveAndReturnEmailData(JSON.parse(mail[0]), doc.user_id)
-        //                 console.log(from_email_id)
-        //                 await Expensebit.storeBulkEmailInDB(mail,from_email_id);
-        //             }
-        //         }
-        //     });
-        // }
 
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-        await BaseController.handleRedis(doc.user_id, true);
+        let finished = false;
+        let is_finished =await BaseController.isScanFinished(doc.user_id);
+        if (is_finished && is_finished == "true") {
+            console.log("is_finished here-> ", is_finished);
+            finished = true;
+        }
+        await BaseController.handleRedis(doc.user_id, false);
         res.status(200).json({
             error: false,
             data: emailinfos,
             unreadData: unreademail,
-            totalEmail: total
+            totalEmail: total,
+            finished: finished
         })
     } catch (err) {
         console.error(err.message, err.stack, "8");

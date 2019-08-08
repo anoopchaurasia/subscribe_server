@@ -14,6 +14,8 @@ var crypto = require('crypto');
 var randomstring = require("randomstring");
 var dns = require('dns');
 var legit = require('legit');
+var Raven = require('raven');
+
 const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
@@ -25,7 +27,8 @@ router.post('/loginWithImap', async (req, res) => {
     try {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
         let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile).catch(err => {
-            console.error(err.message, err, "imap_connect_error");
+            console.error(err.message, err, "imap_connect_error", req.body.username);
+            Raven.captureException(err, { tags: { email_domain: req.body.username.split("@")[1], pass_length: req.body.password.length } });
             if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
                 return res.status(403).json({
                     error: true,
@@ -341,7 +344,7 @@ router.post('/findEmailProvider', async (req, res) => {
         console.log("here")
         let email = req.body.emailId;
         let response = await saveProviderInfo(email);
-        if(response['provider'] != null && response['provider']!='null'){
+        if (response['provider'] != null && response['provider'] != 'null') {
             res.status(200).json({
                 error: false,
                 status: 200,
@@ -351,13 +354,13 @@ router.post('/findEmailProvider', async (req, res) => {
                 video_url: response.video_url,
                 login_js: response.login_js
             })
-        }else{
-             res.status(404).json({
-                    error: true,
-                    status: 404,
-                    data: response.login_url,
-                 message: "We Don't Support this " + email.split('@')[1] + " . Will provide support in future.."
-                })
+        } else {
+            res.status(404).json({
+                error: true,
+                status: 404,
+                data: response.login_url,
+                message: "We Don't Support this " + email.split('@')[1] + " . Will provide support in future.."
+            })
         }
     } catch (error) {
         console.log("here", error)
@@ -390,7 +393,10 @@ router.post('/readZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
         console.log(doc)
-        await Controller.extractEmail(doc);
+        Controller.extractEmail(doc).catch(err => {
+            console.error(err.message, err.stack);
+            Controller.scanFinished(doc.user_id);
+        });;
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -516,8 +522,13 @@ router.post('/saveProfileInfo', async (req, res) => {
             let userObj = {
                 name: req.body.name,
                 "dob": req.body.dob,
-                "gender": req.body.sex
+                "gender": req.body.sex,
+                "ipaddress": req.header('x-forwarded-for') || req.connection.remoteAddress,
+                "inactive_at":null
             };
+            if (req.body.email != null) {
+                userObj.primary_email = req.body.email;
+            }
             await UserModel.findOneAndUpdate({ "_id": doc.user_id }, userObj, { upsert: true }).catch(err => {
                 console.error(err.message, err.stack);
             })
@@ -533,6 +544,9 @@ router.post('/saveProfileInfo', async (req, res) => {
         res.send({ "status": 401, "data": error })
     }
 });
+
+
+
 
 
 
@@ -793,6 +807,7 @@ router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
         let array = sender_email.split(",") || sender_email.split(";");
         array.forEach(async element => {
             console.log(element)
+            element = element.trim();
             let validate = await EmailValidate.validate(element);
             console.log("is valid", validate)
             if (validate) {
@@ -819,6 +834,7 @@ router.post('/imapManualTrashEmailFromUser', async (req, res) => {
         let array = sender_email.split(",") || sender_email.split(";");
         array.forEach(async element => {
             console.log(element)
+            element = element.trim();
             let validate = await EmailValidate.validate(element);
             console.log("is valid", validate)
             if (validate) {

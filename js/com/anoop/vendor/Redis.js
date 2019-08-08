@@ -44,6 +44,26 @@ fm.Class("Redis", function(me) {
          return client.lpush(key, JSON.stringify(data));
      };
 
+     Static.setData = async function (key,data) {
+        return client.set(key, data);
+    };
+
+    Static.getData = async function (key) {
+        return new Promise((resolve, reject) => {
+            client.get(key,(err, res) => {
+                if (err) return reject(err);
+                resolve(res);
+            });
+        });
+    };
+
+
+     Static.pushFlag = async function (key,data) {
+        return client.lpush(key, data);
+    };
+
+     
+
     Static.popData = async function (key) {
         return new Promise((resolve, reject) => {
             client.lrange(key, 0, -1, (err, res) => {

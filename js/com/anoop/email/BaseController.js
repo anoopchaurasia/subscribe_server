@@ -4,10 +4,9 @@ fm.Import("..model.EmailInfo");
 fm.Import("..model.User");
 fm.Import("..model.Token");
 fm.Import("..model.Provider");
-fm.Import("..model.Domain");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Provider, Domain) {
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Provider) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -16,10 +15,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
     Static.updateOrCreateAndGetEMailDetailFromData = async function (data, user_id) {
         let emaildetailraw = await EmailDetail.fromEamil(data, user_id);
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
-    }
-
-    Static.getAllDomain = async function () {
-        return await Domain.get();
     }
 
     Static.saveManualEmailData = async function (user_id, data) {
@@ -40,6 +35,18 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
 
     Static.updateLastMsgId = async function (_id, msg_id) {
         return await User.updatelastMsgId({ _id: _id }, { last_msgId: msg_id });
+    }
+
+    Static.scanFinished = async function(user_id){
+        await RedisDB.setData(user_id,"is_finished", true);
+    }
+
+    Static.scanStarted = async function(user_id){
+        await RedisDB.setData(user_id,"is_finished", false);
+    }
+
+    Static.isScanFinished = async function(user_id){
+        return await RedisDB.getData(user_id,"is_finished");
     }
 
     Static.createUser = async function(email,passsword,trash_label){
@@ -140,13 +147,15 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
     Static.handleRedis = async function (user_id, del_data = true) {
         let keylist = await RedisDB.getKEYS(user_id);
         if (keylist && keylist.length != 0) {
+            console.log(keylist)
             await keylist.asyncForEach(async element => {
+                // console.log(element)
                 let mail = await RedisDB.popData(element);
                 if (mail.length != 0) {
                     let result = await RedisDB.findPercent(mail);
                     if (result) {
                         let from_email_id = await me.updateOrCreateAndGetEMailDetailFromData(JSON.parse(mail[0]), user_id)
-                        console.log(from_email_id)
+                        // console.log(from_email_id)
                         await EmailInfo.bulkInsert(mail, from_email_id._id);
                     }
                 }

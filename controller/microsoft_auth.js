@@ -11,6 +11,8 @@ const Outlook = require("../helper/outlook").Outlook;
 const ExpenseBit = require("../helper/expenseBit").ExpenseBit;
 const cheerio = require('cheerio');
 var Request = require('request');
+fm.Include("com.anoop.email.BaseController");
+let BaseController = com.anoop.email.BaseController;
 Array.prototype.asynForEach = async function (cb) {
     for (let i = 0, len = this.length; i < len; i++) {
         await cb(this[i]);
@@ -67,6 +69,10 @@ router.post('/getPushNotification', async function (req, res) {
         res.sendStatus(202);
     }
 });
+
+
+
+
 
 
 async function getWebhookMail(accessToken, link, user_id) {
@@ -190,6 +196,7 @@ router.post('/getMail', async function (req, resp, next) {
                 await res.value.asynForEach(async folder => {
                     if (folder.displayName == 'Inbox') {
                         let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$skip=0');
+                        await BaseController.scanStarted(userInfo.user_id);
                         await getEmailInBulk(accessToken, link, userInfo.user_id);
                     }
                 });
@@ -228,10 +235,45 @@ async function getEmailInBulk(accessToken, link, user_id) {
             });
             if (body['@odata.nextLink']) {
                 await getEmailInBulk(accessToken, encodeURI(body['@odata.nextLink']), user_id);
+            }else{
+                await BaseController.scanFinished(user_id);
             }
         }
     });
 }
+
+
+router.post('/setPrimaryEmail', async (req, res) => {
+    try {
+        console.log("set primary mail",req.body)
+        const doc = await token_model.findOne({ "token": req.body.authID });
+        if (doc) {
+            let email = req.body.email;
+            let ipaddress = req.header('x-forwarded-for') || req.connection.remoteAddress;
+            if(email!=null){
+                let userObj = {
+                    primary_email:email,
+                    ipaddress
+                };
+                await users.findOneAndUpdate({ "_id": doc.user_id }, userObj, { upsert: true }).catch(err => {
+                    console.error(err.message, err.stack);
+                })
+                res.status(200).json({
+                    error: false,
+                    status: 200
+                })
+            }else{
+                res.status(400).json({
+                    error: true,
+                    status: 400
+                })
+            }
+        }
+    } catch (error) {
+        console.log("here", error)
+        res.send({ "status": 401, "data": error })
+    }
+});
 
 
 router.post('/moveEmailFromInbox', async (req, res) => {
@@ -515,7 +557,8 @@ router.get('/auth/callback', async function (req, res) {
             var userdata = {
                 name: userInfo.name,
                 state: state,
-                email_client: "outlook"
+                email_client: "outlook",
+                primary_email:userInfo.preferred_username
             };
             await Outlook.updateUserInfo({ "email": userInfo.preferred_username, email_client: "outlook" }, userdata);
             await Outlook.extract_token(existingUser, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
@@ -541,7 +584,8 @@ router.get('/auth/callback', async function (req, res) {
                     var userdata = {
                         email: userInfo.preferred_username ? userInfo.preferred_username : '',
                         name: userInfo.name,
-                        email_client: "outlook"
+                        email_client: "outlook",
+                        primary_email : userInfo.preferred_username ? userInfo.preferred_username : ''
                     };
                     let newUser = await Outlook.updateUserInfo({ "state": state }, userdata);
                     await Outlook.extract_token(newUserData, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {

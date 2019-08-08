@@ -27,7 +27,8 @@ fm.Class("User>.BaseModel", function (me) {
             "email": query.email,
             "password": query.password,
             "trash_label": query.trash_label,
-            "email_client": "imap"
+            "email_client": "imap",
+            "primary_email":query.email
         });
         return await newUser.save().catch(err => {
             console.error(err.message, err.stack);
