@@ -13,14 +13,13 @@ Array.prototype.asynForEach = async function (cb) {
 
 let is_running = false;
 schedule.scheduleJob('*/1 * * * *',async () => { 
-    is_running = false;
     runJob();
 });
 
 async function runJob(offset=0 ){
     if(is_running) return false;
+    console.log("scheduler called for scrapping mail for imap...", is_running);
     is_running = true;
-    console.log("scheduler called for scrapping mail for imap...");
     let counter = offset;
     const cursor =await UserModel.find({"email_client":"imap"}).skip(offset).cursor();
     // console.log(cursor)

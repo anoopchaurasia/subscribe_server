@@ -28,7 +28,7 @@ fm.Class("Parser>.Message", function (me, Header) {
 
 
     Static.parse = function (body,parse) {
-        let to = parse.to.text.indexOf("<") != -1 ? parse.to.text.split("<")[1].replace(">", "") : parse.to.text;
+        let to = parse.to && parse.to.text && (parse.to.text.indexOf("<") != -1 ? parse.to.text.split("<")[1].replace(">", "") : parse.to.text);
         return {
             html: body.payload,
             date: new Date(parse.date).toString(),
