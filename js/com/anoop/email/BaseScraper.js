@@ -14,6 +14,9 @@ fm.Class('BaseScraper', function (me, BaseController, BaseRedisData) {
     };
 
     this.inboxToUnused = async function (data, url) {
+        if(data.from_email ==null || data.from_email_name==null){
+            return
+        }
         let emaildetail = await BaseController.updateOrCreateAndGetEMailDetailFromData(data, me.user_id);
         await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, url);
     }
@@ -37,8 +40,11 @@ fm.Class('BaseScraper', function (me, BaseController, BaseRedisData) {
             return await me.inboxToUnused(data, url);
         }
         if (data.labelIds.length != 0) {
+            if(data.from_email ==null || data.from_email_name==null){
+                return
+            }
             delete data.payload;
-            data['source'] = "redis"
+            data['source'] = "redis";
             await com.jeet.memdb.RedisDB.pushData(emaildetailraw.user_id, emaildetailraw.from_email, data);
         }
     }

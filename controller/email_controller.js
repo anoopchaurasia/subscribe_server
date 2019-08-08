@@ -218,6 +218,9 @@ router.post('/readMailInfo', async (req, res) => {
             console.log("is_finished here-> ", is_finished);
             finished = true;
         }
+        if(is_finished === null) {
+            await BaseController.scanFinished(doc.user_id);
+        }
         await BaseController.handleRedis(doc.user_id, false);
         res.status(200).json({
             error: false,
