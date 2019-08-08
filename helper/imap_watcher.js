@@ -19,6 +19,7 @@ schedule.scheduleJob('*/1 * * * *',async () => {
 
 async function runJob(offset=0 ){
     if(is_running) return false;
+    is_running = true;
     console.log("scheduler called for scrapping mail for imap...");
     let counter = offset;
     const cursor =await UserModel.find({"email_client":"imap"}).skip(offset).cursor();
