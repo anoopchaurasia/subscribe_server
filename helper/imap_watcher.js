@@ -20,12 +20,14 @@ if(cluster.isMaster) {
         if(is_running) return false;
         is_running = true;
         myCursor = await UserModel.find({"email_client":"imap"}, {_id:1}).cursor();
+        for(let w in cluster.workers){
+            cluster.workers[w].send({data_available: true});
+        }
         console.log("scheduler called for scrapping mail for imap...");
     });
 
     async function give_me_work(worker){
         if(!is_running || !myCursor) {
-            worker.send({no_work: true});
             return;
         }
         try{
@@ -34,13 +36,11 @@ if(cluster.isMaster) {
                 worker.send({user_id: user._id});
             } else {
                 is_running = false;
-                worker.send({no_work: true});
             }
         } catch(e){
             is_running = false;
             console.error(e.message, "failed cursor");
-            worker.send({no_work: true});
-            myCursor.close();
+            await myCursor.close();
         }
     };
 
@@ -59,26 +59,21 @@ if(cluster.isMaster) {
         process.send("give_me_work");
     }
     process.on('message', async (data) => {
-        if(data.no_work===true) {
-            return i_am_free = true;
-        }
-        await scrapEmailForIamp(data);
+        data.user_id && scrapEmailForIamp(data);
+        data.data_available && !is_working && givmeWork();
     });
-    
-    let i_am_free = true;
+    let is_working = false;
     async function scrapEmailForIamp({user_id}) {
         try{
-            i_am_free = false;
+            is_working = true;
             let user =await UserModel.findOne({_id: user_id}).exec()
             console.log("here ->",user.email)
             await Controller.extractEmailForCronJob(user);
         } catch(e) {
             console.error(e.message, "failed scrap imap");
         } finally {
+            is_working = false;
             givmeWork();
         }
     };
-    setInterval(x=>{
-        i_am_free && givmeWork();
-    }, 10*10000);
 }
