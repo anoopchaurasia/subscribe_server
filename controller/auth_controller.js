@@ -62,10 +62,17 @@ router.get('/getAppVersion', async (req, res) => {
         let versionData = await AppVersionModel.findOne().sort({ version_name: -1 }).limit(1).catch(err => {
             console.error(err.message, err.stack);
         });
-        res.status(200).json({
-            message: "success",
-            version: versionData.version_name
-        })
+        if(versionData){
+            res.status(200).json({
+                message: "success",
+                version: versionData.version_name
+            })
+        }else{
+            res.status(404).json({
+                message: "failed"
+                        })
+        }
+        
     } catch (ex) {
         console.error(ex.message, ex.stack);
     }

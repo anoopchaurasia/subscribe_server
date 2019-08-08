@@ -316,7 +316,7 @@ let saveProviderInfo = async (email) => {
                     login_js = "document.getElementById('login-email').value";
 
                 } else {
-                    provider = "null";
+                    provider = null;
                     login_url = "null";
                     imap_host = "null";
                     two_step_url = "null";
@@ -341,20 +341,30 @@ router.post('/findEmailProvider', async (req, res) => {
         console.log("here")
         let email = req.body.emailId;
         let response = await saveProviderInfo(email);
-        res.status(200).json({
-            error: false,
-            status: 200,
-            data: response.login_url,
-            provider: response.provider,
-            explain_url: response.explain_url,
-            video_url: response.video_url,
-            login_js: response.login_js
-        })
+        if(response['provider'] != null && response['provider']!='null'){
+            res.status(200).json({
+                error: false,
+                status: 200,
+                data: response.login_url,
+                provider: response.provider,
+                explain_url: response.explain_url,
+                video_url: response.video_url,
+                login_js: response.login_js
+            })
+        }else{
+             res.status(404).json({
+                    error: true,
+                    status: 404,
+                    data: response.login_url,
+                 message: "We Don't Support this " + email.split('@')[1] + " . Will provide support in future.."
+                })
+        }
     } catch (error) {
         console.log("here", error)
         res.status(401).json({
             error: true,
-            data: null
+            data: null,
+            message: "Invalid Email."
         })
     }
 });
@@ -523,6 +533,7 @@ router.post('/saveProfileInfo', async (req, res) => {
         res.send({ "status": 401, "data": error })
     }
 });
+
 
 
 async function getTotalEmailCount(user_id) {
