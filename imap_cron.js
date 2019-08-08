@@ -1,5 +1,6 @@
 'use strict'
 require("dotenv").config();
+require("dotenv").config({"path":".cron_env"});
 require("jsfm");
 fm.basedir = process.cwd() + "/js";
 global.basedir = process.cwd();
