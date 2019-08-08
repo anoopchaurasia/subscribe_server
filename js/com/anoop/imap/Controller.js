@@ -17,20 +17,18 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     async function updateMyDetail(user_id, from_email, status) {
-        let emaildetail = await me.getEmailDetail(user_id, from_email);
-        await me.updateEmailDetailStatus(emaildetail._id, status);
+        await me.updateEmailDetailByFromEmail(user_id, from_email, status);
     };
 
     async function closeImap(myImap) {
         await myImap.closeFolder();
         myImap.imap.end(myImap.imap);
-    }
+    };
 
     ///------------------------------------- from unused ---------------------///
 
     Static.unusedToKeep = async function (token, from_email) {
-        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
-        await me.updateEmailDetailStatus(emaildetail._id, "keep");
+        await updateMyDetail(token.user_id, from_email, 'keep');
     };
 
     Static.unusedToTrash = async function (token, from_email) {
@@ -188,10 +186,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.extractEmailForCronJob = async function (user) {
         let myImap = await openFolder("", "INBOX", user);
-        await me.updateLastMsgId(user._id, myImap.box.uidnext)
         let scraper = Scraper.new(myImap);
         await scraper.update();
         myImap.imap.end(myImap.imap);
+        await me.updateLastMsgId(user._id, myImap.box.uidnext)
     }
 
     ///////////------------------------ login ------------------------///
