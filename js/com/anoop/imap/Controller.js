@@ -6,6 +6,26 @@ const mongouser = require('../../../../models/user');
 fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scraper, Label) {
     this.setMe = _me => me = _me;
 
+    async function openFolder(token, folder, user) {
+        let user =  user || (await me.getUserById(token.user_id));
+        let domain = user.email.split("@")[1]; 
+        let provider = await me.getProvider(domain) 
+        let myImap = await MyImap.new(user, provider.provider);
+        await myImap.connect(provider);
+        await myImap.openFolder(folder);
+        return myImap;
+    }
+
+    async function updateMyDetail(user_id, from_email, status) {
+        let emaildetail = await me.getEmailDetail(user_id, from_email);
+        await me.updateEmailDetailStatus(emaildetail._id, status);
+    }
+
+    async function closeImap(myImap) {
+        await myImap.closeFolder();
+        myImap.imap.end(myImap.imap);
+    }
+
     ///------------------------------------- from unused ---------------------///
 
     Static.unusedToKeep = async function (token, from_email) {
@@ -13,75 +33,22 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await me.updateEmailDetailStatus(emaildetail._id, "keep");
     };
 
-
-    Static.login = async function(email, password, provider){
-        let PASSWORD = MyImap.encryptPassword(password);
-        let myImap = await MyImap.new({
-            email,
-            password:PASSWORD
-        }, provider.provider);
-         await myImap.connect(provider);
-        let names = await myImap.getLabels();
-        if (!names.includes("Unsubscribed Emails")) {
-           await Label.create(myImap, "Unsubscribed Emails");
-        }
-        let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
-        let trash_label = labels;
-        let user = await me.getUserByEmail(email);
-        if (!user) {
-            user = await me.createUser(email,PASSWORD,trash_label);
-        }
-        if (provider.provider.includes("inbox.lv")) {
-            await me.updateUser(email, "INBOX/Unsubscribed Emails",trash_label,PASSWORD);
-         } else {
-            await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
-        }
-        myImap.imap.end(myImap.imap);
-        return await me.createToken(user);
-    }
-
-
     Static.unusedToTrash = async function (token, from_email) {
-        let user = await me.getUserById(token.user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap = await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        await myImap.openFolder("INBOX");
-        await Label.moveInboxToTrash(myImap, from_email);
-        await myImap.closeFolder();
-        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
-        await me.updateEmailDetailStatus(emaildetail._id, "trash");
-        myImap.end();
+        let myImap = await openFolder(token, "INBOX");
+        await Label.moveInboxToTrash(myImap, emailids);
+        await closeImap(myImap);
+        await updateMyDetail(token.user_id, from_email, 'trash')
     };
 
     Static.unusedToUnsub = async function (token, from_email) {
-        let user = await me.getUserById(token.user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap =await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        let f = await myImap.openFolder("INBOX");
-        await Label.moveInboxToUnsub(myImap, from_email);
-        await myImap.closeFolder();
-        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
-        await me.updateEmailDetailStatus(emaildetail._id, "move");
-        myImap.imap.end(myImap.imap);
-    };
+        let myImap = await openFolder(token, "INBOX");
+        await Label.moveInboxToUnsub(myImap, emailids);
+        await updateMyDetail(token.user_id, from_email, "move");
+        await closeImap(myImap);
+	};
 
     Static.manualUnusedToTrash = async function (token, from_email) {
-        let user = await me.getUserById(token.user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap = await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        await myImap.openFolder("INBOX");
+        let myImap = await openFolder(token, "INBOX");
         await Label.moveInboxToTrash(myImap, from_email);
         await myImap.closeFolder();
         let data = {
@@ -94,14 +61,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     Static.manualUnusedToUnsub = async function (token, from_email) {
-        let user = await me.getUserById(token.user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap = await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        await myImap.openFolder("INBOX");
+        let myImap = await openFolder(token, "INBOX");
         await Label.moveInboxToUnsub(myImap, from_email);
         await myImap.closeFolder();
         let data = {
@@ -114,122 +74,60 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     Static.automaticInboxToUnsub = async function (user_id, email_id) {
-        let user = await me.getUserById(user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap = await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        await myImap.openFolder("INBOX");
+        let myImap = await openFolder({user_id}, "INBOX");
         let email_id_arr = [email_id];
         await Label.moveInboxToUnsub(myImap, email_id_arr);
-        await myImap.closeFolder();
-        myImap.imap.end(myImap.imap);
+        await closeImap(myImap);
     };
 
 
     Static.automaticInboxToTrash = async function (user_id, email_id) {
-        let user = await me.getUserById(user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap = await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        await myImap.openFolder("INBOX");
+        let myImap = await openFolder({user_id}, "INBOX");
         let email_id_arr = [email_id];
         await Label.moveInboxToTrash(myImap, email_id_arr);
-        await myImap.closeFolder();
-        myImap.imap.end(myImap.imap);
+        await closeImap(myImap);
     };
 
 
     ///------------------------------------- from keep ---------------------///
 
     Static.keepToTrash = async function (token, from_email) {
-        let user = await me.getUserById(token.user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap = await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        await myImap.openFolder("INBOX");
+        let myImap = await openFolder(token, "INBOX");
         await Label.moveActiveToTrash(myImap, from_email);
-        await myImap.closeFolder();
-        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
-        await me.updateEmailDetailStatus(emaildetail._id, "trash");
-        myImap.end();
+        await updateMyDetail(token.user_id, from_email, "trash");
+        await closeImap(myImap);
     };
 
     Static.keepToUnsub = async function (token, from_email) {
-        let user = await me.getUserById(token.user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap = await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        let f = await myImap.openFolder("INBOX");
+        let myImap = await openFolder(token, "INBOX");
         await Label.moveActiveToUnsub(myImap, from_email);
-        await myImap.closeFolder();
-        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
-        await me.updateEmailDetailStatus(emaildetail._id, "move");
-        myImap.end();
-    };
+        await updateMyDetail(token.user_id, from_email, "move");
+        await closeImap(myImap);
+
 
     ///---------------------------------------from unsub folder--------------------///
  
-    Static.unsubToKeep = async function (token, from_email) {
-        let user = await me.getUserById(token.user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap =await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        await myImap.openFolder(myImap.user.unsub_label);
+     Static.unsubToKeep = async function (token, from_email) {
+        let myImap = await openFolder(token, myImap.user.unsub_label);
         await Label.moveUnsubToInbox(myImap, from_email);
-        await myImap.closeFolder();
-        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
-        await me.updateEmailDetailStatus(emaildetail._id, "keep");
-        myImap.end();
+        await updateMyDetail(token.user_id, from_email, "keep");
+        await closeImap(myImap);
     };
-
-    Static.unsubToTrash = async function (token, from_email) {
-        let user = await me.getUserById(token.user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap =await MyImap.new(user);
-        
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        await myImap.openFolder(myImap.user.unsub_label);
+ 	
+	Static.unsubToTrash = async function (token, from_email) {
+        let myImap = await openFolder(token, myImap.user.unsub_label);
         await Label.moveUnsubToTrash(myImap, from_email);
-        await myImap.closeFolder();
-        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
-        await me.updateEmailDetailStatus(emaildetail._id, "trash");
-        myImap.end();
+        await updateMyDetail(token.user_id, from_email, "trash");
+        await closeImap(myImap);
     };
     ///------------------------------------from trash folder---------------------///
 
     Static.trashToKeep = async function (token, from_email) {
-        let user = await me.getUserById(token.user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap =await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        let f = await myImap.openFolder(myImap.user.trash_label);
+        let myImap = await openFolder(token, myImap.user.trash_label);
         await Label.moveTrashToInbox(myImap, from_email);
-        await myImap.closeFolder();
-        let emaildetail = await me.getEmailDetail(token.user_id, from_email);
-        await me.updateEmailDetailStatus(emaildetail._id, "keep");
-        myImap.end();
-    };
+        await updateMyDetail(token.user_id, from_email, "keep");
+        await closeImap(myImap);
+
 
     Static.trashToUnsub = async function (token, from_email) {
         let emaildetail = await me.getEmailDetail(token, from_email);
@@ -270,16 +168,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     ////---------------------scrap fresh ==================
 
     Static.extractEmail = async function (token) {
-        let user = await me.getUserById(token.user_id);
-        await me.scanStarted(token.user_id);
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap = await MyImap.new(user);
-        await myImap.connect(provider).catch(async err => {
-            console.error(err.message, err.stack, "imap connect here");
-            await me.scanFinished(token.user_id);
-        });
-        let box = await myImap.openFolder("INBOX");
+        let myImap = await openFolder(token, "INBOX");
         await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd(){
@@ -293,17 +182,38 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     
 
     Static.extractEmailForCronJob = async function (user) {
-        let domain = user.email.split("@")[1];
-        let provider = await me.getProvider(domain)
-        let myImap = await MyImap.new(user);
-        await myImap.connect(provider).catch(err => {
-            console.error(err.message, err.stack, "imap connect here");
-        });
-        let box = await myImap.openFolder("INBOX");
+        let myImap = await openFolder(token, "INBOX", user);
         await me.updateLastMsgId(user._id, box.uidnext)
         let scraper = Scraper.new(myImap);
         await scraper.update();
         myImap.imap.end(myImap.imap);
+    }
+
+    ///////////------------------------ login ------------------------///
+    Static.login = async function(email, password, provider){
+        let PASSWORD = MyImap.encryptPassword(password);
+        let myImap = await MyImap.new({
+            email,
+            password:PASSWORD
+        }, provider.provider);
+         await myImap.connect(provider);
+        let names = await myImap.getLabels();
+        if (!names.includes("Unsubscribed Emails")) {
+           await Label.create(myImap, "Unsubscribed Emails");
+        }
+        let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
+        let trash_label = labels;
+        let user = await me.getUserByEmail(email);
+        if (!user) {
+            user = await me.createUser(email,PASSWORD,trash_label);
+        }
+        if (provider.provider.includes("inbox.lv")) {
+            await me.updateUser(email, "INBOX/Unsubscribed Emails",trash_label,PASSWORD);
+         } else {
+            await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
+        }
+        myImap.imap.end(myImap.imap);
+        return await me.createToken(user);
     }
 
 });
