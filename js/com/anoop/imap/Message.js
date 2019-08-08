@@ -53,24 +53,24 @@ fm.Class("Message", function (me) {
     Static.getBatchMessage = async function (imap, message_ids, detector) {
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
-                bodies: ['HEADER.FIELDS (FROM TO SUBJECT DATE)', 'TEXT']
+                bodies: '',
+                struct:true
             });
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
-                const parsed = await parseMessage(msg, 'utf8').catch(err => console.error(err));
-                if (detector(parsed)) msgs.push(parsed);
+                detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
             });
             fetch.on('end', async function () {
                 console.log("end")
-                resolve(msgs);
+                resolve();
             });
         });
     };
 
 
     async function parseMessage(msg) {
-
-        const [atts, parsed] = await Promise.all([
+        let response = {};
+        let [atts, parsed] = await Promise.all([
             new Promise(resolve => {
                 msg.on('attributes', atts => {
                     resolve(atts)
@@ -78,101 +78,20 @@ fm.Class("Message", function (me) {
                 msg.on('error', atts => reject(err));
             }),
             new Promise((resolve, reject) => {
-                let result;
                 msg.on('body', (stream, info) => {
                     const chunks = [];
                     stream.once('error', reject);
                     stream.on('data', chunk => chunks.push(chunk));
                     stream.once('end', async () => {
                         const raw = Buffer.concat(chunks).toString('utf8');
-                        let parsed = await simpleParser(raw);
-                        if (!result) {
-                            result = Imap.parseHeader(raw);
-                            for (let k in result) {
-                                if (Array.isArray(result[k])) result[k] = result[k][0];
-                            }
-                        }
-                        // console.log(parsed)
-                        if (result != {} && parsed['textAsHtml'] != undefined) {
-                            resolve({ "header": result, parseBuff: parsed })
-                            // let url = await getUrlFromEmail(parsed['textAsHtml']);
-                            // if (url != null) {
-                            //     console.log(url)
-                            // }
-                        }
+                        let parsed = await simpleParser(raw,{skipHtmlToText:false});
+                        resolve(parsed)
                     });
                 });
             })
-        ]);
+        ])
         parsed.uid = atts.uid;
         return parsed;
-
-        // let isset=false;
-        // const [atts, bufferdata] = await Promise.all([
-        //     new Promise(resolve => {
-        //         msg.on('attributes', atts => {
-        //             resolve(atts)
-        //         });
-        //         msg.on('error', atts => reject(err));
-        //     }),
-        //     new Promise((resolve, reject) => {
-        //         msg.on('body', (stream, info) => {
-        //             const chunks = [];
-        //             stream.once('error', reject);
-        //             stream.on('data', chunk => chunks.push(chunk));
-        //             stream.once('end', async () => {
-        //                 if (isset) return;
-        //                 isset=true
-        //                 console.log("getBatchMessage", "sdsdsds")
-        //                 const raw = Buffer.concat(chunks).toString('utf8');
-        //                 resolve(raw);
-        //             });
-        //         });
-        //     })
-        // ]);
-        // return { bufferdata, atts};
     }
-
-
-    async function getUrlFromEmail(body) {
-        if (!body) {
-            return null;
-        }
-        let $ = cheerio.load(body);
-        let url = null;
-        $('a').each(async function (i, elem) {
-            let fa = $(this).text();
-            let anchortext = fa.toLowerCase();
-            let anchorParentText = $(this).parent().text().toLowerCase();
-            if (anchortext.indexOf("unsubscribe") != -1 ||
-                anchortext.indexOf("preferences") != -1 ||
-                anchortext.indexOf("subscription") != -1 ||
-                anchortext.indexOf("visit this link") != -1 ||
-                anchortext.indexOf("do not wish to receive our mails") != -1 ||
-                anchortext.indexOf("not receiving our emails") != -1) {
-                url = $(this).attr().href;
-                console.log(url)
-                return url;
-            } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
-                anchorParentText.indexOf("stop receiving emails") != -1 ||
-                anchorParentText.indexOf("unsubscribe") != -1 ||
-                anchorParentText.indexOf("subscription") != -1 ||
-                anchorParentText.indexOf("preferences") != -1 ||
-                anchorParentText.indexOf("mailing list") != -1 ||
-                (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
-                ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
-                anchorParentText.indexOf("Don't want this") != -1) {
-                url = $(this).attr().href;
-                console.log(url)
-                return url;
-            }
-        })
-        return url;
-    }
-
-
-    function getBatch(access_token) {
-
-    };
 
 })

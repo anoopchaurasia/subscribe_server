@@ -1,7 +1,8 @@
 fm.Package('com.anoop.email');
 fm.Import(".BaseController")
+fm.Import(".BaseRedisData");
 const cheerio = require('cheerio');
-fm.Class('BaseScraper', function (me, BaseController) {
+fm.Class('BaseScraper', function (me, BaseController, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -18,24 +19,11 @@ fm.Class('BaseScraper', function (me, BaseController) {
     }
 
     this.handleEamil = async function (data, automatic) {
-        let emaildetailraw = await BaseController.dataToEmailDetailRaw(data, me.user_id);
-        let emaildetail = await BaseController.getEmailDetailFromData(emaildetailraw);
-        
-        if (emaildetail && emaildetail.status == "move") {
-            await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
-            return await automatic(data, "move")
-        }
-        if (emaildetail && emaildetail.status == "trash") {
-            // console.log(emaildetail)
-            // console.log(data)
-            await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
-            return await automatic(data, "trash")
-        }
+        let {emaildetail, emaildetailraw} = me.handleBasedOnPastAction(data, automatic);
         if (emaildetail) {
             return await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
         }
         let isEmailMovable = await BaseController.isEmailMovable(emaildetailraw.from_email);
-
         if (isEmailMovable) {
             data['source'] = "count";
             return await me.inboxToUnused(data, "");
@@ -52,19 +40,26 @@ fm.Class('BaseScraper', function (me, BaseController) {
         }
     }
 
-    function findUrlFromBody(body) {
-        if (!body) {
-            return null;
+    this.handleBasedOnPastAction = async function (data, automatic) {
+        let emaildetailraw = await BaseController.dataToEmailDetailRaw(data, me.user_id);
+        let emaildetail = await BaseController.getEmailDetailFromData(emaildetailraw);
+        if (emaildetail && emaildetail.status == "move") {
+            await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
+            await automatic(data, "move");
+            return {};
         }
-        let bodydata = new Buffer(body, 'base64').toString('utf-8')
-        let $ = cheerio.load(bodydata);
-        let matched = $('a').reverse().find(async function (elem) {
-            let $this = $(elem);
-            if ($this.text().match(me.UNSUB_REGEX) || $this.parent().text().match(me.UNSUB_REGEX)) {
-                return true;
-            }
-        })
-        return matched && $(matched).attr("href");
+        else if (emaildetail && emaildetail.status == "trash") {
+            await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
+            await automatic(data, "trash");
+            return {};
+        }
+        return {emaildetail, emaildetailraw}
+    }
+
+
+
+    this.sendMailToScraper = async function(data, user){
+        BaseRedisData.sendMailToScraper(data, user);
     };
 
     async function getUrlFromEmail(body) {

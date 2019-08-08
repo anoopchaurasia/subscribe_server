@@ -14,7 +14,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await myImap.connect(provider);
         await myImap.openFolder(folder);
         return myImap;
-    }
+    };
 
     async function updateMyDetail(user_id, from_email, status) {
         let emaildetail = await me.getEmailDetail(user_id, from_email);

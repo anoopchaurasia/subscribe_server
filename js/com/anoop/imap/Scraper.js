@@ -17,66 +17,44 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     }
 
     this.start = async function (cb) {
-        console.log("start")
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
         console.log(seen,unseen, "sdsds")
         if (unseen.length != 0) {
-            await unseenMailScrap(unseen);
+            await mailScrap(unseen, ["UNREAD"], me.handleEamil);
         }
         if (seen.length != 0) {
-            await seenMailScrap(seen);
+            await mailScrap(seen, ["READ"], me.handleEamil);
         }
-        console.log("cb called");
         setTimeout(async x=>{
             cb && await cb();
-        }, 15*1000);
+        }, 5*1000);
     };
 
     this.update = async function (cb) {
-        console.log("update")
         let { seen, unseen } = await Message.getLatestMessages(me.myImap.imap, me.myImap.user);
-        console.log(seen, unseen)
         if (unseen.length != 0) {
-            await unseenMailScrap(unseen);
+            await mailScrap(unseen, ["UNREAD"], me.handleBasedOnPastAction);
         }
         if (seen.length != 0) {
-            await seenMailScrap(seen);
+            await mailScrap(seen,  ["READ"], me.handleBasedOnPastAction);
         }
     };
 
-    async function unseenMailScrap(unseen) {
+    async function mailScrap(unseen, labels, handleCB) {
         await Message.getBatchMessage(me.myImap.imap, unseen,
             async (parsed) => {
-                let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["UNREAD"]);
-                me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff),me.myImap.user);
-                await me.handleEamil(emailbody, async (data, status) => {
-                    if (status == "move") {
-                        await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
-                    } else if (status == "trash") {
-                        // console.log("trash automaitc")
-                        await Label.moveInboxToTrashAuto(me.myImap, [data.email_id]);
-                    }
-                });
+            let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, labels);
+            me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff),me.myImap.user);
+            await handleCB(emailbody, async (data, status) => {
+                if (status == "move") {
+                    await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
+                } else if (status == "trash") {
+                    await Label.moveInboxToTrashAuto(me.myImap, [data.email_id]);
+                }
             });
         });
     }
 
-    async function seenMailScrap(seen) {
-        await Message.getBatchMessage(me.myImap.imap, seen,
-            async (parsed) => {
-                let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
-                me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff),me.myImap.user);
-                await me.handleEamil(emailbody, async (data, status) => {
-                    if(status == "move") {
-                        // console.log("move automaitc")
-                        await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
-                    } else if (status == "trash") {
-                        // console.log("trash automaitc")
-                        await Label.moveInboxToTrashAuto(me.myImap, [data.email_id]);
-                    }
-                });
-            });
-    }
 
     this.getEmaiIdsBySender = async function (sender) {
         let date = new Date(Date.now() - me.APPROX_TWO_MONTH_IN_MS);
