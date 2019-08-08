@@ -8,8 +8,8 @@ if(cluster.isMaster) {
     for(let p=0; p<services; p++) {
         let worker = cluster.fork({});
         worker.on('message', x=>{
-            console.log(x, worker.id);
             if(x=="give_me_work") {
+                console.log(x, worker.id);
                 give_me_work(worker);
             }
         })
