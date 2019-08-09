@@ -13,6 +13,7 @@ fm.Class("MyImap", function (me) {
         this.imap = null;
         this.user = user;
         this.provider = provider;
+        this.box=null;
     };
 
     Static.getProvider = async function (email) {
@@ -72,7 +73,7 @@ fm.Class("MyImap", function (me) {
 
     this.openFolder = async function (folder) {
         return new Promise((resolve, reject) => {
-            me.imap.openBox(folder, false, function (err, box) {
+            me.box = me.imap.openBox(folder, false, function (err, box) {
                 (err ? reject(err) : resolve(box));
             });
         });

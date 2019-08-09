@@ -19,7 +19,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     async function updateMyDetail(user_id, from_email, status) {
         let emaildetail = await me.getEmailDetail(user_id, from_email);
         await me.updateEmailDetailStatus(emaildetail._id, status);
-    }
+    };
 
     async function closeImap(myImap) {
         await myImap.closeFolder();
@@ -104,7 +104,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await updateMyDetail(token.user_id, from_email, "move");
         await closeImap(myImap);
 
-
+    }
     ///---------------------------------------from unsub folder--------------------///
  
      Static.unsubToKeep = async function (token, from_email) {
@@ -127,7 +127,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await Label.moveTrashToInbox(myImap, from_email);
         await updateMyDetail(token.user_id, from_email, "keep");
         await closeImap(myImap);
-
+    };
 
     Static.trashToUnsub = async function (token, from_email) {
         let emaildetail = await me.getEmailDetail(token, from_email);
@@ -169,6 +169,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.extractEmail = async function (token) {
         let myImap = await openFolder(token, "INBOX");
+
         await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd(){
@@ -183,7 +184,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.extractEmailForCronJob = async function (user) {
         let myImap = await openFolder(token, "INBOX", user);
-        await me.updateLastMsgId(user._id, box.uidnext)
+        await me.updateLastMsgId(user._id, myImap.box.uidnext)
         let scraper = Scraper.new(myImap);
         await scraper.update();
         myImap.imap.end(myImap.imap);

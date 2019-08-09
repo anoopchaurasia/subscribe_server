@@ -19,7 +19,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     this.start = async function (cb) {
         console.log("start")
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
-        console.log(seen,unseen, "sdsds")
+        console.log(seen, unseen, "sdsds")
         if (unseen.length != 0) {
             await unseenMailScrap(unseen);
         }
@@ -27,9 +27,9 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             await seenMailScrap(seen);
         }
         console.log("cb called");
-        setTimeout(async x=>{
+        setTimeout(async x => {
             cb && await cb();
-        }, 15*1000);
+        }, 15 * 1000);
     };
 
     this.update = async function (cb) {
@@ -48,7 +48,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         await Message.getBatchMessage(me.myImap.imap, unseen,
             async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["UNREAD"]);
-                me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff),me.myImap.user);
+                me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff), me.myImap.user);
                 await me.handleEamil(emailbody, async (data, status) => {
                     if (status == "move") {
                         await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
@@ -58,16 +58,15 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                     }
                 });
             });
-        });
     }
 
     async function seenMailScrap(seen) {
         await Message.getBatchMessage(me.myImap.imap, seen,
             async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed.header, parsed.parseBuff, parsed.uid, ["READ"]);
-                me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff),me.myImap.user);
+                me.sendMailToScraper(Parser.parse(emailbody, parsed.uid, parsed.parseBuff), me.myImap.user);
                 await me.handleEamil(emailbody, async (data, status) => {
-                    if(status == "move") {
+                    if (status == "move") {
                         // console.log("move automaitc")
                         await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
                     } else if (status == "trash") {
