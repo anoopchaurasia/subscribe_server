@@ -37,9 +37,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
         return await User.updatelastMsgId({ _id: _id }, { last_msgId: msg_id });
     }
 
-    Static.getAllDomain = async function () {
-        return await Domain.get();
-    }
+   
     
     Static.updateInactiveUser = async function (_id) {
         return await User.updateInactiveUser({ _id: _id }, { "inactive_at": new Date() });

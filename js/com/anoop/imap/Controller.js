@@ -7,14 +7,14 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     this.setMe = _me => me = _me;
 
     async function openFolder(token, folder, user) {
-        let user =  user || (await me.getUserById(token.user_id));
+        user =  user || (await me.getUserById(token.user_id));
         let domain = user.email.split("@")[1]; 
         let provider = await me.getProvider(domain) 
         let myImap = await MyImap.new(user, provider.provider);
         await myImap.connect(provider);
         await myImap.openFolder(folder);
         return myImap;
-    }
+    };
 
     async function updateMyDetail(user_id, from_email, status) {
         let emaildetail = await me.getEmailDetail(user_id, from_email);
@@ -35,14 +35,14 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.unusedToTrash = async function (token, from_email) {
         let myImap = await openFolder(token, "INBOX");
-        await Label.moveInboxToTrash(myImap, emailids);
+        await Label.moveInboxToTrash(myImap, from_email);
         await closeImap(myImap);
         await updateMyDetail(token.user_id, from_email, 'trash')
     };
 
     Static.unusedToUnsub = async function (token, from_email) {
         let myImap = await openFolder(token, "INBOX");
-        await Label.moveInboxToUnsub(myImap, emailids);
+        await Label.moveInboxToUnsub(myImap, from_email);
         await updateMyDetail(token.user_id, from_email, "move");
         await closeImap(myImap);
 	};
@@ -108,14 +108,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     ///---------------------------------------from unsub folder--------------------///
  
      Static.unsubToKeep = async function (token, from_email) {
-        let myImap = await openFolder(token, myImap.user.unsub_label);
+        let user = await me.getUserById(token.user_id);
+        let myImap = await openFolder(token, user.unsub_label,user);
         await Label.moveUnsubToInbox(myImap, from_email);
         await updateMyDetail(token.user_id, from_email, "keep");
         await closeImap(myImap);
     };
  	
 	Static.unsubToTrash = async function (token, from_email) {
-        let myImap = await openFolder(token, myImap.user.unsub_label);
+        let user = await me.getUserById(token.user_id);
+        let myImap = await openFolder(token, user.unsub_label,user);
         await Label.moveUnsubToTrash(myImap, from_email);
         await updateMyDetail(token.user_id, from_email, "trash");
         await closeImap(myImap);
@@ -123,7 +125,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     ///------------------------------------from trash folder---------------------///
 
     Static.trashToKeep = async function (token, from_email) {
-        let myImap = await openFolder(token, myImap.user.trash_label);
+        let user = await me.getUserById(token.user_id);
+        let myImap = await openFolder(token, user.trash_label,user);
         await Label.moveTrashToInbox(myImap, from_email);
         await updateMyDetail(token.user_id, from_email, "keep");
         await closeImap(myImap);
@@ -132,7 +135,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.trashToUnsub = async function (token, from_email) {
         let emaildetail = await me.getEmailDetail(token, from_email);
         let gmailInstance = await MyImap.getInstanceForUser(token.user_id);
-        await Label.moveTrashToInbox(gmailInstance, emailids);
+        await Label.moveTrashToInbox(gmailInstance, from_email);
         await me.updateEmailDetailStatus(emaildetail._id, "unsub");
     };
 
@@ -168,9 +171,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     ////---------------------scrap fresh ==================
 
     Static.extractEmail = async function (token) {
+        
+        await me.scanStarted(token.user_id);
         let myImap = await openFolder(token, "INBOX");
-
-        await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: box.uidnext }, { upsert: true })
+        await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd(){
             console.log("is_finished called")
@@ -183,7 +187,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     
 
     Static.extractEmailForCronJob = async function (user) {
-        let myImap = await openFolder(token, "INBOX", user);
+        let myImap = await openFolder("", "INBOX", user);
         await me.updateLastMsgId(user._id, myImap.box.uidnext)
         let scraper = Scraper.new(myImap);
         await scraper.update();

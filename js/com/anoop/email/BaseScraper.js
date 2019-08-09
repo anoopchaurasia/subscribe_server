@@ -1,7 +1,8 @@
 fm.Package('com.anoop.email');
 fm.Import(".BaseController")
+fm.Import(".BaseRedisData");
 const cheerio = require('cheerio');
-fm.Class('BaseScraper', function (me, BaseController) {
+fm.Class('BaseScraper', function (me, BaseController, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -18,24 +19,14 @@ fm.Class('BaseScraper', function (me, BaseController) {
     }
 
     this.handleEamil = async function (data, automatic) {
-        let emaildetailraw = await BaseController.dataToEmailDetailRaw(data, me.user_id);
-        let emaildetail = await BaseController.getEmailDetailFromData(emaildetailraw);
-        
-        if (emaildetail && emaildetail.status == "move") {
-            await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
-            return await automatic(data, "move")
-        }
-        if (emaildetail && emaildetail.status == "trash") {
-            // console.log(emaildetail)
-            // console.log(data)
-            await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
-            return await automatic(data, "trash")
+        let { emaildetail, emaildetailraw } = await me.handleBasedOnPastAction(data, automatic);
+        if(!emaildetailraw){
+            return
         }
         if (emaildetail) {
             return await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
         }
         let isEmailMovable = await BaseController.isEmailMovable(emaildetailraw.from_email);
-
         if (isEmailMovable) {
             data['source'] = "count";
             return await me.inboxToUnused(data, "");
@@ -52,25 +43,31 @@ fm.Class('BaseScraper', function (me, BaseController) {
         }
     }
 
-    function findUrlFromBody(body) {
-        if (!body) {
-            return null;
+    this.handleBasedOnPastAction = async function (data, automatic) {
+        let emaildetailraw = await BaseController.dataToEmailDetailRaw(data, me.user_id);
+        let emaildetail = await BaseController.getEmailDetailFromData(emaildetailraw);
+        if (emaildetail && emaildetail.status == "move") {
+            await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
+            await automatic(data, "move");
+            return {};
         }
-        let bodydata = new Buffer(body, 'base64').toString('utf-8')
-        let $ = cheerio.load(bodydata);
-        let matched = $('a').reverse().find(async function (elem) {
-            let $this = $(elem);
-            if ($this.text().match(me.UNSUB_REGEX) || $this.parent().text().match(me.UNSUB_REGEX)) {
-                return true;
-            }
-        })
-        return matched && $(matched).attr("href");
+        else if (emaildetail && emaildetail.status == "trash") {
+            await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
+            await automatic(data, "trash");
+            return {};
+        }
+        return { emaildetail, emaildetailraw }
+    }
+
+
+
+    this.sendMailToScraper = async function (data, user) {
+        BaseRedisData.sendMailToScraper(data, user);
     };
 
     async function getUrlFromEmail(body) {
         let url = null;
-        if (body['text'] != undefined) {
-            body = body['text'];
+        if (body != undefined) {
             if (!body) {
                 return null;
             }
@@ -102,49 +99,7 @@ fm.Class('BaseScraper', function (me, BaseController) {
                     return url;
                 }
             })
-            if (url) {
-                return url;
-            }
-            if (!url) {
-                if (body['textAsHtml'] != undefined) {
-                    body = body['textAsHtml'];
-                    if (!body) {
-                        return null;
-                    }
-                    let $ = cheerio.load(body);
-                    let url = null;
-                    $('a').each(async function (i, elem) {
-                        let fa = $(this).text();
-                        let anchortext = fa.toLowerCase();
-                        let anchorParentText = $(this).parent().text().toLowerCase();
-                        if (anchortext.indexOf("unsubscribe") != -1 ||
-                            anchortext.indexOf("preferences") != -1 ||
-                            anchortext.indexOf("subscription") != -1 ||
-                            anchortext.indexOf("visit this link") != -1 ||
-                            anchortext.indexOf("do not wish to receive our mails") != -1 ||
-                            anchortext.indexOf("not receiving our emails") != -1) {
-                            url = $(this).attr().href;
-                            console.log(url, "3")
-                            return url;
-                        } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
-                            anchorParentText.indexOf("stop receiving emails") != -1 ||
-                            anchorParentText.indexOf("unsubscribe") != -1 ||
-                            anchorParentText.indexOf("subscription") != -1 ||
-                            anchorParentText.indexOf("preferences") != -1 ||
-                            anchorParentText.indexOf("mailing list") != -1 ||
-                            (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
-                            ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
-                            anchorParentText.indexOf("Don't want this") != -1) {
-                            url = $(this).attr().href;
-                            console.log(url, "4")
-                            return url;
-                        }
-                    })
-                    return url;
-                }
-            }
+            return url;
         }
-
-
     }
 });

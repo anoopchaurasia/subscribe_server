@@ -73,8 +73,8 @@ fm.Class("MyImap", function (me) {
 
     this.openFolder = async function (folder) {
         return new Promise((resolve, reject) => {
-            me.box = me.imap.openBox(folder, false, function (err, box) {
-                (err ? reject(err) : resolve(box));
+            me.imap.openBox(folder, false, function (err, box) {
+                (err ? reject(err) : resolve(me.box = box));
             });
         });
     }

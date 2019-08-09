@@ -15,7 +15,7 @@ fm.Class("Domain>.BaseModel", function(me){
         setInterval(loadFromDB, process.env.LOAD_DOMAIN_DB_INTERVAL || 30*60*1000);
     }
 
-    function loadFromDB(){
+    async function loadFromDB(){
         let temp = await mongodomain.find({disabled: {$ne: true}},{domain_name:1,_id:0}).exec();
         domainListReg = new RegExp(temp.join("|"), 'i');
     }
