@@ -15,20 +15,18 @@ if(cluster.isMaster) {
         })
     }
     let is_running = false;
-    let free_workers = [], myCursor;
+    let myCursor;
     schedule.scheduleJob('*/1 * * * *',async () => { 
         if(is_running) return false;
         is_running = true;
         myCursor = await UserModel.find({"email_client":"imap"}, {_id:1}).cursor();
-        free_workers.forEach(w=>{
-            give_me_work(w);
-        });
         console.log("scheduler called for scrapping mail for imap...");
     });
 
     async function give_me_work(worker){
         if(!is_running || !myCursor) {
-            return  free_workers.push(worker);
+            worker.send({no_work: true});
+            return;
         }
         try{
             let user = await myCursor.next();
@@ -36,14 +34,13 @@ if(cluster.isMaster) {
                 worker.send({user_id: user._id});
             } else {
                 is_running = false;
-                free_workers.push(worker);
+                worker.send({no_work: true});
             }
         } catch(e){
+            is_running = false;
             console.error(e.message, "failed cursor");
-        } finally{
-            if(free_workers.indexOf(worker)==-1) {
-                free_workers.push(worker);
-            }
+            worker.send({no_work: true});
+            myCursor.close();
         }
     };
 
@@ -59,24 +56,29 @@ if(cluster.isMaster) {
     }
 
     function givmeWork() {
-        console.log("give me work");
         process.send("give_me_work");
     }
     process.on('message', async (data) => {
+        if(data.no_work===true) {
+            return i_am_free = true;
+        }
         await scrapEmailForIamp(data);
     });
+    
+    let i_am_free = true;
     async function scrapEmailForIamp({user_id}) {
         try{
+            i_am_free = false;
             let user =await UserModel.findOne({_id: user_id}).exec()
             console.log("here ->",user.email)
             await Controller.extractEmailForCronJob(user);
         } catch(e) {
             console.error(e.message, "failed scrap imap", e.stack);
         } finally {
-            process.send("give_me_work");
+            givmeWork();
         }
     };
-    setTimeout(x=>{
-        givmeWork();
-    }, 10000)
+    setInterval(x=>{
+        i_am_free && givmeWork();
+    }, 10*10000);
 }
