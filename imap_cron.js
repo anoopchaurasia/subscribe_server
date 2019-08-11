@@ -12,5 +12,4 @@ mongoose.connect(process.env.MONGO_SERVER, {useNewUrlParser: true});
 mongoose.connection.once('connected', function () {
     console.log("Connected to database")
 });
-
 require("./helper/imap_watcher");
