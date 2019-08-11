@@ -68,7 +68,7 @@ if(cluster.isMaster) {
     async function scrapEmailForIamp({user_id}) {
         try{
             let user =await UserModel.findOne({_id: user_id}).exec()
-            console.log("here ->",user)
+            console.log("here ->",user.email)
             await Controller.extractEmailForCronJob(user);
         } catch(e) {
             console.error(e.message, "failed scrap imap", e.stack);
