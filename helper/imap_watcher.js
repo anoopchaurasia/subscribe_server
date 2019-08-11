@@ -2,8 +2,6 @@
 
 let cluster = require("cluster");
 const UserModel = require('../models/user');
-let mongoose = require("mongoose");
-
 if(cluster.isMaster) {
     const schedule = require('node-schedule');
     let services = (process.env.WORKER_COUNT || 1)*1;
@@ -69,8 +67,8 @@ if(cluster.isMaster) {
     });
     async function scrapEmailForIamp({user_id}) {
         try{
-            let user =await UserModel.find({_id: mongoose.Types.ObjectId(user_id)}).exec()
-            console.log("here ->",user.email)
+            let user =await UserModel.findOne({_id: user_id}).exec()
+            console.log("here ->",user)
             await Controller.extractEmailForCronJob(user);
         } catch(e) {
             console.error(e.message, "failed scrap imap", e.stack);
