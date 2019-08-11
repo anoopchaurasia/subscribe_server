@@ -71,7 +71,7 @@ if(cluster.isMaster) {
             console.log("here ->",user.email)
             await Controller.extractEmailForCronJob(user);
         } catch(e) {
-            console.error(e.message, "failed scrap imap");
+            console.error(e.message, "failed scrap imap", e.stack);
         } finally {
             process.send("give_me_work");
         }
