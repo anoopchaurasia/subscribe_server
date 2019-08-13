@@ -12,10 +12,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let provider = await me.getProvider(domain) 
         let myImap = await MyImap.new(user, provider.provider);
         await myImap.connect(provider).catch(async err => {
-            console.error(err.message, err.stack, "imap connect here");
             if (err.message.includes("Invalid credentials")) {
                 await me.updateInactiveUser(user._id);
             } 
+            throw new Error(err);
         });;
         await myImap.openFolder(folder);
         return myImap;
