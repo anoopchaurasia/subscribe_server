@@ -5,15 +5,21 @@ const UserModel = require('../models/user');
 if(cluster.isMaster) {
     const schedule = require('node-schedule');
     let services = (process.env.WORKER_COUNT || 1)*1;
+    let free_workers = [];
     for(let p=0; p<services; p++) {
         let worker = cluster.fork({});
-        worker.on('message', x=>{
+        worker.on('message', async x=>{
             if(x=="give_me_work") {
                 console.log(x, worker.id);
-                give_me_work(worker);
+                free_workers.push(worker);
+                await give_me_work(worker);
             }
         })
     }
+
+    async function handleWorkQueue(){
+
+    } 
     let is_running = false;
     let myCursor;
     schedule.scheduleJob('*/1 * * * *',async () => { 
@@ -25,22 +31,28 @@ if(cluster.isMaster) {
         }
         console.log("scheduler called for scrapping mail for imap...");
     });
-
-    async function give_me_work(worker){
-        if(!is_running || !myCursor) {
+    let sending_data = false;
+    async function give_me_work(){
+        if(!is_running || !myCursor || sending_data) {
             return;
         }
+        sending_data = true;
         try{
-            let user = await myCursor.next();
-            if(user) {
-                worker.send({user_id: user._id});
-            } else {
-                is_running = false;
+            while(free_workers.length) {
+                let user = await myCursor.next();
+                if(user) {
+                    free_workers.shift().send({user_id: user._id});
+                } else {
+                    is_running = false;
+                }
             }
+            sending_data = false;
         } catch(e){
             is_running = false;
             console.error(e.message, "failed cursor");
             await myCursor.close();
+        } finally{
+            sending_data = false;
         }
     };
 
