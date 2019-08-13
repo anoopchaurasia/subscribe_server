@@ -25,8 +25,8 @@ fm.Class("Message", function (me) {
 
     Static.getLatestMessages = async function (imap, user) {
         return {
-            seen: await search(imap, ["SEEN", ['UID', user.last_msgId-3 + ':*']]),
-            unseen: await search(imap, ["UNSEEN", ['UID', user.last_msgId-3 + ':*']])
+            seen: await search(imap, ["SEEN", ['UID', user.last_msgId-1 + ':*']]),
+            unseen: await search(imap, ["UNSEEN", ['UID', user.last_msgId-1 + ':*']])
         }
     };
 
