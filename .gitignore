@@ -5,3 +5,4 @@ dump.rdb
 .vscode
 .DS_Store
 .cron_env
+.listner_env

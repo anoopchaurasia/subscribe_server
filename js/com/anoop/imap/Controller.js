@@ -197,6 +197,22 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await me.updateLastMsgId(user._id, myImap.box.uidnext)
     }
 
+    Static.listenForUser = async function (user) {
+        let myImap = await openFolder("", "INBOX", user);
+        await myImap.listen(async function(x,y){
+            let scraper = Scraper.new(myImap);
+            await scraper.update();
+            await me.updateLastMsgId(user._id, box.uidnext)
+        }, function closeCB(){
+            process.nextTick(x=> me.listenForUser(user));
+        });
+
+        let scraper = Scraper.new(myImap);
+        await scraper.update();
+        myImap.imap.end(myImap.imap);
+        await me.updateLastMsgId(user._id, myImap.box.uidnext)
+    }
+
     ///////////------------------------ login ------------------------///
     Static.login = async function(email, password, provider){
         let PASSWORD = MyImap.encryptPassword(password);
