@@ -14,12 +14,13 @@ fm.Class("User>.BaseModel", function (me) {
 
     Static.updatelastMsgId = async function (query, set) {
         me.updateQueryValidation(query, "_id");
-        return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec();
+        return await mongouser.findOneAndUpdate(query, set).exec();
     };
 
     Static.updateInactiveUser = async function (query,set) {
         me.updateQueryValidation(query, "_id");
-        return await mongouser.findOneAndUpdate(query, { '$set': set}, { upsert: true }).exec();
+        console.log(query, set);
+        return await mongouser.findOneAndUpdate(query, { '$set': set}).exec();
     };
 
     Static.updateUser = async function (query, set) {
