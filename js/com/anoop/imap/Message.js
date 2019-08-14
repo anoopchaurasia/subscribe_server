@@ -69,7 +69,6 @@ fm.Class("Message", function (me) {
 
 
     async function parseMessage(msg) {
-        let response = {};
         let [atts, parsed] = await Promise.all([
             new Promise(resolve => {
                 msg.on('attributes', atts => {
@@ -92,7 +91,7 @@ fm.Class("Message", function (me) {
         ]);
         console.log(JSON.stringify( atts, null, 2));
         parsed.uid = atts.uid;
-        parsed.flags = atts.uid;
+        parsed.flags = atts.flags;
         return parsed;
     }
 

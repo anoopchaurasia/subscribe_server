@@ -187,8 +187,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.imap.end(myImap.imap);
     }
 
-    
-
     Static.extractEmailForCronJob = async function (user) {
         let myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
