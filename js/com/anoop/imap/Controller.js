@@ -202,7 +202,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await myImap.listen(async function(x,y){
             let scraper = Scraper.new(myImap);
             await scraper.update();
-            await me.updateLastMsgId(user._id, box.uidnext)
+            myImap.user.last_msgId = myImap.box.uidnext;
+            console.log(myImap.box.uidnext, x, y);
+            await me.updateLastMsgId(user._id, myImap.box.uidnext)
         }, function closeCB(){
             process.nextTick(x=> me.listenForUser(user));
         });
