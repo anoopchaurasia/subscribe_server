@@ -32,7 +32,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
 
     this.update = async function (cb) {
         let { seen, unseen } = await Message.getLatestMessages(me.myImap.imap, me.myImap.user);
-        console.log(seen, unseen);
+        console.log(seen, unseen, me.myImap.user.email);
         if (unseen.length != 0) {
             await mailScrap(unseen, ["UNREAD"], me.handleBasedOnPastAction);
         }
