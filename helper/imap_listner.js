@@ -37,6 +37,6 @@ async function runJob(offset=0 ){
 
 async function scrapEmailForIamp(user){
     console.log("here ->",user.email)
-   await Controller.listenForUser(user);
+   await ImapController.listenForUser(user);
 };
 
