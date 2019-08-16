@@ -199,8 +199,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.listenForUser = async function (user) {
         let myImap = await openFolder("", "INBOX", user);
+        let scraper = Scraper.new(myImap);
         await myImap.listen(async function(x,y){
-            let scraper = Scraper.new(myImap);
             await scraper.update();
             myImap.user.last_msgId = myImap.box.uidnext;
             console.log(myImap.box.uidnext, x, y);
@@ -208,11 +208,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, function closeCB(){
             process.nextTick(x=> me.listenForUser(user));
         });
-
-        let scraper = Scraper.new(myImap);
-        await scraper.update();
-        myImap.imap.end(myImap.imap);
-        await me.updateLastMsgId(user._id, myImap.box.uidnext)
     }
 
     ///////////------------------------ login ------------------------///
