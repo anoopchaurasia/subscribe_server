@@ -111,13 +111,10 @@ fm.Class("MyImap", function (me) {
         })
     };
 
-    
-    this.listen = async function(cb, closeCB){
+    this.onEnd = function(cb){
+        this.imap.on('end', x=> cb);
+    };
+    this.listen = async function(cb){
         me.imap.on("mail",cb);
-        setTimeout(async function(){ 
-            console.log(me.user.email, "closing");
-            await me.imap.end(me.imap);
-            closeCB();
-        }, 20*60000);
-     }
+    }
 });

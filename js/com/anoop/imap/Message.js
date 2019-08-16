@@ -89,8 +89,10 @@ fm.Class("Message", function (me) {
                     });
                 });
             })
-        ])
+        ]);
+        console.log(atts);
         parsed.uid = atts.uid;
+        parsed.flags = atts.uid;
         return parsed;
     }
 
