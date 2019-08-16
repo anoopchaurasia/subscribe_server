@@ -113,7 +113,7 @@ fm.Class("MyImap", function (me) {
 
     
     this.listen = async function(cb, closeCB){
-        await me.imap.on("mail",cb);
+        me.imap.on("mail",cb);
         setTimeout(async function(){ 
             console.log(me.user.email, "closing");
             await me.imap.end(me.imap);
