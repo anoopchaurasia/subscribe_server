@@ -90,7 +90,7 @@ fm.Class("Message", function (me) {
                 });
             })
         ]);
-        console.log(atts);
+        console.log(JSON.stringify( atts, null, 2));
         parsed.uid = atts.uid;
         parsed.flags = atts.uid;
         return parsed;
