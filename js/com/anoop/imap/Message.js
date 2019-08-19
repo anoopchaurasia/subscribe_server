@@ -89,7 +89,6 @@ fm.Class("Message", function (me) {
                 });
             })
         ]);
-        console.log(JSON.stringify( atts, null, 2));
         parsed.uid = atts.uid;
         parsed.flags = atts.flags;
         return parsed;
