@@ -18,7 +18,7 @@ fm.Class("Parser>.Message", function (me, Header) {
         let from = parse.from.text.indexOf("<") != -1 ? parse.from.text.split("<")[1].replace(">", "") : header.from.text;
         return {
             header, 
-            payload: parse.textAsHtml,
+            payload: parse.html|| "",
             email_id:  parse.uid,
             labelIds: labels,
             from_email_name: from_email_name,

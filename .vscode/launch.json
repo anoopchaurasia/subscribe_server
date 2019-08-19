@@ -20,8 +20,8 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Imap cron",
-            "program": "${workspaceFolder}/test.js",
+            "name": "Imap listener",
+            "program": "${workspaceFolder}/imap_listener.js",
         },
         
         {

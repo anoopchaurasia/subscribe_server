@@ -6,4 +6,4 @@ dump.rdb
 .DS_Store
 .cron_env
 .listner_env
-.test.js
+test.js

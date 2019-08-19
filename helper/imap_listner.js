@@ -12,7 +12,7 @@ Array.prototype.asynForEach = async function (cb) {
 
 setTimeout(x=>{
     runJob();
-}, 30*1000);
+}, 10*1000);
 
 
 async function runJob(offset=0 ){
