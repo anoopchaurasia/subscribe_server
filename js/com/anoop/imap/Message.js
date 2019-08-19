@@ -83,7 +83,8 @@ fm.Class("Message", function (me) {
                     stream.on('data', chunk => chunks.push(chunk));
                     stream.once('end', async () => {
                         const raw = Buffer.concat(chunks).toString('utf8');
-                        let parsed = await simpleParser(raw,{skipHtmlToText:true, skipTextToHtml: true});
+                        
+                        let parsed = await simpleParser(raw,{skipHtmlToText:true, skipTextToHtml: true, skipTextLinks: true});
                         resolve(parsed)
                     });
                 });

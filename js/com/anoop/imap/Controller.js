@@ -194,8 +194,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.imap.end(myImap.imap);
         await me.updateLastMsgId(user._id, myImap.box.uidnext)
     }
-
+//////////////////// listen for user //////////////////////
     Static.listenForUser = async function (user, text) {
+        
         text && console.log(text, user.email);
         let myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
