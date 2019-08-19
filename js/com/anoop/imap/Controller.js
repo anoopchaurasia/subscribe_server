@@ -200,17 +200,21 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
         myImap.listen(async function(x,y){
-            await scraper.update(function latest_id(id){
-                id && (myImap.box.uidnext = id);
-            });
-            myImap.user.last_msgId = myImap.box.uidnext;
-            console.log(myImap.box.uidnext, x, y);
-            await me.updateLastMsgId(user._id, myImap.box.uidnext)
+            updateForUser(scraper, myImap, user);
         });
         myImap.onEnd(x=>{
             console.log("ended", myImap.user.email);
             process.nextTick(r=> me.listenForUser(user, "restarting for user"));
         });
+        await updateForUser(scraper, myImap, user);
+    }
+
+    async function updateForUser(scraper, myImap, user){
+        await scraper.update(function latest_id(id){
+            id && (myImap.box.uidnext = id);
+        });
+        myImap.user.last_msgId = myImap.box.uidnext;
+        await me.updateLastMsgId(user._id, myImap.box.uidnext)
     }
 
     ///////////------------------------ login ------------------------///
