@@ -116,9 +116,9 @@ fm.Class("MyImap", function (me) {
         clearInterval(me.interval_const);
         me.interval_const = setInterval(x=>{
             if(me.imap.state === 'disconnected') {
-                console.log("disconnected", me.imap.user.email);
+                console.log("disconnected", me.user.email);
             } else {
-                console.log("connected", me.imap.user.email);              
+                console.log("connected", me.user.email);              
             }
         }, 10*1000);
     };
