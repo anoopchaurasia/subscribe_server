@@ -120,7 +120,7 @@ fm.Class("MyImap", function (me) {
             } else {
                 console.log("connected", me.user.email);              
             }
-        }, 10*1000);
+        }, 10*60*1000);
     };
 
     this.onEnd = function(cb){
