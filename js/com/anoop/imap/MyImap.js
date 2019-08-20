@@ -14,6 +14,7 @@ fm.Class("MyImap", function (me) {
         this.user = user;
         this.provider = provider;
         this.box=null;
+        this.interval_const = null;
     };
 
     Static.getProvider = async function (email) {
@@ -111,8 +112,17 @@ fm.Class("MyImap", function (me) {
         })
     };
 
+    this.keepCheckingConnection = function(){
+        clearInterval(me.interval_const);
+        me.interval_const = setInterval(x=>{
+            if(me.imap.state === 'disconnected') {
+                console.log("disconnected", me.imap.user.email);
+            }
+        }, 10*1000);
+    };
+
     this.onEnd = function(cb){
-        this.imap.on('end', x=> cb);
+        this.imap.once('close', x=> cb);
     };
     this.listen = async function(cb){
         me.imap.on("mail",cb);
