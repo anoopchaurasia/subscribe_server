@@ -207,7 +207,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             console.log("ended", myImap.user.email);
             process.nextTick(r=> me.listenForUser(user, "restarting for user"));
         });
-        myImap.keepCheckingConnection();
+        myImap.keepCheckingConnection(x=>{
+            process.nextTick(r=> me.listenForUser(user, "restarting for user12"));
+        });
         await updateForUser(scraper, myImap, user);
     }
 
