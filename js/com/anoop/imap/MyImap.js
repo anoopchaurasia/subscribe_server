@@ -105,6 +105,7 @@ fm.Class("MyImap", function (me) {
                 ssl: true
             });
             me.imap.once('ready', async () => {
+                console.log("connected again", me.user.email);
                 resolve(me.imap);
             });
             me.imap.once('error', err => reject(err));
