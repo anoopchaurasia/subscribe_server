@@ -14,6 +14,18 @@ setTimeout(x=>{
     runJob();
 }, 10*1000);
 
+Controller.onNewUser(async x=>{
+    console.log("new user added");
+    let user = await UserModel.get({_id: x});
+    if(user.listener_active && user.inactive_at==null) {
+        return false;
+    }
+    console.log("setting for new user", user._id);
+    await scrapEmailForIamp(user).catch(err => {
+        console.error(err.message, "user -> ", user.email);
+    });
+});
+
 
 async function runJob(offset=0 ){
     console.log("scheduler called for scrapping mail for imap...");
@@ -37,6 +49,7 @@ async function runJob(offset=0 ){
 
 async function scrapEmailForIamp(user){
     console.log("here ->",user.email)
+    await UserModel.updateUserById({_id: user._id}, {listener_active: true});
    await ImapController.listenForUser(user);
 };
 

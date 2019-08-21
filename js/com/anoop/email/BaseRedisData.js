@@ -22,5 +22,24 @@ fm.Class('BaseRedisData', function(me, Domain){
             redis_client.lpush('raw_email_data', JSON.stringify(data));
         }
     };
- 
+
+    Static.notifyListner = async function (user_id) {
+        redis_client.lpush('new_imap_user', user_id);
+        redis_client.expire("new_imap_user", 20);
+    };
+
+    Static.onNewUser = function(cb){
+        function next () {
+            redis_client.blpop('new_imap_user', 0, function(err, [key, user_id]){
+                try{
+                   cb(user_id);
+                } catch(e){
+                    console.log(e);
+                } finally {
+                    next();
+                }
+            });
+        }
+        next();
+    };
 });

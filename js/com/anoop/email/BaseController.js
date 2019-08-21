@@ -4,9 +4,9 @@ fm.Import("..model.EmailInfo");
 fm.Import("..model.User");
 fm.Import("..model.Token");
 fm.Import("..model.Provider");
-fm.Include("com.jeet.memdb.RedisDB");
-let RedisDB = com.jeet.memdb.RedisDB;
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Provider) {
+fm.Import("com.jeet.memdb.RedisDB");
+fm.Import(".BaseRedisData");
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Provider, RedisDB, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -37,16 +37,17 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
         return await User.updatelastMsgId({ _id: _id }, { last_msgId: msg_id });
     }
 
-   
-    
     Static.updateInactiveUser = async function (_id) {
         return await User.updateInactiveUser({ _id: _id, inactive_at: null }, { "inactive_at": new Date() });
-    }
+    };
 
+    Static.reactivateUser = async function (_id) {
+        return await User.updateInactiveUser({ _id: _id }, { "inactive_at":null });
+    };
 
     Static.scanFinished = async function(user_id){
         await RedisDB.setData(user_id,"is_finished", true);
-    }
+    };
 
     Static.scanStarted = async function(user_id){
         await RedisDB.setData(user_id,"is_finished", false);
@@ -133,6 +134,17 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
         await Emailinfo.bulkInsert(emailinfos);
     }
 
+    Static.sendMailToScraper = async function (data, user) {
+        await BaseRedisData.sendMailToScraper(data, user);
+    };
+
+    Static.notifyListner = async function (user_id) {
+        await BaseRedisData.notifyListner(user_id);
+    };
+
+    Static.onNewUser = function (cb) {
+        BaseRedisData.onNewUser(cb);
+    };
 
     Static.getUnusedEmails = async function (token) {
         let emaildetails = await EmailDetail.getMultiple({ "status": "unused", "user_id": token.user_id }, { from_email: 1, from_email_name: 1 })

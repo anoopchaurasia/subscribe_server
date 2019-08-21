@@ -28,6 +28,11 @@ fm.Class("User>.BaseModel", function (me) {
         return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec();
     };
 
+    Static.updateUserById = async function (query, set) {
+        me.updateQueryValidation(query, "_id");
+        return await mongouser.findOneAndUpdate(query, set).exec();
+    };
+
     Static.create = async function(query){
         var newUser = new mongouser({
             "email": query.email,

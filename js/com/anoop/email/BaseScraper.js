@@ -1,8 +1,7 @@
 fm.Package('com.anoop.email');
 fm.Import(".BaseController")
-fm.Import(".BaseRedisData");
 const cheerio = require('cheerio');
-fm.Class('BaseScraper', function (me, BaseController, BaseRedisData) {
+fm.Class('BaseScraper', function (me, BaseController) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -65,10 +64,12 @@ fm.Class('BaseScraper', function (me, BaseController, BaseRedisData) {
         return { emaildetail, emaildetailraw }
     }
 
-
-
     this.sendMailToScraper = async function (data, user) {
-        BaseRedisData.sendMailToScraper(data, user);
+        await BaseController.sendMailToScraper(data, user);
+    };
+
+    this.notifyListner = async function (user_id) {
+        await BaseController.notifyListner(user_id);
     };
 
     async function getUrlFromEmail(body) {

@@ -241,11 +241,17 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }
         if (provider.provider.includes("inbox.lv")) {
             await me.updateUser(email, "INBOX/Unsubscribed Emails",trash_label,PASSWORD);
-         } else {
+        } else {
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
         myImap.imap.end(myImap.imap);
-        return await me.createToken(user);
+        let token = await me.createToken(user);
+        await me.notifyListner(user._id);
+        // delay as active status require to setup listner so that it do not set multi listener for same user
+        setTimeout(async x=>{
+            await me.reactivateUser(user._id);
+        }, 1000);
+        return token;
     }
 
 });

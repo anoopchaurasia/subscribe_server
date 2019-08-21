@@ -2,7 +2,7 @@ fm.Package("com.anoop.imap");
 const MailParser = require('mailparser').MailParser
 const Imap = require('imap');
 const simpleParser = require('mailparser').simpleParser;
-const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
+const TWO_MONTH_TIME_IN_MILI = 8 * 30 * 24 * 60 * 60 * 1000;
 fm.Class("Message", function (me) {
     this.setMe = _me => me = _me;
 
