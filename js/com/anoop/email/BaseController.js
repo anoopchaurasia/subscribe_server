@@ -78,9 +78,12 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
          trash_label, 
          password, 
          "email_client": "imap" });
-    }
-    
+    };
 
+    Static.updateUserById = async function(key, set){
+        return await User.updateUserById(key, set);
+    };
+    
     Static.getProvider = async function (domain) {
         return await Provider.get({ "domain_name": domain });
     };

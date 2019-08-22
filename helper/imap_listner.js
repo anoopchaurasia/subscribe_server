@@ -49,7 +49,7 @@ async function runJob(offset=0 ){
 
 async function scrapEmailForIamp(user){
     console.log("here ->",user.email)
-    await UserModel.updateUserById({_id: user._id}, {listener_active: true});
+    await ImapController.updateUserById({_id: user._id}, {listener_active: true});
    await ImapController.listenForUser(user);
 };
 
