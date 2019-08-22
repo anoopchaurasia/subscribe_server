@@ -15,7 +15,7 @@ setTimeout(x=>{
 }, 10*1000);
 
 ImapController.onNewUser(async x=>{
-    let user = await UserModel.get({_id: x});
+    let user = await ImapController.getUserById(x);
     console.log("new user added", user);
     if(user.listener_active && user.inactive_at==null) {
         return false;
