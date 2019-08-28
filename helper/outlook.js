@@ -121,9 +121,9 @@ class Outlook {
                 const refresh_token = token.refresh_token;
                 let authToken = {};
                 if (refresh_token) {
-                    const newToken = await oauth2.accessToken.create({ refresh_token: refresh_token }).refresh().catch(err => {
+                    const newToken = await oauth2.accessToken.create({ refresh_token: refresh_token }).refresh().catch(async err => {
                         console.log(err);
-                        await Outlook.updateUserInfo({ _id: user_id }, { $set: { inactive_at: new Date() } });
+                        await Outlook.updateUserInfo({ _id: user_id }, { $set: { inactive_at: new Date() }});
                     });;
                     authToken.access_token = newToken.token.access_token;
                     authToken.expiry_date = new Date(newToken.token.expires_at);
