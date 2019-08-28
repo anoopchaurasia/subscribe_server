@@ -558,6 +558,7 @@ router.get('/auth/callback', async function (req, res) {
                 name: userInfo.name,
                 state: state,
                 email_client: "outlook",
+                inactive_at:null,
                 primary_email:userInfo.preferred_username
             };
             await Outlook.updateUserInfo({ "email": userInfo.preferred_username, email_client: "outlook" }, userdata);
@@ -585,6 +586,7 @@ router.get('/auth/callback', async function (req, res) {
                         email: userInfo.preferred_username ? userInfo.preferred_username : '',
                         name: userInfo.name,
                         email_client: "outlook",
+                        inactive_at:null,
                         primary_email : userInfo.preferred_username ? userInfo.preferred_username : ''
                     };
                     let newUser = await Outlook.updateUserInfo({ "state": state }, userdata);
