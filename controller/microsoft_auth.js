@@ -19,6 +19,9 @@ Array.prototype.asynForEach = async function (cb) {
     }
 }
 fm.Include("com.jeet.memdb.RedisDB");
+fm.Include("com.anoop.outlook.Controller");
+let Controller = com.anoop.outlook.Controller;
+
 
 const credentials = {
     client: {
@@ -33,6 +36,25 @@ const credentials = {
 };
 const oauth2 = require('simple-oauth2').create(credentials);
 
+router.get('/getOutLookApiUrl', async function (req, res) {
+    let returnVal = await Controller.getOutlookUrl().catch(err=>{
+        console.log(err);
+    });
+    if(returnVal){
+        res.status(200).json({
+            error: false,
+            data: returnVal
+        })
+    }else{
+        res.status(400).json({
+            error: true,
+            data: null
+        })
+    }    
+});
+
+
+
 router.get('/getPushNotification', async function (req, res) {
     console.log("came here for url")
     // console.log(req)
@@ -42,8 +64,6 @@ router.get('/getPushNotification', async function (req, res) {
 router.post('/getPushNotification', async function (req, res) {
     // console.log("came here for url")
     if (req.query && req.query.validationToken) {
-        // console.log(req.query)
-        // console.log(req.query.validationToken)
         res.setHeader('content-type', 'text/plain');
         res.write(req.query.validationToken);
         res.end();
@@ -69,10 +89,6 @@ router.post('/getPushNotification', async function (req, res) {
         res.sendStatus(202);
     }
 });
-
-
-
-
 
 
 async function getWebhookMail(accessToken, link, user_id) {
@@ -147,27 +163,6 @@ async function subscribeToNotification(accessToken, user_id) {
 }
 
 
-router.get('/getOutLookApiUrl', async function (req, res) {
-    // console.log("came here for url")
-    const stateCode = uniqid() + "outlook" + uniqid();
-    const returnVal = oauth2.authorizationCode.authorizeURL({
-        redirect_uri: process.env.REDIRECT_URI,
-        scope: process.env.APP_SCOPES,
-        state: stateCode
-    });
-    var user = new users({
-        state: stateCode,
-        email: stateCode,
-        email_client: "outlook"
-    });
-    let newUser = await user.save().catch(err => {
-        console.log(err);
-    });
-    res.status(200).json({
-        error: false,
-        data: returnVal
-    })
-});
 
 
 router.post('/getMail', async function (req, resp, next) {
@@ -442,7 +437,6 @@ async function checkUserOldAction(accessToken,emailInfo, user_id, auth) {
             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
             await Outlook.getFolderListForTrashScrapping(accessToken, user_id, link, emailInfoNew.email_id);
         }
-
         return true;
     }
     return false;
@@ -613,9 +607,6 @@ router.get('/auth/callback', async function (req, res) {
     });
 });
 
-
-
-
 router.get('/getAuthTokenForApi', async function (req, res) {
     let state_code = req.query.state_code;
     users.findOne({ state: state_code }, async function (err, user) {
@@ -642,6 +633,3 @@ router.get('/getAuthTokenForApi', async function (req, res) {
 });
 
 module.exports = router
-
-
-

@@ -46,6 +46,15 @@ fm.Class("User>.BaseModel", function (me) {
         });
     }
 
-    
+    Static.createForOutlook = async function(query){
+        var newUser = new mongouser({
+            "state": query.stateCode,
+            "email": query.stateCode,
+            "email_client": "outlook"
+        });
+        return await newUser.save().catch(err => {
+            console.error(err.message, err.stack);
+        });
+    }
 
 });

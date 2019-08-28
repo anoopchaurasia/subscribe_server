@@ -61,6 +61,11 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
         return await User.create({email,passsword,trash_label});
     }
 
+
+    Static.createOutlookUser = async function(stateCode){
+        return await User.createForOutlook({stateCode});
+    }
+
     Static.createToken = async function (user) {
         return await Token.create(user);
     }

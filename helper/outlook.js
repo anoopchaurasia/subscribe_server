@@ -667,8 +667,6 @@ class Outlook {
             }
         });
     }
-
-
 }
 
 exports.Outlook = Outlook;
