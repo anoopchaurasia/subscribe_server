@@ -37,16 +37,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     Static.unusedToTrash = async function (token, from_email) {
+        await updateMyDetail(token.user_id, from_email, 'trash')
         let myImap = await openFolder(token, "INBOX");
         await Label.moveInboxToTrash(myImap, from_email);
         await closeImap(myImap);
-        await updateMyDetail(token.user_id, from_email, 'trash')
     };
 
     Static.unusedToUnsub = async function (token, from_email) {
+        await updateMyDetail(token.user_id, from_email, "move");
         let myImap = await openFolder(token, "INBOX");
         await Label.moveInboxToUnsub(myImap, from_email);
-        await updateMyDetail(token.user_id, from_email, "move");
         await closeImap(myImap);
 	};
 
@@ -95,43 +95,43 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     ///------------------------------------- from keep ---------------------///
 
     Static.keepToTrash = async function (token, from_email) {
+        await updateMyDetail(token.user_id, from_email, "trash");
         let myImap = await openFolder(token, "INBOX");
         await Label.moveActiveToTrash(myImap, from_email);
-        await updateMyDetail(token.user_id, from_email, "trash");
         await closeImap(myImap);
     };
 
     Static.keepToUnsub = async function (token, from_email) {
+        await updateMyDetail(token.user_id, from_email, "move");
         let myImap = await openFolder(token, "INBOX");
         await Label.moveActiveToUnsub(myImap, from_email);
-        await updateMyDetail(token.user_id, from_email, "move");
         await closeImap(myImap);
 
     }
     ///---------------------------------------from unsub folder--------------------///
  
      Static.unsubToKeep = async function (token, from_email) {
+         await updateMyDetail(token.user_id, from_email, "keep");
         let user = await me.getUserById(token.user_id);
         let myImap = await openFolder(token, user.unsub_label,user);
         await Label.moveUnsubToInbox(myImap, from_email);
-        await updateMyDetail(token.user_id, from_email, "keep");
         await closeImap(myImap);
     };
  	
 	Static.unsubToTrash = async function (token, from_email) {
+        await updateMyDetail(token.user_id, from_email, "trash");
         let user = await me.getUserById(token.user_id);
         let myImap = await openFolder(token, user.unsub_label,user);
         await Label.moveUnsubToTrash(myImap, from_email);
-        await updateMyDetail(token.user_id, from_email, "trash");
         await closeImap(myImap);
     };
     ///------------------------------------from trash folder---------------------///
 
     Static.trashToKeep = async function (token, from_email) {
+        await updateMyDetail(token.user_id, from_email, "keep");
         let user = await me.getUserById(token.user_id);
         let myImap = await openFolder(token, user.trash_label,user);
         await Label.moveTrashToInbox(myImap, from_email);
-        await updateMyDetail(token.user_id, from_email, "keep");
         await closeImap(myImap);
     };
 
