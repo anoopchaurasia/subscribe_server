@@ -5,9 +5,26 @@ fm.Class("Parser>.Message", function (me, Header) {
     this.setMe = _me => me = _me;
 
 
+    Static.parse = function(json, user_id, toEmail) {
+        return {
+            html: json.body.content,
+            date: new Date(json.receivedDateTime).toString(),
+            headers: {
+                Subject: json.subject,
+                From: json.from.emailAddress.address
+            },
+            history_id: json.id,
+            timestamp: new Date(json.receivedDateTime).getTime(),
+            subject: json.subject,
+            from: json.from.emailAddress.address,
+            id: json.id,
+            to: toEmail
+        }
+    };
+
+
     Static.getEmailBody = function (messageBodies) {
         return messageBodies.map(x => {
-            
             let header = Header.new(x.payload.headers);
             let payload = new Buffer(getParts(x.payload) || getPlainText(x.payload), 'base64').toString('utf-8');
             let from = header.from.split(/<|>/);

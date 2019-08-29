@@ -1,5 +1,6 @@
 fm.Package("com.anoop.outlook");
 let TokenHandler = require("./../../../../helper/TokenHandler").TokenHandler;
+const OutlookHandler = require("./../../../../helper/outlook").Outlook;
 const { google } = require('googleapis');
 
 const credentials = {
@@ -27,7 +28,6 @@ fm.Class("Outlook", function(me){
     };
 
     Static.getInstanceForUser = async function(user_id) {
-        
         const authToken = await TokenHandler.getAccessToken(user_id).catch(e => console.error(e,"80"));
         let oauth2Client = await TokenHandler.createAuthCleint(authToken);
         let instace = new me(oauth2Client, authToken, user_id);
@@ -39,14 +39,22 @@ fm.Class("Outlook", function(me){
         return oauth2;
     }
 
-    this.getAccessToken = async function (){
-       return this.authToken.access_token;
-    };
-
-    this.userInstance = function(){
-        return google.gmail({
-            version: 'v1',
-            auth: me.oauth2Client
+    Static.getToken = async function(auth_code){
+        let result = await oauth2.authorizationCode.getToken({
+            code: auth_code,
+            redirect_uri: process.env.REDIRECT_URI,
+            scope: process.env.APP_SCOPES
+        }).catch(err => {
+            console.log(err);
+            return
         });
+        const token = await oauth2.accessToken.create(result);
+        return token
     }
+
+    Static.getAccessToken = async function(user_id){
+        let authToken = await OutlookHandler.getAuthToken(user_id);
+        return await OutlookHandler.check_Token_info(userInfo.user_id, authToken);
+    }
+
 });

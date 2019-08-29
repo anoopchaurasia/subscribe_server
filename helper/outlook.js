@@ -109,6 +109,10 @@ class Outlook {
         });
     }
 
+    static async getAuthToken(user_id){
+        return await auth_token.findOne({ "user_id": user_id });
+    }
+
     static async check_Token_info(user_id, token) {
         if (token) {
             const expiration = new Date(token.expiry_date);
@@ -121,9 +125,9 @@ class Outlook {
                 const refresh_token = token.refresh_token;
                 let authToken = {};
                 if (refresh_token) {
-                    const newToken = await oauth2.accessToken.create({ refresh_token: refresh_token }).refresh().catch(err => {
+                    const newToken = await oauth2.accessToken.create({ refresh_token: refresh_token }).refresh().catch(async err => {
                         console.log(err);
-                        await Outlook.updateUserInfo({ _id: user_id }, { $set: { inactive_at: new Date() } });
+                        await Outlook.updateUserInfo({ _id: user_id }, { $set: { inactive_at: new Date() }});
                     });;
                     authToken.access_token = newToken.token.access_token;
                     authToken.expiry_date = new Date(newToken.token.expires_at);
@@ -139,6 +143,57 @@ class Outlook {
                 }
             }
         }
+    }
+
+    static async  subscribeToNotification(accessToken, user_id) {
+        var settings = {
+            "url": "https://graph.microsoft.com/v1.0/subscriptions",
+            "method": "GET",
+            "headers": {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            }
+        }
+    
+        Request(settings, async (error, response, body) => {
+            if (error) {
+                console.log(error);
+            }
+            if (body) {
+                let value = JSON.parse(body).value;
+                if (value.length > 0) {
+                    return true;
+                } else {
+                    var settingsubs = {
+                        "url": "https://graph.microsoft.com/v1.0/subscriptions",
+                        "method": "POST",
+                        "headers": {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + accessToken
+                        },
+                        "body": JSON.stringify({
+                            "changeType": "created",
+                            "notificationUrl": "https://unsub.expensebit.com/api/v1/mail/microsoft/getPushNotification",
+                            "resource": "me/mailFolders('Inbox')/messages",
+                            "expirationDateTime": new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000),
+                            "applicationId": "c92a2e87-b74b-4c3b-9f46-422f11622292",
+                            "creatorId": "8ee44408-0679-472c-bc2a-692812af3437",
+                            "clientState": user_id
+                        })
+                    }
+    
+                    Request(settingsubs, async (error, response, body) => {
+                        if (error) {
+                            console.log(error);
+                        }
+                        if (body) {
+                            // console.log(body);
+                            return
+                        }
+                    });
+                }
+            }
+        });   
     }
     static async extract_token(user, access_token, refresh_token, id_token, expiry_date, scope, token_type) {
         var tokedata = {
@@ -667,6 +722,8 @@ class Outlook {
             }
         });
     }
+
+
 }
 
 exports.Outlook = Outlook;

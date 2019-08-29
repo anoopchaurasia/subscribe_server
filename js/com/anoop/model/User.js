@@ -7,6 +7,7 @@ fm.Class("User>.BaseModel", function (me) {
         me.updateQueryValidation(query, "_id");
         return await mongouser.findOne(query).exec();
     };
+    
     Static.getByEmail = async function (query) {
         me.updateQueryValidation(query, "email");
         return await mongouser.findOne(query).exec();
@@ -45,6 +46,26 @@ fm.Class("User>.BaseModel", function (me) {
             console.error(err.message, err.stack);
         });
     }
+
+    Static.getByEmailAndClient = async function (query) {
+        me.updateQueryValidation(query, "email");
+        return await mongouser.findOne(query).exec();
+    };
+
+    Static.removeUserByState = async function (query) {
+        me.updateQueryValidation(query, "state");
+        return await mongouser.remove(query).exec();
+    };
+
+    Static.getByState = async function (query) {
+        me.updateQueryValidation(query, "state");
+        return await mongouser.findOne(query).exec();
+    };
+
+    Static.updateUserInfoOutlook = async function (query, set) {
+        me.updateQueryValidation(query, "email");
+        return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec();
+    };
 
     Static.createForOutlook = async function(query){
         var newUser = new mongouser({

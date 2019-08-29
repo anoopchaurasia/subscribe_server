@@ -33,7 +33,6 @@ fm.Class('BaseScraper', function (me, BaseController) {
             data['source'] = "count";
             return await me.inboxToUnused(data, "");
         }
-        // console.log(data)
         let url = await getUrlFromEmail(data.payload);
         if (url) {
             return await me.inboxToUnused(data, url);

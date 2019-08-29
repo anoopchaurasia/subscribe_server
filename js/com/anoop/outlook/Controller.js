@@ -4,12 +4,14 @@ fm.Import(".Scraper");
 fm.Import(".Label");
 fm.Import(".ScraperMailSend");
 var uniqid = require('uniqid');
-fm.Class("Controller>com.anoop.email.BaseController", function(me, Outlook, Scraper, Label, ScraperMailSend){
+const jwt = require('jsonwebtoken');
+const OutlookHandler = require("./../../../../helper/outlook").Outlook;
+fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scraper, Label, ScraperMailSend) {
     'use strict'
-    this.setMe=_me=>me=_me;
+    this.setMe = _me => me = _me;
 
 
-    Static.getOutlookUrl = async function(){
+    Static.getOutlookUrl = async function () {
         const stateCode = uniqid() + "outlook" + uniqid();
         let oauth2 = await Outlook.getOutlookInstance();
         const returnVal = oauth2.authorizationCode.authorizeURL({
@@ -21,25 +23,44 @@ fm.Class("Controller>com.anoop.email.BaseController", function(me, Outlook, Scra
         return returnVal;
     }
 
-    // Static.extractEmail = async function(token){
-    //     let gmailInstance = await Gmail.getInstanceForUser(token.user_id);
-    //     let scraper = Scraper.new(gmailInstance);
-    //     scraper.start(me, async function afterEnd(){
-    //        await me.handleRedis(token.user_id);
-    //     });
-    // }
+    Static.createAndStoreToken = async function (auth_code, state) {
+        let token = await Outlook.getToken(auth_code);
+        let userInfo = jwt.decode(token.token.id_token);
+        let user = await me.getByEmailAndClient(userInfo);
+        if (user) {
+            await me.removeUserByState(state);
+            await me.updateExistingUserInfoOutlook(userInfo, state);
+        } else {
+            user = await me.getByState(state);
+            await me.updateNewUserInfoOutlook(userInfo, state);
+        }
+        await OutlookHandler.extract_token(user, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
+            console.log(err);
+        });
+        await OutlookHandler.subscribeToNotification(token.token.access_token, user._id);
+        return await me.createToken(user);
+    }
 
-    // Static.extractAndSendMailToScraper = async function(user_id, cb) {
-    //     let gmailInstance = await Gmail.getInstanceForUser(user_id);
-    //     if(gmailInstance.error) return console.error(gmailInstance.error)
-    //     let scraper = ScraperMailSend.new(gmailInstance);
-    //     await scraper.start(cb);
-    // }
+    Static.getNotificationEmailData = async function (data) {
+        await data.asynForEach(async subsc => {
+            let resource = subsc.resourceData;
+            let user_id = subsc.clientState;
+            let message_id = resource.id;
+            let link = encodeURI('https://graph.microsoft.com/v1.0/me/messages/' + message_id);
+            let accessToken = await Outlook.getAccessToken(user_id);
+            await Scraper.getWebhookMail(accessToken, link, user_id).catch(err => {
+                console.log(err);
+            });
+        });
+    }
 
-    // Static.extractAndSendMailBasedOnSender = async function(user_id, senders, cb) {
-    //     let gmailInstance = await Gmail.getInstanceForUser(user_id);
-    //     if(gmailInstance.error) return console.error(gmailInstance.error);
-    //     let scraper = ScraperMailSend.new(gmailInstance);
-    //     await scraper.getEmaiIdsBySender(senders, cb);
-    // }
+
+    Static.extractEmail = async function (user_id) {
+        let accessToken = await Outlook.getAccessToken(user_id);
+        await me.scanStarted(user_id);
+        await Scraper.scrapEmail(accessToken,user_id);
+        await me.scanFinished(user_id);
+    }
+
+ 
 });

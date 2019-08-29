@@ -6,7 +6,7 @@ fm.Import("..model.Token");
 fm.Import("..model.Provider");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Provider, RedisDB, BaseRedisData) {
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, RedisDB, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -42,29 +42,64 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
     };
 
     Static.reactivateUser = async function (_id) {
-        return await User.updateInactiveUser({ _id: _id }, { "inactive_at":null });
+        return await User.updateInactiveUser({ _id: _id }, { "inactive_at": null });
     };
 
-    Static.scanFinished = async function(user_id){
-        await RedisDB.setData(user_id,"is_finished", true);
+    Static.scanFinished = async function (user_id) {
+        await RedisDB.setData(user_id, "is_finished", true);
     };
 
-    Static.scanStarted = async function(user_id){
-        await RedisDB.setData(user_id,"is_finished", false);
+    Static.scanStarted = async function (user_id) {
+        await RedisDB.setData(user_id, "is_finished", false);
     }
 
-    Static.isScanFinished = async function(user_id){
-        return await RedisDB.getData(user_id,"is_finished");
+    Static.isScanFinished = async function (user_id) {
+        return await RedisDB.getData(user_id, "is_finished");
     }
 
-    Static.createUser = async function(email,passsword,trash_label){
-        return await User.create({email,passsword,trash_label});
+    Static.createUser = async function (email, passsword, trash_label) {
+        return await User.create({ email, passsword, trash_label });
     }
 
-
-    Static.createOutlookUser = async function(stateCode){
-        return await User.createForOutlook({stateCode});
+    Static.getByEmailAndClient = async function (userInfo) {
+        return await User.getByEmailAndClient({ email: userInfo.preferred_username, email_client: "outlook" });
     }
+
+    Static.removeUserByState = async function (state) {
+        return await User.removeUserByState({ state });
+    }
+
+    Static.createOutlookUser = async function (stateCode) {
+        return await User.createForOutlook({ stateCode });
+    }
+
+    Static.getByState = async function(state){
+        return await User.getByState({state});
+    }
+
+    Static.updateExistingUserInfoOutlook = async function (userInfo, state) {
+        var userdata = {
+            name: userInfo.name,
+            state: state,
+            email_client: "outlook",
+            inactive_at: null,
+            primary_email: userInfo.preferred_username
+        };
+        return await User.updateUserInfoOutlook({ email: userInfo.preferred_username, email_client: "outlook" },
+            { $set: userdata });
+    };
+
+    Static.updateNewUserInfoOutlook = async function (userInfo, state) {
+        var userdata = {
+            email: userInfo.preferred_username ? userInfo.preferred_username : '',
+            name: userInfo.name,
+            email_client: "outlook",
+            inactive_at: null,
+            primary_email: userInfo.preferred_username ? userInfo.preferred_username : ''
+        };
+        return await User.updateUserInfoOutlook({ state: state },
+            { $set: userdata });
+    };
 
     Static.createToken = async function (user) {
         return await Token.create(user);
@@ -78,17 +113,19 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
         return await User.getByEmail({ email: email });
     }
 
-    Static.updateUser = async function (email, unsub_label,trash_label,password) {
-        return await User.updateUser({ email: email }, { unsub_label,
-         trash_label, 
-         password, 
-         "email_client": "imap" });
+    Static.updateUser = async function (email, unsub_label, trash_label, password) {
+        return await User.updateUser({ email: email }, {
+            unsub_label,
+            trash_label,
+            password,
+            "email_client": "imap"
+        });
     };
 
-    Static.updateUserById = async function(key, set){
+    Static.updateUserById = async function (key, set) {
         return await User.updateUserById(key, set);
     };
-    
+
     Static.getProvider = async function (domain) {
         return await Provider.get({ "domain_name": domain });
     };
@@ -113,7 +150,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
         return await EmailDetail.updateStatus({ _id: _id }, status);
     };
 
-    Static.updateEmailDetailByFromEmail = async function(user_id, from_email, status){
+    Static.updateEmailDetailByFromEmail = async function (user_id, from_email, status) {
         return await EmailDetail.updateStatus({ user_id, from_email }, status);
     };
 
