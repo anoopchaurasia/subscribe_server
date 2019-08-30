@@ -53,7 +53,7 @@ fm.Class("Label>.Message", function(me){
         //         console.log("got it",JSON.parse(response.body))
         //     }
         // })
-        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        let response = await axios(settings).catch(e => console.error(e, "folder access error"));
         console.log(response)
         return response.data;
     }
