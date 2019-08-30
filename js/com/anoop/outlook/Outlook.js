@@ -20,10 +20,9 @@ fm.Class("Outlook", function(me){
     'use strict'
     this.setMe=_me=>me=_me;
 
-    this.Outlook = function(oauth2Client, authToken, user_id) {
-        this.oauth2Client = oauth2Client;
-        this.authToken = authToken;
-        this.user_id = user_id;
+    this.Outlook = function(oauth2,user) {
+        this.oauth2 = oauth2;
+        this.user = user;
         this.error = null;
     };
 
