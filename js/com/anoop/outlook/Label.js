@@ -36,11 +36,11 @@ fm.Class("Label>.Message", function(me){
     async function sendRequestInBatch(accessToken, reqArray) {
         console.log("batch called");
         var settings = {
-            "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
+            "url": "https://graph.microsoft.com/v1.0/$batch",
             "method": "POST",
             "headers": {
                 'Content-Type': 'application/json',
-                // 'Accept': 'application/json',
+                'Accept': 'application/json',
                 'Authorization': 'Bearer ' + accessToken
             },
             "body": { "requests": reqArray }
@@ -53,7 +53,7 @@ fm.Class("Label>.Message", function(me){
         //         console.log("got it",JSON.parse(response.body))
         //     }
         // })
-        let response = await axios(settings).catch(e => console.error(e.data, "folder access error"));
+        let response = await axios(settings).catch(e => console.error(e, "folder access error"));
         console.log(response)
         return response.data;
     }
