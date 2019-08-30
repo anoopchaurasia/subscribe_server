@@ -1,5 +1,6 @@
 fm.Package("com.anoop.outlook");
 var Request = require('request');
+var axios = require('axios');
 fm.Class("Message", function (me) {
     'use strict'
     this.setMe = _me => me = _me;
@@ -12,15 +13,8 @@ fm.Class("Message", function (me) {
                 'Authorization': 'Bearer ' + accessToken
             }
         }
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                console.log(error)
-                return null;
-            }
-            if (body) {
-                return body;
-            }
-        });
+        let response = await axios(settings).catch(e => console.error(e.message, "update access token"));
+        return response.data;
     }
 
     Static.getMailFolders = async function (accessToken) {
@@ -32,14 +26,8 @@ fm.Class("Message", function (me) {
                 'Authorization': 'Bearer ' + accessToken
             }
         }
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                console.log(error);
-            }
-            if (body) {
-                return body;
-            }
-        });
+        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        return response.data;
     }
 
     Static.getBulkEmail = async function(accessToken,link){
@@ -50,15 +38,8 @@ fm.Class("Message", function (me) {
                 'Authorization': 'Bearer ' + accessToken
             }
         }
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                return console.log(error);
-            }
-            if (body) {
-                return JSON.parse(body);
-            }
-        });
+        let response = await axios(settings).catch(e => console.error(e.message, "update access token"));
+        return response.data;
     }
-
 
 })
