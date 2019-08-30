@@ -33,6 +33,30 @@ fm.Class("Label>.Message", function(me){
     }
 
 
+    async function sendMailToBatchProcessForRevert(accessToken,mailIds,source_id,destination_id){
+        if (mailIds.length <= 0) return;
+          var msgIDS = mailIds.splice(0, 18);
+          var batchRequest = [];
+          for (let i = 0; i < msgIDS.length; i++) {
+            var settings = {
+                "id": msgIDS[i],
+                "url": encodeURI("/me/mailFolders/" + source_id + "/messages/" + msgIDS[i] + "/move"),
+                "method": "POST",
+                "headers": {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                "body": { "destinationId": destination_id }
+            }
+            batchRequest.push(settings);
+          }
+          if (batchRequest.length > 0) {
+             return await sendRequestInBatch(accessToken, batchRequest)
+          }
+          return await sendMailToBatchProcess(accessToken, mailIds, label_id);
+    }
+
+
     async function sendRequestInBatch(accessToken, reqArray) {
         console.log("batch called");
         var settings = {
@@ -76,6 +100,11 @@ fm.Class("Label>.Message", function(me){
     Static.moveMailFromInbox =async function(accessToken, mailIdList,label_id){
         return await sendMailToBatchProcess(accessToken,mailIdList,label_id);
     };
+
+
+    Static.reverMailForOutlook = async function(accessToken,mailIdList,source_id,destination_id){
+        return await sendMailToBatchProcessForRevert(accessToken,mailIdList,source_id,destination_id);
+    }
 
     Static.moveInboxToUnsub = async function(gmail, mailIdList) {
         return await me.batchModify(gmail,  {

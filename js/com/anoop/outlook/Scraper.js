@@ -45,6 +45,33 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         }
     }
 
+    this.getTwoFolderId = async function (accessToken,user_id,link,source_name,destination_name,source_id,destination_id){
+        let folderList = await Message.getMailFoldersListInBatch(accessToken, link);
+        let length = folderList.value.length;
+        let count = 0;
+        await folderList.value.asynForEach(async folder => {
+            count++;
+            if (folder.displayName == source_name) {
+                console.log("source folder",folder.id);
+                source_id=folder.id;
+            }else if(folder.displayName == destination_name){
+                console.log("destination found",folder.id);
+                destination_id=folder.id;
+            }
+        });
+        if(source_id!=null && destination_id!=null){
+            return {source_id,destination_id};
+        }
+        if (count == length) {
+            if (folderList['@odata.nextLink']) {
+                console.log("not found folder",folderList['@odata.nextLink']);
+                return await me.getFolderId(accessToken, user_id, folderList['@odata.nextLink'],folder_name)
+            } else {
+                return null;
+            }
+        }
+    }
+
 
 
     this.getWebhookMail = async function (accessToken, link, user_id) {

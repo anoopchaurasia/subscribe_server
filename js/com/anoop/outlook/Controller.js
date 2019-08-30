@@ -31,6 +31,21 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         }
     }
 
+    async function revertMailForOutlook(accessToken, user_id, source_id,destination_id, from_email,status) {
+        // await OutlookHandler.updateAuthToken(user_id, folder_id);
+        let emailids = await getEmailDetailsAndIds(user_id, from_email,status);
+        console.log(emailids);
+        let response = await Label.reverMailForOutlook(accessToken, emailids, source_id,destination_id);
+        console.log("moved response", response)
+        if (response) {
+            await response.responses.asynForEach(async element => {
+                if (element.status == 201) {
+                    await me.updateEmailInfoForOutlook(element.id, element.body.id);
+                }
+            });
+        }
+    }
+
 
     //-------------------------FROM INBOX---------------------------------------//
 
@@ -78,7 +93,20 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
     }
 
  
+    //------------------------------FROM UNSUB-------------------------------/
 
+    Static.revertUnsubToInbox = async function(user_id,from_email){
+        let accessToken = await Outlook.getAccessToken(user_id);
+        let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0";
+        let user = await me.getUserById(user_id);
+        let instance = await Outlook.getOutlookInstanceForUser(user);
+        let scraper = new Scraper(instance);
+        let {source_id,destination_id} = await scraper.getTwoFolderId(accessToken,user_id,link,"Unsubscribed Emails","Inbox",null,null)
+        if (source_id != null && destination_id!=null) {
+            console.log("got it", source_id,destination_id)
+            return await revertMailForOutlook(accessToken, user_id, source_id,destination_id, from_email,"keep");
+        }
+    }
 
 
     Static.getOutlookUrl = async function () {
