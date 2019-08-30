@@ -28,11 +28,13 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         await folderList.value.asynForEach(async folder => {
             count++;
             if (folder.displayName == 'Unsubscribed Emails') {
+                console.log("find folder",folder.id);
                 return folder.id;
             }
         });
         if (count == length) {
             if (folderList['@odata.nextLink']) {
+                console.log("not found folder",folderList['@odata.nextLink']);
                 await getFolderId(accessToken, user_id, folderList['@odata.nextLink'])
             } else {
                 return null;

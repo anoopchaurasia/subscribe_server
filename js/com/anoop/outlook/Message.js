@@ -31,6 +31,7 @@ fm.Class("Message", function (me) {
     }
 
     Static.getMailFoldersListInBatch = async function (accessToken,link) {
+        console.log(link);
         var settings = {
             "url": link,
             "method": "GET",
