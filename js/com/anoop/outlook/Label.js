@@ -40,22 +40,22 @@ fm.Class("Label>.Message", function(me){
             "method": "POST",
             "headers": {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
+                // 'Accept': 'application/json',
                 'Authorization': 'Bearer ' + accessToken
             },
-            "body": JSON.stringify({ "requests": reqArray })
+            "body": { "requests": reqArray }
         }
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                console.log(error);
-            }
-            if (response) {
-                console.log("got it",JSON.parse(response.body))
-            }
-        })
-        // let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
-        // console.log(response)
-        // return response.data;
+        // Request(settings, async (error, response, body) => {
+        //     if (error) {
+        //         console.log(error);
+        //     }
+        //     if (response) {
+        //         console.log("got it",JSON.parse(response.body))
+        //     }
+        // })
+        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        console.log(response)
+        return response.data;
     }
 
 
