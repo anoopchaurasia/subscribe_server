@@ -38,7 +38,7 @@ fm.Class("Message", function (me) {
             }
             if (body) {
                 console.log(body)
-                return JSON.parse(body);
+                return body;
             }
         });
     }
