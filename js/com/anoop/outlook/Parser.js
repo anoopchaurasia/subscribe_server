@@ -23,25 +23,25 @@ fm.Class("Parser>.Message", function (me, Header) {
     };
 
 
-    Static.getEmailBody = function (messageBodies) {
-        return messageBodies.map(x => {
-            let header = Header.new(x.payload.headers);
-            let payload = new Buffer(getParts(x.payload) || getPlainText(x.payload), 'base64').toString('utf-8');
-            let from = header.from.split(/<|>/);
-            from = from.length === 1 ? from[0] : from[from.length - 2];
-            return {
-                header, payload,
-                email_id: x.id,
-                historyId: x.historyId,
-                labelIds: x.labelIds,
-                date: new Date(parseInt(x.internalDate)).toString(),
-                from_email_name: header.from,
-                from_email: from,
-                to_email: header.to,
-                subject: header.subject
-            };
-        });
-    };
+    // Static.getEmailBody = function (messageBodies) {
+    //     return messageBodies.map(x => {
+    //         let header = Header.new(x.payload.headers);
+    //         let payload = new Buffer(getParts(x.payload) || getPlainText(x.payload), 'base64').toString('utf-8');
+    //         let from = header.from.split(/<|>/);
+    //         from = from.length === 1 ? from[0] : from[from.length - 2];
+    //         return {
+    //             header, payload,
+    //             email_id: x.id,
+    //             historyId: x.historyId,
+    //             labelIds: x.labelIds,
+    //             date: new Date(parseInt(x.internalDate)).toString(),
+    //             from_email_name: header.from,
+    //             from_email: from,
+    //             to_email: header.to,
+    //             subject: header.subject
+    //         };
+    //     });
+    // };
 
     Static.parseForScraper = function(messages){
         return getEmailBody(messages).map(x=>{
@@ -78,22 +78,22 @@ fm.Class("Parser>.Message", function (me, Header) {
         return str;
     }
 
-    Static.parse = function (messages) {
-        return me.getEmailBody(messages).map(x=>{
-            return {
-                html: x.payload,
-                date: x.date,
-                headers:{
-                    Subject: x.subject,
-                    From: x.from_email
-                },
-                history_id: x.historyId,
-                subject: x.subject,
-                from: x.from_email,
-                id: x.email_id,
-                to :x.to_email
-            }
-        });
+    // Static.parse = function (messages) {
+    //     return me.getEmailBody(messages).map(x=>{
+    //         return {
+    //             html: x.payload,
+    //             date: x.date,
+    //             headers:{
+    //                 Subject: x.subject,
+    //                 From: x.from_email
+    //             },
+    //             history_id: x.historyId,
+    //             subject: x.subject,
+    //             from: x.from_email,
+    //             id: x.email_id,
+    //             to :x.to_email
+    //         }
+    //     });
         
     };  
 
