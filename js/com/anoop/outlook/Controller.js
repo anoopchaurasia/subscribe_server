@@ -101,10 +101,26 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         let user = await me.getUserById(user_id);
         let instance = await Outlook.getOutlookInstanceForUser(user);
         let scraper = new Scraper(instance);
-        let {source_id,destination_id} = await scraper.getTwoFolderId(accessToken,user_id,link,"Unsubscribed Emails","Inbox",null,null)
+        let {source_id,destination_id} = await scraper.getTwoFolderId(accessToken,user_id,link,"Unsubscribed Emails","Inbox",null,null);
         if (source_id != null && destination_id!=null) {
             console.log("got it", source_id,destination_id)
             return await revertMailForOutlook(accessToken, user_id, source_id,destination_id, from_email,"keep");
+        }
+    }
+
+
+    //-------------------------------FROM TRASH---------------------------------/
+    
+    Static.revertTrashToInbox = async function(user_id,from_email){
+        let accessToken = await Outlook.getAccessToken(user_id);
+        let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0";
+        let user = await me.getUserById(user_id);
+        let instance = await Outlook.getOutlookInstanceForUser(user);
+        let scraper = new Scraper(instance);
+        let {source_id,destination_id} = await scraper.getTwoFolderId(accessToken,user_id,link,"Junk Email","Inbox",null,null);
+        if(source_id!=null && destination_id!=null){
+            console.log("find trash to inbox ", source_id,destination_id);
+            return await revertMailForOutlook(accessToken,user_id,source_id,destination_id,from_email,"keep");
         }
     }
 

@@ -454,22 +454,29 @@ router.post('/revertTrashMailToInbox', async (req, res) => {
         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
             console.log(err);
         });
-        if (doc) {
-            let tokenInfo = await auth_token.findOne({ "user_id": doc.user_id }).catch(err => {
-                console.log(err);
-            });
-            if (tokenInfo) {
-                let accessToken = await Outlook.check_Token_info(doc.user_id, tokenInfo);
-                if (accessToken) {
-                    let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-                    let id = await Outlook.getRevertTrashMailFolderList(accessToken, doc.user_id, link, from_email, null, null)
-                    res.status(200).json({
-                        error: false,
-                        data: "moving"
-                    })
-                }
-            }
-        }
+
+        await Controller.revertTrashToInbox(doc.user_id,from_email);
+        res.status(200).json({
+            error: false,
+            data: "moving"
+        })
+        
+        // if (doc) {
+        //     let tokenInfo = await auth_token.findOne({ "user_id": doc.user_id }).catch(err => {
+        //         console.log(err);
+        //     });
+        //     if (tokenInfo) {
+        //         let accessToken = await Outlook.check_Token_info(doc.user_id, tokenInfo);
+        //         if (accessToken) {
+        //             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
+        //             let id = await Outlook.getRevertTrashMailFolderList(accessToken, doc.user_id, link, from_email, null, null)
+        //             res.status(200).json({
+        //                 error: false,
+        //                 data: "moving"
+        //             })
+        //         }
+        //     }
+        // }
     } catch (ex) {
         res.sendStatus(400);
     }
