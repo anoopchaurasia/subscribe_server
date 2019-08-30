@@ -13,7 +13,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         this.outlook = outlook;
         me.base(outlook.user_id);
     }
-    
+
     // this.start = async function (cb) {
     //     let date = new Date(Date.now() - me.APPROX_TWO_MONTH_IN_MS);
     //     let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
@@ -57,6 +57,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
 
     this.scrapEmail = async function (accessToken, user_id) {
         let folderList = await Message.getMailFolders(accessToken);
+        console.log(folderList)
         await folderList.value.asynForEach(async folder => {
             if (folder.displayName == 'Inbox') {
                 let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$skip=0');
