@@ -10,6 +10,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
     };
 
     this.Scraper = function (outlook) {
+        console.log(outlook)
         this.outlook = outlook;
         me.base(outlook.user._id);
     }
