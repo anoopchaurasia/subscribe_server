@@ -81,7 +81,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
     }
 
     async function checkEmail(body, accessToken, user_id) {
-        body = JSON.parse(body);
         body['user_id'] = user_id;
         body['payload'] = body.body.content;
         if (body.isRead) {
