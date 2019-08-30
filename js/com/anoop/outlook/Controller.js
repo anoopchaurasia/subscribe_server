@@ -10,58 +10,39 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
     'use strict'
     this.setMe = _me => me = _me;
 
-    async function getEmailDetailsAndIds(user_id, from_email){
-        let {emaildetail, emailids} = await me.getEmailDetailAndInfos(user_id, from_email);
+    async function getEmailDetailsAndIds(user_id, from_email) {
+        let { emaildetail, emailids } = await me.getEmailDetailAndInfos(user_id, from_email);
         // let gmailInstance = await Gmail.getInstanceForUser(user_id);
         // await Label.moveInboxToTrash(gmailInstance, emailids);
-        // me.updateEmailDetailStatus(emaildetail._id, "move");
+        me.updateEmailDetailStatus(emaildetail._id, "move");
         return emailids;
     };
     //-------------------------FROM INBOX---------------------------------------//
 
-    Static.moveEmailFromInbox = async function (user_id,from_email) {
+    Static.moveEmailFromInbox = async function (user_id, from_email) {
         let accessToken = await Outlook.getAccessToken(user_id);
         console.log(accessToken)
         let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
         let user = await me.getUserById(user_id);
         let instance = await Outlook.getOutlookInstanceForUser(user);
         let scraper = new Scraper.new(instance);
-        let folder_id = await scraper.getFolderId(accessToken,user_id,link)
-        console.log("came here",folder_id)
-        if(folder_id!=null){
-            console.log("got it",folder_id)
-            await OutlookHandler.updateAuthToken(user_id,folder_id);
-            let emailids = await getEmailDetailsAndIds(user_id,from_email);
+        let folder_id = await scraper.getFolderId(accessToken, user_id, link)
+        console.log("came here", folder_id)
+        if (folder_id != null) {
+            console.log("got it", folder_id)
+            await OutlookHandler.updateAuthToken(user_id, folder_id);
+            let emailids = await getEmailDetailsAndIds(user_id, from_email);
             console.log(emailids);
-            let response = await Label.moveMailFromInbox(accessToken,emailids,folder_id);
-            console.log("moved response",response)
-            // Request(settings, async (error, response, body) => {
-            //     if (error) {
-            //         return console.log(error);
-            //     }
-            //     if (response) {
-            //         let rsp = JSON.parse(response.body);
-            //         await rsp.responses.asynForEach(async element => {
-            //             if (element.status == 201) {
-            //                 var oldvalue = {
-            //                     "email_id": element.id
-            //                 };
-            //                 var newvalues = {
-            //                     $set: {
-            //                         "email_id": element.body.id
-            //                     }
-            //                 };
-            //                 let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-            //                     console.error(err.message, err.stack);
-            //                 });
-            //                 if (check) {
-            //                     console.log(check)
-            //                 }
-            //             }
-            //         });
-            //     }
-            // });
-        }else{
+            let response = await Label.moveMailFromInbox(accessToken, emailids, folder_id);
+            console.log("moved response", response)
+            if (response) {
+                await response.responses.asynForEach(async element => {
+                    if (element.status == 201) {
+                        await me.updateEmailInfoForOutlook(element.id,element.body.id);
+                    }
+                });
+            }
+        } else {
             console.log(folder_id)
         }
 
