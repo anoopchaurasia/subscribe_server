@@ -29,7 +29,7 @@ class Outlook {
 
     static async updateUserInfo(oldvalue, newvalue) {
         return await users.findOneAndUpdate(oldvalue, newvalue, { upsert: true }).catch(err => {
-            console.log(err);
+            console.error(err);
         });
     }
 
@@ -122,8 +122,8 @@ class Outlook {
                 let authToken = {};
                 if (refresh_token) {
                     const newToken = await oauth2.accessToken.create({ refresh_token: refresh_token }).refresh().catch(async err => {
-                        console.log(err);
-                        await Outlook.updateUserInfo({ _id: user_id }, { $set: { inactive_at: new Date() }});
+                        console.error(err.message, "outlook");
+                        await Outlook.updateUserInfo({ _id: user_id, inactive_at: null }, { $set: { inactive_at: new Date() }});
                     });;
                     authToken.access_token = newToken.token.access_token;
                     authToken.expiry_date = new Date(newToken.token.expires_at);
