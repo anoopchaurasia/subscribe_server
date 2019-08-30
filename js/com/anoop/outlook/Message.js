@@ -37,6 +37,7 @@ fm.Class("Message", function (me) {
                 console.log(error);
             }
             if (body) {
+                console.log(body)
                 return JSON.parse(body);
             }
         });
