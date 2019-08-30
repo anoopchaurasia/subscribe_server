@@ -1,4 +1,5 @@
 fm.Package("com.anoop.outlook");
+var axios = require('axios');
 fm.Class("Label>.Message", function(me){
     'use strict'
     this.setMe=_me=>me=_me;
@@ -32,6 +33,7 @@ fm.Class("Label>.Message", function(me){
 
 
     async function sendRequestInBatch(accessToken, reqArray) {
+        console.log(reqArray);
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
             "method": "POST",
@@ -43,6 +45,7 @@ fm.Class("Label>.Message", function(me){
             "body": JSON.stringify({ "requests": reqArray })
         }
         let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        console.log(response)
         return response.data;
     }
 
