@@ -32,6 +32,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
             console.log("got it",folder_id)
             await OutlookHandler.updateAuthToken(user_id,folder_id);
             let emailids = await getEmailDetailsAndIds(user_id,from_email);
+            console.log(emailids);
             let response = await Label.moveMailFromInbox(accessToken,emailids,folder_id);
             console.log("moved response",response)
             // Request(settings, async (error, response, body) => {
