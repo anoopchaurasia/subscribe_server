@@ -23,7 +23,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         let accessToken = await Outlook.getAccessToken(user_id);
         console.log(accessToken)
         let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-        let folder_id = await Scraper.getFolderId(accessToken,user_id,link)
+        let user = await me.getUserById(user_id);
+        let instance = await Outlook.getOutlookInstanceForUser(user);
+        let scraper = new Scraper.new(instance);
+        let folder_id = await scraper.getFolderId(accessToken,user_id,link)
         if(folder_id!=null){
             console.log(folder_id)
             await OutlookHandler.updateAuthToken(user_id,folder_id);
