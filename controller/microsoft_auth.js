@@ -419,7 +419,7 @@ router.post('/revertMailToInbox', async (req, res) => {
             console.log(err);
         });
 
-        await Controller.moveEmailFromInbox(doc.user_id,from_email);
+        await Controller.revertUnsubToInbox(doc.user_id,from_email);
         res.status(200).json({
             error: false,
             data: "moving"
