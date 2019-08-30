@@ -34,7 +34,7 @@ fm.Class("Message", function (me) {
         }
         Request(settings, async (error, response, body) => {
             if (error) {
-                return console.log(error);
+                console.log(error);
             }
             if (body) {
                 return JSON.parse(body);
