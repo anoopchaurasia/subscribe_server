@@ -71,7 +71,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
     async function getEmailInBulk(accessToken, link, user_id) {
         let mailList = await Message.getBulkEmail(accessToken, link);
         await mailList.value.asynForEach(async oneEmail => {
-            await checkEmail(accessToken, oneEmail, user_id)
+            await checkEmail(oneEmail,accessToken, user_id)
         });
         if (body['@odata.nextLink']) {
             await getEmailInBulk(accessToken, encodeURI(body['@odata.nextLink']), user_id);
