@@ -33,6 +33,7 @@ fm.Class("Label>.Message", function(me){
 
 
     async function sendRequestInBatch(accessToken, reqArray) {
+        console.log("batch called");
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
             "method": "POST",
