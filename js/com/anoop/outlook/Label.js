@@ -16,7 +16,7 @@ fm.Class("Label>.Message", function(me){
           for (let i = 0; i < msgIDS.length; i++) {
               var settings = {
                   "id": msgIDS[i],
-                  "url": "/me/messages/" + msgIDS[i] + "/move"),
+                  "url": "/me/messages/" + msgIDS[i] + "/move",
                   "method": "POST",
                   "headers": {
                       'Content-Type': 'application/json',
