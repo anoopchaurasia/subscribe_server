@@ -63,9 +63,14 @@ fm.Class("User>.BaseModel", function (me) {
     };
 
     Static.updateUserInfoOutlook = async function (query, set) {
-        // me.updateQueryValidation(query, "email");
+        me.updateQueryValidation(query, "email");
         return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec();
     };
+
+    Static.updateUserInfoOutlookWithState = async function(query,set){
+        me.updateQueryValidation(query, "state");
+        return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec();
+    }
 
     Static.createForOutlook = async function(query){
         var newUser = new mongouser({
