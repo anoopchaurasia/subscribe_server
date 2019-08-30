@@ -65,7 +65,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         if (count == length) {
             if (folderList['@odata.nextLink']) {
                 console.log("not found folder",folderList['@odata.nextLink']);
-                return await me.getFolderId(accessToken, user_id, folderList['@odata.nextLink'],folder_name)
+                return await me.getTwoFolderId(accessToken, user_id, folderList['@odata.nextLink'],source_name,destination_name,source_id,destination_id)
             } else {
                 return null;
             }
