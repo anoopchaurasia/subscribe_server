@@ -95,6 +95,6 @@ fm.Class("Parser>.Message", function (me, Header) {
     //         }
     //     });
         
-    };  
+    // };  
 
 });
