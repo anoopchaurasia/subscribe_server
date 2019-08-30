@@ -40,6 +40,7 @@ fm.Class("Message", function (me) {
             }
         }
         let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        console.log(response)
         return response.data;
     }
 
