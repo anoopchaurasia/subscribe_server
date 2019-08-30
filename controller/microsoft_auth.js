@@ -325,29 +325,20 @@ router.post('/getMail', async function (req, resp, next) {
 
 router.post('/setPrimaryEmail', async (req, res) => {
     try {
-        console.log("set primary mail", req.body)
         const doc = await token_model.findOne({ "token": req.body.authID });
-        if (doc) {
-            let email = req.body.email;
-            let ipaddress = req.header('x-forwarded-for') || req.connection.remoteAddress;
-            if (email != null) {
-                let userObj = {
-                    primary_email: email,
-                    ipaddress
-                };
-                await users.findOneAndUpdate({ "_id": doc.user_id }, userObj, { upsert: true }).catch(err => {
-                    console.error(err.message, err.stack);
-                })
-                res.status(200).json({
-                    error: false,
-                    status: 200
-                })
-            } else {
-                res.status(400).json({
-                    error: true,
-                    status: 400
-                })
-            }
+        let email = req.body.email;
+        let ipaddress = req.header('x-forwarded-for') || req.connection.remoteAddress;
+        if (email != null) {
+            await Controller.setPrimaryEmail(doc.user_id, email, ipaddress);
+            res.status(200).json({
+                error: false,
+                status: 200
+            })
+        } else {
+            res.status(400).json({
+                error: true,
+                status: 400
+            })
         }
     } catch (error) {
         console.log("here", error)
@@ -363,26 +354,62 @@ router.post('/moveEmailFromInbox', async (req, res) => {
         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
             console.log(err);
         });
-        if (doc) {
-            let tokenInfo = await auth_token.findOne({ "user_id": doc.user_id }).catch(err => {
-                console.log(err);
-            });
-            if (tokenInfo) {
-                let accessToken = await Outlook.check_Token_info(doc.user_id, tokenInfo);
-                if (accessToken) {
-                    let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-                    let id = await Outlook.getFolderList(accessToken, doc.user_id, link, from_email)
-                    res.status(200).json({
-                        error: false,
-                        data: "moving"
-                    })
-                }
-            }
-        }
+        await Controller.moveEmailFromInbox(doc.user_id,from_email);
+        res.status(200).json({
+            error: false,
+            data: "moving"
+        })
+        
+        // if (doc) {
+        //     let tokenInfo = await auth_token.findOne({ "user_id": doc.user_id }).catch(err => {
+        //         console.log(err);
+        //     });
+        //     if (tokenInfo) {
+        //         let accessToken = await Outlook.check_Token_info(doc.user_id, tokenInfo);
+        //         if (accessToken) {
+        //             let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
+        //             let id = await Outlook.getFolderList(accessToken, doc.user_id, link, from_email)
+        //             res.status(200).json({
+        //                 error: false,
+        //                 data: "moving"
+        //             })
+        //         }
+        //     }
+        // }
     } catch (ex) {
         res.sendStatus(400);
     }
 });
+
+
+
+// router.post('/moveEmailFromInbox', async (req, res) => {
+//     try {
+//         let auth_id = req.body.authID;
+//         let from_email = req.body.from_email;
+//         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+//             console.log(err);
+//         });
+//         if (doc) {
+//             let tokenInfo = await auth_token.findOne({ "user_id": doc.user_id }).catch(err => {
+//                 console.log(err);
+//             });
+//             if (tokenInfo) {
+//                 let accessToken = await Outlook.check_Token_info(doc.user_id, tokenInfo);
+//                 if (accessToken) {
+//                     let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
+//                     let id = await Outlook.getFolderList(accessToken, doc.user_id, link, from_email)
+//                     res.status(200).json({
+//                         error: false,
+//                         data: "moving"
+//                     })
+//                 }
+//             }
+//         }
+//     } catch (ex) {
+//         res.sendStatus(400);
+//     }
+// });
 
 router.post('/revertMailToInbox', async (req, res) => {
     try {

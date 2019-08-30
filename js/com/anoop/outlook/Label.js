@@ -6,12 +6,50 @@ fm.Class("Label>.Message", function(me){
     this.Label = function(){
 
     };
+
+    async function sendMailToBatchProcess (accessToken,mailIds,label_id){
+          if (mailIds.length <= 0) return;
+          var msgIDS = mailIds.splice(0, 18);
+          var batchRequest = [];
+          for (let i = 0; i < msgIDS.length; i++) {
+              var settings = {
+                  "id": msgIDS[i],
+                  "url": encodeURI("/me/messages/" + msgIDS[i] + "/move"),
+                  "method": "POST",
+                  "headers": {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Bearer ' + accessToken
+                  },
+                  "body": { "destinationId": label_id }
+              }
+              batchRequest.push(settings);
+          }
+          if (batchRequest.length > 0) {
+             return await sendRequestInBatch(accessToken, batchRequest)
+          }
+          return await sendMailToBatchProcess(accessToken, mailIds, label_id);
+    }
+
+
+    async function sendRequestInBatch(accessToken, reqArray) {
+        var settings = {
+            "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
+            "method": "POST",
+            "headers": {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
+            "body": JSON.stringify({ "requests": reqArray })
+        }
+        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        return response.data;
+    }
+
+
     ///---------------from inbox ------------
-    Static.moveInboxToTrash =async function(gmail, mailIdList){
-        return await me.batchModify(gmail,  {
-            'ids': mailIdList,
-            'addLabelIds': ["TRASH"]
-        });
+    Static.moveMailFromInbox =async function(accessToken, mailIdList,label_id){
+        return await sendMailToBatchProcess(accessToken,mailIdList,label_id);
     };
 
     Static.moveInboxToUnsub = async function(gmail, mailIdList) {

@@ -10,6 +10,110 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
     'use strict'
     this.setMe = _me => me = _me;
 
+    async function getEmailDetailsAndIds(user_id, from_email){
+        let {emaildetail, emailids} = await me.getEmailDetailAndInfos(user_id, from_email);
+        // let gmailInstance = await Gmail.getInstanceForUser(user_id);
+        // await Label.moveInboxToTrash(gmailInstance, emailids);
+        // me.updateEmailDetailStatus(emaildetail._id, "move");
+        return emailids;
+    };
+    //-------------------------FROM INBOX---------------------------------------//
+
+    Static.moveEmailFromInbox = async function (user_id,from_email) {
+        let accessToken = await Outlook.getAccessToken(user_id);
+        let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
+        let folder_id = await Scraper.getFolderId(accessToken,user_id,link)
+        if(folder_id!=null){
+            await OutlookHandler.updateAuthToken(user_id,folder_id);
+            let emailids = await getEmailDetailsAndIds(user_id,from_email);
+            let response = await Label.moveMailFromInbox(accessToken,emailids,folder_id);
+            console.log(response)
+            // Request(settings, async (error, response, body) => {
+            //     if (error) {
+            //         return console.log(error);
+            //     }
+            //     if (response) {
+            //         let rsp = JSON.parse(response.body);
+            //         await rsp.responses.asynForEach(async element => {
+            //             if (element.status == 201) {
+            //                 var oldvalue = {
+            //                     "email_id": element.id
+            //                 };
+            //                 var newvalues = {
+            //                     $set: {
+            //                         "email_id": element.body.id
+            //                     }
+            //                 };
+            //                 let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+            //                     console.error(err.message, err.stack);
+            //                 });
+            //                 if (check) {
+            //                     console.log(check)
+            //                 }
+            //             }
+            //         });
+            //     }
+            // });
+        }else{
+
+        }
+
+
+
+        // let id = await OutlookHandler.getFolderList(accessToken, doc.user_id, link, from_email)
+
+        // static async getFolderList(accessToken, user_id, link, from_email) {
+        //     var settings = {
+        //         "url": link,
+        //         "method": "GET",
+        //         "headers": {
+        //             'Content-Type': 'application/json',
+        //             'Authorization': 'Bearer ' + accessToken
+        //         }
+        //     }
+    
+        //     Request(settings, async (error, response, body) => {
+        //         if (error) {
+        //             return console.log(error);
+        //         }
+        //         if (body) {
+        //             const res = JSON.parse(body);
+        //             let length = res.value.length;
+        //             let count = 0;
+        //             await res.value.asynForEach(async folder => {
+        //                 count++;
+        //                 if (folder.displayName == 'Unsubscribed Emails') {
+        //                     var oldvalue = {
+        //                         user_id: user_id
+        //                     };
+        //                     var newvalues = {
+        //                         $set: {
+        //                             "label_id": folder.id
+        //                         }
+        //                     };
+        //                     var upsert = {
+        //                         upsert: true
+        //                     };
+        //                     await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+        //                         console.log(err);
+        //                     });
+        //                     return await Outlook.MoveMailFromInBOX(user_id, accessToken, from_email, folder.id);
+        //                 }
+        //             });
+        //             if (count == length) {
+        //                 if (res['@odata.nextLink']) {
+        //                     await Outlook.getFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
+        //                 } else {
+        //                     let lbl = await Outlook.createFolderOutlook(accessToken, user_id)
+        //                     return await Outlook.MoveMailFromInBOX(user_id, accessToken, from_email, lbl);
+        //                 }
+        //             }
+        //         }
+        //     });
+        // }
+    }
+
+
 
     Static.getOutlookUrl = async function () {
         const stateCode = uniqid() + "outlook" + uniqid();
@@ -25,11 +129,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
 
     Static.createAndStoreToken = async function (auth_code, state) {
         let token = await Outlook.getToken(auth_code);
-        console.log("token",token);
         let userInfo = jwt.decode(token.token.id_token);
-        console.log("userInfo",userInfo);
         let user = await me.getByEmailAndClient(userInfo);
-        console.log("user",user);
         if (user) {
             await me.removeUserByState(state);
             await me.updateExistingUserInfoOutlook(userInfo, state);
@@ -37,12 +138,15 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
             user = await me.getByState(state);
             await me.updateNewUserInfoOutlook(userInfo, state);
         }
-        console.log(user);
         await OutlookHandler.extract_token(user, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
             console.log(err);
         });
         await OutlookHandler.subscribeToNotification(token.token.access_token, user._id);
         return await me.createToken(user);
+    }
+
+    Static.setPrimaryEmail = async function (user_id, email, ipaddress) {
+        await me.updateUserById({ "_id": user_id }, { $set: { primary_email: email, ipaddress } });
     }
 
     Static.getNotificationEmailData = async function (data) {
@@ -64,12 +168,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         await me.scanStarted(user_id);
         let user = await me.getUserById(user_id);
         let instance = await Outlook.getOutlookInstanceForUser(user);
-        console.log(instance)
         let scraper = new Scraper.new(instance);
-        console.log(accessToken,user_id)
-        await scraper.scrapEmail(accessToken,user_id);
+        await scraper.scrapEmail(accessToken, user_id);
         await me.scanFinished(user_id);
     }
 
- 
+
 });

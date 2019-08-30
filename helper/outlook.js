@@ -109,8 +109,18 @@ class Outlook {
         });
     }
 
-    static async getAuthToken(user_id){
+    static async getAuthToken(user_id) {
         return await auth_token.findOne({ "user_id": user_id });
+    }
+
+    static async updateAuthToken(user_id, folder_id) {
+        return await auth_token.updateOne({ user_id: user_id }, {
+            $set: {
+                "label_id": folder_id
+            }
+        }, { upsert: true }).catch(err => {
+            console.log(err);
+        });
     }
 
     static async check_Token_info(user_id, token) {
@@ -127,7 +137,7 @@ class Outlook {
                 if (refresh_token) {
                     const newToken = await oauth2.accessToken.create({ refresh_token: refresh_token }).refresh().catch(async err => {
                         console.log(err);
-                        await Outlook.updateUserInfo({ _id: user_id }, { $set: { inactive_at: new Date() }});
+                        await Outlook.updateUserInfo({ _id: user_id }, { $set: { inactive_at: new Date() } });
                     });;
                     authToken.access_token = newToken.token.access_token;
                     authToken.expiry_date = new Date(newToken.token.expires_at);
@@ -154,7 +164,7 @@ class Outlook {
                 'Authorization': 'Bearer ' + accessToken
             }
         }
-    
+
         Request(settings, async (error, response, body) => {
             if (error) {
                 console.log(error);
@@ -173,27 +183,27 @@ class Outlook {
                         },
                         "body": JSON.stringify({
                             "changeType": "created",
-                            "notificationUrl": "https://unsub.expensebit.com/api/v1/mail/microsoft/getPushNotification",
+                            "notificationUrl": "https://test.expensebit.com/api/v2/mail/microsoft/getPushNotification",
                             "resource": "me/mailFolders('Inbox')/messages",
                             "expirationDateTime": new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000),
-                            "applicationId": "c92a2e87-b74b-4c3b-9f46-422f11622292",
+                            "applicationId": "25dc3c47-0836-4c00-9c6b-eea7f6073fad",
                             "creatorId": "8ee44408-0679-472c-bc2a-692812af3437",
                             "clientState": user_id
                         })
                     }
-    
+
                     Request(settingsubs, async (error, response, body) => {
                         if (error) {
                             console.log(error);
                         }
                         if (body) {
-                            // console.log(body);
+                            console.log(body);
                             return
                         }
                     });
                 }
             }
-        });   
+        });
     }
     static async extract_token(user, access_token, refresh_token, id_token, expiry_date, scope, token_type) {
         var tokedata = {
@@ -408,6 +418,7 @@ class Outlook {
     }
 
     static async  MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
+       
         let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
         let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
         if (mailList) {

@@ -30,6 +30,19 @@ fm.Class("Message", function (me) {
         return response.data;
     }
 
+    Static.getMailFoldersListInBatch = async function (accessToken,link) {
+        var settings = {
+            "url": link,
+            "method": "GET",
+            "headers": {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            }
+        }
+        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        return response.data;
+    }
+
     Static.getBulkEmail = async function(accessToken,link){
         var settings = {
             "url": link,
