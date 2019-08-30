@@ -81,6 +81,21 @@ fm.Class("Label>.Message", function(me){
         return response.data;
     }
 
+
+    Static.moveOneMailFromInbox = async function(accessToken,emailId,folder_id){
+        var settings = {
+            "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + emailId + "/move"),
+            "method": "POST",
+            "headers": {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
+            "data": JSON.stringify({ "destinationId": folder_id })
+        }
+        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        return response.data;
+    }
+
     Static.createFolderForOutlook = async function(accessToken){
         var settings = {
             "url": "https://graph.microsoft.com/v1.0/me/mailFolders",
@@ -89,7 +104,7 @@ fm.Class("Label>.Message", function(me){
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + accessToken
             },
-            "body": JSON.stringify({ "displayName": "Unsubscribed Emails" })
+            "data": JSON.stringify({ "displayName": "Unsubscribed Emails" })
         }
         let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
         return response.data;

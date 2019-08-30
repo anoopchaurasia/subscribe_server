@@ -1,13 +1,14 @@
 fm.Package("com.anoop.outlook");
 fm.Import(".Message");
 fm.Import(".Parser");
+fm.Import(".Label");
 const OutlookHandler = require("./../../../../helper/outlook").Outlook;
 // Array.prototype.asynForEach = async function (cb) {
 //     for (let i = 0, len = this.length; i < len; i++) {
 //         await cb(this[i]);
 //     }
 // }
-fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
+fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     this.setMe = _me => me = _me;
     Static.APPROX_TWO_MONTH_IN_MS = process.env.APPROX_TWO_MONTH_IN_MS || 4 * 30 * 24 * 60 * 60 * 1000;
     Static.getInstanceForUser = async function (outlook) {
@@ -121,8 +122,11 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         await me.sendMailToScraper(Parser.parse(body, user_id, null), me.outlook.user);
         await me.handleEamil(body, async (data, status) => {
             if (status == "move") {
-                let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-                let id = await OutlookHandler.getFolderListForScrapping(accessToken, user_id, link, data.email_id)
+                let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0";
+                let folder_id = await me.getFolderId(accessToken, user_id, link,"Unsubscribed Emails");
+                let response = await Label.moveOneMailFromInbox(accessToken,data.email_id,folder_id);
+                console.log(response);
+                // let id = await OutlookHandler.getFolderListForScrapping(accessToken, user_id, link, data.email_id);
             } else if (status == "trash") {
                 let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
                 await OutlookHandler.getFolderListForTrashScrapping(accessToken, user_id, link, data.email_id);
