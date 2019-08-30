@@ -265,6 +265,7 @@ class Outlook {
                 return console.log(error);
             }
             if (response) {
+                console.log(response)
                 let rsp = JSON.parse(response.body);
                 await rsp.responses.asynForEach(async element => {
                     if (element.status == 201) {
@@ -417,7 +418,7 @@ class Outlook {
         return await Outlook.sendMailToBatchProcess(accessToken, mailIds, source, label_id);
     }
 
-    static async  MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
+    static async MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
        
         let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
         let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
