@@ -21,6 +21,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
     }
 
     this.getFolderId = async function (accessToken, user_id, link) {
+        let folder_id=null;
         let folderList = await Message.getMailFoldersListInBatch(accessToken, link);
         console.log(folderList)
         let length = folderList.value.length;
@@ -29,9 +30,12 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
             count++;
             if (folder.displayName == 'Unsubscribed Emails') {
                 console.log("find folder",folder.id);
-                return folder.id;
+                folder_id=folder.id;
             }
         });
+        if(folder_id!=null){
+            return folder_id;
+        }
         if (count == length) {
             if (folderList['@odata.nextLink']) {
                 console.log("not found folder",folderList['@odata.nextLink']);
