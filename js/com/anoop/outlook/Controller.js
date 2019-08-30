@@ -16,6 +16,21 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         return emailids;
     };
 
+    async function moveMailFromInboxMain(accessToken, user_id, folder_id, from_email) {
+        await OutlookHandler.updateAuthToken(user_id, folder_id);
+        let emailids = await getEmailDetailsAndIds(user_id, from_email);
+        console.log(emailids);
+        let response = await Label.moveMailFromInbox(accessToken, emailids, folder_id);
+        console.log("moved response", response)
+        if (response) {
+            await response.responses.asynForEach(async element => {
+                if (element.status == 201) {
+                    await me.updateEmailInfoForOutlook(element.id, element.body.id);
+                }
+            });
+        }
+    }
+
 
     //-------------------------FROM INBOX---------------------------------------//
 
@@ -40,20 +55,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         }
     }
 
-    async function moveMailFromInboxMain(accessToken, user_id, folder_id, from_email) {
-        await OutlookHandler.updateAuthToken(user_id, new_folder);
-        let emailids = await getEmailDetailsAndIds(user_id, from_email);
-        console.log(emailids);
-        let response = await Label.moveMailFromInbox(accessToken, emailids, folder_id);
-        console.log("moved response", response)
-        if (response) {
-            await response.responses.asynForEach(async element => {
-                if (element.status == 201) {
-                    await me.updateEmailInfoForOutlook(element.id, element.body.id);
-                }
-            });
-        }
-    }
+ 
 
 
 
