@@ -896,21 +896,6 @@ function getBoxes(imap) {
     });
 }
 
-function createInbox(imap) {
-    return new Promise((resolve, reject) => {
-        imap.addBox("Unsubscribed Emails", function (err, box) {
-            (err ? reject(err) : resolve(box));
-        })
-    });
-}
-
-function createInboxForLV(imap) {
-    return new Promise((resolve, reject) => {
-        imap.addBox("INBOX/Unsubscribed Emails", function (err, box) {
-            (err ? reject(err) : resolve(box));
-        })
-    });
-}
 
 function openBox(imap, boxName) {
     return new Promise((resolve, reject) => {
