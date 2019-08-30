@@ -27,7 +27,7 @@ fm.Class("Label>.Message", function(me){
               batchRequest.push(settings);
           }
           if (batchRequest.length > 0) {
-              await sendRequestInBatch(accessToken, batchRequest)
+             return await sendRequestInBatch(accessToken, batchRequest)
           }
           return await sendMailToBatchProcess(accessToken, mailIds, label_id);
     }
@@ -54,7 +54,6 @@ fm.Class("Label>.Message", function(me){
         //     }
         // })
         let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
-        console.log(response)
         return response.data;
     }
 
