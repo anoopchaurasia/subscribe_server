@@ -22,6 +22,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
 
     this.getFolderId = async function (accessToken, user_id, link) {
         let folderList = await Message.getMailFoldersListInBatch(accessToken, link);
+        console.log(folderList)
         let length = folderList.value.length;
         let count = 0;
         await folderList.value.asynForEach(async folder => {

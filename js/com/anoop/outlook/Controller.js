@@ -60,59 +60,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
             console.log(folder_id)
         }
 
-
-
-        // let id = await OutlookHandler.getFolderList(accessToken, doc.user_id, link, from_email)
-
-        // static async getFolderList(accessToken, user_id, link, from_email) {
-        //     var settings = {
-        //         "url": link,
-        //         "method": "GET",
-        //         "headers": {
-        //             'Content-Type': 'application/json',
-        //             'Authorization': 'Bearer ' + accessToken
-        //         }
-        //     }
-    
-        //     Request(settings, async (error, response, body) => {
-        //         if (error) {
-        //             return console.log(error);
-        //         }
-        //         if (body) {
-        //             const res = JSON.parse(body);
-        //             let length = res.value.length;
-        //             let count = 0;
-        //             await res.value.asynForEach(async folder => {
-        //                 count++;
-        //                 if (folder.displayName == 'Unsubscribed Emails') {
-        //                     var oldvalue = {
-        //                         user_id: user_id
-        //                     };
-        //                     var newvalues = {
-        //                         $set: {
-        //                             "label_id": folder.id
-        //                         }
-        //                     };
-        //                     var upsert = {
-        //                         upsert: true
-        //                     };
-        //                     await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-        //                         console.log(err);
-        //                     });
-        //                     return await Outlook.MoveMailFromInBOX(user_id, accessToken, from_email, folder.id);
-        //                 }
-        //             });
-        //             if (count == length) {
-        //                 if (res['@odata.nextLink']) {
-        //                     await Outlook.getFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
-        //                 } else {
-        //                     let lbl = await Outlook.createFolderOutlook(accessToken, user_id)
-        //                     return await Outlook.MoveMailFromInBOX(user_id, accessToken, from_email, lbl);
-        //                 }
-        //             }
-        //         }
-        //     });
-        // }
     }
 
 
