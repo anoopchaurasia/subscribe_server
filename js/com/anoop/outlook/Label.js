@@ -33,7 +33,6 @@ fm.Class("Label>.Message", function(me){
 
 
     async function sendRequestInBatch(accessToken, reqArray) {
-        console.log(reqArray);
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
             "method": "POST",
@@ -46,10 +45,10 @@ fm.Class("Label>.Message", function(me){
         }
         Request(settings, async (error, response, body) => {
             if (error) {
-                return console.log(error);
+                console.log(error);
             }
             if (response) {
-                console.log(JSON.parse(response.body))
+                console.log("got it",JSON.parse(response.body))
             }
         })
         // let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
