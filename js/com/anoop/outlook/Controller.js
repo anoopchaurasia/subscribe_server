@@ -12,11 +12,11 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
 
     async function getEmailDetailsAndIds(user_id, from_email) {
         let { emaildetail, emailids } = await me.getEmailDetailAndInfos(user_id, from_email);
-        // let gmailInstance = await Gmail.getInstanceForUser(user_id);
-        // await Label.moveInboxToTrash(gmailInstance, emailids);
         me.updateEmailDetailStatus(emaildetail._id, "move");
         return emailids;
     };
+
+
     //-------------------------FROM INBOX---------------------------------------//
 
     Static.moveEmailFromInbox = async function (user_id, from_email) {
@@ -30,22 +30,29 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         console.log("came here", folder_id)
         if (folder_id != null) {
             console.log("got it", folder_id)
-            await OutlookHandler.updateAuthToken(user_id, folder_id);
-            let emailids = await getEmailDetailsAndIds(user_id, from_email);
-            console.log(emailids);
-            let response = await Label.moveMailFromInbox(accessToken, emailids, folder_id);
-            console.log("moved response", response)
-            if (response) {
-                await response.responses.asynForEach(async element => {
-                    if (element.status == 201) {
-                        await me.updateEmailInfoForOutlook(element.id,element.body.id);
-                    }
-                });
-            }
+            return await moveMailFromInboxMain(accessToken, user_id, folder_id, from_email);
         } else {
             console.log(folder_id)
+            let new_folder = await Label.createFolderForOutlook(accessToken, user_id);
+            if (new_folder) {
+                return await me.moveMailFromInboxMain(accessToken, user_id, new_folder.id, from_email);
+            }
         }
+    }
 
+    Static.moveMailFromInboxMain = async function (accessToken, user_id, folder_id, from_email) {
+        await OutlookHandler.updateAuthToken(user_id, new_folder);
+        let emailids = await getEmailDetailsAndIds(user_id, from_email);
+        console.log(emailids);
+        let response = await Label.moveMailFromInbox(accessToken, emailids, folder_id);
+        console.log("moved response", response)
+        if (response) {
+            await response.responses.asynForEach(async element => {
+                if (element.status == 201) {
+                    await me.updateEmailInfoForOutlook(element.id, element.body.id);
+                }
+            });
+        }
     }
 
 

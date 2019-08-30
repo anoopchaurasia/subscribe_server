@@ -57,6 +57,20 @@ fm.Class("Label>.Message", function(me){
         return response.data;
     }
 
+    Static.createFolderForOutlook = async function(accessToken){
+        var settings = {
+            "url": "https://graph.microsoft.com/v1.0/me/mailFolders",
+            "method": "POST",
+            "headers": {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            },
+            "body": JSON.stringify({ "displayName": "Unsubscribed Emails" })
+        }
+        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        return response.data;
+    }
+
 
     ///---------------from inbox ------------
     Static.moveMailFromInbox =async function(accessToken, mailIdList,label_id){
