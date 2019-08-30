@@ -11,7 +11,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
 
     this.Scraper = function (outlook) {
         this.outlook = outlook;
-        me.base(outlook.user_id);
+        me.base(outlook.user._id);
     }
 
     // this.start = async function (cb) {
@@ -97,7 +97,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         body['email_id'] = body.id;
         body['to_email'] = null;
 
-        await me.sendMailToScraper(Parser.parse(body, user_id, null), me.myImap.user);
+        await me.sendMailToScraper(Parser.parse(body, user_id, null), me.outlook.user);
         await me.handleEamil(body, async (data, status) => {
             if (status == "move") {
                 let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
