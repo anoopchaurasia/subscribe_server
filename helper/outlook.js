@@ -223,30 +223,30 @@ class Outlook {
     }
 
 
-    static async sendMailToBatchProcess(accessToken, mailIds, label_id) {
-        // console.log(mailIds.length);
-        if (mailIds.length <= 0) return;
-        var msgIDS = mailIds.splice(0, 18);
-        var batchRequest = [];
-        // console.log(msgIDS)
-        for (let i = 0; i < msgIDS.length; i++) {
-            var settings = {
-                "id": msgIDS[i],
-                "url": encodeURI("/me/messages/" + msgIDS[i] + "/move"),
-                "method": "POST",
-                "headers": {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + accessToken
-                },
-                "body": { "destinationId": label_id }
-            }
-            batchRequest.push(settings);
-        }
-        if (batchRequest.length > 0) {
-            await Outlook.sendRequestInBatch(accessToken, batchRequest)
-        }
-        return await Outlook.sendMailToBatchProcess(accessToken, mailIds, label_id);
-    }
+    // static async sendMailToBatchProcess(accessToken, mailIds, label_id) {
+    //     // console.log(mailIds.length);
+    //     if (mailIds.length <= 0) return;
+    //     var msgIDS = mailIds.splice(0, 18);
+    //     var batchRequest = [];
+    //     // console.log(msgIDS)
+    //     for (let i = 0; i < msgIDS.length; i++) {
+    //         var settings = {
+    //             "id": msgIDS[i],
+    //             "url": encodeURI("/me/messages/" + msgIDS[i] + "/move"),
+    //             "method": "POST",
+    //             "headers": {
+    //                 'Content-Type': 'application/json',
+    //                 'Authorization': 'Bearer ' + accessToken
+    //             },
+    //             "body": { "destinationId": label_id }
+    //         }
+    //         batchRequest.push(settings);
+    //     }
+    //     if (batchRequest.length > 0) {
+    //         await Outlook.sendRequestInBatch(accessToken, batchRequest)
+    //     }
+    //     return await Outlook.sendMailToBatchProcess(accessToken, mailIds, label_id);
+    // }
 
     static async sendRequestInBatch(accessToken, reqArray) {
         // console.log(reqArray)
@@ -265,7 +265,7 @@ class Outlook {
                 return console.log(error);
             }
             if (response) {
-                console.log(response)
+                console.log(res)
                 let rsp = JSON.parse(response.body);
                 await rsp.responses.asynForEach(async element => {
                     if (element.status == 201) {
@@ -415,31 +415,31 @@ class Outlook {
         if (batchRequest.length > 0) {
             await Outlook.sendRequestInBatch(accessToken, batchRequest);
         }
-        return await Outlook.sendMailToBatchProcess(accessToken, mailIds, source, label_id);
+        return await Outlook.sendRevertMailToBatchProcess(accessToken, mailIds, source, label_id);
     }
 
-    static async MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
+    // static async MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
        
-        let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
-        let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
-        if (mailList) {
-            let mailIDSARRAY = mailList.map(x => x.email_id);
-            var oldvalue = {
-                "from_email": from_email,
-                "user_id": user_id
-            };
-            var newvalues = {
-                $set: {
-                    "status": "move",
-                    "status_date": new Date()
-                }
-            };
-            await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                console.error(err.message, err.stack);
-            });
-            return await Outlook.sendMailToBatchProcess(accessToken, mailIDSARRAY, label_id);
-        }
-    }
+    //     let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
+    //     let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
+    //     if (mailList) {
+    //         let mailIDSARRAY = mailList.map(x => x.email_id);
+    //         var oldvalue = {
+    //             "from_email": from_email,
+    //             "user_id": user_id
+    //         };
+    //         var newvalues = {
+    //             $set: {
+    //                 "status": "move",
+    //                 "status_date": new Date()
+    //             }
+    //         };
+    //         await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+    //             console.error(err.message, err.stack);
+    //         });
+    //         return await Outlook.sendMailToBatchProcess(accessToken, mailIDSARRAY, label_id);
+    //     }
+    // }
 
 
     static async trashSingleMailFromInBOX(accessToken, emailId, label_id) {
@@ -636,55 +636,55 @@ class Outlook {
         });
     }
 
-    static async getFolderList(accessToken, user_id, link, from_email) {
-        var settings = {
-            "url": link,
-            "method": "GET",
-            "headers": {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            }
-        }
+    // static async getFolderList(accessToken, user_id, link, from_email) {
+    //     var settings = {
+    //         "url": link,
+    //         "method": "GET",
+    //         "headers": {
+    //             'Content-Type': 'application/json',
+    //             'Authorization': 'Bearer ' + accessToken
+    //         }
+    //     }
 
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                return console.log(error);
-            }
-            if (body) {
-                const res = JSON.parse(body);
-                let length = res.value.length;
-                let count = 0;
-                await res.value.asynForEach(async folder => {
-                    count++;
-                    if (folder.displayName == 'Unsubscribed Emails') {
-                        var oldvalue = {
-                            user_id: user_id
-                        };
-                        var newvalues = {
-                            $set: {
-                                "label_id": folder.id
-                            }
-                        };
-                        var upsert = {
-                            upsert: true
-                        };
-                        await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                            console.log(err);
-                        });
-                        return await Outlook.MoveMailFromInBOX(user_id, accessToken, from_email, folder.id);
-                    }
-                });
-                if (count == length) {
-                    if (res['@odata.nextLink']) {
-                        await Outlook.getFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
-                    } else {
-                        let lbl = await Outlook.createFolderOutlook(accessToken, user_id)
-                        return await Outlook.MoveMailFromInBOX(user_id, accessToken, from_email, lbl);
-                    }
-                }
-            }
-        });
-    }
+    //     Request(settings, async (error, response, body) => {
+    //         if (error) {
+    //             return console.log(error);
+    //         }
+    //         if (body) {
+    //             const res = JSON.parse(body);
+    //             let length = res.value.length;
+    //             let count = 0;
+    //             await res.value.asynForEach(async folder => {
+    //                 count++;
+    //                 if (folder.displayName == 'Unsubscribed Emails') {
+    //                     var oldvalue = {
+    //                         user_id: user_id
+    //                     };
+    //                     var newvalues = {
+    //                         $set: {
+    //                             "label_id": folder.id
+    //                         }
+    //                     };
+    //                     var upsert = {
+    //                         upsert: true
+    //                     };
+    //                     await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+    //                         console.log(err);
+    //                     });
+    //                     return await Outlook.MoveMailFromInBOX(user_id, accessToken, from_email, folder.id);
+    //                 }
+    //             });
+    //             if (count == length) {
+    //                 if (res['@odata.nextLink']) {
+    //                     await Outlook.getFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
+    //                 } else {
+    //                     let lbl = await Outlook.createFolderOutlook(accessToken, user_id)
+    //                     return await Outlook.MoveMailFromInBOX(user_id, accessToken, from_email, lbl);
+    //                 }
+    //             }
+    //         }
+    //     });
+    // }
 
 
 

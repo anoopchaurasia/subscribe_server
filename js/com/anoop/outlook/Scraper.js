@@ -20,14 +20,14 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         me.base(outlook.user._id);
     }
 
-    this.getFolderId = async function (accessToken, user_id, link) {
+    this.getFolderId = async function (accessToken, user_id, link,folder_name) {
         let folder_id=null;
         let folderList = await Message.getMailFoldersListInBatch(accessToken, link);
         let length = folderList.value.length;
         let count = 0;
         await folderList.value.asynForEach(async folder => {
             count++;
-            if (folder.displayName == 'Unsubscribed Emails') {
+            if (folder.displayName == folder_name) {
                 console.log("find folder",folder.id);
                 folder_id=folder.id;
             }
@@ -38,7 +38,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         if (count == length) {
             if (folderList['@odata.nextLink']) {
                 console.log("not found folder",folderList['@odata.nextLink']);
-                return await me.getFolderId(accessToken, user_id, folderList['@odata.nextLink'])
+                return await me.getFolderId(accessToken, user_id, folderList['@odata.nextLink'],folder_name)
             } else {
                 return null;
             }

@@ -10,15 +10,15 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
     'use strict'
     this.setMe = _me => me = _me;
 
-    async function getEmailDetailsAndIds(user_id, from_email) {
+    async function getEmailDetailsAndIds(user_id, from_email,status) {
         let { emaildetail, emailids } = await me.getEmailDetailAndInfos(user_id, from_email);
-        me.updateEmailDetailStatus(emaildetail._id, "move");
+        me.updateEmailDetailStatus(emaildetail._id, status);
         return emailids;
     };
 
-    async function moveMailFromInboxMain(accessToken, user_id, folder_id, from_email) {
-        await OutlookHandler.updateAuthToken(user_id, folder_id);
-        let emailids = await getEmailDetailsAndIds(user_id, from_email);
+    async function moveMailFromInboxMain(accessToken, user_id, folder_id, from_email,status) {
+        // await OutlookHandler.updateAuthToken(user_id, folder_id);
+        let emailids = await getEmailDetailsAndIds(user_id, from_email,status);
         console.log(emailids);
         let response = await Label.moveMailFromInbox(accessToken, emailids, folder_id);
         console.log("moved response", response)
@@ -41,18 +41,40 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         let user = await me.getUserById(user_id);
         let instance = await Outlook.getOutlookInstanceForUser(user);
         let scraper = new Scraper.new(instance);
-        let folder_id = await scraper.getFolderId(accessToken, user_id, link)
+        let folder_id = await scraper.getFolderId(accessToken, user_id, link,"Unsubscribed Emails")
         console.log("came here", folder_id)
         if (folder_id != null) {
             console.log("got it", folder_id)
-            return await moveMailFromInboxMain(accessToken, user_id, folder_id, from_email);
+            return await moveMailFromInboxMain(accessToken, user_id, folder_id, from_email,"move");
         } else {
             console.log(folder_id)
             let new_folder = await Label.createFolderForOutlook(accessToken, user_id);
             if (new_folder) {
-                return await moveMailFromInboxMain(accessToken, user_id, new_folder.id, from_email);
+                return await moveMailFromInboxMain(accessToken, user_id, new_folder.id, from_email,"move");
             }
         }
+    }
+
+
+    Static.moveEmailToTrashFromInbox = async function(user_id,from_email){
+        let accessToken = await Outlook.getAccessToken(user_id);
+        let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
+        let user = await me.getUserById(user_id);
+        let instance = await Outlook.getOutlookInstanceForUser(user);
+        let scraper = new Scraper.new(instance);
+        let folder_id = await scraper.getFolderId(accessToken, user_id, link,"Junk Email")
+        console.log("came here", folder_id)
+        if (folder_id != null) {
+            console.log("got it", folder_id)
+            return await moveMailFromInboxMain(accessToken, user_id, folder_id, from_email,"trash");
+        } else {
+            console.log(folder_id)
+            let new_folder = await Label.createFolderForOutlook(accessToken, user_id);
+            if (new_folder) {
+                return await moveMailFromInboxMain(accessToken, user_id, new_folder.id, from_email,"trash");
+            }
+        }
+        
     }
 
  
