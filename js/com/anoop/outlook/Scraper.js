@@ -59,6 +59,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         let folderList = await Message.getMailFolders(accessToken);
         console.log(folderList)
         await folderList.value.asynForEach(async folder => {
+            console.log(folder)
             if (folder.displayName == 'Inbox') {
                 let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$skip=0');
                 await getEmailInBulk(accessToken, link, user_id);
