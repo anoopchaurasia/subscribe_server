@@ -27,12 +27,13 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         let instance = await Outlook.getOutlookInstanceForUser(user);
         let scraper = new Scraper.new(instance);
         let folder_id = await scraper.getFolderId(accessToken,user_id,link)
+        console.log("came here",folder_id)
         if(folder_id!=null){
-            console.log(folder_id)
+            console.log("got it",folder_id)
             await OutlookHandler.updateAuthToken(user_id,folder_id);
             let emailids = await getEmailDetailsAndIds(user_id,from_email);
             let response = await Label.moveMailFromInbox(accessToken,emailids,folder_id);
-            console.log(response)
+            console.log("moved response",response)
             // Request(settings, async (error, response, body) => {
             //     if (error) {
             //         return console.log(error);
