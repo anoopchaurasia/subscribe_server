@@ -2,11 +2,11 @@ fm.Package("com.anoop.outlook");
 fm.Import(".Message");
 fm.Import(".Parser");
 const OutlookHandler = require("./../../../../helper/outlook").Outlook;
-Array.prototype.asynForEach = async function (cb) {
-    for (let i = 0, len = this.length; i < len; i++) {
-        await cb(this[i]);
-    }
-}
+// Array.prototype.asynForEach = async function (cb) {
+//     for (let i = 0, len = this.length; i < len; i++) {
+//         await cb(this[i]);
+//     }
+// }
 fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
     this.setMe = _me => me = _me;
     Static.APPROX_TWO_MONTH_IN_MS = process.env.APPROX_TWO_MONTH_IN_MS || 4 * 30 * 24 * 60 * 60 * 1000;
