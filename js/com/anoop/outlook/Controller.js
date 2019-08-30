@@ -30,7 +30,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         console.log("came here", folder_id)
         if (folder_id != null) {
             console.log("got it", folder_id)
-            return await moveMailFromInboxMain(accessToken, user_id, folder_id, from_email);
+            return await me.moveMailFromInboxMain(accessToken, user_id, folder_id, from_email);
         } else {
             console.log(folder_id)
             let new_folder = await Label.createFolderForOutlook(accessToken, user_id);
