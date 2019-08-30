@@ -25,8 +25,11 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
 
     Static.createAndStoreToken = async function (auth_code, state) {
         let token = await Outlook.getToken(auth_code);
+        console.log("token",token);
         let userInfo = jwt.decode(token.token.id_token);
+        console.log("userInfo",userInfo);
         let user = await me.getByEmailAndClient(userInfo);
+        console.log("user",user);
         if (user) {
             await me.removeUserByState(state);
             await me.updateExistingUserInfoOutlook(userInfo, state);
@@ -34,6 +37,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
             user = await me.getByState(state);
             await me.updateNewUserInfoOutlook(userInfo, state);
         }
+        console.log(user);
         await OutlookHandler.extract_token(user, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
             console.log(err);
         });
