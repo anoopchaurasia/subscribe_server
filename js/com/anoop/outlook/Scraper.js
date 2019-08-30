@@ -74,8 +74,8 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser) {
         await mailList.value.asynForEach(async oneEmail => {
             await checkEmail(oneEmail,accessToken, user_id)
         });
-        if (body['@odata.nextLink']) {
-            await getEmailInBulk(accessToken, encodeURI(body['@odata.nextLink']), user_id);
+        if (mailList['@odata.nextLink']) {
+            await getEmailInBulk(accessToken, encodeURI(mailList['@odata.nextLink']), user_id);
         } else {
             // await BaseController.scanFinished(user_id);
         }
