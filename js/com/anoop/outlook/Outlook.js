@@ -39,6 +39,10 @@ fm.Class("Outlook", function(me){
         return oauth2;
     }
 
+    Static.getOutlookInstanceForUser = async function(user_id) {
+        return new me(oauth2, user_id);
+    };
+
     Static.getToken = async function(auth_code){
         let result = await oauth2.authorizationCode.getToken({
             code: auth_code,
