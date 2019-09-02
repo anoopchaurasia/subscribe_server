@@ -23,6 +23,7 @@ const credentials = {
         tokenPath: 'common/oauth2/v2.0/token'
     }
 };
+
 const oauth2 = require('simple-oauth2').create(credentials);
 
 class Outlook {
@@ -43,7 +44,6 @@ class Outlook {
             },
             "body": JSON.stringify({ "displayName": "Unsubscribed Emails" })
         }
-
         Request(settings, async (error, response, body) => {
             if (error) {
                 console.log(error);
@@ -71,44 +71,6 @@ class Outlook {
         });
     }
 
-    static async  MoveSingleMailFromInBOX(accessToken, emailId, label_id) {
-        // console.log(emailId,"came here for move")
-        var settings = {
-            "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + emailId + "/move"),
-            "method": "POST",
-            "headers": {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            },
-            "body": JSON.stringify({ "destinationId": label_id })
-        }
-
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                return console.log(error);
-            }
-            if (response) {
-                let element = JSON.parse(response.body);
-                if (element['id']) {
-                    var oldvalue = {
-                        "email_id": emailId
-                    };
-                    var newvalues = {
-                        $set: {
-                            "email_id": element.id
-                        }
-                    };
-                    let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                        console.error(err.message, err.stack);
-                    });
-                    // if (check) {
-                    //     console.log(check)
-                    // }
-                }
-            }
-        });
-    }
-
     static async getAuthToken(user_id) {
         return await auth_token.findOne({ "user_id": user_id });
     }
@@ -131,7 +93,6 @@ class Outlook {
                 accessToken = token.access_token;
                 return accessToken;
             } else {
-                // console.log("expired token")
                 const refresh_token = token.refresh_token;
                 let authToken = {};
                 if (refresh_token) {
@@ -155,56 +116,6 @@ class Outlook {
         }
     }
 
-    static async  subscribeToNotification(accessToken, user_id) {
-        var settings = {
-            "url": "https://graph.microsoft.com/v1.0/subscriptions",
-            "method": "GET",
-            "headers": {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            }
-        }
-
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                console.log(error);
-            }
-            if (body) {
-                let value = JSON.parse(body).value;
-                if (value.length > 0) {
-                    return true;
-                } else {
-                    var settingsubs = {
-                        "url": "https://graph.microsoft.com/v1.0/subscriptions",
-                        "method": "POST",
-                        "headers": {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + accessToken
-                        },
-                        "body": JSON.stringify({
-                            "changeType": "created",
-                            "notificationUrl": "https://test.expensebit.com/api/v2/mail/microsoft/getPushNotification",
-                            "resource": "me/mailFolders('Inbox')/messages",
-                            "expirationDateTime": new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000),
-                            "applicationId": "25dc3c47-0836-4c00-9c6b-eea7f6073fad",
-                            "creatorId": "8ee44408-0679-472c-bc2a-692812af3437",
-                            "clientState": user_id
-                        })
-                    }
-
-                    Request(settingsubs, async (error, response, body) => {
-                        if (error) {
-                            console.log(error);
-                        }
-                        if (body) {
-                            console.log(body);
-                            return
-                        }
-                    });
-                }
-            }
-        });
-    }
     static async extract_token(user, access_token, refresh_token, id_token, expiry_date, scope, token_type) {
         var tokedata = {
             "access_token": access_token,
@@ -223,420 +134,67 @@ class Outlook {
     }
 
 
-    // static async sendMailToBatchProcess(accessToken, mailIds, label_id) {
-    //     // console.log(mailIds.length);
-    //     if (mailIds.length <= 0) return;
-    //     var msgIDS = mailIds.splice(0, 18);
-    //     var batchRequest = [];
-    //     // console.log(msgIDS)
-    //     for (let i = 0; i < msgIDS.length; i++) {
+    // static async MoveMailToTrashFromInBOX(user_id, accessToken, from_email, label_id) {
+    //     let mail = await email.findOne({
+    //         from_email: from_email,
+    //         user_id: user_id
+    //     }).catch(err => {
+    //         console.error(err.message, err.stack);
+    //     });
+
+    //     let mailList = await emailInformation.find({ "from_email_id": mail._id },
+    //         { "email_id": 1 }).catch(err => { console.error(err.message, err.stack) });
+    //     let mailIdList = mailList.map(x => x.email_id);
+    //     var oldvalue = {
+    //         from_email: from_email,
+    //         user_id: user_id
+    //     };
+    //     var newvalues = {
+    //         $set: {
+    //             "status": "trash",
+    //             "status_date": new Date()
+    //         }
+    //     };
+    //     await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
+    //         console.error(err.message, err.stack);
+    //     });
+    //     await mailIdList.asynForEach(async email_id => {
     //         var settings = {
-    //             "id": msgIDS[i],
-    //             "url": encodeURI("/me/messages/" + msgIDS[i] + "/move"),
+    //             "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + email_id + "/move"),
     //             "method": "POST",
     //             "headers": {
     //                 'Content-Type': 'application/json',
     //                 'Authorization': 'Bearer ' + accessToken
     //             },
-    //             "body": { "destinationId": label_id }
+    //             "body": JSON.stringify({ "destinationId": label_id })
     //         }
-    //         batchRequest.push(settings);
-    //     }
-    //     if (batchRequest.length > 0) {
-    //         await Outlook.sendRequestInBatch(accessToken, batchRequest)
-    //     }
-    //     return await Outlook.sendMailToBatchProcess(accessToken, mailIds, label_id);
-    // }
+    //         Request(settings, async (error, response, body) => {
+    //             if (error) {
+    //                 return console.log(error);
+    //             }
+    //             if (response) {
+    //                 let resp = JSON.parse(response.body);
+    //                 if (resp && resp['id']) {
 
-    // static async sendRequestInBatch(accessToken, reqArray) {
-    //     // console.log(reqArray)
-    //     var settings = {
-    //         "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
-    //         "method": "POST",
-    //         "headers": {
-    //             'Content-Type': 'application/json',
-    //             'Accept': 'application/json',
-    //             'Authorization': 'Bearer ' + accessToken
-    //         },
-    //         "body": JSON.stringify({ "requests": reqArray })
-    //     }
-    //     Request(settings, async (error, response, body) => {
-    //         if (error) {
-    //             return console.log(error);
-    //         }
-    //         if (response) {
-    //             console.log(res)
-    //             let rsp = JSON.parse(response.body);
-    //             await rsp.responses.asynForEach(async element => {
-    //                 if (element.status == 201) {
     //                     var oldvalue = {
-    //                         "email_id": element.id
+    //                         "email_id": email_id,
+    //                         "from_email_id": mail._id
     //                     };
     //                     var newvalues = {
     //                         $set: {
-    //                             "email_id": element.body.id
+    //                             "email_id": resp['id']
     //                         }
     //                     };
-    //                     let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
+    //                     await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
     //                         console.error(err.message, err.stack);
     //                     });
-    //                     if (check) {
-    //                         console.log(check)
-    //                     }
-    //                 }
-    //             });
-    //         }
-    //     });
-    // }
-
-
-
-
-    // static async getRevertMailFolderList(accessToken, user_id, link, from_email, source, dest) {
-    //     var settings = {
-    //         "url": link,
-    //         "method": "GET",
-    //         "headers": {
-    //             'Content-Type': 'application/json',
-    //             'Authorization': 'Bearer ' + accessToken
-    //         }
-    //     }
-
-    //     Request(settings, async (error, response, body) => {
-    //         if (error) {
-    //             return console.log(error);
-    //         }
-    //         if (body) {
-    //             const res = JSON.parse(body);
-    //             let length = res.value.length;
-    //             let count = 0;
-    //             await res.value.forEach(async folder => {
-    //                 count++;
-    //                 if (folder.displayName == 'Inbox') {
-    //                     dest = folder.id;
-    //                 } else if (folder.displayName == 'Unsubscribed Emails') {
-    //                     source = folder.id;
-    //                 }
-    //                 if (dest && source) {
-    //                     return await Outlook.RevertMailToInbox(user_id, accessToken, from_email, source, dest);
-    //                 }
-    //             });
-    //             if (count == length) {
-    //                 if (res['@odata.nextLink']) {
-    //                     await Outlook.getRevertMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email, source, dest)
     //                 }
     //             }
-    //         }
-    //     });
-    // }
-
-    // static async getRevertTrashMailFolderList(accessToken, user_id, link, from_email, source, dest) {
-    //     var settings = {
-    //         "url": link,
-    //         "method": "GET",
-    //         "headers": {
-    //             'Content-Type': 'application/json',
-    //             'Authorization': 'Bearer ' + accessToken
-    //         }
-    //     }
-
-    //     Request(settings, async (error, response, body) => {
-    //         if (error) {
-    //             return console.log(error);
-    //         }
-    //         if (body) {
-    //             const res = JSON.parse(body);
-    //             let length = res.value.length;
-    //             let count = 0;
-    //             await res.value.forEach(async folder => {
-    //                 count++;
-    //                 if (folder.displayName == 'Inbox') {
-    //                     dest = folder.id;
-    //                 } else if (folder.displayName == 'Junk Email') {
-    //                     source = folder.id;
-    //                 }
-    //                 if (dest && source) {
-    //                     return await Outlook.RevertMailToInbox(user_id, accessToken, from_email, source, dest);
-    //                 }
-    //             });
-    //             if (count == length) {
-    //                 if (res['@odata.nextLink']) {
-    //                     await Outlook.getRevertTrashMailFolderList(accessToken, user_id, res['@odata.nextLink'], from_email, source, dest)
-    //                 }
-    //             }
-    //         }
-    //     });
-    // }
-
-
-
-    // static async RevertMailToInbox(user_id, accessToken, from_email, source, label_id) {
-    //     let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
-    //     let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
-    //     if (mailList) {
-    //         let mailIDSARRAY = mailList.map(x => x.email_id);
-    //         var oldvalue = {
-    //             "from_email": from_email,
-    //             "user_id": user_id
-    //         };
-    //         var newvalues = {
-    //             $set: {
-    //                 "status": "keep",
-    //                 "status_date": new Date()
-    //             }
-    //         };
-    //         await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-    //             console.error(err.message, err.stack);
     //         });
-    //         await Outlook.sendRevertMailToBatchProcess(accessToken, mailIDSARRAY, source, label_id)
-    //     }
+    //     });
     // }
 
-
-
-    // static async  sendRevertMailToBatchProcess(accessToken, mailIds, source, label_id) {
-    //     // console.log(mailIds.length);
-    //     if (mailIds.length <= 0) return;
-    //     var msgIDS = mailIds.splice(0, 18);
-    //     var batchRequest = [];
-    //     for (let i = 0; i < msgIDS.length; i++) {
-    //         var settings = {
-    //             "id": msgIDS[i],
-    //             "url": encodeURI("/me/mailFolders/" + source + "/messages/" + msgIDS[i] + "/move"),
-    //             "method": "POST",
-    //             "headers": {
-    //                 'Content-Type': 'application/json',
-    //                 'Authorization': 'Bearer ' + accessToken
-    //             },
-    //             "body": { "destinationId": label_id }
-    //         }
-    //         batchRequest.push(settings);
-    //     }
-    //     if (batchRequest.length > 0) {
-    //         await Outlook.sendRequestInBatch(accessToken, batchRequest);
-    //     }
-    //     return await Outlook.sendRevertMailToBatchProcess(accessToken, mailIds, source, label_id);
-    // }
-
-    // static async MoveMailFromInBOX(user_id, accessToken, from_email, label_id) {
-       
-    //     let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack); });
-    //     let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
-    //     if (mailList) {
-    //         let mailIDSARRAY = mailList.map(x => x.email_id);
-    //         var oldvalue = {
-    //             "from_email": from_email,
-    //             "user_id": user_id
-    //         };
-    //         var newvalues = {
-    //             $set: {
-    //                 "status": "move",
-    //                 "status_date": new Date()
-    //             }
-    //         };
-    //         await email.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-    //             console.error(err.message, err.stack);
-    //         });
-    //         return await Outlook.sendMailToBatchProcess(accessToken, mailIDSARRAY, label_id);
-    //     }
-    // }
-
-
-    static async trashSingleMailFromInBOX(accessToken, emailId, label_id) {
-        var settings = {
-            "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + emailId + "/move"),
-            "method": "POST",
-            "headers": {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            },
-            "body": JSON.stringify({ "destinationId": label_id })
-        }
-
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                return console.log(error);
-            }
-            if (response) {
-                let element = JSON.parse(response.body);
-                if (element['id']) {
-                    var oldvalue = {
-                        "email_id": emailId
-                    };
-                    var newvalues = {
-                        $set: {
-                            "email_id": element.id
-                        }
-                    };
-                    let check = await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                        console.error(err.message, err.stack);
-                    });
-                }
-            }
-        });
-    }
-
-    static async MoveMailToTrashFromInBOX(user_id, accessToken, from_email, label_id) {
-        let mail = await email.findOne({
-            from_email: from_email,
-            user_id: user_id
-        }).catch(err => {
-            console.error(err.message, err.stack);
-        });
-        let mailList = await emailInformation.find({ "from_email_id": mail._id }, { "email_id": 1 }).catch(err => { console.error(err.message, err.stack); });
-        let mailIdList = mailList.map(x => x.email_id);
-        var oldvalue = {
-            from_email: from_email,
-            user_id: user_id
-        };
-        var newvalues = {
-            $set: {
-                "status": "trash",
-                "status_date": new Date()
-            }
-        };
-        await email.updateOne(oldvalue, newvalues, { upsert: true }).catch(err => {
-            console.error(err.message, err.stack);
-        });
-        await mailIdList.asynForEach(async email_id => {
-            var settings = {
-                "url": encodeURI("https://graph.microsoft.com/v1.0/me/messages/" + email_id + "/move"),
-                "method": "POST",
-                "headers": {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + accessToken
-                },
-                "body": JSON.stringify({ "destinationId": label_id })
-            }
-
-            Request(settings, async (error, response, body) => {
-                if (error) {
-                    return console.log(error);
-                }
-                if (response) {
-                    let resp = JSON.parse(response.body);
-                    if (resp && resp['id']) {
-
-                        var oldvalue = {
-                            "email_id": email_id,
-                            "from_email_id": mail._id
-                        };
-                        var newvalues = {
-                            $set: {
-                                "email_id": resp['id']
-                            }
-                        };
-                        await emailInformation.findOneAndUpdate(oldvalue, newvalues, { upsert: true }).catch(err => {
-                            console.error(err.message, err.stack);
-                        });
-                    }
-                }
-            });
-        });
-    }
-
-    static async getFolderListForScrapping(accessToken, user_id, link, emailId) {
-        var settings = {
-            "url": link,
-            "method": "GET",
-            "headers": {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            }
-        }
-
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                return console.log(error);
-            }
-            if (body) {
-                const res = JSON.parse(body);
-                let length = res.value.length;
-                let count = 0;
-                await res.value.asynForEach(async folder => {
-                    count++;
-                    if (folder.displayName == 'Unsubscribed Emails') {
-                        var oldvalue = {
-                            user_id: user_id
-                        };
-                        var newvalues = {
-                            $set: {
-                                "label_id": folder.id
-                            }
-                        };
-                        var upsert = {
-                            upsert: true
-                        };
-                        await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                            console.log(err);
-                        });
-                        return await Outlook.MoveSingleMailFromInBOX(accessToken, emailId, folder.id);
-                    }
-                });
-                if (count == length) {
-                    if (res['@odata.nextLink']) {
-                        await Outlook.getFolderListForScrapping(accessToken, user_id, res['@odata.nextLink'], emailId)
-                    } else {
-                        let lbl = await Outlook.createFolderOutlook(accessToken, user_id)
-                        return await Outlook.MoveSingleMailFromInBOX(accessToken, emailId, lbl);
-                    }
-                }
-            }
-        });
-    }
-
-
-    static async getFolderListForTrashScrapping(accessToken, user_id, link, emailId) {
-        var settings = {
-            "url": link,
-            "method": "GET",
-            "headers": {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            }
-        }
-
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                return console.log(error);
-            }
-            if (body) {
-                const res = JSON.parse(body);
-                if (res['value']) {
-                    let length = res.value.length;
-                    let count = 0;
-                    await res.value.asynForEach(async folder => {
-                        count++;
-                        if (folder.displayName == 'Junk Email') {
-                            var oldvalue = {
-                                user_id: user_id
-                            };
-                            var newvalues = {
-                                $set: {
-                                    "label_id": folder.id
-                                }
-                            };
-                            var upsert = {
-                                upsert: true
-                            };
-                            await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                                console.log(err);
-                            });
-                            return await Outlook.trashSingleMailFromInBOX(accessToken, emailId, folder.id);
-                        }
-                    });
-                    if (count == length) {
-                        if (res['@odata.nextLink']) {
-                            await Outlook.getFolderListForTrashScrapping(accessToken, user_id, res['@odata.nextLink'], emailId)
-                        }
-                    }
-                }
-
-            }
-        });
-    }
-
-    // static async getFolderList(accessToken, user_id, link, from_email) {
+    // static async getFolderListForTrash(accessToken, user_id, link, from_email) {
     //     var settings = {
     //         "url": link,
     //         "method": "GET",
@@ -645,7 +203,6 @@ class Outlook {
     //             'Authorization': 'Bearer ' + accessToken
     //         }
     //     }
-
     //     Request(settings, async (error, response, body) => {
     //         if (error) {
     //             return console.log(error);
@@ -656,7 +213,7 @@ class Outlook {
     //             let count = 0;
     //             await res.value.asynForEach(async folder => {
     //                 count++;
-    //                 if (folder.displayName == 'Unsubscribed Emails') {
+    //                 if (folder.displayName == 'Junk Email') {
     //                     var oldvalue = {
     //                         user_id: user_id
     //                     };
@@ -671,72 +228,17 @@ class Outlook {
     //                     await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
     //                         console.log(err);
     //                     });
-    //                     return await Outlook.MoveMailFromInBOX(user_id, accessToken, from_email, folder.id);
+    //                     return await Outlook.MoveMailToTrashFromInBOX(user_id, accessToken, from_email, folder.id);
     //                 }
     //             });
     //             if (count == length) {
     //                 if (res['@odata.nextLink']) {
-    //                     await Outlook.getFolderList(accessToken, user_id, res['@odata.nextLink'], from_email)
-    //                 } else {
-    //                     let lbl = await Outlook.createFolderOutlook(accessToken, user_id)
-    //                     return await Outlook.MoveMailFromInBOX(user_id, accessToken, from_email, lbl);
+    //                     await Outlook.getFolderListForTrash(accessToken, user_id, res['@odata.nextLink'], from_email)
     //                 }
     //             }
     //         }
     //     });
     // }
-
-
-
-
-    static async getFolderListForTrash(accessToken, user_id, link, from_email) {
-        var settings = {
-            "url": link,
-            "method": "GET",
-            "headers": {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            }
-        }
-
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                return console.log(error);
-            }
-            if (body) {
-                const res = JSON.parse(body);
-                let length = res.value.length;
-                let count = 0;
-                await res.value.asynForEach(async folder => {
-                    count++;
-                    if (folder.displayName == 'Junk Email') {
-                        var oldvalue = {
-                            user_id: user_id
-                        };
-                        var newvalues = {
-                            $set: {
-                                "label_id": folder.id
-                            }
-                        };
-                        var upsert = {
-                            upsert: true
-                        };
-                        await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                            console.log(err);
-                        });
-                        return await Outlook.MoveMailToTrashFromInBOX(user_id, accessToken, from_email, folder.id);
-                    }
-                });
-                if (count == length) {
-                    if (res['@odata.nextLink']) {
-                        await Outlook.getFolderListForTrash(accessToken, user_id, res['@odata.nextLink'], from_email)
-                    }
-                }
-            }
-        });
-    }
-
-
 }
 
 exports.Outlook = Outlook;

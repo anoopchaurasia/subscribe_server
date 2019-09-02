@@ -2,8 +2,6 @@ fm.Package("com.anoop.imap");
 fm.Class("Label>.Message", function (me) {
     this.setMe = _me => me = _me;
 
-
-
     Static.moveInboxToTrashAuto = async function (myImap, ids) {
         // console.log(myImap.user,ids)
         return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
@@ -31,7 +29,7 @@ fm.Class("Label>.Message", function (me) {
 
     Static.checkIds = async function (ids) {
         return ids.length != 0 ? true : false;
-    }
+    }   
 
     Static.moveInboxToUnsub = async function (myImap, from_email) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);

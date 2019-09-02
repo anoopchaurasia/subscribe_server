@@ -110,6 +110,46 @@ fm.Class("Label>.Message", function(me){
         return response.data;
     }
 
+    async function checkForSubscription(accessToken){
+        var settings = {
+            "url": "https://graph.microsoft.com/v1.0/subscriptions",
+            "method": "GET",
+            "headers": {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            }
+        }
+        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        return response.data.value.length>0;
+    }
+
+    Static.subscribeToNotification = async function(accessToken,user_id){
+        let is_subscribed = await checkForSubscription(accessToken);
+        if(!is_subscribed){
+            var settingsubs = {
+                "url": "https://graph.microsoft.com/v1.0/subscriptions",
+                "method": "POST",
+                "headers": {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                "data": JSON.stringify({
+                    "changeType": "created",
+                    "notificationUrl": "https://test.expensebit.com/api/v2/mail/microsoft/getPushNotification",
+                    "resource": "me/mailFolders('Inbox')/messages",
+                    "expirationDateTime": new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000),
+                    "applicationId": "25dc3c47-0836-4c00-9c6b-eea7f6073fad",
+                    "creatorId": "8ee44408-0679-472c-bc2a-692812af3437",
+                    "clientState": user_id
+                })
+            }
+            let response = await axios(settingsubs).catch(e => console.error(e.message, "folder access error"));
+            return response.data;
+        }else{
+            return
+        }
+    }
+
 
     ///---------------from inbox ------------
     Static.moveMailFromInbox =async function(accessToken, mailIdList,label_id){

@@ -124,15 +124,23 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             if (status == "move") {
                 let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0";
                 let folder_id = await me.getFolderId(accessToken, user_id, link,"Unsubscribed Emails");
+                if(folder_id==null){
+                    let new_folder =  await Label.createFolderForOutlook(accessToken, user_id);
+                    folder_id=new_folder.id;
+                }
                 let response = await Label.moveOneMailFromInbox(accessToken,data.email_id,folder_id);
-                console.log(response);
-                // let id = await OutlookHandler.getFolderListForScrapping(accessToken, user_id, link, data.email_id);
+                await me.updateEmailInfoForOutlook(data.email_id,response.id)
             } else if (status == "trash") {
                 let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
-                await OutlookHandler.getFolderListForTrashScrapping(accessToken, user_id, link, data.email_id);
+                let folder_id = await me.getFolderId(accessToken, user_id, link,"Junk Email");
+                if(folder_id==null){
+                    let new_folder =  await Label.createFolderForOutlook(accessToken, user_id);
+                    folder_id=new_folder.id;
+                }
+                let response = await Label.moveOneMailFromInbox(accessToken,data.email_id,folder_id);
+                await me.updateEmailInfoForOutlook(data.email_id,response.id)
             }
         });
     }
-
 
 });

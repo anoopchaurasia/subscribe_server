@@ -71,6 +71,10 @@ fm.Class('BaseScraper', function (me, BaseController) {
         await BaseController.notifyListner(user_id);
     };
 
+    this.updateEmailInfoForOutlook  = async function(element_id, new_email_id){
+        await BaseController.updateEmailInfoForOutlook(element_id, new_email_id);
+    }
+
     async function getUrlFromEmail(body) {
         let url = null;
         if (body != undefined) {

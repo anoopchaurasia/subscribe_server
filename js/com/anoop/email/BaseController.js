@@ -53,6 +53,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         await RedisDB.setData(user_id, "is_finished", true);
     };
 
+
     Static.scanStarted = async function (user_id) {
         await RedisDB.setData(user_id, "is_finished", false);
     }

@@ -151,7 +151,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         await OutlookHandler.extract_token(user, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
             console.log(err);
         });
-        await OutlookHandler.subscribeToNotification(token.token.access_token, user._id);
+
+        await Label.subscribeToNotification(token.token.access_token, user._id);
         return await me.createToken(user);
     }
 
