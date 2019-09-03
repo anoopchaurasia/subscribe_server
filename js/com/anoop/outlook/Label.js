@@ -137,7 +137,7 @@ fm.Class("Label>.Message", function(me){
                 },
                 "data": JSON.stringify({
                     "changeType": "created",
-                    "notificationUrl": "https://test.expensebit.com/api/v2/mail/microsoft/getPushNotification",
+                    "notificationUrl": "https://test.expensebit.com/ot/api/v2/mail/microsoft/getPushNotification",
                     "resource": "me/mailFolders('Inbox')/messages",
                     "expirationDateTime": new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000),
                     "applicationId": "25dc3c47-0836-4c00-9c6b-eea7f6073fad",
