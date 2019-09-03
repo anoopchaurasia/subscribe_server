@@ -17,11 +17,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
     };
 
     async function moveMailFromInboxMain(accessToken, user_id, folder_id, from_email,status) {
-        // await OutlookHandler.updateAuthToken(user_id, folder_id);
         let emailids = await getEmailDetailsAndIds(user_id, from_email,status);
-        console.log(emailids);
         let response = await Label.moveMailFromInbox(accessToken, emailids, folder_id);
-        console.log("moved response", response)
         if (response) {
             await response.responses.asynForEach(async element => {
                 if (element.status == 201) {
@@ -32,11 +29,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
     }
 
     async function revertMailForOutlook(accessToken, user_id, source_id,destination_id, from_email,status) {
-        // await OutlookHandler.updateAuthToken(user_id, folder_id);
         let emailids = await getEmailDetailsAndIds(user_id, from_email,status);
-        console.log(emailids);
         let response = await Label.reverMailForOutlook(accessToken, emailids, source_id,destination_id);
-        console.log("moved response", response)
         if (response) {
             await response.responses.asynForEach(async element => {
                 if (element.status == 201) {
@@ -51,18 +45,14 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
 
     Static.moveEmailFromInbox = async function (user_id, from_email) {
         let accessToken = await Outlook.getAccessToken(user_id);
-        console.log(accessToken)
         let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
         let user = await me.getUserById(user_id);
         let instance = await Outlook.getOutlookInstanceForUser(user);
         let scraper = new Scraper.new(instance);
         let folder_id = await scraper.getFolderId(accessToken, user_id, link,"Unsubscribed Emails")
-        console.log("came here", folder_id)
         if (folder_id != null) {
-            console.log("got it", folder_id)
             return await moveMailFromInboxMain(accessToken, user_id, folder_id, from_email,"move");
         } else {
-            console.log(folder_id)
             let new_folder = await Label.createFolderForOutlook(accessToken, user_id);
             if (new_folder) {
                 return await moveMailFromInboxMain(accessToken, user_id, new_folder.id, from_email,"move");
@@ -78,12 +68,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         let instance = await Outlook.getOutlookInstanceForUser(user);
         let scraper = new Scraper.new(instance);
         let folder_id = await scraper.getFolderId(accessToken, user_id, link,"Junk Email")
-        console.log("came here", folder_id)
         if (folder_id != null) {
-            console.log("got it", folder_id)
             return await moveMailFromInboxMain(accessToken, user_id, folder_id, from_email,"trash");
         } else {
-            console.log(folder_id)
             let new_folder = await Label.createFolderForOutlook(accessToken, user_id);
             if (new_folder) {
                 return await moveMailFromInboxMain(accessToken, user_id, new_folder.id, from_email,"trash");
@@ -103,7 +90,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         let scraper = new Scraper(instance);
         let {source_id,destination_id} = await scraper.getTwoFolderId(accessToken,user_id,link,"Unsubscribed Emails","Inbox",null,null);
         if (source_id != null && destination_id!=null) {
-            console.log("got it", source_id,destination_id)
             return await revertMailForOutlook(accessToken, user_id, source_id,destination_id, from_email,"keep");
         }
     }
@@ -119,7 +105,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         let scraper = new Scraper(instance);
         let {source_id,destination_id} = await scraper.getTwoFolderId(accessToken,user_id,link,"Junk Email","Inbox",null,null);
         if(source_id!=null && destination_id!=null){
-            console.log("find trash to inbox ", source_id,destination_id);
             return await revertMailForOutlook(accessToken,user_id,source_id,destination_id,from_email,"keep");
         }
     }
@@ -161,22 +146,20 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
     }
 
     Static.getNotificationEmailData = async function (data) {
-        console.log(data)
         await data.asynForEach(async subsc => {
             let resource = subsc.resourceData;
             let user_id = subsc.clientState;
             let message_id = resource.id;
-            console.log(user_id,message_id,"hefdghsfdhgsfchgsf")
             let link = encodeURI('https://graph.microsoft.com/v1.0/me/messages/' + message_id);
             let accessToken = await Outlook.getAccessToken(user_id);
-            console.log(accessToken)
             let user = await me.getUserById(user_id);
-            console.log(user)
-            let instance = await Outlook.getOutlookInstanceForUser(user);
-            let scraper = new Scraper.new(instance);
-            await scraper.getWebhookMail(accessToken, link, user_id).catch(err => {
-                console.log(err);
-            });
+            if(user){
+                let instance = await Outlook.getOutlookInstanceForUser(user);
+                let scraper = new Scraper.new(instance);
+                await scraper.getWebhookMail(accessToken, link, user_id).catch(err => {
+                    console.log(err);
+                });
+            }
         });
     }
 

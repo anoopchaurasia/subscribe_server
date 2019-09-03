@@ -15,7 +15,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     };
 
     this.Scraper = function (outlook) {
-        console.log(outlook)
         this.outlook = outlook;
         me.base(outlook.user._id);
     }
@@ -28,7 +27,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         await folderList.value.asynForEach(async folder => {
             count++;
             if (folder.displayName == folder_name) {
-                console.log("find folder", folder.id);
                 folder_id = folder.id;
             }
         });
@@ -37,7 +35,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         }
         if (count == length) {
             if (folderList['@odata.nextLink']) {
-                console.log("not found folder", folderList['@odata.nextLink']);
                 return await me.getFolderId(accessToken, user_id, folderList['@odata.nextLink'], folder_name)
             } else {
                 return null;
@@ -52,10 +49,8 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         await folderList.value.asynForEach(async folder => {
             count++;
             if (folder.displayName == source_name) {
-                console.log("source folder", folder.id);
                 source_id = folder.id;
             } else if (folder.displayName == destination_name) {
-                console.log("destination found", folder.id);
                 destination_id = folder.id;
             }
         });
@@ -64,7 +59,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         }
         if (count == length) {
             if (folderList['@odata.nextLink']) {
-                console.log("not found folder", folderList['@odata.nextLink']);
                 return await me.getTwoFolderId(accessToken, user_id, folderList['@odata.nextLink'], source_name, destination_name, source_id, destination_id)
             } else {
                 return null;

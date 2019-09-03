@@ -58,7 +58,6 @@ fm.Class("Label>.Message", function(me){
 
 
     async function sendRequestInBatch(accessToken, reqArray) {
-        console.log("batch called");
         var settings = {
             "url": encodeURI("https://graph.microsoft.com/v1.0/$batch"),
             "method": "POST",
@@ -112,13 +111,11 @@ fm.Class("Label>.Message", function(me){
             }
         }
         let response = await axios(settings).catch(e => console.error(e.message, "get subscriptions"));
-        console.log(response);
         return response.data.value.length>0;
     }
 
     Static.subscribeToNotification = async function(accessToken,user_id){
         let is_subscribed = await checkForSubscription(accessToken);
-        console.log("here is_subcribed",is_subscribed)
         if(!is_subscribed){
             var settingsubs = {
                 "url": "https://graph.microsoft.com/v1.0/subscriptions",
@@ -138,7 +135,6 @@ fm.Class("Label>.Message", function(me){
                 })
             }
             let response = await axios(settingsubs).catch(e => console.error(e, "subscribe notification"));
-            console.log(response)
             return response;
         }else{
             return
