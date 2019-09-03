@@ -39,6 +39,7 @@ fm.Class("Outlook", function(me){
     }
 
     Static.getOutlookInstanceForUser = async function(user) {
+        console.log(user)
         return new me(oauth2, user);
     };
 
