@@ -34,14 +34,11 @@ router.post('/saveDeviceInfo', async (req, res) => {
     let deviceData = req.body.data;
     deviceData['user_id'] = req.token.user_id;
     let uniqueLaunchDeviceId = req.body['uniqueLaunchDeviceId'];
-    console.log(deviceData)
-    console.log("terteret", uniqueLaunchDeviceId)
     let checkUserDevice = await DeviceInfo.findOne({ "user_id": deviceData['user_id'] }).catch(err => {
         console.error(err.message, err.stack, "27");
     });
     if (!checkUserDevice) {
         if (uniqueLaunchDeviceId) {
-            console.log("here came");
             deviceData['deviceIpAddress'] = { "ip": req.header('x-forwarded-for') || req.connection.remoteAddress };
             let device = await DeviceInfo.findOneAndUpdate({ "userUniqueId": uniqueLaunchDeviceId }, deviceData, { upsert: true }).catch(err => {
                 console.error(err.message, err.stack, "271");
@@ -56,8 +53,8 @@ router.post('/saveDeviceInfo', async (req, res) => {
         let device = await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, deviceData, { upsert: true }).catch(err => {
             console.error(err.message, err.stack, "273");
         });
-        if(uniqueLaunchDeviceId){
-            await DeviceInfo.remove({ "userUniqueId": uniqueLaunchDeviceId }).catch(err => {
+        if (uniqueLaunchDeviceId) {
+            await DeviceInfo.findOneAndUpdate({ "userUniqueId": uniqueLaunchDeviceId }, { $set: { "deleted_at": new Date(),"user_id": deviceData['user_id']} }, { upsert: true }).catch(err => {
                 console.error(err.message, err.stack, "432");
             });
         }

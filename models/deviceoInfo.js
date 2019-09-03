@@ -65,6 +65,9 @@ var DeviceInfoSchema = new Schema({
     devicePhone:{
         type:Number
     },
+    deleted_at:{
+        type:Date
+    },
     created_at: Date
 });
 
