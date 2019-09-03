@@ -40,7 +40,7 @@ fm.Class("Message", function (me) {
                 'Authorization': 'Bearer ' + accessToken
             }
         }
-        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        let response = await axios(settings).catch(e => console.error(e.message, "folder access error in batch"));
         return response.data;
     }
 
@@ -52,7 +52,7 @@ fm.Class("Message", function (me) {
                 'Authorization': 'Bearer ' + accessToken
             }
         }
-        let response = await axios(settings).catch(e => console.error(e.message, "update access token"));
+        let response = await axios(settings).catch(e => console.error(e.message, "get bulk email error"));
         return response.data;
     }
 

@@ -77,7 +77,7 @@ fm.Class("Label>.Message", function(me){
         //         console.log("got it",JSON.parse(response.body))
         //     }
         // })
-        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        let response = await axios(settings).catch(e => console.error(e.message, "send request in batch"));
         return response.data;
     }
 
@@ -92,7 +92,7 @@ fm.Class("Label>.Message", function(me){
             },
             "data": JSON.stringify({ "destinationId": folder_id })
         }
-        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        let response = await axios(settings).catch(e => console.error(e.message, "move mail from inbox"));
         return response.data;
     }
 
@@ -106,7 +106,7 @@ fm.Class("Label>.Message", function(me){
             },
             "data": JSON.stringify({ "displayName": "Unsubscribed Emails" })
         }
-        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        let response = await axios(settings).catch(e => console.error(e.message, "create folder"));
         return response.data;
     }
 
@@ -119,7 +119,7 @@ fm.Class("Label>.Message", function(me){
                 'Authorization': 'Bearer ' + accessToken
             }
         }
-        let response = await axios(settings).catch(e => console.error(e.message, "folder access error"));
+        let response = await axios(settings).catch(e => console.error(e.message, "get subscriptions"));
         return response.data.value.length>0;
     }
 
@@ -143,7 +143,7 @@ fm.Class("Label>.Message", function(me){
                     "clientState": user_id
                 })
             }
-            let response = await axios(settingsubs).catch(e => console.error(e.message, "folder access error"));
+            let response = await axios(settingsubs).catch(e => console.error(e.message, "subscribe notification"));
             console.log(response)
             return response;
         }else{
