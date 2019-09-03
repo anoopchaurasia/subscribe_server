@@ -161,10 +161,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
     }
 
     Static.getNotificationEmailData = async function (data) {
+        console.log(data)
         await data.asynForEach(async subsc => {
             let resource = subsc.resourceData;
             let user_id = subsc.clientState;
             let message_id = resource.id;
+            console.log(user_id,message_id,"hefdghsfdhgsfchgsf")
             let link = encodeURI('https://graph.microsoft.com/v1.0/me/messages/' + message_id);
             let accessToken = await Outlook.getAccessToken(user_id);
             console.log(accessToken)
