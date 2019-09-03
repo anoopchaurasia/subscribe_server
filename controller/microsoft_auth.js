@@ -77,6 +77,7 @@ router.get('/getAuthTokenForApi', async function (req, res) {
 
 router.post('/getPushNotification', async function (req, res) {
     if (req.query && req.query.validationToken) {
+        console.log("notification validation...",req.query);
         res.setHeader('content-type', 'text/plain');
         res.write(req.query.validationToken);
         res.end();
