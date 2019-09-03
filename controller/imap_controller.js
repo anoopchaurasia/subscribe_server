@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const simpleParser = require('mailparser').simpleParser;
 const Imap = require('imap');
+const DeviceInfo = require('../models/deviceoInfo');
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
 const UserModel = require('../models/user');
@@ -79,6 +80,22 @@ router.post('/loginWithImap', async (req, res) => {
     }
 });
 
+router.post('/saveOnLaunchDeviceData', async (req, res) => {
+    let deviceData = req.body.data;
+    let userUniqueId = deviceData['serialno'] +uniqid() + uniqid() + uniqid() + uniqid();
+    deviceData['user_id'] = null;
+    deviceData['userUniqueId']=userUniqueId;
+    deviceData['deviceIpAddress'] = { "ip": req.header('x-forwarded-for') || req.connection.remoteAddress };
+    await DeviceInfo.findOneAndUpdate({ "userUniqueId": userUniqueId }, { $set: deviceData }, { upsert: true }).catch(err => {
+        console.error(err.message, err.stack, "27");
+    });
+    res.status(200).json({
+        error: false,
+        status: 200,
+        message: "success",
+        userUniqueId:userUniqueId
+    });
+});
 
 let getProviderName = async (email) => {
     let domain = email.split("@")[1];
@@ -524,7 +541,7 @@ router.post('/saveProfileInfo', async (req, res) => {
                 "dob": req.body.dob,
                 "gender": req.body.sex,
                 "ipaddress": req.header('x-forwarded-for') || req.connection.remoteAddress,
-                "inactive_at":null
+                "inactive_at": null
             };
             if (req.body.email != null) {
                 userObj.primary_email = req.body.email;

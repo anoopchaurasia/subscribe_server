@@ -56,6 +56,15 @@ var DeviceInfoSchema = new Schema({
     timeZoneOffset:{
         type:String
     },
+    userUniqueId:{
+        type:String
+    },
+    deviceModel:{
+        type:String
+    },
+    devicePhone:{
+        type:Number
+    },
     created_at: Date
 });
 
