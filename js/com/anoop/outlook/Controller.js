@@ -167,7 +167,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
             let message_id = resource.id;
             let link = encodeURI('https://graph.microsoft.com/v1.0/me/messages/' + message_id);
             let accessToken = await Outlook.getAccessToken(user_id);
-            await Scraper.getWebhookMail(accessToken, link, user_id).catch(err => {
+            let user = await me.getUserById(user_id);
+            let instance = await Outlook.getOutlookInstanceForUser(user);
+            let scraper = new Scraper.new(instance);
+            await scraper.getWebhookMail(accessToken, link, user_id).catch(err => {
                 console.log(err);
             });
         });
