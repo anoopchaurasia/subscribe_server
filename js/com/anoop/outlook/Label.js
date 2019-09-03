@@ -139,7 +139,7 @@ fm.Class("Label>.Message", function(me){
                     "resource": "me/mailFolders('Inbox')/messages",
                     "expirationDateTime": new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000),
                     "applicationId": "25dc3c47-0836-4c00-9c6b-eea7f6073fad",
-                    "creatorId": "8ee44408-0679-472c-bc2a-692812af3437",
+                    "creatorId": "635d4304-01c6-4829-9ba7-06d0401c0735",
                     "clientState": user_id
                 })
             }
