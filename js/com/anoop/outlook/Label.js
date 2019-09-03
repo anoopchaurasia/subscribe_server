@@ -144,7 +144,8 @@ fm.Class("Label>.Message", function(me){
                 })
             }
             let response = await axios(settingsubs).catch(e => console.error(e.message, "folder access error"));
-            return response.data;
+            console.log(response)
+            return response;
         }else{
             return
         }
