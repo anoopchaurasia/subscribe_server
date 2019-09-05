@@ -9,6 +9,7 @@ const emailInformation = require('../models/emailInfo');
 const UserModel = require('../models/user');
 const token_model = require('../models/tokeno');
 const providerModel = require('../models/provider');
+const unlistedProviderModel = require('../models/unlistedProvider');
 const cheerio = require('cheerio');
 const uniqid = require('uniqid');
 var crypto = require('crypto');
@@ -82,9 +83,9 @@ router.post('/loginWithImap', async (req, res) => {
 
 router.post('/saveOnLaunchDeviceData', async (req, res) => {
     let deviceData = req.body.data;
-    let userUniqueId = deviceData['serialno'] +uniqid() + uniqid() + uniqid() + uniqid();
+    let userUniqueId = deviceData['serialno'] + uniqid() + uniqid() + uniqid() + uniqid();
     deviceData['user_id'] = null;
-    deviceData['userUniqueId']=userUniqueId;
+    deviceData['userUniqueId'] = userUniqueId;
     deviceData['deviceIpAddress'] = { "ip": req.header('x-forwarded-for') || req.connection.remoteAddress };
     await DeviceInfo.findOneAndUpdate({ "userUniqueId": userUniqueId }, { $set: deviceData }, { upsert: true }).catch(err => {
         console.error(err.message, err.stack, "27");
@@ -93,8 +94,37 @@ router.post('/saveOnLaunchDeviceData', async (req, res) => {
         error: false,
         status: 200,
         message: "success",
-        userUniqueId:userUniqueId
+        userUniqueId: userUniqueId
     });
+});
+
+router.post('/saveUnlistedProviderInfo', async (req, res) => {
+    let email_id = req.body.email;
+    let userUniqueId = req.body.uniqueLaunchDeviceId;
+    let deviceData =  await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
+        console.error(err.message, err.stack, "27");
+    });
+    if(deviceData){
+        var unlistedProvider = new unlistedProviderModel({
+            "email_id": email_id,
+            "device_id": deviceData._id,
+            "created_at": new Date()
+        });
+        await unlistedProvider.save().catch(err => {
+            console.error(err.message, err.stack);
+        });
+        res.status(200).json({
+            error: false,
+            status: 200,
+            message: "success"
+        });
+    }else{
+        res.status(401).json({
+            error: true,
+            status: 401,
+            message: "false"
+        });
+    }
 });
 
 let getProviderName = async (email) => {
@@ -348,6 +378,8 @@ let saveProviderInfo = async (email) => {
                     console.error(err.message, err.stack, "provider_2");
                 });
                 return resp;
+            }else{
+                return response;
             }
         }
     } catch (e) {
@@ -384,7 +416,7 @@ router.post('/findEmailProvider', async (req, res) => {
         res.status(401).json({
             error: true,
             data: null,
-            message: "Invalid Email."
+            message: "We Don't Support this Email Id . Will provide support in future.."
         })
     }
 });

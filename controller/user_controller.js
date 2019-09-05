@@ -10,8 +10,6 @@ const AppVersionModel = require('../models/appVersion');
 const userModel = require('../models/user');
 const router = express.Router();
 
-
-
 /* 
 This Api for storing FCM Token Into database for firebase notification.
 */
@@ -25,7 +23,6 @@ router.post('/savefcmToken', async (req, res) => {
         message: "success"
     });
 });
-
 
 /*
 This Api for storing Device Inforamtion into Database.
@@ -63,7 +60,6 @@ router.post('/saveDeviceInfo', async (req, res) => {
         });
     }
 });
-
 
 router.post('/saveAppVersion', async (req, res) => {
     try {
@@ -113,8 +109,6 @@ router.get('/getAppVersion', async (req, res) => {
         console.error(ex.message, ex.stack);
     }
 });
-
-
 
 
 /*
