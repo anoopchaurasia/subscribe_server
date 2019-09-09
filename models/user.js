@@ -65,7 +65,6 @@ var UserSchema = new Schema({
     ipaddress:{
         type:String
     }
-
 });
 
 

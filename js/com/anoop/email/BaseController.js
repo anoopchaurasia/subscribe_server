@@ -4,9 +4,10 @@ fm.Import("..model.EmailInfo");
 fm.Import("..model.User");
 fm.Import("..model.Token");
 fm.Import("..model.Provider");
+fm.Import("..model.UserAction");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Provider, RedisDB, BaseRedisData) {
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, RedisDB, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -42,23 +43,31 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
     };
 
     Static.reactivateUser = async function (_id) {
-        return await User.updateInactiveUser({ _id: _id }, { "inactive_at":null });
+        return await User.updateInactiveUser({ _id: _id }, { "inactive_at": null });
     };
 
-    Static.scanFinished = async function(user_id){
-        await RedisDB.setData(user_id,"is_finished", true);
+    Static.scanFinished = async function (user_id) {
+        await RedisDB.setData(user_id, "is_finished", true);
     };
 
-    Static.scanStarted = async function(user_id){
-        await RedisDB.setData(user_id,"is_finished", false);
+    Static.updateUserByActionKey = async function (user_id, value) {
+        return await UserAction.updateByKey({ _id: user_id }, value);
     }
 
-    Static.isScanFinished = async function(user_id){
-        return await RedisDB.getData(user_id,"is_finished");
+    Static.getUserActionData = async function (user_id) {
+        return await UserAction.get({ _id: user_id });
     }
 
-    Static.createUser = async function(email,passsword,trash_label){
-        return await User.create({email,passsword,trash_label});
+    Static.scanStarted = async function (user_id) {
+        await RedisDB.setData(user_id, "is_finished", false);
+    }
+
+    Static.isScanFinished = async function (user_id) {
+        return await RedisDB.getData(user_id, "is_finished");
+    }
+
+    Static.createUser = async function (email, passsword, trash_label) {
+        return await User.create({ email, passsword, trash_label });
     }
 
     Static.createToken = async function (user) {
@@ -73,17 +82,19 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
         return await User.getByEmail({ email: email });
     }
 
-    Static.updateUser = async function (email, unsub_label,trash_label,password) {
-        return await User.updateUser({ email: email }, { unsub_label,
-         trash_label, 
-         password, 
-         "email_client": "imap" });
+    Static.updateUser = async function (email, unsub_label, trash_label, password) {
+        return await User.updateUser({ email: email }, {
+            unsub_label,
+            trash_label,
+            password,
+            "email_client": "imap"
+        });
     };
 
-    Static.updateUserById = async function(key, set){
+    Static.updateUserById = async function (key, set) {
         return await User.updateUserById(key, set);
     };
-    
+
     Static.getProvider = async function (domain) {
         return await Provider.get({ "domain_name": domain });
     };
@@ -108,7 +119,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User,Token, Pro
         return await EmailDetail.updateStatus({ _id: _id }, status);
     };
 
-    Static.updateEmailDetailByFromEmail = async function(user_id, from_email, status){
+    Static.updateEmailDetailByFromEmail = async function (user_id, from_email, status) {
         return await EmailDetail.updateStatus({ user_id, from_email }, status);
     };
 

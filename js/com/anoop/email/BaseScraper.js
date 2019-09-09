@@ -64,6 +64,10 @@ fm.Class('BaseScraper', function (me, BaseController) {
         return { emaildetail, emaildetailraw }
     }
 
+    this.getUserActionData = async function(user_id){
+        return await BaseController.getUserActionData(user_id);
+    }
+
     this.sendMailToScraper = async function (data, user) {
         await BaseController.sendMailToScraper(data, user);
     };

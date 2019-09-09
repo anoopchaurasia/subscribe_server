@@ -14,5 +14,4 @@ var UnlistedProviderSchema = new Schema({
     created_at: Date
 });
 
-
 module.exports = mongoose.model('UnlistedProvider', UnlistedProviderSchema);

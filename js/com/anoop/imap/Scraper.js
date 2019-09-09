@@ -16,6 +16,25 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         me.base(myImap.user._id);
     }
 
+    this.onLauchScrap = async function(cb){
+        let actions = await me.getUserActionData(me.myImap.user._id);
+        if(actions && actions['last_scan_date']){
+            let {seen,unseen} = await Message.getOnLaunchSpecificEmailList(me.myImap.imap,actions.last_scan_date);
+            console.log(seen, unseen, "launch scan")
+            if (unseen.length != 0) {
+                await mailScrap(unseen, ["UNREAD"], me.handleEamil);
+            }
+            if (seen.length != 0) {
+                await mailScrap(seen, ["READ"], me.handleEamil);
+            }
+            setTimeout(async x => {
+                cb && await cb();
+            }, 5 * 1000);
+        }else{
+            await cb();
+        }
+    }
+
     this.start = async function (cb) {
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
         console.log(seen, unseen, "sdsds")
@@ -56,7 +75,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                 });
             })
     }
-
 
     this.getEmaiIdsBySender = async function (sender) {
         let date = new Date(Date.now() - me.APPROX_TWO_MONTH_IN_MS);

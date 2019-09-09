@@ -23,10 +23,17 @@ fm.Class("Message", function (me) {
         }
     };
 
+    Static.getOnLaunchSpecificEmailList = async function (imap, last_scan_date) {
+        return {
+            seen: await search(imap, ["SEEN", ['SINCE', last_scan_date]]),
+            unseen: await search(imap, ["UNSEEN", ['SINCE', last_scan_date]])
+        }
+    };
+
     Static.getLatestMessages = async function (imap, user) {
         return {
-            seen: await search(imap, ["SEEN", ['UID', (user.last_msgId)+ ':*']]),
-            unseen: await search(imap, ["UNSEEN", ['UID', (user.last_msgId)+ ':*']])
+            seen: await search(imap, ["SEEN", ['UID', (user.last_msgId) + ':*']]),
+            unseen: await search(imap, ["UNSEEN", ['UID', (user.last_msgId) + ':*']])
         }
     };
 
@@ -49,12 +56,12 @@ fm.Class("Message", function (me) {
     Static.getEmailsBySender = async function (gmail, sender, formatted_date) {
 
     };
-    
+
     Static.getBatchMessage = async function (imap, message_ids, detector) {
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
                 bodies: '',
-                struct:true
+                struct: true
             });
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
@@ -66,7 +73,6 @@ fm.Class("Message", function (me) {
             });
         });
     };
-
 
     async function parseMessage(msg) {
         let [atts, parsed] = await Promise.all([
@@ -83,8 +89,8 @@ fm.Class("Message", function (me) {
                     stream.on('data', chunk => chunks.push(chunk));
                     stream.once('end', async () => {
                         const raw = Buffer.concat(chunks).toString('utf8');
-                        
-                        let parsed = await simpleParser(raw,{skipHtmlToText:true, skipTextToHtml: true, skipTextLinks: true, skipImageLinks: true});
+
+                        let parsed = await simpleParser(raw, { skipHtmlToText: true, skipTextToHtml: true, skipTextLinks: true, skipImageLinks: true });
                         resolve(parsed)
                     });
                 });

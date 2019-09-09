@@ -23,6 +23,7 @@ Array.prototype.asyncForEach = async function (cb) {
         await cb(this[i], i, this);
     }
 }
+
 /*
 This api for deleting mail from Inbox or Trash folder.
 */
@@ -33,7 +34,6 @@ router.post('/deleteMailFromTrash', async (req, res) => {
         data: "moving"
     })
 });
-
 
 /*
 This api for moving Mail from Inbox to Trash Folder.(When swipe Upper)
@@ -46,7 +46,6 @@ router.post('/deleteMailFromInbox', async (req, res) => {
         data: "moving"
     })
 });
-
 
 /*
 Thsi api for Reverting Back Trash Email from Trash folder to Inbox.
@@ -67,13 +66,11 @@ router.post('/revertTrashMailToInbox', async (req, res) => {
     }
 });
 
-
 /*
 This api for Moving Email From INbox to SUbscribed Folder.(Whne swipe Left)
 */
 router.post('/moveEmailToExpbit', async (req, res) => {
     try {
-
         const from_email = req.body.from_email;
         const is_unscubscribe = req.body.is_unscubscribe;
         const is_remove_all = req.body.is_remove_all;
@@ -90,7 +87,6 @@ router.post('/moveEmailToExpbit', async (req, res) => {
         res.sendStatus(400);
     }
 });
-
 
 /*
 This Api for Scrapping Mail from INbox.
@@ -132,8 +128,6 @@ router.post('/getMailInfo', async (req, res) => {
     }
 });
 
-
-
 router.post('/manualUnsubEmailFromUser', async (req, res) => {
     try {
         const token = req.token;
@@ -159,7 +153,6 @@ router.post('/manualUnsubEmailFromUser', async (req, res) => {
     }
 });
 
-
 router.post('/manualTrashEmailFromUser', async (req, res) => {
     try {
         const token = req.token;
@@ -184,7 +177,6 @@ router.post('/manualTrashEmailFromUser', async (req, res) => {
     }
 });
 
-
 router.post('/getMailListForSender', async (req, res) => {
     try {
         const doc = req.token;
@@ -199,8 +191,6 @@ router.post('/getMailListForSender', async (req, res) => {
     }
 });
 
-
-
 /*
 This Api for Getting all Mail Subscri for Home screen for App.
 This will get Filter subcription(new subscription only), unread Mail Info and total Count
@@ -213,12 +203,15 @@ router.post('/readMailInfo', async (req, res) => {
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
         let finished = false;
-        let is_finished =await BaseController.isScanFinished(doc.user_id);
+        let is_finished = await BaseController.isScanFinished(doc.user_id);
         if (is_finished && is_finished == "true") {
             console.log("is_finished here-> ", is_finished);
             finished = true;
+            BaseController.updateUserByActionKey(doc.user_id, { "last_launch_date": new Date() }).catch(err => {
+                console.error(err.message, err.stack, "launch date set error");
+            });
         }
-        if(is_finished === null) {
+        if (is_finished === null) {
             await BaseController.scanFinished(doc.user_id);
         }
         await BaseController.handleRedis(doc.user_id, false);
@@ -234,7 +227,6 @@ router.post('/readMailInfo', async (req, res) => {
         res.sendStatus(400);
     }
 });
-
 
 /*
 This Api will get Profile/statistic Inforamtion for Subcription.
@@ -264,7 +256,6 @@ router.post('/readProfileInfo', async (req, res) => {
         console.error(err.message, err.stack, "9");
     }
 });
-
 
 router.post('/readMailInfoPage', async (req, res) => {
     try {
@@ -304,7 +295,6 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
         console.error(err.message, err.stack, "11");
     }
 });
-
 
 router.post('/getUnsubscribeMailInfoPage', async (req, res) => {
     try {
@@ -535,6 +525,7 @@ function getPlainText(payload) {
     }
     return str;
 }
+
 function getParts(payload) {
     var str = "";
     var isHtmlTag;
@@ -548,8 +539,6 @@ function getParts(payload) {
     }
     return str;
 }
-
-
 
 async function getEmailFromSpecificSender(user_id, auth, nextPageToken, label, sender_email, is_move) {
     let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
