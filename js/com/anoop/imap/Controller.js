@@ -78,7 +78,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await Label.moveInboxToUnsub(myImap, from_email);
         await myImap.closeFolder();
         let data = {
-            user_id: user._id,
+            user_id: token.user_id,
             from_email,
             status: "move"
         };
