@@ -42,6 +42,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await User.updateInactiveUser({ _id: _id, inactive_at: null }, { "inactive_at": new Date() });
     };
 
+    Static.updateEmailInfoForOutlook = async function(email_id,new_email_id){
+        return await EmailInfo.updateEmailInfo({email_id:email_id},{email_id:new_email_id});
+    }
+
     Static.reactivateUser = async function (_id) {
         return await User.updateInactiveUser({ _id: _id }, { "inactive_at": null });
     };
@@ -69,6 +73,38 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.createUser = async function (email, passsword, trash_label) {
         return await User.create({ email, passsword, trash_label });
     }
+
+    Static.createOutlookUser = async function (stateCode) {
+        return await User.createForOutlook({ stateCode });
+    }
+
+    Static.getByState = async function(state){
+        return await User.getByState({state});
+    }
+
+    Static.updateExistingUserInfoOutlook = async function (userInfo, state) {
+        var userdata = {
+            name: userInfo.name,
+            state: state,
+            email_client: "outlook",
+            inactive_at: null,
+            primary_email: userInfo.preferred_username
+        };
+        return await User.updateUserInfoOutlook({ email: userInfo.preferred_username, email_client: "outlook" },
+            { $set: userdata });
+    };
+
+    Static.updateNewUserInfoOutlook = async function (userInfo, state) {
+        var userdata = {
+            email: userInfo.preferred_username ? userInfo.preferred_username : '',
+            name: userInfo.name,
+            email_client: "outlook",
+            inactive_at: null,
+            primary_email: userInfo.preferred_username ? userInfo.preferred_username : ''
+        };
+        return await User.updateUserInfoOutlookWithState({ state: state },
+            { $set: userdata });
+    };
 
     Static.createToken = async function (user) {
         return await Token.create(user);
