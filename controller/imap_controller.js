@@ -440,7 +440,7 @@ router.post('/findEmailProvider', async (req, res) => {
                 error: true,
                 status: 404,
                 data: response.login_url,
-                message: "We don't support this email service provider currently. we will reach out to you once the support is added."
+                message: "We don't support this email service provider currently. We will reach out to you once the support is added."
             })
         }
     } catch (error) {
@@ -453,7 +453,7 @@ router.post('/findEmailProvider', async (req, res) => {
         res.status(401).json({
             error: true,
             data: null,
-            message: "We Don't Support this email service provider currently. we will reach out to you once the support is added."
+            message: "We don't support this email service provider currently. We will reach out to you once the support is added."
         })
     }
 });
@@ -843,7 +843,6 @@ router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
     }
 });
 
-
 router.post('/imapManualTrashEmailFromUser', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
@@ -869,7 +868,6 @@ router.post('/imapManualTrashEmailFromUser', async (req, res) => {
     }
 });
 
-
 router.post('/revertTrashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
@@ -887,7 +885,6 @@ router.post('/revertTrashZohoMail', async (req, res) => {
     }
 });
 
-
 router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
@@ -904,7 +901,6 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
         })
     }
 });
-
 
 module.exports = router
 
