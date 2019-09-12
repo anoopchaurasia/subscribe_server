@@ -94,14 +94,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await closeImap(myImap);
     };
 
-
     Static.automaticInboxToTrash = async function (user_id, email_id) {
         let myImap = await openFolder({ user_id }, "INBOX");
         let email_id_arr = [email_id];
         await Label.moveInboxToTrash(myImap, email_id_arr);
         await closeImap(myImap);
     };
-
 
     ///------------------------------------- from keep ---------------------///
 

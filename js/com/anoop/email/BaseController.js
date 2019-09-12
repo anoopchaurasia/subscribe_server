@@ -5,13 +5,18 @@ fm.Import("..model.User");
 fm.Import("..model.Token");
 fm.Import("..model.Provider");
 fm.Import("..model.UserAction");
+fm.Import("..model.SenderMail");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, RedisDB, BaseRedisData) {
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, RedisDB, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
     };
+
+    Static.createSenderMail = async function(fromEamil,user_id){
+        return await SenderMail.findOneAndUpdate({user_id:user_id,senderMail:fromEamil},{user_id:user_id,senderMail:fromEamil});
+    }
 
     Static.updateOrCreateAndGetEMailDetailFromData = async function (data, user_id) {
         let emaildetailraw = await EmailDetail.fromEamil(data, user_id);

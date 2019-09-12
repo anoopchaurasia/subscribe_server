@@ -21,10 +21,15 @@ fm.Class('BaseScraper', function (me, BaseController) {
     }
 
     this.handleEamil = async function (data, automatic) {
+
         let { emaildetail, emaildetailraw } = await me.handleBasedOnPastAction(data, automatic);
         if(!emaildetailraw){
             return
         }
+
+        let senderMailSaved = await BaseController.createSenderMail(data.from_email,emaildetailraw.user_id);
+        console.log(senderMailSaved);
+
         if (emaildetail) {
             return await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
         }

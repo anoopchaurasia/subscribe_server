@@ -187,7 +187,6 @@ router.post('/moveEmailToTrashFromInbox', async (req, res) => {
             error: false,
             data: "trash"
         })
-
     } catch (ex) {
         res.sendStatus(400);
     }

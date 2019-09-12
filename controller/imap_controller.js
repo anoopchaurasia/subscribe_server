@@ -25,7 +25,7 @@ let Controller = com.anoop.imap.Controller;
 fm.Include("com.anoop.email.Email");
 let EmailValidate = com.anoop.email.Email;
 
-
+//login or signup with the credentials and generate the token and return back to user
 router.post('/loginWithImap', async (req, res) => {
     try {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
@@ -93,7 +93,6 @@ router.post('/loginWithImap', async (req, res) => {
     }
 });
 
-
 let createLogForUser = async (email_id,action_name,action_page,action_event,attribute,api_name) => {
     var userLog = new userAppLog({
         email_id ,
@@ -108,8 +107,6 @@ let createLogForUser = async (email_id,action_name,action_page,action_event,attr
         console.error(err.message, err.stack);
     });
 }
-
-
 
 router.post('/saveOnLaunchDeviceData', async (req, res) => {
     let deviceData = req.body.data;
@@ -127,9 +124,6 @@ router.post('/saveOnLaunchDeviceData', async (req, res) => {
         userUniqueId: userUniqueId
     });
 });
-
-
-
 
 router.post('/saveUnlistedProviderInfo', async (req, res) => {
     let email_id = req.body.email;
@@ -458,7 +452,7 @@ router.post('/findEmailProvider', async (req, res) => {
     }
 });
 
-
+// read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
@@ -476,7 +470,6 @@ router.post('/readZohoMail', async (req, res) => {
     }
     return;
 });
-
 
 router.post('/onLaunchScrapEmail', async (req, res) => {
     try {
@@ -627,7 +620,6 @@ router.post('/saveProfileInfo', async (req, res) => {
     }
 });
 
-
 async function getTotalEmailCount(user_id) {
     let totalNL = await email.find({ "user_id": user_id }).catch(err => {
         console.error(err.message, err.stack);
@@ -697,7 +689,6 @@ async function getAllUnsubscribeSubscription(user_id) {
     return senddata;
 }
 
-
 async function getAllTrashSubscription(user_id) {
     const emails = await email.find({ "status": "trash", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).exec()
     const senddata = [];
@@ -715,7 +706,6 @@ async function getAllTrashSubscription(user_id) {
     }
     return senddata;
 }
-
 
 router.post('/trashZohoMail', async (req, res) => {
     try {
@@ -747,7 +737,6 @@ router.post('/keepZohoMail', async (req, res) => {
         res.sendStatus(400);
     }
 });
-
 
 router.post('/unsubscribeZohoMail', async (req, res) => {
     try {
@@ -817,7 +806,6 @@ router.post('/leftInboxToTrashZohoMail', async (req, res) => {
         })
     }
 });
-
 
 router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
     try {
