@@ -159,7 +159,7 @@ router.post('/saveUnlistedProviderInfo', async (req, res) => {
 });
 
 router.post('/saveAnalyticData', async (req, res) => {
-    console.log(req.body)
+    // console.log(req.body)
     let email_id = req.body.email;
     let userUniqueId = req.body.uniqueLaunchDeviceId;
     let deviceData = await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
@@ -189,7 +189,7 @@ router.post('/saveAnalyticData', async (req, res) => {
 });
 
 router.post('/saveAnalyticDataWithStep', async (req, res) => {
-    console.log(req.body)
+    // console.log(req.body)
     let email_id = req.body.email;
     let step_key = req.body.step_key;
     let value = {

@@ -68,6 +68,90 @@ var loginAnalyticSchema = new Schema({
     clicked_onTutorial_in_loginflow: {
         type: Boolean
     },
+    clicked_on_show_subject: {
+        type: Boolean
+    },
+    unsubscribe_clicked_from_main_list: {
+        type: Boolean
+    },
+    delete_clicked_from_main_list: {
+        type: Boolean
+    },
+    keep_clicked_from_main_list: {
+        type: Boolean
+    },
+    clicked_share_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_multiacc_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_rating_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_statistic_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_settings_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_abtUs_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_trash_list_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_faq_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_unsubs_list_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_privacy_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_terms_btn_from_side_menu: {
+        type: Boolean
+    },
+    clicked_keep_list_btn_from_side_menu: {
+        type: Boolean
+    },
+    logout_success: {
+        type: Boolean
+    },
+    gdpr_disconnected: {
+        type: Boolean
+    },
+    clicked_delete_btn_from_unsub_list: {
+        type: Boolean
+    },
+    clicked_keep_btn_from_unsub_list: {
+        type: Boolean
+    },
+    clicked_keep_btn_from_delete_list: {
+        type: Boolean
+    },
+    clicked_delete_btn_from_keep_list: {
+        type: Boolean
+    },
+    clicked_unsub_btn_from_keep_list: {
+        type: Boolean
+    },
+    clicked_delete_btn_from_manually_unsub_page: {
+        type: Boolean
+    },
+    clicked_unsub_btn_from_manually_unsub_page: {
+        type: Boolean
+    },
+    clicked_unsub_btn_from_subject_view:{
+        type: Boolean
+    },
+    clicked_keep_btn_from_subject_view:{
+        type:Boolean
+    },
+    clicked_trash_btn_from_subject_view:{
+        type:Boolean
+    },
     created_at: Date
 });
 
