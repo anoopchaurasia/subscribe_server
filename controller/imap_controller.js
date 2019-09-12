@@ -11,6 +11,7 @@ const UserModel = require('../models/user');
 const token_model = require('../models/tokeno');
 const providerModel = require('../models/provider');
 const unlistedProviderModel = require('../models/unlistedProvider');
+const loginAnalyticModel = require('../models/loginAnalytic');
 const cheerio = require('cheerio');
 const uniqid = require('uniqid');
 var crypto = require('crypto');
@@ -25,19 +26,18 @@ let Controller = com.anoop.imap.Controller;
 fm.Include("com.anoop.email.Email");
 let EmailValidate = com.anoop.email.Email;
 
-
 router.post('/loginWithImap', async (req, res) => {
     try {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
         let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile).catch(err => {
             console.error(err.message, err, "imap_connect_error", req.body.username);
             Raven.captureException(err, { tags: { email_domain: req.body.username.split("@")[1], pass_length: req.body.password.length } });
-            let attribute={
-                "type":"error",
-                "error_message":err.message,
-                "message":"login_failed"
+            let attribute = {
+                "type": "error",
+                "error_message": err.message,
+                "message": "login_failed"
             };
-            createLogForUser(req.body.username,"login","login_page","imap_login",attribute,"loginWithImap");
+            createLogForUser(req.body.username, "login", "login_page", "imap_login", attribute, "loginWithImap");
             if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
                 return res.status(403).json({
                     error: true,
@@ -94,14 +94,14 @@ router.post('/loginWithImap', async (req, res) => {
 });
 
 
-let createLogForUser = async (email_id,action_name,action_page,action_event,attribute,api_name) => {
+let createLogForUser = async (email_id, action_name, action_page, action_event, attribute, api_name) => {
     var userLog = new userAppLog({
-        email_id ,
-        attribute ,
-        created_at : new Date(),
+        email_id,
+        attribute,
+        created_at: new Date(),
         action_name,
-        action_page ,
-        action_event ,
+        action_page,
+        action_event,
         api_name
     });
     await userLog.save().catch(err => {
@@ -127,8 +127,6 @@ router.post('/saveOnLaunchDeviceData', async (req, res) => {
         userUniqueId: userUniqueId
     });
 });
-
-
 
 
 router.post('/saveUnlistedProviderInfo', async (req, res) => {
@@ -160,19 +158,53 @@ router.post('/saveUnlistedProviderInfo', async (req, res) => {
     }
 });
 
-let getProviderName = async (email) => {
-    let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { imap_host: 1, port: 1 }).catch(err => {
-        console.error(err.message, err.stack, "provider_3");
+router.post('/saveAnalyticData', async (req, res) => {
+    console.log(req.body)
+    let email_id = req.body.email;
+    let userUniqueId = req.body.uniqueLaunchDeviceId;
+    let deviceData = await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
+        console.error(err.message, err.stack, "27");
     });
-}
+    if (deviceData) {
+        var loginAnalytic = {
+            "email_id": email_id,
+            "device_id": deviceData._id,
+            "created_at": new Date()
+        };
+        await loginAnalyticModel.findOneAndUpdate({ "email_id": email_id }, { $set: loginAnalytic }, { upsert: true }).catch(err => {
+            console.error(err.message, err.stack);
+        });
+        res.status(200).json({
+            error: false,
+            status: 200,
+            message: "success"
+        });
+    } else {
+        res.status(401).json({
+            error: true,
+            status: 401,
+            message: "false"
+        });
+    }
+});
 
-let getLoginUrl = async (email) => {
-    let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { login_url: 1 }).catch(err => {
-        console.error(err.message, err.stack, "provider_4");
+router.post('/saveAnalyticDataWithStep', async (req, res) => {
+    console.log(req.body)
+    let email_id = req.body.email;
+    let step_key = req.body.step_key;
+    let value = {
+        [step_key]: true
+    };
+    await loginAnalyticModel.findOneAndUpdate({ "email_id": email_id }, { $set: value }, { upsert: true }).catch(err => {
+        console.error(err.message, err.stack);
     });
-}
+    res.status(200).json({
+        error: false,
+        status: 200,
+        message: "success"
+    });
+});
+
 
 let getTwoStepVerificationUrl = async (email) => {
     let domain = email.split("@")[1];
@@ -430,12 +462,12 @@ router.post('/findEmailProvider', async (req, res) => {
                 login_js: response.login_js
             })
         } else {
-            let attribute={
-                "type":"error",
-                "error_message":null,
-                "message":"provider not found"
+            let attribute = {
+                "type": "error",
+                "error_message": null,
+                "message": "provider not found"
             };
-            createLogForUser(req.body.emailId,"provider","email_entry_page","find_provider",attribute,"findEmailProvider");
+            createLogForUser(req.body.emailId, "provider", "email_entry_page", "find_provider", attribute, "findEmailProvider");
             res.status(404).json({
                 error: true,
                 status: 404,
@@ -444,12 +476,12 @@ router.post('/findEmailProvider', async (req, res) => {
             })
         }
     } catch (error) {
-        let attribute={
-            "type":"error",
-            "error_message":error.message,
-            "message":"provider not found"
+        let attribute = {
+            "type": "error",
+            "error_message": error.message,
+            "message": "provider not found"
         };
-        createLogForUser(req.body.emailId,"provider","email_entry_page","find_provider",attribute,"findEmailProvider");
+        createLogForUser(req.body.emailId, "provider", "email_entry_page", "find_provider", attribute, "findEmailProvider");
         res.status(401).json({
             error: true,
             data: null,
@@ -484,7 +516,7 @@ router.post('/onLaunchScrapEmail', async (req, res) => {
         Controller.extractOnLaunchEmail(doc).catch(err => {
             console.error(err.message, err.stack);
             Controller.scanFinished(doc.user_id);
-         });
+        });
         res.status(200).json({
             error: false,
             data: "scrape"
