@@ -24,6 +24,25 @@ Array.prototype.asyncForEach = async function (cb) {
     }
 }
 
+router.post('/senderEmailNotInEmailDetails',async (req,res)=>{
+    let emailIds = await BaseController.senderEmailNotInEmailDetails(req.body.user_id)
+    res.status(200).json({
+        error:false,
+        data:{
+            "emailIds":emailIds
+        }
+    })
+});
+
+
+router.post('/getLast7daysData', async (req, res) => {
+    let emailDetailsWithInfo = await BaseController.getLast7DaysData(req.body.user_id)
+    res.json({
+        error: false,
+        data: emailDetailsWithInfo
+    })
+});
+
 /*
 This api for deleting mail from Inbox or Trash folder.
 */

@@ -26,9 +26,9 @@ fm.Class('BaseScraper', function (me, BaseController) {
         if(!emaildetailraw){
             return
         }
-
-        let senderMailSaved = await BaseController.createSenderMail(data.from_email,emaildetailraw.user_id);
-        console.log(senderMailSaved);
+        if(data.from_email!=null){
+            await BaseController.createSenderMail(data.from_email,emaildetailraw.user_id);
+        }
 
         if (emaildetail) {
             return await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");

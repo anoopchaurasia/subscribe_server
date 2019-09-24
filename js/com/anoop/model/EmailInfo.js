@@ -20,13 +20,16 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
     }
 
     Static.fromEamil = async function (data, from_email_id, url) {
+        console.log("data-------:"+Object.keys(data));
+        
         return {
             from_email_id,
             email_id: data.email_id,
             historyId: data.historyId,
             unsubscribe: url,
             subject: data.subject,
-            labelIds: data.labelIds
+            labelIds: data.labelIds,
+            date: data['header']?data.header.date.split('Date: ')[1]:data.receivedDateTime
         }
     };
 

@@ -8,14 +8,52 @@ fm.Import("..model.UserAction");
 fm.Import("..model.SenderMail");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
+var ObjectId = require('mongoose').Types.ObjectId;
+
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, RedisDB, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
     };
 
-    Static.createSenderMail = async function(fromEamil,user_id){
-        return await SenderMail.findOneAndUpdate({user_id:user_id,senderMail:fromEamil},{user_id:user_id,senderMail:fromEamil});
+    Static.senderEmailNotInEmailDetails = async function (user_id) {
+        try {
+            let conditions = [{ $match: { "user_id": ObjectId(user_id) } }, { $lookup: { from: "sendermails", localField: "user_id", foreignField: "user_id", as: "data" } }];
+            let emailDetailsData = await EmailDetail.executeAggregateQuery(conditions);
+            let senderMails = emailDetailsData[0].data.map(sender => { return sender.senderMail })
+            let emailDetailsMails = emailDetailsData.map(emailDetail => { return emailDetail.from_email })
+            let notCommonMails = senderMails.filter(senderMail => !emailDetailsMails.includes(senderMail))
+            return notCommonMails
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    Static.getLast7DaysData = async function (user_id) {
+        try {
+            let conditions = [{ $match: { user_id: ObjectId(user_id) } }, { $lookup: { from: "emailinfos", localField: "_id", foreignField: "from_email_id", as: "emailInfo" } }];
+            let emailDetailsWithInfo = await EmailDetail.executeAggregateQuery(conditions);
+            let userEmailAnalyziedData = {
+                "totalProviders": 0,
+                "providerEmails": [],
+                "unused": 0,
+                "totalEmails": 0,
+                "mailCategories": {
+                    "banking": [],
+                    "ecommerce": [],
+                    "social": [],
+                    "jobs": [],
+                    "others": []
+                }
+            };
+            return await me.getUserAnalyzed(emailDetailsWithInfo,userEmailAnalyziedData);
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    Static.createSenderMail = async function (fromEamil, user_id) {
+        return await SenderMail.findOneAndUpdate({ user_id: user_id, senderMail: fromEamil }, { user_id: user_id, senderMail: fromEamil });
     }
 
     Static.updateOrCreateAndGetEMailDetailFromData = async function (data, user_id) {
@@ -47,8 +85,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await User.updateInactiveUser({ _id: _id, inactive_at: null }, { "inactive_at": new Date() });
     };
 
-    Static.updateEmailInfoForOutlook = async function(email_id,new_email_id){
-        return await EmailInfo.updateEmailInfo({email_id:email_id},{email_id:new_email_id});
+    Static.updateEmailInfoForOutlook = async function (email_id, new_email_id) {
+        return await EmailInfo.updateEmailInfo({ email_id: email_id }, { email_id: new_email_id });
     }
 
     Static.reactivateUser = async function (_id) {
@@ -83,8 +121,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await User.createForOutlook({ stateCode });
     }
 
-    Static.getByState = async function(state){
-        return await User.getByState({state});
+    Static.getByState = async function (state) {
+        return await User.getByState({ state });
     }
 
     Static.updateExistingUserInfoOutlook = async function (userInfo, state) {
@@ -131,6 +169,11 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
             "email_client": "imap"
         });
     };
+
+    Static.getByEmailAndClient = async function(userInfo){
+        console.log(userInfo)
+        return await User.getByEmailAndClient({email:userInfo.preferred_username,email_client:"outlook"})
+    }
 
     Static.updateUserById = async function (key, set) {
         return await User.updateUserById(key, set);
@@ -234,12 +277,63 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
                     if (result) {
                         let from_email_id = await me.updateOrCreateAndGetEMailDetailFromData(JSON.parse(mail[0]), user_id)
                         // console.log(from_email_id)
+                        console.log('inside')
                         await EmailInfo.bulkInsert(mail, from_email_id._id);
                     }
                 }
             });
             del_data && await RedisDB.delKEY(keylist);
         }
+    }
+
+    Static.getUserAnalyzed = async function (emailDetailsWithInfo,userEmailAnalyziedData) {
+        emailDetailsWithInfo.forEach((emaildata, index) => {
+            let oneWeekBeforeInMillisecond = 7 * 24 * 60 * 60 * 1000
+            let oneWeekBefore = new Date(Date.now()-oneWeekBeforeInMillisecond);
+            let status_date = new Date(emaildata.status_date)
+            console.log(`${status_date}---${oneWeekBefore}---${new Date()}`);
+            if (!(status_date >= oneWeekBefore && status_date <= new Date())){
+                emailDetailsWithInfo.splice(index, 1);
+            }
+        });        
+
+        userEmailAnalyziedData.totalProviders = emailDetailsWithInfo.length;
+
+        let allProviderEmails = emailDetailsWithInfo.map(provider => { return provider.from_email })
+        userEmailAnalyziedData["providerEmails"] = allProviderEmails;
+
+        allProviderEmails.forEach(email => {
+            if (email.includes('bank') || email.includes('axis') || email.includes('kotak')
+                || email.includes('sbi') || email.includes('icici') || email.includes('hdfc')) {
+                userEmailAnalyziedData.mailCategories.banking.push(email)
+            }
+            else if (email.includes('shop') || email.includes('amazon') || email.includes('flipkart')
+                || email.includes('myntra') || email.includes('ebay') || email.includes('buy')) {
+                userEmailAnalyziedData.mailCategories.ecommerce.push(email)
+            }
+            else if (email.includes('job') || email.includes('guru') || email.includes('naukri')
+                || email.includes('internshala') || email.includes('monster') || email.includes('indeed')) {
+                userEmailAnalyziedData.mailCategories.jobs.push(email)
+            }
+            else if (email.includes('social') || email.includes('google') || email.includes('linked')
+                || email.includes('facebook') || email.includes('insta') || email.includes('tiktok')) {
+                userEmailAnalyziedData.mailCategories.social.push(email)
+            }
+            else {
+                userEmailAnalyziedData.mailCategories.others.push(email)
+            }
+        });
+
+        let unusedStatusCount = emailDetailsWithInfo.filter(x => { return x.status == "unused" }).length
+        userEmailAnalyziedData['unused'] = unusedStatusCount;
+
+        let totalEmailCount = 0;
+        emailDetailsWithInfo.forEach(provider => {
+            totalEmailCount += provider.emailInfo.length;
+        });
+        userEmailAnalyziedData['totalEmails'] = totalEmailCount;
+
+        return userEmailAnalyziedData;
     }
 
 });
