@@ -19,9 +19,7 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
         return await mongo_emailInfo.findOneAndUpdate(query, { $set: set }, {  upsert: true });
     }
 
-    Static.fromEamil = async function (data, from_email_id, url) {
-        console.log("data-------:"+Object.keys(data));
-        
+    Static.fromEamil = async function (data, from_email_id, url) {        
         return {
             from_email_id,
             email_id: data.email_id,

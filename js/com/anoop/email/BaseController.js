@@ -175,7 +175,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     };
 
     Static.getByEmailAndClient = async function(userInfo){
-        console.log(userInfo)
         return await User.getByEmailAndClient({email:userInfo.preferred_username,email_client:"outlook"})
     }
 
@@ -272,7 +271,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.handleRedis = async function (user_id, del_data = true) {
         let keylist = await RedisDB.getKEYS(user_id);
         if (keylist && keylist.length != 0) {
-            console.log(keylist)
             await keylist.asyncForEach(async element => {
                 // console.log(element)
                 let mail = await RedisDB.popData(element);
@@ -281,7 +279,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
                     if (result) {
                         let from_email_id = await me.updateOrCreateAndGetEMailDetailFromData(JSON.parse(mail[0]), user_id)
                         // console.log(from_email_id)
-                        console.log('inside')
                         await EmailInfo.bulkInsert(mail, from_email_id._id);
                     }
                 }
