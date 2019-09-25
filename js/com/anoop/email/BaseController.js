@@ -85,6 +85,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await User.updateInactiveUser({ _id: _id, inactive_at: null }, { "inactive_at": new Date() });
     };
 
+    Static.removeUserByState = async function(state){
+        return await User.removeUserByState({state:state});
+    }
+
     Static.updateEmailInfoForOutlook = async function (email_id, new_email_id) {
         return await EmailInfo.updateEmailInfo({ email_id: email_id }, { email_id: new_email_id });
     }
