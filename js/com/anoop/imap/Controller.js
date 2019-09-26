@@ -254,7 +254,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
     ///////////------------------------ login ------------------------///
-    Static.login = async function (email, password, provider) {
+    Static.login = async function (email, password, provider, ipaddress) {
         let PASSWORD = MyImap.encryptPassword(password);
         let myImap = await MyImap.new({
             email,
@@ -278,7 +278,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
         myImap.imap.end(myImap.imap);
-        let token = await me.createToken(user);
+        let token = await me.createToken(user,ipaddress);
         await me.notifyListner(user._id);
         // delay as active status require to setup listner so that it do not set multi listener for same user
         setTimeout(async x => {

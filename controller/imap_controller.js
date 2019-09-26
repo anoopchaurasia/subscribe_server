@@ -19,6 +19,10 @@ var randomstring = require("randomstring");
 var dns = require('dns');
 var legit = require('legit');
 var Raven = require('raven');
+const app = express();
+const cookieParser = require('cookie-parser');
+
+app.use(cookieParser());
 
 
 const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
@@ -34,7 +38,8 @@ let EmailValidate = com.anoop.email.Email;
 router.post('/loginWithImap', async (req, res) => {
     try {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
-        let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile).catch(err => {
+        let ipaddress = req.header('x-forwarded-for') || req.connection.remoteAddress;
+        let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile, ipaddress).catch(err => {
             console.error(err.message, err, "imap_connect_error", req.body.username);
             Raven.captureException(err, { tags: { email_domain: req.body.username.split("@")[1], pass_length: req.body.password.length } });
             let attribute = {
@@ -82,7 +87,7 @@ router.post('/loginWithImap', async (req, res) => {
             }
         });
         if (response) {
-            return res.status(200).json({
+            return res.cookie("refreshToken",response.token.refreshToken).status(200).json({
                 error: false,
                 status: 200,
                 data: response,

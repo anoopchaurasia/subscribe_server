@@ -9,7 +9,8 @@ fm.Import("..model.SenderMail");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
 var ObjectId = require('mongoose').Types.ObjectId;
-
+const jwt = require('jsonwebtoken');
+require('dotenv').config()
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, RedisDB, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
@@ -46,7 +47,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
                     "others": []
                 }
             };
-            return await me.getUserAnalyzed(emailDetailsWithInfo,userEmailAnalyziedData);
+            return await me.getUserAnalyzed(emailDetailsWithInfo, userEmailAnalyziedData);
         } catch (error) {
             console.log(error)
         }
@@ -149,8 +150,30 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
             { $set: userdata });
     };
 
-    Static.createToken = async function (user) {
-        return await Token.create(user);
+    Static.createToken = async function (user, ipaddress) {
+        // return await Token.create(user);
+        let token = await me.generateJWTToken({ user_id: user._id, email: user.email });
+        let refreshTokenInsertedOrUpdated = await Token.findOneAndUpdate(
+            { user_id: user._id },
+            {
+                refresh_token: token.refreshToken,
+                user_id: user._id,
+                last_used_at: new Date(),
+                ipaddress: ipaddress
+            });
+        return {
+            token:token,
+            user:user
+        }
+    }
+
+    Static.generateJWTToken = async (user) => {
+        let fiveHoursLater = new Date(new Date().setHours(new Date().getHours() + 5)).toString();
+        return {
+            "accessToken": jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: '5hr' }),
+            "refreshToken": jwt.sign(user, process.env.JWT_REFRESH_TOKEN_SECRET, { expiresIn: '720hr' }),
+            "accessTokenExpireTime":fiveHoursLater
+        }
     }
 
     Static.getUserById = async function (user_id) {
@@ -170,9 +193,9 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         });
     };
 
-    Static.getByEmailAndClient = async function(userInfo){
+    Static.getByEmailAndClient = async function (userInfo) {
         console.log(userInfo)
-        return await User.getByEmailAndClient({email:userInfo.preferred_username,email_client:"outlook"})
+        return await User.getByEmailAndClient({ email: userInfo.preferred_username, email_client: "outlook" })
     }
 
     Static.updateUserById = async function (key, set) {
@@ -286,16 +309,16 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         }
     }
 
-    Static.getUserAnalyzed = async function (emailDetailsWithInfo,userEmailAnalyziedData) {
+    Static.getUserAnalyzed = async function (emailDetailsWithInfo, userEmailAnalyziedData) {
         emailDetailsWithInfo.forEach((emaildata, index) => {
             let oneWeekBeforeInMillisecond = 7 * 24 * 60 * 60 * 1000
-            let oneWeekBefore = new Date(Date.now()-oneWeekBeforeInMillisecond);
+            let oneWeekBefore = new Date(Date.now() - oneWeekBeforeInMillisecond);
             let status_date = new Date(emaildata.status_date)
             console.log(`${status_date}---${oneWeekBefore}---${new Date()}`);
-            if (!(status_date >= oneWeekBefore && status_date <= new Date())){
+            if (!(status_date >= oneWeekBefore && status_date <= new Date())) {
                 emailDetailsWithInfo.splice(index, 1);
             }
-        });        
+        });
 
         userEmailAnalyziedData.totalProviders = emailDetailsWithInfo.length;
 
