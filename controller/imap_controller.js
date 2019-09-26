@@ -13,6 +13,7 @@ const providerModel = require('../models/provider');
 const unlistedProviderModel = require('../models/unlistedProvider');
 const loginAnalyticModel = require('../models/loginAnalytic');
 const cheerio = require('cheerio');
+const jwt = require('jsonwebtoken');
 const uniqid = require('uniqid');
 var crypto = require('crypto');
 var randomstring = require("randomstring");
@@ -498,9 +499,9 @@ router.post('/findEmailProvider', async (req, res) => {
 });
 
 // read mail using the user token
-router.post('/readZohoMail', async (req, res) => {
+router.post('/readZohoMail',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         Controller.extractEmail(doc).catch(err => {
             console.error(err.message, err.stack);
             Controller.scanFinished(doc.user_id);
@@ -516,9 +517,9 @@ router.post('/readZohoMail', async (req, res) => {
     return;
 });
 
-router.post('/onLaunchScrapEmail', async (req, res) => {
+router.post('/onLaunchScrapEmail',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         Controller.extractOnLaunchEmail(doc).catch(err => {
             console.error(err.message, err.stack);
             Controller.scanFinished(doc.user_id);
@@ -534,9 +535,9 @@ router.post('/onLaunchScrapEmail', async (req, res) => {
     return;
 });
 
-router.post('/getMailInfo', async (req, res) => {
+router.post('/getMailInfo',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         if (doc) {
             const emailinfos = await getAllsubscription(doc.user_id).catch(err => {
                 console.error(err.message, err.stack);
@@ -557,9 +558,9 @@ router.post('/getMailInfo', async (req, res) => {
     }
 });
 
-router.post('/getKeepedMailInfo', async (req, res) => {
+router.post('/getKeepedMailInfo',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         if (doc) {
             const emailinfos = await getAllKeepedSubscription(doc.user_id);
             if (emailinfos) {
@@ -578,9 +579,9 @@ router.post('/getKeepedMailInfo', async (req, res) => {
     }
 });
 
-router.post('/getUnsubscribeMailInfo', async (req, res) => {
+router.post('/getUnsubscribeMailInfo',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         if (doc) {
             const emailinfos = await getAllUnsubscribeSubscription(doc.user_id);
             if (emailinfos) {
@@ -599,9 +600,9 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
     }
 });
 
-router.post('/getTrashMailInfo', async (req, res) => {
+router.post('/getTrashMailInfo',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         if (doc) {
             const emailinfos = await getAllTrashSubscription(doc.user_id);
             if (emailinfos) {
@@ -620,9 +621,9 @@ router.post('/getTrashMailInfo', async (req, res) => {
     }
 });
 
-router.post('/getEmailSubscription', async (req, res) => {
+router.post('/getEmailSubscription',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         if (doc) {
             const emailinfos = await getAllsubscription(doc.user_id);
             res.status(200).json({
@@ -635,9 +636,9 @@ router.post('/getEmailSubscription', async (req, res) => {
     }
 });
 
-router.post('/saveProfileInfo', async (req, res) => {
+router.post('/saveProfileInfo',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         if (doc) {
             let userObj = {
                 name: req.body.name,
@@ -752,9 +753,9 @@ async function getAllTrashSubscription(user_id) {
     return senddata;
 }
 
-router.post('/trashZohoMail', async (req, res) => {
+router.post('/trashZohoMail',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         Controller.unusedToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
@@ -769,9 +770,9 @@ router.post('/trashZohoMail', async (req, res) => {
     }
 });
 
-router.post('/keepZohoMail', async (req, res) => {
+router.post('/keepZohoMail',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         Controller.unusedToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
@@ -783,9 +784,9 @@ router.post('/keepZohoMail', async (req, res) => {
     }
 });
 
-router.post('/unsubscribeZohoMail', async (req, res) => {
+router.post('/unsubscribeZohoMail',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         Controller.unusedToUnsub(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
@@ -800,9 +801,9 @@ router.post('/unsubscribeZohoMail', async (req, res) => {
     }
 });
 
-router.post('/revertUnsubscribeZohoMail', async (req, res) => {
+router.post('/revertUnsubscribeZohoMail',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         Controller.unsubToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
@@ -817,9 +818,9 @@ router.post('/revertUnsubscribeZohoMail', async (req, res) => {
     }
 });
 
-router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
+router.post('/leftUnsubToTrashZohoMail',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         Controller.unsubToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
@@ -835,9 +836,9 @@ router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
     }
 });
 
-router.post('/leftInboxToTrashZohoMail', async (req, res) => {
+router.post('/leftInboxToTrashZohoMail',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         Controller.keepToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
@@ -852,9 +853,9 @@ router.post('/leftInboxToTrashZohoMail', async (req, res) => {
     }
 });
 
-router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
+router.post('/imapManualUnsubEmailFromUser',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         let sender_email = req.body.sender_email;
         let array = sender_email.split(",") || sender_email.split(";");
         array.forEach(async element => {
@@ -876,9 +877,9 @@ router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
     }
 });
 
-router.post('/imapManualTrashEmailFromUser', async (req, res) => {
+router.post('/imapManualTrashEmailFromUser',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         let sender_email = req.body.sender_email;
         let array = sender_email.split(",") || sender_email.split(";");
         array.forEach(async element => {
@@ -901,9 +902,9 @@ router.post('/imapManualTrashEmailFromUser', async (req, res) => {
     }
 });
 
-router.post('/revertTrashZohoMail', async (req, res) => {
+router.post('/revertTrashZohoMail',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         Controller.trashToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
@@ -918,9 +919,9 @@ router.post('/revertTrashZohoMail', async (req, res) => {
     }
 });
 
-router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
+router.post('/revertInboxToUnsubscribeImapZohoMail',jwtTokenVerify, async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const doc = req.token;
         Controller.keepToUnsub(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
@@ -934,6 +935,25 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
         })
     }
 });
+
+async function jwtTokenVerify(req, res, next) {
+    let token = req.headers["x-auth-token"];
+    if (!token) {
+        res.status(403).json({ error: true, msg: 'token required' });
+    }
+    jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET, (err, data) => {
+        if (err) {
+            console.log(err);
+            res.status(401).json({
+                error: true,
+                msg: "unauthorised user"
+            });
+        } else {
+            req.token = data;
+        }
+        next();
+    })
+}
 
 module.exports = router
 

@@ -17,6 +17,7 @@ app.use(cookieParser())
 
 
 router.get('/refreshToken', verifyRefreshToken, async (req, res) => {
+    console.log("jdksgcjhgsdfchgwsckjaewjcedicefufcg")
     let fiveHoursLater = new Date(new Date().setHours(new Date().getHours() + 5)).toString();
     res.json({
         error: false,
