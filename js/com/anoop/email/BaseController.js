@@ -151,7 +151,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     };
 
     Static.createToken = async function (user, ipaddress) {
-        // return await Token.create(user);
+        return await Token.create(user);
+    }
+
+    Static.createTokenWeb = async function(user,ipaddress){
         let token = await me.generateJWTToken({ user_id: user._id, email: user.email });
         let refreshTokenInsertedOrUpdated = await Token.findOneAndUpdate(
             { user_id: user._id },

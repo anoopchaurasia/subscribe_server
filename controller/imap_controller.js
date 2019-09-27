@@ -87,7 +87,7 @@ router.post('/loginWithImap', async (req, res) => {
             }
         });
         if (response) {
-            return res.cookie("refreshToken",response.token.refreshToken).status(200).json({
+            return res.status(200).json({
                 error: false,
                 status: 200,
                 data: response,
