@@ -937,7 +937,10 @@ router.post('/revertInboxToUnsubscribeImapZohoMail',jwtTokenVerify, async (req, 
 });
 
 async function jwtTokenVerify(req, res, next) {
-    let token = req.headers["x-auth-token"];
+    let token = req.headers["x-auth-token"] || req.headers['authorization'];
+    if(token.startsWith('Bearer ')){
+        token = token.split(' ')[1];
+    }
     if (!token) {
         res.status(403).json({ error: true, msg: 'token required' });
     }

@@ -32,8 +32,10 @@ async function authenticate(req, res, next) {
 
 async function jwtTokenVerify(req, res, next) {
     // console.log(req.headers)
-    let token = req.headers["x-auth-token"];
-    console.log("token",token)
+    let token = req.headers["x-auth-token"] || req.headers['authorization'];
+    if(token.startsWith('Bearer ')){
+        token = token.split(' ')[1];
+    }
     if (!token) {
         res.status(403).json({ error: true, msg: 'token required' });
     }
