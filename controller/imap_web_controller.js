@@ -40,7 +40,7 @@ router.post('/loginWithImap', async (req, res) => {
     try {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
         let ipaddress = req.header('x-forwarded-for') || req.connection.remoteAddress;
-        let response = await Controller.loginWeb(req.body.username.toLowerCase(), req.body.password, profile, ipaddress).catch(err => {
+        let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile, ipaddress, req.headers.client_access_mode).catch(err => {
             console.error(err.message, err, "imap_connect_error", req.body.username);
             Raven.captureException(err, { tags: { email_domain: req.body.username.split("@")[1], pass_length: req.body.password.length } });
             let attribute = {
