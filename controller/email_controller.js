@@ -24,6 +24,14 @@ Array.prototype.asyncForEach = async function (cb) {
     }
 }
 
+router.get('/isEmailExist/:emailId',async (req,res)=>{
+    let result = await BaseController.isEmailExist(req.params.emailId);
+    res.status(200).json({
+        error:false,
+        isEmailExist:result
+    })
+});
+
 router.post('/senderEmailNotInEmailDetails',async (req,res)=>{
     let emailIds = await BaseController.senderEmailNotInEmailDetails(req.body.user_id)
     res.status(200).json({

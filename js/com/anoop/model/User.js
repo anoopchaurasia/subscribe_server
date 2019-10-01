@@ -7,6 +7,10 @@ fm.Class("User>.BaseModel", function (me) {
         me.updateQueryValidation(query, "_id");
         return await mongouser.findOne(query).exec();
     };
+
+    Static.find = async function (query) {
+        return await mongouser.findOne(query).exec();
+    };
     
     Static.getByEmail = async function (query) {
         me.updateQueryValidation(query, "email");

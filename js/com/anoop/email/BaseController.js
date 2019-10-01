@@ -17,6 +17,15 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         me = _me;
     };
 
+    Static.isEmailExist = async function(emailId){
+        let emailExistResult = await User.find({email:emailId});
+        if(emailExistResult){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
     Static.senderEmailNotInEmailDetails = async function (user_id) {
         try {
             let conditions = [{ $match: { "user_id": ObjectId(user_id) } }, { $lookup: { from: "sendermails", localField: "user_id", foreignField: "user_id", as: "data" } }];
