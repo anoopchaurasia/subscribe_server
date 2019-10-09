@@ -261,6 +261,7 @@ This will get all the subscription,Moved subscription,total email and total ubsu
 */
 router.post('/readProfileInfo', async (req, res) => {
     try {
+        console.log("jhshjdagjs")
         const doc = req.token;
         const emailinfos = await GetEmailQuery.getAllSubscription(doc.user_id);
         const movedMail = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
@@ -511,6 +512,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllKeepedSubscription(doc.user_id);
         let unreadData = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        console.log(emailinfos)
         res.status(200).json({
             error: false,
             data: emailinfos,

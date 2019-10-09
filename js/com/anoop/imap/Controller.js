@@ -278,16 +278,18 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
         myImap.imap.end(myImap.imap);
+        let token;
         if(clientAccessMode == 'web'){
-            let token = await me.createTokenWeb(user,ipaddress);
+            token = await me.createTokenWeb(user,ipaddress);
         }else{
-            let token = await me.createToken(user,ipaddress);
+            token = await me.createToken(user,ipaddress);
         }
         await me.notifyListner(user._id);
         // delay as active status require to setup listner so that it do not set multi listener for same user
         setTimeout(async x => {
             await me.reactivateUser(user._id);
         }, 1000);
+        console.log("token ==>",token)
         return token;
     }
 
