@@ -127,6 +127,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await User.create({ email, passsword, trash_label });
     }
 
+    Static.removeUserByState = async function(state){
+        return await User.removeUserByState({state:state});
+    }
+
     Static.createOutlookUser = async function (stateCode) {
         return await User.createForOutlook({ stateCode });
     }
