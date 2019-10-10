@@ -225,6 +225,18 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         });
         myImap.imap.end(myImap.imap);
     }
+
+    Static.validCredentialCheck = async function (token){
+        await me.scanStarted(token.user_id);
+        let myImap = await openFolder(token, "INBOX");
+        if(myImap){
+            myImap.imap.end(myImap.imap);
+            return true
+        }else{
+            myImap.imap.end(myImap.imap);
+            return false
+        }
+    }
     
     //////////////////// listen for user //////////////////////
     Static.listenForUser = async function (user, text) {
