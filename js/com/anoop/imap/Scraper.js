@@ -3,7 +3,8 @@ fm.Package("com.anoop.imap");
 fm.Import(".Message");
 fm.Import(".Parser");
 fm.Import(".Label");
-fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
+fm.Import(".MyImap");
+fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label,MyImap) {
     'use strict';
     this.setMe = _me => me = _me;
     Static.APPROX_TWO_MONTH_IN_MS = process.env.APPROX_TWO_MONTH_IN_MS || 4 * 30 * 24 * 60 * 60 * 1000;
@@ -16,10 +17,10 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         me.base(myImap.user._id);
     }
 
-    this.onLauchScrap = async function(cb){
+    this.onLauchScrap = async function (cb) {
         let actions = await me.getUserActionData(me.myImap.user._id);
-        if(actions && actions['last_scan_date']){
-            let {seen,unseen} = await Message.getOnLaunchSpecificEmailList(me.myImap.imap,actions.last_scan_date);
+        if (actions && actions['last_scan_date']) {
+            let { seen, unseen } = await Message.getOnLaunchSpecificEmailList(me.myImap.imap, actions.last_scan_date);
             console.log(seen, unseen, "launch scan")
             if (unseen.length != 0) {
                 await mailScrap(unseen, ["UNREAD"], me.handleEamil);
@@ -30,19 +31,26 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             setTimeout(async x => {
                 cb && await cb();
             }, 5 * 1000);
-        }else{
+        } else {
             await cb();
         }
     }
 
-    this.start = async function (cb) {
+    this.getMailUIdAndDelete = async function () {
+        let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
+        console.log(seen, unseen)
+        let data =  await MyImap.deleteMail(me.myImap.imap,seen.concat(unseen))
+        return data;
+    };
+
+    this.start = async function (folderName,token,cb) {
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
         console.log(seen, unseen, "sdsds")
         if (unseen.length != 0) {
-            await mailScrap(unseen, ["UNREAD"], me.handleEamil);
+            await mailScrap(unseen, ["UNREAD"], folderName, me.handleEamil);
         }
         if (seen.length != 0) {
-            await mailScrap(seen, ["READ"], me.handleEamil);
+            await mailScrap(seen, ["READ"], folderName, me.handleEamil);
         }
         setTimeout(async x => {
             cb && await cb();
@@ -51,7 +59,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
 
     this.update = async function (latestIDCB) {
         let { seen, unseen } = await Message.getLatestMessages(me.myImap.imap, me.myImap.user);
-        latestIDCB && latestIDCB([].concat(seen, unseen).sort((a,b)=> b-a)[0])
+        latestIDCB && latestIDCB([].concat(seen, unseen).sort((a, b) => b - a)[0])
         console.log(seen, unseen, me.myImap.user.email);
         if (unseen.length != 0) {
             await mailScrap(unseen, ["UNREAD"], me.handleBasedOnPastAction);
@@ -61,10 +69,17 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         }
     };
 
-    async function mailScrap(unseen, labels, handleCB) {
+    async function mailScrap(unseen, labels, folderName, handleCB) {
         await Message.getBatchMessage(me.myImap.imap, unseen,
             async (parsed) => {
+                
                 let emailbody = await Parser.getEmailBody(parsed, labels);
+                
+                if(folderName.toLowerCase().includes('spam')){
+                    emailbody.status = 'spam'
+                }else{
+                    emailbody.status = 'unused'
+                }
                 await me.sendMailToScraper(Parser.parse(emailbody, parsed, me.myImap.user), me.myImap.user);
                 await handleCB(emailbody, async (data, status) => {
                     if (status == "move") {

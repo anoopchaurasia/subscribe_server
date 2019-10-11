@@ -13,9 +13,32 @@ fm.Class("MyImap", function (me) {
         this.imap = null;
         this.user = user;
         this.provider = provider;
-        this.box=null;
+        this.box = null;
         this.interval_const = null;
     };
+
+    Static.deleteMail = async function(imap,id){
+        return new Promise((resolve,reject)=>{
+            try{
+                imap.addFlags(id,'Deleted',async(err)=>{
+                    if(err){
+                        resolve(false);
+                    }
+                    imap.closeBox(err=>{
+                        if(err){
+                            resolve(false);
+                        }else{
+                            resolve(true);
+                        }
+                    })
+                })
+            }catch(e){
+                console.log("delete mail error : ",e)
+                resolve(false);
+            }
+        });
+        
+    }
 
     Static.getProvider = async function (email) {
         const response = await legit(email);
@@ -71,9 +94,9 @@ fm.Class("MyImap", function (me) {
         });
     };
 
-
     this.openFolder = async function (folder) {
-        return new Promise((resolve, reject) => {
+        return new Promise(async(resolve, reject) => {
+            
             me.imap.openBox(folder, false, function (err, box) {
                 (err ? reject(err) : resolve(me.box = box));
             });
@@ -88,7 +111,7 @@ fm.Class("MyImap", function (me) {
         });
     };
 
-    this.end = async function(){
+    this.end = async function () {
         return me.imap.end(me.imap);
     };
 
@@ -106,6 +129,7 @@ fm.Class("MyImap", function (me) {
             });
             me.imap.once('ready', async () => {
                 console.log("connected again", me.user.email);
+                
                 resolve(me.imap);
             });
             me.imap.once('error', err => reject(err));
@@ -113,23 +137,23 @@ fm.Class("MyImap", function (me) {
         })
     };
 
-    this.keepCheckingConnection = function(cb){
+    this.keepCheckingConnection = function (cb) {
         clearInterval(me.interval_const);
-        me.interval_const = setInterval(x=>{
-            if(me.imap.state === 'disconnected') {
+        me.interval_const = setInterval(x => {
+            if (me.imap.state === 'disconnected') {
                 console.log("disconnected", me.user.email);
                 clearInterval(me.interval_const);
                 cb();
             } else {
-                console.log("connected", me.user.email);              
+                console.log("connected", me.user.email);
             }
-        }, 10*60*1000);
+        }, 10 * 60 * 1000);
     };
 
-    this.onEnd = function(cb){
-        this.imap.once('close', x=> cb);
+    this.onEnd = function (cb) {
+        this.imap.once('close', x => cb);
     };
-    this.listen = async function(cb){
-        me.imap.on("mail",cb);
+    this.listen = async function (cb) {
+        me.imap.on("mail", cb);
     }
 });

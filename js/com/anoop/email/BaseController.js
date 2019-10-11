@@ -10,6 +10,7 @@ fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
 var ObjectId = require('mongoose').Types.ObjectId;
 const jwt = require('jsonwebtoken');
+var legit = require('legit');
 require('dotenv').config()
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, RedisDB, BaseRedisData) {
     'use strict';
@@ -17,11 +18,40 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         me = _me;
     };
 
-    Static.isEmailExist = async function(emailId){
-        let emailExistResult = await User.find({email:emailId});
-        if(emailExistResult){
+    Static.getProviderInfo = async function (email) {
+        let domainName = email.split('@')[1];
+        let providerInfo = await Provider.get({ "domain_name": domainName });
+        if (providerInfo) {
+            return providerInfo
+        }
+        try{
+            var legitRes = await legit(email);
+        }catch(e){
+            return false
+        }
+        if (!legitRes.isValid) {
+            return false
+        }
+        let mxr = legitRes.mxArray[0].exchange;
+        providerInfo = {
+            provider : "",
+            login_url : "",
+            two_step_url : "",
+            imap_enable_url : "",
+            imap_host : mxr,
+            port : 993,
+            explain_url : "",
+            video_url : null,
+            login_js : null
+        }
+        return providerInfo
+    }
+
+    Static.isEmailExist = async function (emailId) {
+        let emailExistResult = await User.find({ email: emailId });
+        if (emailExistResult) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -163,7 +193,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await Token.create(user);
     }
 
-    Static.createTokenWeb = async function(user,ipaddress){
+    Static.createTokenWeb = async function (user, ipaddress) {
         let token = await me.generateJWTToken({ user_id: user._id, email: user.email });
         let refreshTokenInsertedOrUpdated = await Token.findOneAndUpdate(
             { user_id: user._id },
@@ -171,11 +201,11 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
                 refresh_token: token.refreshToken,
                 user_id: user._id,
                 last_used_at: new Date(),
-                ipaddress: ipaddress
+                ipaddress: ipaddress || ''
             });
         return {
-            token:token,
-            user:user
+            token: token,
+            user: user
         }
     }
 
@@ -184,7 +214,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return {
             "accessToken": jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: '5hr' }),
             "refreshToken": jwt.sign(user, process.env.JWT_REFRESH_TOKEN_SECRET, { expiresIn: '720hr' }),
-            "accessTokenExpireTime":fiveHoursLater
+            "accessTokenExpireTime": fiveHoursLater
         }
     }
 

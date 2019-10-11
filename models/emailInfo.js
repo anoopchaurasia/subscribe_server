@@ -35,6 +35,9 @@ var emailInfo = new Schema({
     date:{
         type:Date
     },
+    size:{
+        type:Number
+    },
     from_email_id: { type: Schema.Types.ObjectId, ref: 'EmailDetail', index: true },
    });
 
