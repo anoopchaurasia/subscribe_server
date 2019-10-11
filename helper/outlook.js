@@ -125,7 +125,7 @@ class Outlook {
             "user_id": user._id,
             "created_at": new Date()
         };
-        console.log(tokedata);
+        // console.log(tokedata);
         await auth_token.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
             console.log(err);
         });
