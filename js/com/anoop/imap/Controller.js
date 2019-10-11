@@ -94,14 +94,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await closeImap(myImap);
     };
 
-
     Static.automaticInboxToTrash = async function (user_id, email_id) {
         let myImap = await openFolder({ user_id }, "INBOX");
         let email_id_arr = [email_id];
         await Label.moveInboxToTrash(myImap, email_id_arr);
         await closeImap(myImap);
     };
-
 
     ///------------------------------------- from keep ---------------------///
 
@@ -183,6 +181,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.inboxToTrashBySender = async function (token, sender_email) {
         let emailinfos = await commonBySender(token, sender_email, "trash");
+        console.log("coming");
+        
         await Emailinfo.bulkInsert(emailinfos);
     }
 
@@ -274,6 +274,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, provider.provider);
         await myImap.connect(provider);
         let names = await myImap.getLabels();
+        console.log(names)
         if (!names.includes("Unsubscribed Emails")) {
             await Label.create(myImap, "Unsubscribed Emails");
         }

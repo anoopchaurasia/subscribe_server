@@ -21,6 +21,7 @@ fm.Class('BaseScraper', function (me, BaseController) {
     }
 
     this.handleEamil = async function (data, automatic) {
+
         let { emaildetail, emaildetailraw } = await me.handleBasedOnPastAction(data, automatic);
         if(!emaildetailraw){
             return
@@ -37,7 +38,6 @@ fm.Class('BaseScraper', function (me, BaseController) {
             data['source'] = "count";
             return await me.inboxToUnused(data, "");
         }
-        // console.log(data)
         let url = await getUrlFromEmail(data.payload);
         if (url) {
             return await me.inboxToUnused(data, url);
@@ -79,6 +79,10 @@ fm.Class('BaseScraper', function (me, BaseController) {
     this.notifyListner = async function (user_id) {
         await BaseController.notifyListner(user_id);
     };
+
+    this.updateEmailInfoForOutlook  = async function(element_id, new_email_id){
+        await BaseController.updateEmailInfoForOutlook(element_id, new_email_id);
+    }
 
     async function getUrlFromEmail(body) {
         let url = null;
