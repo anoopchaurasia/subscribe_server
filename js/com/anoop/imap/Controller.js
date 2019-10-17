@@ -44,7 +44,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.unusedToTrash = async function (token, from_email) {
         await updateMyDetail(token.user_id, from_email, 'trash')
         let myImap = await openFolder(token, "INBOX");
-        console.log('executed 1')
         await Label.moveInboxToTrash(myImap, from_email);
         me.updateUserByActionKey(token.user_id, { "last_trash_date": new Date() });
         await closeImap(myImap);
@@ -264,7 +263,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, provider.provider);
         await myImap.connect(provider);
         let names = await myImap.getLabels();
-        console.log(names)
         if (!names.includes("Unsubscribed Emails")) {
             await Label.create(myImap, "Unsubscribed Emails");
         }

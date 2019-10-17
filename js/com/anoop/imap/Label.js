@@ -3,13 +3,11 @@ fm.Class("Label>.Message", function (me) {
     this.setMe = _me => me = _me;
 
     Static.moveInboxToTrashAuto = async function (myImap, ids) {
-        // console.log(myImap.user,ids)
         return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
     };
 
     Static.moveInboxToUnsubAuto = async function (myImap, ids) {
         try {
-            // console.log(ids)
             return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
         } catch (e) {
             await me.create(myImap);
@@ -20,9 +18,6 @@ fm.Class("Label>.Message", function (me) {
     ///---------------from inbox ------------
     Static.moveInboxToTrash = async function (myImap, from_email) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
-        console.log(ids)
-        console.log('-----------------------------------------------------------');
-        console.log(myImap.user.trash_label)
         
         if (ids.length!=0) {
             return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);

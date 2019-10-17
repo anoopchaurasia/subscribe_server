@@ -102,7 +102,6 @@ fm.Class('BaseScraper', function (me, BaseController) {
                     anchortext.indexOf("do not wish to receive our mails") != -1 ||
                     anchortext.indexOf("not receiving our emails") != -1) {
                     url = $(this).attr().href;
-                    console.log(url, "1")
                     return url;
                 } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
                     anchorParentText.indexOf("stop receiving emails") != -1 ||
@@ -114,7 +113,6 @@ fm.Class('BaseScraper', function (me, BaseController) {
                     ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
                     anchorParentText.indexOf("Don't want this") != -1) {
                     url = $(this).attr().href;
-                    console.log(url, "2")
                     return url;
                 }
             })

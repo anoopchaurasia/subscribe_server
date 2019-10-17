@@ -134,7 +134,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
             await me.updateNewUserInfoOutlook(userInfo, state);
         }
         await OutlookHandler.extract_token(user, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
-            console.log(err);
+            console.error(err.message, err.stack,'createAndStoreToken');
         });
 
         await Label.subscribeToNotification(token.token.access_token, user._id);
@@ -161,7 +161,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
                 let instance = await Outlook.getOutlookInstanceForUser(user);
                 let scraper = new Scraper.new(instance);
                 await scraper.getWebhookMail(accessToken, link, user_id).catch(err => {
-                    console.log(err);
+                    console.error(err.message,err.stack,'getNotificationEmailData');
                 });
             }
         });
@@ -170,10 +170,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
 
     Static.extractEmail = async function (user_id) {
         let accessToken = await Outlook.getAccessToken(user_id);
-        console.log("11")
         await me.scanStarted(user_id);
         let user = await me.getUserById(user_id);
-        console.log(user_id)
         let instance = await Outlook.getOutlookInstanceForUser(user);
         let scraper = new Scraper.new(instance);
         await scraper.scrapEmail(accessToken, user_id);

@@ -30,7 +30,6 @@ fm.Class("Parser>.Message", function (me, Header) {
 
 
     Static.parse = function (body,parse, user) {
-        // console.log(parse.date)
         return {
             html: body.payload,
             date: new Date(parse.date).toString(),

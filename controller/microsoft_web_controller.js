@@ -130,7 +130,7 @@ router.post('/setPrimaryEmail',jwtTokenVerify, async (req, res) => {
             })
         }
     } catch (error) {
-        console.log("here", error)
+        console.error(error.message, error.stack, 'setPrimaryEmail')
         res.send({ "status": 401, "data": error })
     }
 });
@@ -222,7 +222,7 @@ async function jwtTokenVerify(req, res, next) {
     }
     jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET, (err, data) => {
         if (err) {
-            console.log(err);
+            console.error(err.message,err.stack, 'jwtTokenVerify function error')
             res.status(401).json({
                 error: true,
                 msg: "unauthorised user"

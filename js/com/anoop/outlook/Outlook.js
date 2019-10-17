@@ -48,7 +48,7 @@ fm.Class("Outlook", function(me){
             redirect_uri: process.env.REDIRECT_URI,
             scope: process.env.APP_SCOPES
         }).catch(err => {
-            console.log(err);
+            console.error(err.message, err.stack, 'getToken');
             return
         });
         const token = await oauth2.accessToken.create(result);

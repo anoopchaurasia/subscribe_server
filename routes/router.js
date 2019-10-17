@@ -21,7 +21,6 @@ router.use('/webapp/imap', require('../controller/imap_web_controller'));
 router.use('/webapp/auth/imap',jwtTokenVerify, require('../controller/imap_web_controller_with_auth'));
 
 async function authenticate(req, res, next) {
-    // console.log(req.headers['x-app-version'])
     let doc = await token_model.findOne({ "token": req.body.authID }).catch(err => {
         console.error(err.message);
     });
@@ -33,7 +32,6 @@ async function authenticate(req, res, next) {
 };
 
 async function jwtTokenVerify(req, res, next) {
-    console.log(req.headers)
     let token = req.headers["x-auth-token"] || req.headers['authorization'];
     if(token.startsWith('Bearer ')){
         token = token.split(' ')[1];
@@ -43,13 +41,12 @@ async function jwtTokenVerify(req, res, next) {
     }
     jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET, (err, data) => {
         if (err) {
-            console.log(err);
+            console.error(err.message,err.stack,'jwtTokenVerify');
             res.status(401).json({
                 error: true,
                 msg: "unauthorised user"
             });
         } else {
-            console.log(data);
             req.token = data;
         }
         next();

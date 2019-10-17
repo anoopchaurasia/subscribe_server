@@ -116,7 +116,7 @@ router.post('/getMailInfo', async (req, res) => {
             })
         }
     } catch (error) {
-        console.log("here", error)
+        console.error(error.message,error.stack, "getMailInfo api")
         res.send({ "status": 401, "data": error })
     }
 });
@@ -205,31 +205,24 @@ router.post('/disconnectGdprAccount', async (req, res) => {
         let authoTokon = await AuthTokenModel.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete1");
         });
-        console.log(authoTokon)
         let fcmtoken = await fcmToken.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete2");
         });
-        console.log(fcmtoken)
         let emailDetails = await emailDetailsModel.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete3");
         });
-        console.log(emailDetails)
         let emailInfo = await emailInformationModel.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete4");
         });
-        console.log(emailInfo)
         let token = await token_model.remove({ "user_id": doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete5");
         });
-        console.log(token)
         let device = await DeviceInfo.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete6");
         });
-        console.log(device)
         let user = await UserModel.remove({ _id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete6");
         });
-        console.log(user)
         res.status(200).send({
             message: "success"
         });
@@ -266,7 +259,7 @@ router.post('/saveProfileInfo', async (req, res) => {
             })
         }
     } catch (error) {
-        console.log("here", error)
+        console.error(error.message, error.stack,'saveProfileInfo')
         res.send({ "status": 401, "data": error })
     }
 });
@@ -367,7 +360,7 @@ router.post('/trashZohoMail', async (req, res) => {
             data: "move"
         })
     } catch (error) {
-        console.log(error)
+        console.error(error.message, error.stack,'trashZohoMail')
         res.status(401).json({
             error: error,
             data: null
@@ -398,7 +391,7 @@ router.post('/unsubscribeZohoMail', async (req, res) => {
             data: "move"
         })
     } catch (error) {
-        console.log(error)
+        console.error(error.message, error.stack,'unsubscribeZohoMail')
         res.status(401).json({
             error: error,
             data: null
@@ -415,7 +408,7 @@ router.post('/revertUnsubscribeZohoMail', async (req, res) => {
             data: "unsubtokeep"
         })
     } catch (error) {
-        console.log(error)
+        console.error(error.message, error.stack,'revertUnsubscribeZohoMail')
         res.status(401).json({
             error: error,
             data: null
@@ -433,7 +426,7 @@ router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
         })
 
     } catch (error) {
-        console.log(error)
+        console.error(error.message, error.stack,'leftUnsubToTrashZohoMail')
         res.status(401).json({
             error: error,
             data: null
@@ -450,7 +443,7 @@ router.post('/leftInboxToTrashZohoMail', async (req, res) => {
             data: "trashtoinbox"
         })
     } catch (error) {
-        console.log(error)
+        console.error(error.message, error.stack,'leftInboxToTrashZohoMail')
         res.status(401).json({
             error: error,
             data: null
@@ -464,10 +457,8 @@ router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
         let sender_email = req.body.sender_email;
         let array = sender_email.split(",") || sender_email.split(";");
         array.forEach(async element => {
-            console.log(element)
             element = element.trim();
             let validate = await EmailValidate.validate(element);
-            console.log("is valid", validate)
             if (validate) {
                 await Controller.manualUnusedToUnsub(doc, element);
             }
@@ -488,10 +479,8 @@ router.post('/imapManualTrashEmailFromUser', async (req, res) => {
         let sender_email = req.body.sender_email;
         let array = sender_email.split(",") || sender_email.split(";");
         array.forEach(async element => {
-            console.log(element)
             element = element.trim();
             let validate = await EmailValidate.validate(element);
-            console.log("is valid", validate)
             if (validate) {
                 await Controller.manualUnusedToTrash(doc, element);
             }
@@ -516,7 +505,7 @@ router.post('/revertTrashZohoMail', async (req, res) => {
             data: "trashtoinbox"
         })
     } catch (error) {
-        console.log(error)
+        console.error(error.message, error.stack, 'revertTrashZohoMail')
         res.status(401).json({
             error: error,
             data: null
@@ -533,7 +522,7 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
             data: "trashtoinbox"
         })
     } catch (error) {
-        console.log(error)
+        console.error(error.message, error.stack, 'revertInboxToUnsubscribeImapZohoMail')
         res.status(401).json({
             error: error,
             data: null

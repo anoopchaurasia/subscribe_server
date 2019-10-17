@@ -33,7 +33,7 @@ fm.Class("MyImap", function (me) {
                     })
                 })
             }catch(e){
-                console.log("delete mail error : ",e)
+                console.error(e.message, e.stack,"delete mail error")
                 resolve(false);
             }
         });
