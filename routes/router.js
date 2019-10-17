@@ -18,7 +18,7 @@ router.use('/microsoft', require('../controller/microsoft_auth'));
 router.use('/imap', require('../controller/imap_controller'));
 router.use('/auth/imap', require('../controller/imap_controller_with_auth'));
 router.use('/webapp/imap', require('../controller/imap_web_controller'));
-router.use('/auth/webapp/imap',jwtTokenVerify, require('../controller/imap_web_controller_with_auth'));
+router.use('/webapp/auth/imap',jwtTokenVerify, require('../controller/imap_web_controller_with_auth'));
 
 async function authenticate(req, res, next) {
     // console.log(req.headers['x-app-version'])

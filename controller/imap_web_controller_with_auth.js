@@ -1,36 +1,19 @@
 'use strict'
 const express = require('express');
 const router = express.Router();
-const simpleParser = require('mailparser').simpleParser;
-const Imap = require('imap');
 const DeviceInfo = require('../models/deviceoInfo');
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
-const userAppLog = require('../models/userAppLog');
 const UserModel = require('../models/user');
 const token_model = require('../models/tokeno');
-const providerModel = require('../models/provider');
 const AuthTokenModel = require('../models/authoToken');
 const fcmToken = require('../models/fcmoToken');
 const emailDetailsModel = require('../models/emailDetails');
 const emailInformationModel = require('../models/emailInfo');
-const unlistedProviderModel = require('../models/unlistedProvider');
-const loginAnalyticModel = require('../models/loginAnalytic');
-const cheerio = require('cheerio');
-const jwt = require('jsonwebtoken');
-const uniqid = require('uniqid');
-var crypto = require('crypto');
-var randomstring = require("randomstring");
-var dns = require('dns');
-var legit = require('legit');
-var Raven = require('raven');
+
 const app = express();
 const cookieParser = require('cookie-parser');
-
 app.use(cookieParser());
-
-
-const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 fm.Include("com.anoop.email.Email");
@@ -40,7 +23,7 @@ let EmailValidate = com.anoop.email.Email;
 router.post('/readZohoMail', async (req, res) => {
     try {
         const doc = req.token;
-        Controller.extractEmail(doc).catch(err => {
+        Controller.extractEmail(doc,"INBOX").catch(err => {
             console.error(err.message, err.stack);
             Controller.scanFinished(doc.user_id);
         });
@@ -218,10 +201,7 @@ router.post('/getEmailSubscription', async (req, res) => {
 
 router.post('/disconnectGdprAccount', async (req, res) => {
     try {
-        let auth_id = req.body.authID;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.error(err.message, err.stack, "28");
-        });
+        const doc = req.token;
         let authoTokon = await AuthTokenModel.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete1");
         });
@@ -246,7 +226,7 @@ router.post('/disconnectGdprAccount', async (req, res) => {
             console.error(err.message, err.stack, "delete6");
         });
         console.log(device)
-        let user = await userModel.remove({ _id: doc.user_id }).catch(err => {
+        let user = await UserModel.remove({ _id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete6");
         });
         console.log(user)
