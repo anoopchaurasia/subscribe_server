@@ -280,7 +280,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
         myImap.imap.end(myImap.imap);
-        let token = "";
+        let token;
         if(clientAccessMode == 'web'){
             token = await me.createTokenWeb(user,ipaddress);
         }else{
@@ -291,41 +291,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         setTimeout(async x => {
             await me.reactivateUser(user._id);
         }, 1000);
+        console.log("token ==>",token)
         return token;
     }
-
-    // Static.loginWeb = async function (email, password, provider, ipaddress) {
-    //     let PASSWORD = MyImap.encryptPassword(password);
-    //     let myImap = await MyImap.new({
-    //         email,
-    //         password: PASSWORD
-    //     }, provider.provider);
-    //     await myImap.connect(provider);
-    //     let names = await myImap.getLabels();
-    //     console.log(names)
-    //     if (!names.includes("Unsubscribed Emails")) {
-    //         await Label.create(myImap, "Unsubscribed Emails");
-    //     }
-    //     let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
-    //     let trash_label = labels;
-    //     let user = await me.getUserByEmail(email);
-    //     if (!user) {
-    //         user = await me.createUser(email, PASSWORD, trash_label);
-    //     }
-    //     if (provider.provider.includes("inbox.lv")) {
-    //         await me.updateUser(email, "INBOX/Unsubscribed Emails", trash_label, PASSWORD);
-    //     } else {
-    //         await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
-    //     }
-    //     myImap.imap.end(myImap.imap);
-    //     let token = await me.createTokenWeb(user,ipaddress);
-    //     await me.notifyListner(user._id);
-    //     // delay as active status require to setup listner so that it do not set multi listener for same user
-    //     setTimeout(async x => {
-    //         await me.reactivateUser(user._id);
-    //     }, 1000);
-    //     return token;
-
-    // }
-
 });

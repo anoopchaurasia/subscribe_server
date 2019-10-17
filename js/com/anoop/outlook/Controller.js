@@ -141,6 +141,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         return await me.createToken(user);
     }
 
+    Static.createToken = async function(user,ipaddress){
+        return await me.createTokenWeb(user,ipaddress);
+    }
+
     Static.setPrimaryEmail = async function (user_id, email, ipaddress) {
         await me.updateUserById({ "_id": user_id }, { $set: { primary_email: email, ipaddress } });
     }
