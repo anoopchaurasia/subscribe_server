@@ -76,6 +76,16 @@ class GetEmailQuery {
     }
 
 
+    static async getAllMailBasedOnMultipleSender(user_id, from_email) {
+        let mails = await email.find({ "from_email": {$in: from_email}, "user_id": user_id }).catch(err => { console.error(err.message, err.stack, "3eq"); });
+        mails = mails.map(mail=>{return mail._id});
+        let mailList;
+        if (mails) {
+            mailList = await emailInformation.find({ "from_email_id": {$in:mails} }).catch(err => { console.error(err.message, err.stack, "4eq"); });
+        }
+        return mailList;
+    }
+
 
     /*
         This function will return all unread subscription Information.

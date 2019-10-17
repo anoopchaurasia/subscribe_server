@@ -234,6 +234,20 @@ router.post('/getMailListForSender', async (req, res) => {
     }
 });
 
+router.post('/getMailListForMultipleSender', async (req, res) => {
+    try {
+        const doc = req.token;
+        const emailinfos = await GetEmailQuery.getAllMailBasedOnMultipleSender(doc.user_id, req.body.from_email);
+        res.status(200).json({
+            error: false,
+            data: emailinfos
+        })
+    } catch (err) {
+        res.sendStatus(400);
+        console.error(err.message, err.stack, "7");
+    }
+});
+
 /*
 This Api for Getting all Mail Subscri for Home screen for App.
 This will get Filter subcription(new subscription only), unread Mail Info and total Count
