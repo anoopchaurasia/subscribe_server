@@ -98,6 +98,44 @@ router.post('/onLaunchScrapEmail', async (req, res) => {
     return;
 });
 
+router.post('/validCredentialCheck', async (req, res) => {
+    try {
+        const doc = req.token;
+        let response = await Controller.validCredentialCheck(doc).catch(err => {
+            if (err.message.includes("Invalid credentials")) {
+                console.error(err.message, "got error here");
+                return res.status(400).json({
+                    error: true,
+                    data: "Invalid Credential"
+                });
+            }else{
+                console.error(err.message, "got error here");
+                return res.status(400).json({
+                    error: true,
+                    data: "Invalid Credential"
+                });
+            }
+        });
+        if (response == true) {
+            console.log("success");
+            return res.status(200).json({
+                error: false,
+                data: "scrape"
+            });
+        } else if (response == false){
+            console.log("reject");
+            return res.status(401).json({
+                error: false,
+                data: "scrscrap errorape"
+            });
+        }
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+    return;
+});
+
 router.post('/getMailInfo', async (req, res) => {
     try {
         const doc = req.token;

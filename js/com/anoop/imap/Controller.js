@@ -36,6 +36,18 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     // }
     ///------------------------------------- from unused ---------------------///
 
+    Static.validCredentialCheck = async function (token){
+        await me.scanStarted(token.user_id);
+        let myImap = await openFolder(token, "INBOX");
+        if(myImap){
+            myImap.imap.end(myImap.imap);
+            return true
+        }else{
+            myImap.imap.end(myImap.imap);
+            return false
+        }
+    }
+
     Static.unusedToKeep = async function (token, from_email) {
         await updateMyDetail(token.user_id, from_email, 'keep');
         me.updateUserByActionKey(token.user_id, { "last_keep_date": new Date() });
