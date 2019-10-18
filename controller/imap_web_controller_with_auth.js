@@ -131,7 +131,10 @@ router.post('/validCredentialCheck', async (req, res) => {
         }
     } catch (ex) {
         console.error(ex.message, ex.stack, "6");
-        res.sendStatus(400);
+        return res.status(400).json({
+            error: true,
+            data: "Invalid Credential"
+        });
     }
     return;
 });

@@ -41,6 +41,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let myImap = await openFolder(token, "INBOX");
         if(myImap){
             myImap.imap.end(myImap.imap);
+            await me.scanFinished(token.user_id);
             return true
         }else{
             myImap.imap.end(myImap.imap);

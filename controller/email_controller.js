@@ -261,6 +261,7 @@ router.post('/readMailInfo', async (req, res) => {
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
         let finished = false;
         let is_finished = await BaseController.isScanFinished(doc.user_id);
+        console.log(is_finished)
         if (is_finished && is_finished == "true") {
             console.log("is_finished here-> ", is_finished);
             finished = true;
