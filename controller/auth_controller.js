@@ -104,7 +104,7 @@ function verifyRefreshToken(req, res, next) {
     }
     jwt.verify(token, process.env.JWT_REFRESH_TOKEN_SECRET, (err, data) => {
         if (err) {
-            console.log(err);
+            console.error(err.message,err.stack,'verifyRefreshToken auth_controller');
             res.status(401).json({
                 error: true,
                 msg: "unauthorised token"

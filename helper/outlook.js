@@ -28,7 +28,7 @@ class Outlook {
 
     static async updateUserInfo(oldvalue, newvalue) {
         return await users.findOneAndUpdate(oldvalue, newvalue, { upsert: true }).catch(err => {
-            console.error(err);
+            console.error(err.message,err.stack,'updateUserInfo method');
         });
     }
 
@@ -44,7 +44,7 @@ class Outlook {
         }
         Request(settings, async (error, response, body) => {
             if (error) {
-                console.log(error);
+                console.error(error.message,error.stack,'1.createFolderOutlook method');
             }
             if (body) {
                 const res = JSON.parse(body);
@@ -60,8 +60,8 @@ class Outlook {
                     var upsert = {
                         upsert: true
                     };
-                    await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                        console.log(err);
+                    await auth_token.updateOne(oldvalue, newvalues, upsert).catch(error => {
+                        console.error(error.message,error.stack,'2.createFolderOutlook method');
                     });
                     return res.id;
                 }
@@ -78,8 +78,8 @@ class Outlook {
             $set: {
                 "label_id": folder_id
             }
-        }, { upsert: true }).catch(err => {
-            console.log(err);
+        }, { upsert: true }).catch(error => {
+            console.error(error.message,error.stack,'updateAuthToken method');
         });
     }
 
@@ -95,7 +95,7 @@ class Outlook {
                 let authToken = {};
                 if (refresh_token) {
                     const newToken = await oauth2.accessToken.create({ refresh_token: refresh_token }).refresh().catch(async err => {
-                        console.error(err.message, "outlook");
+                        console.error(err.message, err.stack,"1.check_Token_info");
                         await Outlook.updateUserInfo({ _id: user_id, inactive_at: null }, { $set: { inactive_at: new Date() }});
                     });;
                     authToken.access_token = newToken.token.access_token;
@@ -104,8 +104,8 @@ class Outlook {
                         "access_token": newToken.token.access_token,
                         "expiry_date": new Date(newToken.token.expires_at)
                     };
-                    let tokens = await auth_token.findOneAndUpdate({ "user_id": user_id }, { $set: obj }, { upsert: true }).catch(err => {
-                        console.log(err);
+                    let tokens = await auth_token.findOneAndUpdate({ "user_id": user_id }, { $set: obj }, { upsert: true }).catch(error => {
+                        console.error(error.message,error.stack,'2.check_Token_info');
                     });
                     accessToken = newToken.token.access_token;
                     return accessToken;
@@ -125,9 +125,8 @@ class Outlook {
             "user_id": user._id,
             "created_at": new Date()
         };
-        console.log(tokedata);
-        await auth_token.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(err => {
-            console.log(err);
+        await auth_token.findOneAndUpdate({ "user_id": user._id }, tokedata, { upsert: true }).catch(error => {
+            console.error(error.message,error.stack,'extract_token method');
         });
     }
 
