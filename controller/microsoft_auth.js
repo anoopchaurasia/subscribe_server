@@ -41,7 +41,6 @@ router.get('/auth/callback', async function (req, res) {
 });
 
 router.get('/getPushNotification', async function (req, res) {
-    console.log("came here for url")
 });
 
 
@@ -116,7 +115,7 @@ router.post('/setPrimaryEmail', async (req, res) => {
             })
         }
     } catch (error) {
-        console.log("here", error)
+        console.error(e.message,e.stack,'setPrimaryEmail microsoft');
         res.send({ "status": 401, "data": error })
     }
 });

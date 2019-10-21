@@ -22,14 +22,12 @@ app.use(bodyParser.json());
   
 app.use('/api/v2/mail', require('./routes/router'));
 app.get('/api/v2/setToken', function (req, res) {
-    console.log(req)
 })
 
 
 
 
 app.get('/', function (req, res) {
-    console.log(req)
     res.send("welcome!!!!!!!!");
 })
 

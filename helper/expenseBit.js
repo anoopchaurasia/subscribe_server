@@ -460,7 +460,6 @@ class ExpenseBit {
                     console.error(err, "66")
                 }
                 if (result) {
-                    // console.log(result);
                 }
             })
         }

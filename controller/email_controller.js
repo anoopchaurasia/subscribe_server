@@ -59,7 +59,6 @@ router.post('/senderEmailNotInEmailDetails', async (req, res) => {
     })
 });
 
-
 router.post('/getLast7daysData', async (req, res) => {
     let emailDetailsWithInfo = await BaseController.getLast7DaysData(req.body.user_id)
     res.json({
@@ -226,6 +225,7 @@ router.post('/getMailListForSender', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(doc.user_id, req.body.from_email);
         res.status(200).json({
             error: false,
+            status:200,
             data: emailinfos
         })
     } catch (err) {
@@ -240,6 +240,7 @@ router.post('/getMailListForMultipleSender', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllMailBasedOnMultipleSender(doc.user_id, req.body.from_email);
         res.status(200).json({
             error: false,
+            status:200,
             data: emailinfos
         })
     } catch (err) {
@@ -436,8 +437,6 @@ async function getRecentEmail(user_id, auth, nextPageToken, label, afterFinishCB
         afterFinishCB()
     }
 }
-
-
 /*
 This api for unsubscribing mail from Inbox.
 This api Currently not using Its under development.
@@ -502,8 +501,6 @@ router.post('/getDeletedEmailDataPage', async (req, res) => {
         console.error(err.message, ex.stack, "18");
     }
 });
-
-
 /*
 This api for changing keeped subscription.(when swipe right)
 this will changed changed is_keeped value in database for keped subscription
@@ -531,8 +528,6 @@ router.post('/keepMailInformation', async (req, res) => {
         res.sendStatus(400);
     }
 });
-
-
 /*
 This Api for getting only keeped subscription Information.
 */

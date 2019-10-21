@@ -94,7 +94,7 @@ router.post('/loginWithImap', async (req, res) => {
             });
         }
     } catch (error) {
-        console.log("here", error)
+        console.error(error.message,error.stack,'loginwithimap')
     }
 });
 
@@ -160,7 +160,6 @@ router.post('/saveUnlistedProviderInfo', async (req, res) => {
 });
 
 router.post('/saveAnalyticData', async (req, res) => {
-    // console.log(req.body)
     let email_id = req.body.email;
     let userUniqueId = req.body.uniqueLaunchDeviceId;
     let deviceData = await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
@@ -190,7 +189,6 @@ router.post('/saveAnalyticData', async (req, res) => {
 });
 
 router.post('/saveAnalyticDataWithStep', async (req, res) => {
-    // console.log(req.body)
     let email_id = req.body.email;
     let step_key = req.body.step_key;
     let value = {
@@ -232,7 +230,7 @@ router.post('/getTwoStepUrl', async (req, res) => {
             login_js: response.login_js
         })
     } catch (error) {
-        console.log("here", error)
+        console.error(error.message,error.stack,'getTwoStepUrl app')
         res.status(401).json({
             error: true,
             data: null
@@ -251,7 +249,7 @@ router.post('/getImapEnableUrl', async (req, res) => {
             login_js: response.login_js
         })
     } catch (error) {
-        console.log("here", error)
+        console.error(error.message,error.stack,'getImapEnableUrl')
         res.status(401).json({
             error: true,
             data: null
@@ -261,13 +259,11 @@ router.post('/getImapEnableUrl', async (req, res) => {
 
 let saveProviderInfo = async (email) => {
     try {
-        console.log(email)
         var domain = email.split('@')[1];
         let resp = await providerModel.findOne({ "domain_name": domain }).catch(err => {
             console.error(err.message, err.stack, "provider_1");
         });
         if (resp) {
-            console.log("response", resp)
             return resp;
         } else {
             const response = await legit(email);
@@ -444,7 +440,7 @@ let saveProviderInfo = async (email) => {
             }
         }
     } catch (e) {
-        console.log(e);
+        console.error(e.message,e.stack,'saveProviderInfo method');
     }
 }
 

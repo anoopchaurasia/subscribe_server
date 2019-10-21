@@ -117,13 +117,11 @@ router.post('/validCredentialCheck', async (req, res) => {
             }
         });
         if (response == true) {
-            console.log("success");
             return res.status(200).json({
                 error: false,
                 data: "scrape"
             });
         } else if (response == false){
-            console.log("reject");
             return res.status(401).json({
                 error: false,
                 data: "scrscrap errorape"

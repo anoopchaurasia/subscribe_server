@@ -207,9 +207,14 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
                 last_used_at: new Date(),
                 ipaddress: ipaddress || ''
             });
+        
         return {
             token: token,
-            user: user
+            user: {
+                email: user.email,
+                email_client: user.email_client,
+                primary_email: user.primary_email,
+            }
         }
     }
 
