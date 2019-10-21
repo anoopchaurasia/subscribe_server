@@ -72,28 +72,32 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.manualUnusedToTrash = async function (token, from_email) {
         let myImap = await openFolder(token, "INBOX");
-        await Label.moveInboxToTrash(myImap, from_email);
+        let resp = await Label.moveInboxToTrash(myImap, from_email);
         await myImap.closeFolder();
-        let data = {
-            user_id: token.user_id,
-            from_email,
-            status: "trash"
-        };
-        await me.saveManualEmailData(token.user_id, data);
+        if(resp){
+            let data = {
+                user_id: token.user_id,
+                from_email,
+                status: "trash"
+            };
+            await me.saveManualEmailData(token.user_id, data);
+        }
         me.updateUserByActionKey(token.user_id, { "last_manual_trash_date": new Date() });
         myImap.imap.end(myImap.imap);
     };
 
     Static.manualUnusedToUnsub = async function (token, from_email) {
         let myImap = await openFolder(token, "INBOX");
-        await Label.moveInboxToUnsub(myImap, from_email);
+        let resp = await Label.moveInboxToUnsub(myImap, from_email);
         await myImap.closeFolder();
-        let data = {
-            user_id: token.user_id,
-            from_email,
-            status: "move"
-        };
-        await me.saveManualEmailData(token.user_id, data);
+        if(resp){
+            let data = {
+                user_id: token.user_id,
+                from_email,
+                status: "move"
+            };
+            await me.saveManualEmailData(token.user_id, data);
+        }
         me.updateUserByActionKey(token.user_id, { "last_manual_unsub_date": new Date() });
         myImap.imap.end(myImap.imap);
     };
