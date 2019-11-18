@@ -15,6 +15,6 @@ fm.Class("SenderMail>.BaseModel", function (me) {
     }
 
     Static.findOneAndUpdate = async function (query, set) {
-        return await SenderMail.findOneAndUpdate(query, { $set: set }, { upsert: true }).exec();
+        return await SenderMail.findOneAndUpdate(query, { $set: set, $inc: { "total": 1 } }, { upsert: true }).exec();
     }
 });
