@@ -523,7 +523,7 @@ router.post('/validCredentialCheck', async (req, res) => {
                     error: true,
                     data: "Invalid Credential"
                 });
-            }else{
+            } else {
                 console.error(err.message, "got error here");
                 return res.status(400).json({
                     error: true,
@@ -537,7 +537,7 @@ router.post('/validCredentialCheck', async (req, res) => {
                 error: false,
                 data: "scrape"
             });
-        } else if (response == false){
+        } else if (response == false) {
             console.log("reject");
             return res.status(401).json({
                 error: false,
@@ -967,6 +967,98 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
             error: error,
             data: null
         })
+    }
+});
+
+/* This api will return the emails based on the size, 
+   for example: if i need emails between 1-5MB, 
+   it will return the partucular emails with seen and unseen seperated format */
+router.post('/getEmailsBySize', async (req, res) => {
+    try {
+        let smallerThan = req.body.smallerThan;
+        let largerThan = req.body.largerThan;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await Controller.extractEmailBySize(doc, 'INBOX', smallerThan, largerThan);
+        emails.unseen.sort((a, b) => {
+            return a.size > b.size ? -1 : 1;
+        })
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+/* This api will return the emails which is belongs to the input
+   payload:
+   if custom date:
+     { data:{isCustom:true, since:date, before:date}}
+   id before/after particular date:
+     { date:{isCustom:false, beforeOrAfter:"BEFORE/AFTER", date:date}}
+*/
+router.post('/getEmailsByDate', async (req, res) => {
+    try {
+        let { data } = req.body;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await Controller.extractEmailByDate(doc, 'INBOX', data);
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+/* This api will read all the emails and return by labels categorized */
+router.post('/getEmailsByLables', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await Controller.extractAllEmails(doc, 'INBOX');
+        let { seen, unseen } = emails;
+        let definedLables = {
+            "social": ['facebook', 'twitter', 'instagram'],
+            "promotion": ['promotion'],
+            "deadEnd": ['noreply', 'no-reply']
+        }
+        let fliteredByLabel = {
+            'seen': {
+                "social": [], "promotion": [], "deadEnd": []
+            },
+            'unseen': {
+                "social": [], "promotion": [], "deadEnd": []
+            }
+        }
+        seen.forEach(seenSingleData => {
+            if (definedLables.social.some(val => JSON.stringify(seenSingleData).includes(val))) {
+                fliteredByLabel.seen.social.push(seenSingleData)
+            }
+            if (definedLables.promotion.some(val => JSON.stringify(seenSingleData).includes(val))) {
+                fliteredByLabel.seen.promotion.push(seenSingleData)
+            }
+            if (definedLables.deadEnd.some(val => JSON.stringify(seenSingleData).includes(val))) {
+                fliteredByLabel.seen.deadEnd.push(seenSingleData)
+            }
+        })
+        unseen.forEach(unseenSingleData => {
+            if (definedLables.social.some(val => JSON.stringify(unseenSingleData).includes(val))) {
+                fliteredByLabel.unseen.social.push(unseenSingleData)
+            }
+            if (definedLables.promotion.some(val => JSON.stringify(unseenSingleData).includes(val))) {
+                fliteredByLabel.unseen.promotion.push(unseenSingleData)
+            }
+            if (definedLables.deadEnd.some(val => JSON.stringify(unseenSingleData).includes(val))) {
+                fliteredByLabel.unseen.deadEnd.push(unseenSingleData)
+            }
+        })
+        res.status(200).json({
+            error: false,
+            data: fliteredByLabel
+        });
+    } catch (err) {
+        console.log(err);
     }
 });
 

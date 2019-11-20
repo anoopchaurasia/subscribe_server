@@ -16,10 +16,10 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         me.base(myImap.user._id);
     }
 
-    this.onLauchScrap = async function(cb){
+    this.onLauchScrap = async function (cb) {
         let actions = await me.getUserActionData(me.myImap.user._id);
-        if(actions && actions['last_scan_date']){
-            let {seen,unseen} = await Message.getOnLaunchSpecificEmailList(me.myImap.imap,actions.last_scan_date);
+        if (actions && actions['last_scan_date']) {
+            let { seen, unseen } = await Message.getOnLaunchSpecificEmailList(me.myImap.imap, actions.last_scan_date);
             console.log(seen, unseen, "launch scan")
             if (unseen.length != 0) {
                 await mailScrap(unseen, ["UNREAD"], me.handleEamil);
@@ -30,7 +30,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             setTimeout(async x => {
                 cb && await cb();
             }, 5 * 1000);
-        }else{
+        } else {
             await cb();
         }
     }
@@ -51,7 +51,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
 
     this.update = async function (latestIDCB) {
         let { seen, unseen } = await Message.getLatestMessages(me.myImap.imap, me.myImap.user);
-        latestIDCB && latestIDCB([].concat(seen, unseen).sort((a,b)=> b-a)[0])
+        latestIDCB && latestIDCB([].concat(seen, unseen).sort((a, b) => b - a)[0])
         console.log(seen, unseen, me.myImap.user.email);
         if (unseen.length != 0) {
             await mailScrap(unseen, ["UNREAD"], me.handleBasedOnPastAction);
@@ -89,6 +89,89 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             }
         }
         return idlist;
+    }
+
+    this.size = async function (smallerThan, largerThan) {
+        let { seen, unseen } = await Message.getEmailListsBySize(me.myImap.imap, smallerThan, largerThan);
+        console.log('************************ size based emails uids ********************************')
+        console.log({ 'seen': seen.length, 'unseen': unseen.length })
+        let seenAndUnseenEmails = {
+            'unseen': [],
+            'seen': []
+        }
+        if (unseen.length != 0) {
+            let unseenEmail = await mailScrapAndReturnEmailData(unseen, ["UNREAD"]);
+            // console.log(unseenEmail);
+            // console.log('hgsdfuhgsadhfgasjdfgjhasdgfjhasdgfjhasgfjhsdgfjhsdgfsh')
+            seenAndUnseenEmails.unseen = unseenEmail
+        }
+        if (seen.length != 0) {
+            let seenEmail = await mailScrapAndReturnEmailData(seen, ["READ"]);
+            seenAndUnseenEmails.seen = seenEmail
+        }
+        return seenAndUnseenEmails;
+    }
+
+    this.byDate = async function (data) {
+        if (data.isCustom) {
+            var { seen, unseen } = await Message.getUIDByBetweenDate(me.myImap.imap, data.since, data.before);
+        }
+        else {
+            var { seen, unseen } = await Message.getUIDByBeforeOrAfterParticularDate(me.myImap.imap, data.beforeOrAfter, data.date);
+        }
+        console.log('************************ date based emails uids ********************************')
+        console.log({ 'seen': seen.length, 'unseen': unseen.length })
+        let seenAndUnseenEmails = {
+            'unseen': [],
+            'seen': []
+        }
+        if (unseen.length != 0) {
+            let unseenEmail = await mailScrapAndReturnEmailData(unseen, ["UNREAD"]);
+            // console.log(unseenEmail);
+            // console.log('hgsdfuhgsadhfgasjdfgjhasdgfjhasdgfjhasgfjhsdgfjhsdgfsh')
+            seenAndUnseenEmails.unseen = unseenEmail
+        }
+        if (seen.length != 0) {
+            let seenEmail = await mailScrapAndReturnEmailData(seen, ["READ"]);
+            seenAndUnseenEmails.seen = seenEmail
+        }
+        return seenAndUnseenEmails;
+    }
+
+    this.getAllEmails = async function () {
+        let { seen, unseen } = await Message.getAllUID(me.myImap.imap);
+        console.log('************************ all emails uids ********************************')
+        console.log({ 'seen': seen.length, 'unseen': unseen.length })
+        let seenAndUnseenEmails = {
+            'unseen': [],
+            'seen': []
+        }
+        if (unseen.length != 0) {
+            let unseenEmail = await mailScrapAndReturnEmailData(unseen, ["UNREAD"]);
+            seenAndUnseenEmails.unseen = unseenEmail
+        }
+        if (seen.length != 0) {
+            let seenEmail = await mailScrapAndReturnEmailData(seen, ["READ"]);
+            seenAndUnseenEmails.seen = seenEmail
+        }
+        return seenAndUnseenEmails;
+    }
+
+    async function mailScrapAndReturnEmailData(uids, labels) {
+        return new Promise(async (resolve, reject) => {
+            let emails = [];
+            await Message.getBatchMessageAndReturnEmail(me.myImap.imap, uids, async (parsed) => {
+                let emailbody = await Parser.getEmailBody(parsed, labels);
+                emails.push({
+                    'from_email': emailbody.from_email,
+                    'subject': emailbody.subject,
+                    'email_id': emailbody.email_id,
+                    'size': Number(emailbody.size / 1000000).toFixed(2) + "MB",
+                    'receivedDate': emailbody.header.date.split('Date: ')[1]
+                });
+            })
+            resolve(emails)
+        });
     }
 
 });

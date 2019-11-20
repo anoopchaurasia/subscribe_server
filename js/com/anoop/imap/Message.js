@@ -101,4 +101,60 @@ fm.Class("Message", function (me) {
         return parsed;
     }
 
+    Static.getEmailListsBySize = async function (imap, smallerThan, largerThan) {
+        smallerThan = smallerThan * 1000000;
+        largerThan = largerThan * 1000000;
+        return {
+            seen: await search(imap, ["SEEN", ['LARGER', largerThan], ['SMALLER', smallerThan]]),
+            unseen: await search(imap, ["UNSEEN", ['LARGER', largerThan], ['SMALLER', smallerThan]])
+
+        }
+    };
+
+    Static.getUIDByBeforeOrAfterParticularDate = async function (imap, beforeOrAfter, date) {
+        console.log(beforeOrAfter)
+        console.log(date);
+        return {
+            seen: await search(imap, ["SEEN", [beforeOrAfter, date]]),
+            unseen: await search(imap, ["UNSEEN", [beforeOrAfter, date]])
+        }
+    };
+
+    Static.getUIDByBetweenDate = async function (imap, since, before) {
+        return {
+            seen: await search(imap, ["SEEN", ['SINCE', since], ['BEFORE', before]]),
+            unseen: await search(imap, ["UNSEEN", ['SINCE', since], ['BEFORE', before]])
+        }
+    };
+
+    Static.getAllUID = async function (imap) {
+        return {
+            seen: await search(imap, ["SEEN"]),
+            unseen: await search(imap, ["UNSEEN"])
+        }
+    };
+    Static.getBatchMessageAndReturnEmail = async function (imap, message_ids, detector) {
+        return new Promise((resolve, reject) => {
+            const fetch = imap.fetch(message_ids, {
+                bodies: '',
+                struct: true
+            });
+            const msgs = [];
+            fetch.on('message', async function (msg, seqNo) {
+                console.log('before parser')
+                msgs.push(1)
+                detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
+                msgs.pop();
+                msgs.length === 0 && ended && resolve();
+
+            });
+            let ended = false;
+            fetch.on('end', async function () {
+                console.log("end")
+                ended = true;
+                msgs.length === 0 && resolve();
+            });
+        });
+    };
+
 })
