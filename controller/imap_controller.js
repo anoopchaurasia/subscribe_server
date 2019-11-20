@@ -10,6 +10,7 @@ const userAppLog = require('../models/userAppLog');
 const UserModel = require('../models/user');
 const token_model = require('../models/tokeno');
 const providerModel = require('../models/provider');
+const fcmToken = require('../models/fcmoToken');
 const unlistedProviderModel = require('../models/unlistedProvider');
 const loginAnalyticModel = require('../models/loginAnalytic');
 const cheerio = require('cheerio');
@@ -120,8 +121,12 @@ router.post('/saveOnLaunchDeviceData', async (req, res) => {
     deviceData['user_id'] = null;
     deviceData['userUniqueId'] = userUniqueId;
     deviceData['deviceIpAddress'] = { "ip": req.header('x-forwarded-for') || req.connection.remoteAddress };
-    await DeviceInfo.findOneAndUpdate({ "userUniqueId": userUniqueId }, { $set: deviceData }, { upsert: true }).catch(err => {
+    let dinfo = await DeviceInfo.findOneAndUpdate({ "userUniqueId": userUniqueId }, { $set: deviceData }, { upsert: true }).catch(err => {
         console.error(err.message, err.stack, "27");
+    });
+    let tokenInfo = { "device_id": dinfo._id, "fcm_token": req.body.fcmToken };
+    await fcmToken.findOneAndUpdate({ "device_id": dinfo._id }, tokenInfo, { upsert: true }).catch(err => {
+        console.error(err.message, err.stack, "26");
     });
     res.status(200).json({
         error: false,

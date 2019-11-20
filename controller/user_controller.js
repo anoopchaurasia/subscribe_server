@@ -15,8 +15,11 @@ This Api for storing FCM Token Into database for firebase notification.
 */
 router.post('/savefcmToken', async (req, res) => {
     let token = req.token;
-    let tokenInfo = { "user_id": token.user_id, "fcm_token": req.body.fcmToken };
-    await fcmToken.findOneAndUpdate({ "user_id": token.user_id }, tokenInfo, { upsert: true }).catch(err => {
+    let userDevice = await DeviceInfo.findOne({ "user_id": token.user_id }).catch(err => {
+        console.error(err.message, err.stack, "27");
+    });
+    let tokenInfo = { "user_id": token.user_id, "fcm_token": req.body.fcmToken,"device_id":userDevice._id };
+    await fcmToken.findOneAndUpdate({ "device_id": userDevice._id }, tokenInfo, { upsert: true }).catch(err => {
         console.error(err.message, err.stack, "26");
     });
     res.json({
