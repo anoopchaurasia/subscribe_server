@@ -91,6 +91,7 @@ fm.Class("Message", function (me) {
                         const raw = Buffer.concat(chunks).toString('utf8');
 
                         let parsed = await simpleParser(raw, { skipHtmlToText: true, skipTextToHtml: true, skipTextLinks: true, skipImageLinks: true });
+                        parsed['size'] = info.size;
                         resolve(parsed)
                     });
                 });
@@ -121,6 +122,8 @@ fm.Class("Message", function (me) {
     };
 
     Static.getUIDByBetweenDate = async function (imap, since, before) {
+        console.log(since+"   "+before);
+        console.log(await search(imap, ["SEEN", ['SINCE', since], ['BEFORE', before]]))
         return {
             seen: await search(imap, ["SEEN", ['SINCE', since], ['BEFORE', before]]),
             unseen: await search(imap, ["UNSEEN", ['SINCE', since], ['BEFORE', before]])

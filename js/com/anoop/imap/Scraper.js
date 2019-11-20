@@ -115,6 +115,8 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     this.byDate = async function (data) {
         if (data.isCustom) {
             var { seen, unseen } = await Message.getUIDByBetweenDate(me.myImap.imap, data.since, data.before);
+            console.log('----');
+            
         }
         else {
             var { seen, unseen } = await Message.getUIDByBeforeOrAfterParticularDate(me.myImap.imap, data.beforeOrAfter, data.date);
