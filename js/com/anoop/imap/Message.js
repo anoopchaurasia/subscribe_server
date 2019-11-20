@@ -113,8 +113,6 @@ fm.Class("Message", function (me) {
     };
 
     Static.getUIDByBeforeOrAfterParticularDate = async function (imap, beforeOrAfter, date) {
-        console.log(beforeOrAfter)
-        console.log(date);
         return {
             seen: await search(imap, ["SEEN", [beforeOrAfter, date]]),
             unseen: await search(imap, ["UNSEEN", [beforeOrAfter, date]])
@@ -122,7 +120,6 @@ fm.Class("Message", function (me) {
     };
 
     Static.getUIDByBetweenDate = async function (imap, since, before) {
-        console.log(since+"   "+before);
         console.log(await search(imap, ["SEEN", ['SINCE', since], ['BEFORE', before]]))
         return {
             seen: await search(imap, ["SEEN", ['SINCE', since], ['BEFORE', before]]),
