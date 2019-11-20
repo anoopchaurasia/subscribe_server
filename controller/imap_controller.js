@@ -121,9 +121,13 @@ router.post('/saveOnLaunchDeviceData', async (req, res) => {
     deviceData['user_id'] = null;
     deviceData['userUniqueId'] = userUniqueId;
     deviceData['deviceIpAddress'] = { "ip": req.header('x-forwarded-for') || req.connection.remoteAddress };
-    let dinfo = await DeviceInfo.findOneAndUpdate({ "userUniqueId": userUniqueId }, { $set: deviceData }, { upsert: true }).catch(err => {
+    await DeviceInfo.findOneAndUpdate({ "userUniqueId": userUniqueId }, { $set: deviceData }, { upsert: true }).catch(err => {
         console.error(err.message, err.stack, "27");
     });
+    let dinfo = await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
+        console.error(err.message, err.stack, "27");
+    });
+    console.log(dinfo)
     let tokenInfo = { "device_id": dinfo._id, "fcm_token": req.body.fcmToken };
     await fcmToken.findOneAndUpdate({ "device_id": dinfo._id }, tokenInfo, { upsert: true }).catch(err => {
         console.error(err.message, err.stack, "26");

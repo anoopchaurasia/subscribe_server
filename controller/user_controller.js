@@ -15,13 +15,15 @@ This Api for storing FCM Token Into database for firebase notification.
 */
 router.post('/savefcmToken', async (req, res) => {
     let token = req.token;
-    let userDevice = await DeviceInfo.findOne({ "user_id": token.user_id }).catch(err => {
-        console.error(err.message, err.stack, "27");
-    });
-    let tokenInfo = { "user_id": token.user_id, "fcm_token": req.body.fcmToken,"device_id":userDevice._id };
-    await fcmToken.findOneAndUpdate({ "device_id": userDevice._id }, tokenInfo, { upsert: true }).catch(err => {
-        console.error(err.message, err.stack, "26");
-    });
+    console.log(token)
+    // let userDevice = await DeviceInfo.findOne({ "user_id": token.user_id }).catch(err => {
+    //     console.error(err.message, err.stack, "27");
+    // });
+    // console.log(userDevice)
+    // let tokenInfo = { "user_id": token.user_id, "fcm_token": req.body.fcmToken,"device_id":userDevice._id };
+    // await fcmToken.findOneAndUpdate({ "device_id": userDevice._id }, tokenInfo, { upsert: true }).catch(err => {
+    //     console.error(err.message, err.stack, "26");
+    // });
     res.json({
         message: "success"
     });
@@ -64,6 +66,13 @@ router.post('/saveDeviceInfo', async (req, res) => {
             message: "success"
         });
     }
+    let userDevice = await DeviceInfo.findOne({ "user_id": req.token.user_id }).catch(err => {
+        console.error(err.message, err.stack, "27");
+    });
+    let tokenInfo = { "user_id": req.token.user_id,"device_id":userDevice._id };
+    await fcmToken.findOneAndUpdate({ "device_id": userDevice._id }, tokenInfo, { upsert: true }).catch(err => {
+        console.error(err.message, err.stack, "26");
+    });
 });
 
 router.post('/saveAppVersion', async (req, res) => {
