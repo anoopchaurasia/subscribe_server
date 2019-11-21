@@ -65,6 +65,12 @@ var DeviceInfoSchema = new Schema({
     devicePhone:{
         type:Number
     },
+    uniqueId:{
+        type:String
+    },
+    identifierId:{
+        type:String
+    },
     deleted_at:{
         type:Date
     },
