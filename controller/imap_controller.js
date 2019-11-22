@@ -1036,6 +1036,7 @@ router.post('/getEmailsByLables', async (req, res) => {
                 "social": [], "promotion": [], "deadEnd": []
             }
         }
+        console.log(seen)
         seen.forEach(seenSingleData => {
             if (definedLables.social.some(val => JSON.stringify(seenSingleData).includes(val))) {
                 fliteredByLabel.seen.social.push(seenSingleData)

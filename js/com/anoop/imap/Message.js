@@ -103,11 +103,13 @@ fm.Class("Message", function (me) {
     }
 
     Static.getEmailListsBySize = async function (imap, smallerThan, largerThan) {
+
+        let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
         smallerThan = smallerThan * 1000000;
         largerThan = largerThan * 1000000;
         return {
-            seen: await search(imap, ["SEEN", ['LARGER', largerThan], ['SMALLER', smallerThan]]),
-            unseen: await search(imap, ["UNSEEN", ['LARGER', largerThan], ['SMALLER', smallerThan]])
+            seen: await search(imap, ["SEEN", ['LARGER', largerThan], ['SMALLER', smallerThan],['SINCE', since]]),
+            unseen: await search(imap, ["UNSEEN", ['LARGER', largerThan], ['SMALLER', smallerThan],['SINCE', since]])
 
         }
     };
@@ -128,11 +130,14 @@ fm.Class("Message", function (me) {
     };
 
     Static.getAllUID = async function (imap) {
+        let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
         return {
-            seen: await search(imap, ["SEEN"]),
-            unseen: await search(imap, ["UNSEEN"])
+            seen: await search(imap, ["SEEN", ['SINCE', since]]),
+            unseen: await search(imap, ["UNSEEN", ['SINCE', since]])
         }
     };
+
+
     Static.getBatchMessageAndReturnEmail = async function (imap, message_ids, detector) {
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
