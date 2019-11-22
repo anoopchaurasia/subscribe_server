@@ -299,4 +299,41 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         return token;
     }
 
+    Static.extractEmailBySize = async function (token,folderName,smallerThan, largerThan) {
+        await me.scanStarted(token.user_id);
+        let myImap = await openFolder(token, folderName);
+        
+        // await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
+        let scraper = Scraper.new(myImap);
+        
+        let emails = await scraper.size(smallerThan, largerThan);
+        myImap.imap.end(myImap.imap);
+        return emails;
+    }
+
+    Static.extractEmailByDate = async function (token,folderName,data) {
+        await me.scanStarted(token.user_id);
+        let myImap = await openFolder(token, folderName);
+        
+        // await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
+        let scraper = Scraper.new(myImap);
+        
+        let emails = await scraper.byDate(data);
+        myImap.imap.end(myImap.imap);
+        return emails;
+    }
+
+    // this will return all the emails
+    Static.extractAllEmails = async function (token,folderName) {
+        await me.scanStarted(token.user_id);
+        let myImap = await openFolder(token, folderName);
+        
+        // await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
+        let scraper = Scraper.new(myImap);
+        
+        let emails = await scraper.getAllEmails();
+        myImap.imap.end(myImap.imap);
+        return emails;
+    }
+
 });
