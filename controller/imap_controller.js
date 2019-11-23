@@ -127,7 +127,6 @@ router.post('/saveOnLaunchDeviceData', async (req, res) => {
     let dinfo = await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
         console.error(err.message, err.stack, "27");
     });
-    console.log(dinfo)
     let tokenInfo = { "device_id": dinfo._id, "fcm_token": req.body.fcmToken };
     await fcmToken.findOneAndUpdate({ "device_id": dinfo._id }, tokenInfo, { upsert: true }).catch(err => {
         console.error(err.message, err.stack, "26");
