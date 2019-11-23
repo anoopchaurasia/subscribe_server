@@ -3,6 +3,10 @@ const mongo_emaildetail = require('../../../../models/emailDetails');
 fm.Class("EmailDetail>.BaseModel", function(me){
     this.setMe=_me=>me=_me;
 
+    Static.executeAggregateQuery = async function(query){
+        return await mongo_emaildetail.aggregate(query);
+    }
+
     Static.get = async function(query){
         me.updateQueryValidation(query);
         return await mongo_emaildetail.findOne(query).exec();

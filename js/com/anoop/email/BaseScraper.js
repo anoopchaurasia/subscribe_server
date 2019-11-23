@@ -21,10 +21,15 @@ fm.Class('BaseScraper', function (me, BaseController) {
     }
 
     this.handleEamil = async function (data, automatic) {
+
         let { emaildetail, emaildetailraw } = await me.handleBasedOnPastAction(data, automatic);
         if(!emaildetailraw){
             return
         }
+        if(data.from_email!=null){
+            await BaseController.createSenderMail(data.from_email,emaildetailraw.user_id);
+        }
+
         if (emaildetail) {
             return await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, "");
         }
@@ -33,7 +38,6 @@ fm.Class('BaseScraper', function (me, BaseController) {
             data['source'] = "count";
             return await me.inboxToUnused(data, "");
         }
-        // console.log(data)
         let url = await getUrlFromEmail(data.payload);
         if (url) {
             return await me.inboxToUnused(data, url);
@@ -64,6 +68,10 @@ fm.Class('BaseScraper', function (me, BaseController) {
         return { emaildetail, emaildetailraw }
     }
 
+    this.getUserActionData = async function(user_id){
+        return await BaseController.getUserActionData(user_id);
+    }
+
     this.sendMailToScraper = async function (data, user) {
         await BaseController.sendMailToScraper(data, user);
     };
@@ -71,6 +79,10 @@ fm.Class('BaseScraper', function (me, BaseController) {
     this.notifyListner = async function (user_id) {
         await BaseController.notifyListner(user_id);
     };
+
+    this.updateEmailInfoForOutlook  = async function(element_id, new_email_id){
+        await BaseController.updateEmailInfoForOutlook(element_id, new_email_id);
+    }
 
     async function getUrlFromEmail(body) {
         let url = null;
@@ -90,7 +102,7 @@ fm.Class('BaseScraper', function (me, BaseController) {
                     anchortext.indexOf("do not wish to receive our mails") != -1 ||
                     anchortext.indexOf("not receiving our emails") != -1) {
                     url = $(this).attr().href;
-                    console.log(url, "1")
+                    // console.log(url, "1")
                     return url;
                 } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
                     anchorParentText.indexOf("stop receiving emails") != -1 ||
@@ -102,7 +114,7 @@ fm.Class('BaseScraper', function (me, BaseController) {
                     ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
                     anchorParentText.indexOf("Don't want this") != -1) {
                     url = $(this).attr().href;
-                    console.log(url, "2")
+                    // console.log(url, "2")
                     return url;
                 }
             })

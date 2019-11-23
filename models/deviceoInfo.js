@@ -71,5 +71,4 @@ var DeviceInfoSchema = new Schema({
     created_at: Date
 });
 
-
 module.exports = mongoose.model('DeviceoInfo', DeviceInfoSchema);

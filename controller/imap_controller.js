@@ -6,10 +6,12 @@ const Imap = require('imap');
 const DeviceInfo = require('../models/deviceoInfo');
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
+const userAppLog = require('../models/userAppLog');
 const UserModel = require('../models/user');
 const token_model = require('../models/tokeno');
 const providerModel = require('../models/provider');
 const unlistedProviderModel = require('../models/unlistedProvider');
+const loginAnalyticModel = require('../models/loginAnalytic');
 const cheerio = require('cheerio');
 const uniqid = require('uniqid');
 var crypto = require('crypto');
@@ -18,6 +20,7 @@ var dns = require('dns');
 var legit = require('legit');
 var Raven = require('raven');
 
+
 const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
@@ -25,45 +28,59 @@ fm.Include("com.anoop.email.Email");
 let EmailValidate = com.anoop.email.Email;
 
 
+
+
+//login or signup with the credentials and generate the token and return back to user
 router.post('/loginWithImap', async (req, res) => {
     try {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
         let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile).catch(err => {
             console.error(err.message, err, "imap_connect_error", req.body.username);
             Raven.captureException(err, { tags: { email_domain: req.body.username.split("@")[1], pass_length: req.body.password.length } });
+            let attribute = {
+                "type": "error",
+                "error_message": err.message,
+                "message": "login_failed"
+            };
+            createLogForUser(req.body.username, "login", "login_page", "imap_login", attribute, "loginWithImap");
             if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
                 return res.status(403).json({
                     error: true,
                     status: 403,
-                    data: err.message
+                    data: err.message,
+                    message: "IMAP is disabled."
                 })
             } else if (err.message.includes("Invalid credentials")) {
                 return res.status(401).json({
                     error: true,
                     status: 401,
-                    data: err.message
+                    data: err.message,
+                    message: "Invalid Credentials."
                 })
             } else if (err.message.includes("Timed out")) {
                 return res.status(402).json({
                     error: true,
                     status: 402,
-                    data: err.message
+                    data: err.message,
+                    message: "Invalid Credential."
                 })
             } else if (err.message.includes("Application specific password")) {
                 return res.status(404).json({
                     error: true,
                     status: 404,
-                    data: err.message
+                    data: err.message,
+                    message: "Application Specific Password Required."
                 })
             } else {
+
                 return res.status(404).json({
                     error: true,
                     status: 404,
-                    data: err.message
+                    data: err.message,
+                    message: "Invalid Credentials."
                 })
             }
         });
-
         if (response) {
             return res.status(200).json({
                 error: false,
@@ -80,6 +97,22 @@ router.post('/loginWithImap', async (req, res) => {
         console.log("here", error)
     }
 });
+
+
+let createLogForUser = async (email_id, action_name, action_page, action_event, attribute, api_name) => {
+    var userLog = new userAppLog({
+        email_id,
+        attribute,
+        created_at: new Date(),
+        action_name,
+        action_page,
+        action_event,
+        api_name
+    });
+    await userLog.save().catch(err => {
+        console.error(err.message, err.stack);
+    });
+}
 
 router.post('/saveOnLaunchDeviceData', async (req, res) => {
     let deviceData = req.body.data;
@@ -101,10 +134,10 @@ router.post('/saveOnLaunchDeviceData', async (req, res) => {
 router.post('/saveUnlistedProviderInfo', async (req, res) => {
     let email_id = req.body.email;
     let userUniqueId = req.body.uniqueLaunchDeviceId;
-    let deviceData =  await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
+    let deviceData = await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
         console.error(err.message, err.stack, "27");
     });
-    if(deviceData){
+    if (deviceData) {
         var unlistedProvider = new unlistedProviderModel({
             "email_id": email_id,
             "device_id": deviceData._id,
@@ -118,7 +151,7 @@ router.post('/saveUnlistedProviderInfo', async (req, res) => {
             status: 200,
             message: "success"
         });
-    }else{
+    } else {
         res.status(401).json({
             error: true,
             status: 401,
@@ -127,19 +160,53 @@ router.post('/saveUnlistedProviderInfo', async (req, res) => {
     }
 });
 
-let getProviderName = async (email) => {
-    let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { imap_host: 1, port: 1 }).catch(err => {
-        console.error(err.message, err.stack, "provider_3");
+router.post('/saveAnalyticData', async (req, res) => {
+    // console.log(req.body)
+    let email_id = req.body.email;
+    let userUniqueId = req.body.uniqueLaunchDeviceId;
+    let deviceData = await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
+        console.error(err.message, err.stack, "27");
     });
-}
+    if (deviceData) {
+        var loginAnalytic = {
+            "email_id": email_id,
+            "device_id": deviceData._id,
+            "created_at": new Date()
+        };
+        await loginAnalyticModel.findOneAndUpdate({ "email_id": email_id }, { $set: loginAnalytic }, { upsert: true }).catch(err => {
+            console.error(err.message, err.stack);
+        });
+        res.status(200).json({
+            error: false,
+            status: 200,
+            message: "success"
+        });
+    } else {
+        res.status(401).json({
+            error: true,
+            status: 401,
+            message: "false"
+        });
+    }
+});
 
-let getLoginUrl = async (email) => {
-    let domain = email.split("@")[1];
-    return await providerModel.findOne({ "domain_name": domain }, { login_url: 1 }).catch(err => {
-        console.error(err.message, err.stack, "provider_4");
+router.post('/saveAnalyticDataWithStep', async (req, res) => {
+    // console.log(req.body)
+    let email_id = req.body.email;
+    let step_key = req.body.step_key;
+    let value = {
+        [step_key]: true
+    };
+    await loginAnalyticModel.findOneAndUpdate({ "email_id": email_id }, { $set: value }, { upsert: true }).catch(err => {
+        console.error(err.message, err.stack);
     });
-}
+    res.status(200).json({
+        error: false,
+        status: 200,
+        message: "success"
+    });
+});
+
 
 let getTwoStepVerificationUrl = async (email) => {
     let domain = email.split("@")[1];
@@ -193,8 +260,6 @@ router.post('/getImapEnableUrl', async (req, res) => {
     }
 });
 
-
-
 let saveProviderInfo = async (email) => {
     try {
         console.log(email)
@@ -210,7 +275,6 @@ let saveProviderInfo = async (email) => {
             if (response.isValid) {
                 let mxString = response.mxArray.map(x => { return x.exchange }).toString();
                 let mxr = response.mxArray[0].exchange;
-                console.log(mxr)
                 let provider = "";
                 let login_url = "";
                 let two_step_url = "";
@@ -314,7 +378,6 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://help.mail.ru/mail-help/security/2auth/activate";
                     port = 993;
 
-
                 } else if (mxr.includes("protonmail")) {
                     provider = "protonmail";
                     login_url = "https://mail.protonmail.com/login";
@@ -324,7 +387,6 @@ let saveProviderInfo = async (email) => {
                     explain_url = "https://protonmail.com/support/knowledge-base/two-factor-authentication/";
                     port = 993;
 
-
                 } else if (mxr.includes("me.com")) {
                     provider = "me.com";
                     login_url = "https://appleid.apple.com/#!&page=signin";
@@ -333,7 +395,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://appleid.apple.com/#!&page=signin";
                     explain_url = "https://support.apple.com/en-in/HT207198";
                     port = 993;
-
+                    login_js = "document.getElementById('imapuser').value";
 
                 } else if (mxr.includes("icloud.com")) {
                     provider = "icloud";
@@ -343,7 +405,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://appleid.apple.com/#!&page=signin";
                     explain_url = "https://support.apple.com/en-in/HT207198";
                     port = 993;
-
+                    login_js = "document.getElementById('imapuser').value";
 
                 } else if (mxr.includes("inbox")) {
                     provider = "inbox.lv";
@@ -363,7 +425,7 @@ let saveProviderInfo = async (email) => {
                     imap_enable_url = "https://www.mail.com/int/";
                     explain_url = "https://www.mail.com/int/";
                     port = 993;
-                    login_js = "document.getElementById('login-email').value";
+                    login_js = "";
 
                 } else {
                     provider = null;
@@ -378,7 +440,7 @@ let saveProviderInfo = async (email) => {
                     console.error(err.message, err.stack, "provider_2");
                 });
                 return resp;
-            }else{
+            } else {
                 return response;
             }
         }
@@ -387,10 +449,8 @@ let saveProviderInfo = async (email) => {
     }
 }
 
-
 router.post('/findEmailProvider', async (req, res) => {
     try {
-        console.log("here")
         let email = req.body.emailId;
         let response = await saveProviderInfo(email);
         if (response['provider'] != null && response['provider'] != 'null') {
@@ -404,48 +464,100 @@ router.post('/findEmailProvider', async (req, res) => {
                 login_js: response.login_js
             })
         } else {
+            let attribute = {
+                "type": "error",
+                "error_message": null,
+                "message": "provider not found"
+            };
+            createLogForUser(req.body.emailId, "provider", "email_entry_page", "find_provider", attribute, "findEmailProvider");
             res.status(404).json({
                 error: true,
                 status: 404,
                 data: response.login_url,
-                message: "We Don't Support this " + email.split('@')[1] + " . Will provide support in future.."
+                message: "We don't support this email service provider currently. We will reach out to you once the support is added."
             })
         }
     } catch (error) {
-        console.log("here", error)
+        let attribute = {
+            "type": "error",
+            "error_message": error.message,
+            "message": "provider not found"
+        };
+        createLogForUser(req.body.emailId, "provider", "email_entry_page", "find_provider", attribute, "findEmailProvider");
         res.status(401).json({
             error: true,
             data: null,
-            message: "We Don't Support this Email Id . Will provide support in future.."
+            message: "We don't support this email service provider currently. We will reach out to you once the support is added."
         })
     }
 });
 
-async function create_token(user) {
-    var token_uniqueid = uniqid() + uniqid() + uniqid();
-    var tokmodel = new token_model({
-        "user_id": user._id,
-        "token": token_uniqueid,
-        "created_at": new Date()
-    });
-    await tokmodel.save().catch(err => {
-        console.error(err.message, err.stack);
-    });
-    return {
-        "tokenid": token_uniqueid,
-        "user": user
-    };
-}
-
-
+// read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        console.log(doc)
         Controller.extractEmail(doc).catch(err => {
             console.error(err.message, err.stack);
             Controller.scanFinished(doc.user_id);
-        });;
+        });
+        res.status(200).json({
+            error: false,
+            data: "scrape"
+        });
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+    return;
+});
+
+
+router.post('/validCredentialCheck', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        console.log(doc.user_id)
+        let response = await Controller.validCredentialCheck(doc).catch(err => {
+            if (err.message.includes("Invalid credentials")) {
+                console.error(err.message, "got error here");
+                return res.status(400).json({
+                    error: true,
+                    data: "Invalid Credential"
+                });
+            }else{
+                console.error(err.message, "got error here");
+                return res.status(400).json({
+                    error: true,
+                    data: "Invalid Credential"
+                });
+            }
+        });
+        if (response == true) {
+            console.log("success");
+            return res.status(200).json({
+                error: false,
+                data: "scrape"
+            });
+        } else if (response == false){
+            console.log("reject");
+            return res.status(401).json({
+                error: false,
+                data: "scrscrap errorape"
+            });
+        }
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+    return;
+});
+
+router.post('/onLaunchScrapEmail', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        Controller.extractOnLaunchEmail(doc).catch(err => {
+            console.error(err.message, err.stack);
+            Controller.scanFinished(doc.user_id);
+        });
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -467,7 +579,6 @@ router.post('/getMailInfo', async (req, res) => {
             const total = await getTotalEmailCount(doc.user_id).catch(err => {
                 console.error(err.message, err.stack);
             });
-            console.log(emailinfos, total)
             res.status(200).json({
                 error: false,
                 data: emailinfos,
@@ -486,10 +597,8 @@ router.post('/getKeepedMailInfo', async (req, res) => {
         const doc = await token_model.findOne({ "token": req.body.token });
         if (doc) {
             const emailinfos = await getAllKeepedSubscription(doc.user_id);
-            // let unreadData = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
             if (emailinfos) {
                 const total = await getTotalEmailCount(doc.user_id);
-                console.log("keep", emailinfos, total)
                 res.status(200).json({
                     error: false,
                     data: emailinfos,
@@ -511,7 +620,6 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
             const emailinfos = await getAllUnsubscribeSubscription(doc.user_id);
             if (emailinfos) {
                 const total = await getTotalEmailCount(doc.user_id);
-                console.log("unsub", emailinfos, total)
                 res.status(200).json({
                     error: false,
                     data: emailinfos,
@@ -533,7 +641,6 @@ router.post('/getTrashMailInfo', async (req, res) => {
             const emailinfos = await getAllTrashSubscription(doc.user_id);
             if (emailinfos) {
                 const total = await getTotalEmailCount(doc.user_id);
-                console.log("trash", emailinfos, total)
                 res.status(200).json({
                     error: false,
                     data: emailinfos,
@@ -565,7 +672,6 @@ router.post('/getEmailSubscription', async (req, res) => {
 
 router.post('/saveProfileInfo', async (req, res) => {
     try {
-        console.log(req.body)
         const doc = await token_model.findOne({ "token": req.body.token });
         if (doc) {
             let userObj = {
@@ -594,11 +700,6 @@ router.post('/saveProfileInfo', async (req, res) => {
     }
 });
 
-
-
-
-
-
 async function getTotalEmailCount(user_id) {
     let totalNL = await email.find({ "user_id": user_id }).catch(err => {
         console.error(err.message, err.stack);
@@ -613,7 +714,6 @@ async function getTotalEmailCount(user_id) {
     }
     return total;
 }
-
 
 async function getAllsubscription(user_id) {
     const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).exec()
@@ -669,7 +769,6 @@ async function getAllUnsubscribeSubscription(user_id) {
     return senddata;
 }
 
-
 async function getAllTrashSubscription(user_id) {
     const emails = await email.find({ "status": "trash", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).exec()
     const senddata = [];
@@ -688,61 +787,6 @@ async function getAllTrashSubscription(user_id) {
     return senddata;
 }
 
-
-router.post('/loginImap', async (req, res) => {
-    const EMAIL = 'prantik@expensebit.com';
-    const PASSWORD = 'X8gUne7rqLZS';
-    const imap = await connect({ EMAIL, PASSWORD });
-    console.log('Connected');
-
-    const box = await openBox(imap, 'INBOX');
-    console.log('Box', box);
-
-    let since = new Date(Date.now() - 864e5); // One day ago
-    console.log(box.messages.new)
-    const ids = await search(imap, [box.messages.total - box.messages.new + ':' + box.messages.total]);
-    console.log('Ids', ids);
-
-    const spam = await fetchAndFilter(imap, ids, async (msg, i) => {
-        console.log(msg.header)
-        return msg;
-    });
-    const spamIds = spam.map(msg => msg.uid);
-    console.log(spamIds)
-    // imap.end(imap);
-
-});
-
-async function connect(loginCred, err, cb) {
-    let { EMAIL, PASSWORD } = loginCred;
-    var algorithm = 'aes256';
-    // secret key
-    var key = 'donnottrytodecryptthisone';
-    var decipher = crypto.createDecipher(algorithm, key);
-    var decrypted = decipher.update(PASSWORD, 'hex', 'utf8') + decipher.final('utf8');
-    //decrypt password with reverse method
-    var remove_padding = decrypted.slice(8, decrypted.length - 6)
-    var your_password = remove_padding.substring(0, 3) + remove_padding.substring(7, remove_padding.length);
-    let provider = await getProviderName(EMAIL);
-    return new Promise((resolve, reject) => {
-
-        const imap = new Imap({
-            user: EMAIL,
-            password: your_password,
-            host: provider.imap_host,
-            port: provider.port,
-            tls: true,//provider.provider == "rediffmail" ? true : false,
-            ssl: true//provider.provider == "rediffmail" ? true : false
-        });
-        imap.once('ready', async () => {
-            resolve(imap)
-        });
-        imap.once('error', err => reject(err));
-        imap.connect();
-    })
-}
-
-
 router.post('/trashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
@@ -760,9 +804,6 @@ router.post('/trashZohoMail', async (req, res) => {
     }
 });
 
-
-
-
 router.post('/keepZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
@@ -776,7 +817,6 @@ router.post('/keepZohoMail', async (req, res) => {
         res.sendStatus(400);
     }
 });
-
 
 router.post('/unsubscribeZohoMail', async (req, res) => {
     try {
@@ -811,7 +851,6 @@ router.post('/revertUnsubscribeZohoMail', async (req, res) => {
         })
     }
 });
-
 
 router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
     try {
@@ -848,7 +887,6 @@ router.post('/leftInboxToTrashZohoMail', async (req, res) => {
     }
 });
 
-
 router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
@@ -861,20 +899,17 @@ router.post('/imapManualUnsubEmailFromUser', async (req, res) => {
             console.log("is valid", validate)
             if (validate) {
                 await Controller.manualUnusedToUnsub(doc, element);
-
             }
         });
         res.status(200).json({
             error: false,
             data: "scrape"
         })
-
     } catch (ex) {
         console.error(ex.message, ex.stack, "6");
         res.sendStatus(400);
     }
 });
-
 
 router.post('/imapManualTrashEmailFromUser', async (req, res) => {
     try {
@@ -901,7 +936,6 @@ router.post('/imapManualTrashEmailFromUser', async (req, res) => {
     }
 });
 
-
 router.post('/revertTrashZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
@@ -919,7 +953,6 @@ router.post('/revertTrashZohoMail', async (req, res) => {
     }
 });
 
-
 router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
@@ -936,167 +969,6 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
         })
     }
 });
-
-function getBoxes(imap) {
-    return new Promise((resolve, reject) => {
-        imap.getBoxes(function (err, boxes) {
-            (err ? reject(err) : resolve(boxes));
-        });
-    });
-}
-
-
-function openBox(imap, boxName) {
-    return new Promise((resolve, reject) => {
-        imap.openBox(boxName, false, function (err, box) {
-            (err ? reject(err) : resolve(box));
-        });
-    });
-}
-
-function search(imap, criteria) {
-    return new Promise((resolve, reject) => {
-        imap.search(criteria, function (err, uids) {
-            (err ? reject(err) : resolve(uids));
-        });
-    });
-}
-
-async function getUrlFromEmail(body) {
-    if (!body) {
-        return null;
-    }
-    let $ = cheerio.load(body);
-    let url = null;
-    $('a').each(async function (i, elem) {
-        let fa = $(this).text();
-        let anchortext = fa.toLowerCase();
-        let anchorParentText = $(this).parent().text().toLowerCase();
-        if (anchortext.indexOf("unsubscribe") != -1 ||
-            anchortext.indexOf("preferences") != -1 ||
-            anchortext.indexOf("subscription") != -1 ||
-            anchortext.indexOf("visit this link") != -1 ||
-            anchortext.indexOf("do not wish to receive our mails") != -1 ||
-            anchortext.indexOf("not receiving our emails") != -1) {
-            url = $(this).attr().href;
-            return url;
-        } else if (anchorParentText.indexOf("not receiving our emails") != -1 ||
-            anchorParentText.indexOf("stop receiving emails") != -1 ||
-            anchorParentText.indexOf("unsubscribe") != -1 ||
-            anchorParentText.indexOf("subscription") != -1 ||
-            anchorParentText.indexOf("preferences") != -1 ||
-            anchorParentText.indexOf("mailing list") != -1 ||
-            (anchortext.indexOf("click here") != -1 && anchorParentText.indexOf("mailing list") != -1) ||
-            ((anchortext.indexOf("here") != -1 || anchortext.indexOf("click here") != -1) && anchorParentText.indexOf("unsubscribe") != -1) ||
-            anchorParentText.indexOf("Don't want this") != -1) {
-            url = $(this).attr().href;
-            return url;
-        }
-    })
-    return url;
-}
-
-async function parseMessage(msg) {
-
-    const [atts, parsed] = await Promise.all([
-        new Promise(resolve => {
-            msg.on('attributes', atts => {
-                resolve(atts)
-            });
-            msg.on('error', atts => reject(err));
-        }),
-        new Promise((resolve, reject) => {
-            let result;
-            msg.on('body', (stream, info) => {
-                const chunks = [];
-                stream.once('error', reject);
-                stream.on('data', chunk => chunks.push(chunk));
-                stream.once('end', async () => {
-                    const raw = Buffer.concat(chunks).toString('utf8');
-                    let parsed = await simpleParser(raw);
-                    if (!result) {
-                        result = Imap.parseHeader(raw);
-                        for (let k in result) {
-                            if (Array.isArray(result[k])) result[k] = result[k][0];
-                        }
-                    }
-                    if (result != {} && parsed['textAsHtml'] != undefined) {
-                        let url = await getUrlFromEmail(parsed['textAsHtml']);
-                        if (url != null) {
-                            console.log(url)
-                            resolve({ "header": result, "url": url })
-                        }
-                    }
-                });
-            });
-        })
-    ]);
-    parsed.uid = atts.uid;
-    return parsed;
-}
-
-async function fetchAndFilter(imap, msgIds, detector) {
-    return new Promise((resolve, reject) => {
-        const fetch = imap.fetch(msgIds, {
-            bodies: ['HEADER.FIELDS (FROM SUBJECT)', 'TEXT']
-        });
-        const msgs = [];
-        fetch.on('message', async function (msg, seqNo) {
-            const parsed = await parseMessage(msg, 'utf8');
-            if (detector(parsed)) msgs.push(parsed);
-        });
-        fetch.on('end', async function () {
-            resolve(msgs);
-        });
-    });
-}
-
-
-async function trashzoho(imap, msgIds, tarash_lbl) {
-    if (!msgIds || msgIds.length <= 0) return;
-    console.log("trash", msgIds);
-    await new Promise((resolve, reject) => {
-        imap.move(msgIds, tarash_lbl, function (err) {
-            (err ? reject(err) : resolve());
-        });
-    });
-    await new Promise((resolve, reject) => {
-        imap.closeBox(true, function (err) {
-            (err ? reject(err) : resolve());
-        });
-    });
-}
-
-
-async function unsubscribe(imap, msgIds) {
-    if (!msgIds || msgIds.length <= 0) return;
-    console.log("came here", msgIds)
-    await new Promise((resolve, reject) => {
-        imap.move(msgIds, 'Unsubscribed Emails', function (err) {
-            (err ? reject(err) : resolve());
-        });
-    });
-    await new Promise((resolve, reject) => {
-        imap.closeBox(true, function (err) {
-            (err ? reject(err) : resolve());
-        });
-    });
-}
-
-async function revertMail(imap, msgIds) {
-    if (!msgIds || msgIds.length <= 0) return;
-    console.log("came here for revert", msgIds)
-    await new Promise((resolve, reject) => {
-        imap.move(msgIds, 'INBOX', function (err) {
-            (err ? reject(err) : resolve());
-        });
-    });
-    await new Promise((resolve, reject) => {
-        imap.closeBox(true, function (err) {
-            (err ? reject(err) : resolve());
-        });
-    });
-}
 
 module.exports = router
 

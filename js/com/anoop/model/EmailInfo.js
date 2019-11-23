@@ -14,14 +14,20 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
         return await mongo_emailInfo.findOneAndUpdate(query, { $setOnInsert: set }, { new: true, upsert: true });
     };
 
-    Static.fromEamil = async function (data, from_email_id, url) {
+    Static.updateEmailInfo = async function(query,set){
+        me.updateQueryValidation(query, 'email_id');
+        return await mongo_emailInfo.findOneAndUpdate(query, { $set: set }, {  upsert: true });
+    }
+
+    Static.fromEamil = async function (data, from_email_id, url) {        
         return {
             from_email_id,
             email_id: data.email_id,
             historyId: data.historyId,
             unsubscribe: url,
             subject: data.subject,
-            labelIds: data.labelIds
+            labelIds: data.labelIds,
+            date: data['header']?data.header.date.split('Date: ')[1]:data.receivedDateTime
         }
     };
 

@@ -2,9 +2,9 @@
   "name": "subscription",
   "version": "1.0.0",
   "description": "unsubscribe email",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "test": "node index.js"
+    "test": "node app.js"
   },
   "author": "jitendra virani",
   "license": "ISC",
