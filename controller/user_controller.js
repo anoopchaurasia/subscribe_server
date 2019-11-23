@@ -9,7 +9,7 @@ const emailInformationModel = require('../models/emailInfo');
 const AppVersionModel = require('../models/appVersion');
 const userModel = require('../models/user');
 const router = express.Router();
-
+const Raven = require('raven');
 /* 
 This Api for storing FCM Token Into database for firebase notification.
 */
@@ -17,6 +17,7 @@ router.post('/savefcmToken', async (req, res) => {
     let token = req.token;
     let tokenInfo = { "user_id": token.user_id, "fcm_token": req.body.fcmToken };
     await fcmToken.findOneAndUpdate({ "user_id": token.user_id }, tokenInfo, { upsert: true }).catch(err => {
+        Raven.captureException(err);
         console.error(err.message, err.stack, "26");
     });
     res.json({
@@ -33,11 +34,16 @@ router.post('/saveDeviceInfo', async (req, res) => {
     deviceData['deviceIpAddress'] = { "ip": req.header('x-forwarded-for') || req.connection.remoteAddress };
     let uniqueLaunchDeviceId = req.body['uniqueLaunchDeviceId'];
     let checkUserDevice = await DeviceInfo.findOne({ "user_id": deviceData['user_id'] }).catch(err => {
+        Raven.captureException(err);
         console.error(err.message, err.stack, "27");
     });
+
+    //user does not exisst
     if (!checkUserDevice) {
+        // new user identification using unique device id
         if (uniqueLaunchDeviceId) {
             await DeviceInfo.findOneAndUpdate({ "userUniqueId": uniqueLaunchDeviceId }, deviceData, { upsert: true }).catch(err => {
+                Raven.captureException(err);
                 console.error(err.message, err.stack, "271");
             });
             res.json({
@@ -45,15 +51,18 @@ router.post('/saveDeviceInfo', async (req, res) => {
             });
         }else{
             await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, deviceData, { upsert: true }).catch(err => {
+                Raven.captureException(err);
                 console.error(err.message, err.stack, "273");
             });
         }
     } else {
         await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, deviceData, { upsert: true }).catch(err => {
+            Raven.captureException(err);
             console.error(err.message, err.stack, "273");
         });
         if (uniqueLaunchDeviceId) {
             await DeviceInfo.findOneAndUpdate({ "userUniqueId": uniqueLaunchDeviceId }, { $set: { "deleted_at": new Date(),"user_id": deviceData['user_id']} }, { upsert: true }).catch(err => {
+                Raven.captureException(err);
                 console.error(err.message, err.stack, "432");
             });
         }
