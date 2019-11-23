@@ -299,6 +299,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         return token;
     }
 
+    Static.extractAllEmail = async function (token,folderName) {
+        await me.scanStarted(token.user_id);
+        let myImap = await openFolder(token, folderName);
+        let scraper = Scraper.new(myImap);        
+        await me.updateLastTrackMessageId(token.user_id,myImap.box.uidnext)
+        let emails = await scraper.scrapAll(myImap.box.uidnext);
+        myImap.imap.end(myImap.imap);
+        return emails;
+    }
+
     Static.extractEmailBySize = async function (token,folderName,smallerThan, largerThan) {
         await me.scanStarted(token.user_id);
         let myImap = await openFolder(token, folderName);

@@ -6,6 +6,7 @@ const Imap = require('imap');
 const DeviceInfo = require('../models/deviceoInfo');
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
+const EmailDataModel = require('../models/emailsData');
 const userAppLog = require('../models/userAppLog');
 const UserModel = require('../models/user');
 const token_model = require('../models/tokeno');
@@ -975,6 +976,21 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
     }
 });
 
+/* This api will Scrape all the emails from Account and will store into Database. */
+   router.post('/getAllEmail', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await Controller.extractAllEmail(doc, 'INBOX');
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
 /* This api will return the emails based on the size, 
    for example: if i need emails between 1-5MB, 
    it will return the partucular emails with seen and unseen seperated format */
@@ -987,6 +1003,81 @@ router.post('/getEmailsBySize', async (req, res) => {
         emails.unseen.sort((a, b) => {
             return a.size > b.size ? -1 : 1;
         })
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+/* This api will return the emails based on the size, 
+   for example: if i need emails between 1-5MB, 
+   it will return the partucular emails with seen and unseen seperated format */
+   router.post('/getEmailsBySizeFromDb', async (req, res) => {
+    try {
+        let smallerThan = req.body.smallerThan;
+        let largerThan = req.body.largerThan;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
+        emails.sort((a, b) => {
+            return a.size > b.size ? -1 : 1;
+        })
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+/* This api will return the emails based on the size, 
+   for example: if i need emails between 1-5MB, 
+   it will return the partucular emails with seen and unseen seperated format */
+   router.post('/getEmailsByDateFromDb', async (req, res) => {
+    try {
+        let { data } = req.body;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails;
+        if(data.isCustom){
+            emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $gte :data.since,$lte:data.before}});
+        }else{
+            if(data.beforeOrAfter==='BEFORE'){
+                emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $lte:data.date}});
+            }else{
+                emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $gte :data.date}});
+            }
+        }
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+/* This api will return the emails based on the size, 
+   for example: if i need emails between 1-5MB, 
+   it will return the partucular emails with seen and unseen seperated format */
+   router.post('/getEmailsByDateFromDb', async (req, res) => {
+    try {
+        let { data } = req.body;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
+        if(data.isCustom){
+            emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $gte :data.since,$lte:data.before}});
+        }else{
+            if(data.beforeOrAfter==='BEFORE'){
+                emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $lte:data.date}});
+            }else{
+                emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $gte :data.date}});
+            }
+        }
         res.status(200).json({
             error: false,
             data: emails

@@ -114,6 +114,13 @@ fm.Class("Message", function (me) {
         }
     };
 
+    Static.getALlEmailList = async function (imap) {
+        return {
+            seen: await search(imap, ["SEEN"]),
+            unseen: await search(imap, ["UNSEEN"])
+        }
+    };
+
     Static.getUIDByBeforeOrAfterParticularDate = async function (imap, beforeOrAfter, date) {
         return {
             seen: await search(imap, ["SEEN", [beforeOrAfter, date]]),

@@ -6,11 +6,13 @@ fm.Import("..model.Token");
 fm.Import("..model.Provider");
 fm.Import("..model.UserAction");
 fm.Import("..model.SenderMail");
+fm.Import("..model.EmailData");
+fm.Import("..model.EmailTrack");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
 var ObjectId = require('mongoose').Types.ObjectId;
 
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, RedisDB, BaseRedisData) {
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, EmailData,EmailTrack, RedisDB, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -61,6 +63,15 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
     }
 
+    Static.getLastTrackMessageId = async function(user_id){
+        
+    }
+
+    Static.storeEmailData = async function(data,user_id){
+        let emailData = await EmailData.storeEamil(data,user_id);
+        await EmailData.updateOrCreateAndGet({from_email:emailData.from_email,email_id:emailData.email_id,user_id:emailData.user_id,receivedDate:emailData.receivedDate},emailData);
+    }
+
     Static.saveManualEmailData = async function (user_id, data) {
         let emaildetailraw = await EmailDetail.storeEamil(data, user_id);
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
@@ -84,6 +95,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.updateInactiveUser = async function (_id) {
         return await User.updateInactiveUser({ _id: _id, inactive_at: null }, { "inactive_at": new Date() });
     };
+
+    Static.updateLastTrackMessageId = async function(user_id,last_msgId){
+        return await EmailTrack.updatelastMsgId({ user_id: user_id }, {$set:{ last_msgId: last_msgId }});
+    }
 
     Static.removeUserByState = async function(state){
         return await User.removeUserByState({state:state});
