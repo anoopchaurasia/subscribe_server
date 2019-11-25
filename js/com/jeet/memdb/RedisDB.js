@@ -40,5 +40,9 @@ fm.Class("RedisDB>com.anoop.vendor.Redis", function(me) {
     Static.getFinishKey = function(key){
         return me.base.getKEYS(key);
     }
-    
+
+    Static.sendNewUserProcess = function(key, value){
+        return me.lPush(key, value);
+    };
+
 });

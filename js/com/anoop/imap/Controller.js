@@ -239,29 +239,35 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
     
     //////////////////// listen for user //////////////////////
-    Static.listenForUser = async function (user, text) {
+    Static.listenForUser = async function (user, text, new_email_cb) {
 
         text && console.log(text, user.email);
         let myImap = await openFolder("", "INBOX", user);
-        let scraper = Scraper.new(myImap);
         myImap.listen(async function (x, y) {
-            updateForUser(scraper, myImap, user);
+            new_email_cb(x, y);
+         //   updateForUser(scraper, myImap, user);
         });
         myImap.onEnd(x => {
             console.log("ended", myImap.user.email);
-            process.nextTick(r => me.listenForUser(user, "restarting for user"));
+            process.nextTick(r => me.listenForUser(user, "restarting for user"), new_email_cb);
         });
         myImap.keepCheckingConnection(x => {
-            process.nextTick(r => me.listenForUser(user, "restarting for user12"));
+            process.nextTick(r => me.listenForUser(user, "restarting for user12"), new_email_cb);
         });
-        await updateForUser(scraper, myImap, user);
+        new_email_cb();
+       // await updateForUser(scraper, myImap, user);
     }
 
-    async function updateForUser(scraper, myImap, user) {
+    Static.updateForUser = async function (user_id) {
+        console.log(user_id);
+        let user = await me.getUserById(user_id)
+        let myImap = await openFolder("", "INBOX", user);
+        let scraper = Scraper.new(myImap);
         await scraper.update(function latest_id(id) {
             id && (myImap.box.uidnext = id);
         });
         myImap.user.last_msgId = myImap.box.uidnext;
+        myImap.imap.end(myImap.imap);
         await me.updateLastMsgId(user._id, myImap.box.uidnext)
     }
 

@@ -287,6 +287,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         }
     }
 
+    Static.startProcessServer = async function(token){
+        RedisDB.sendNewUserProcess('process_user_login', token);
+    };
+
     Static.getUserAnalyzed = async function (emailDetailsWithInfo,userEmailAnalyziedData) {
         emailDetailsWithInfo.forEach((emaildata, index) => {
             let oneWeekBeforeInMillisecond = 7 * 24 * 60 * 60 * 1000

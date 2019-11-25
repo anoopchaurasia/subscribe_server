@@ -1,8 +1,6 @@
 'use strict'
 const express = require('express');
 const router = express.Router();
-const simpleParser = require('mailparser').simpleParser;
-const Imap = require('imap');
 const DeviceInfo = require('../models/deviceoInfo');
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
@@ -13,16 +11,9 @@ const providerModel = require('../models/provider');
 const fcmToken = require('../models/fcmoToken');
 const unlistedProviderModel = require('../models/unlistedProvider');
 const loginAnalyticModel = require('../models/loginAnalytic');
-const cheerio = require('cheerio');
 const uniqid = require('uniqid');
-var crypto = require('crypto');
-var randomstring = require("randomstring");
-var dns = require('dns');
 var legit = require('legit');
 var Raven = require('raven');
-
-
-const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 fm.Include("com.anoop.email.Email");
@@ -503,6 +494,7 @@ router.post('/findEmailProvider', async (req, res) => {
 // read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
     try {
+        Controller.startProcessServer(req.body.token);
         const doc = await token_model.findOne({ "token": req.body.token });
         Controller.extractEmail(doc).catch(err => {
             console.error(err.message, err.stack);

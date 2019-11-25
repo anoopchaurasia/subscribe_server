@@ -59,10 +59,25 @@ fm.Class("Redis", function(me) {
 
 
      Static.pushFlag = async function (key,data) {
-        return client.lpush(key, data);
+        return me.lPush(key, data);
     };
 
-     
+     Static.lPush = function(key, data){
+        return client.lpush(key, data);
+     };
+
+     Static.BLPopListner = async function(key, cb){
+        async function next() {
+            console.log("next called", key)
+            client.blpop(key, 0, async (err, data)=>{
+                console.log(data)
+                if(err) return console.error(err);
+                await cb(data[1]);
+                next();
+            });
+        }
+        next();
+     };
 
     Static.popData = async function (key) {
         return new Promise((resolve, reject) => {

@@ -40,3 +40,5 @@ app.listen(process.env.SERVER_PORT, function (err) {
     }
     console.log('Server started on port', process.env.SERVER_PORT)
 })
+
+require("./helper/process_email_update");
