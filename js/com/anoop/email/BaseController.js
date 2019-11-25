@@ -240,11 +240,11 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     };
 
     Static.notifyListner = async function (user_id) {
-        await BaseRedisData.notifyListner(user_id);
+        await RedisDB.notifyListner(user_id);
     };
 
     Static.onNewUser = function (cb) {
-        BaseRedisData.onNewUser(cb);
+        RedisDB.onNewUser(cb);
     };
 
     Static.getUnusedEmails = async function (token) {

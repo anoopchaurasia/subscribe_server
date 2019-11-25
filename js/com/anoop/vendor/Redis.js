@@ -90,4 +90,24 @@ fm.Class("Redis", function(me) {
             });
         });
     };
+
+    Static.notifyListner = async function (user_id) {
+        client.lpush('new_imap_user', user_id);
+        client.expire("new_imap_user", 20);
+    };
+
+    Static.onNewUser = function(cb){
+        function next () {
+            client.blpop('new_imap_user', 0, function(err, [key, user_id]){
+                try{
+                   cb(user_id);
+                } catch(e){
+                    console.log(e);
+                } finally {
+                    next();
+                }
+            });
+        }
+        next();
+    };
 });
