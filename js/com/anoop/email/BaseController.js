@@ -287,7 +287,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         }
     }
 
-    Static.startProcessServer = async function(token){
+    Static.sendToProcessServer = async function(token){
         RedisDB.sendNewUserProcess('process_user_login', token);
     };
 

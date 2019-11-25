@@ -71,12 +71,18 @@ fm.Class("Redis", function(me) {
 
      Static.BLPopListner = async function(key, cb){
         async function next() {
-            console.log("next called", key)
             client.blpop(key, 0, async (err, data)=>{
-                console.log(data)
-                if(err) return console.error(err);
-                await cb(data[1]);
-                next();
+                if(err) {
+                    console.error(err);
+                    return next()
+                }
+                try{
+                    await cb(data[1]);
+                } catch(e){
+                    console.error(e)
+                } finally {
+                    next();
+                }
             });
         }
         next();
@@ -98,9 +104,9 @@ fm.Class("Redis", function(me) {
 
     Static.onNewUser = function(cb){
         function next () {
-            client.blpop('new_imap_user', 0, function(err, [key, user_id]){
+            client.blpop('new_imap_user', 0, function(err, data){
                 try{
-                   cb(user_id);
+                   cb(data[1]);
                 } catch(e){
                     console.log(e);
                 } finally {

@@ -13,3 +13,5 @@ mongoose.connect(process.env.MONGO_SERVER, {useNewUrlParser: true});
 mongoose.connection.once('connected', function () {
     console.log("Connected to database")
 });
+require("./helper/process_email_update");
+require("./helper/process_user_login");
