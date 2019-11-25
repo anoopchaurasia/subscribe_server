@@ -6,7 +6,7 @@ client.on("error", function (err) {
     console.error("Error " + err);
 });
 fm.Class("Redis", function(me) {
-
+    this.setMe = _me => me=_me;
     Static.set = function(key, value){
         return client.set(key, value);
     };
@@ -65,6 +65,7 @@ fm.Class("Redis", function(me) {
     };
 
      Static.lPush = function(key, data){
+         console.log(key, data);
         return client.lpush(key, data);
      };
 
