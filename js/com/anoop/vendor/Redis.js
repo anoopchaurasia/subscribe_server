@@ -1,5 +1,8 @@
 fm.Package("com.anoop.vendor");
-let client = require('redis').createClient();
+let client = require('redis').createClient({
+    host: process.env.IMAP_REDIS_HOST,
+    no_ready_check: true
+});
 client.on("error", function (err) {
     console.error("Error " + err);
 });
