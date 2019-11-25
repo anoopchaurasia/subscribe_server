@@ -70,7 +70,7 @@ fm.Class("Redis", function(me) {
      };
 
      Static.BLPopListner = async function(key, cb){
-        async function next() {
+        function next() {
             console.log("getting next");
             client.blpop(key, 0, async (err, data)=>{
                 if(err) {
