@@ -114,7 +114,14 @@ fm.Class("Message", function (me) {
         }
     };
 
-    Static.getALlEmailList = async function (imap) {
+    Static.getALlEmailList = async function (imap,trackedUser) {
+        console.log(trackedUser.last_msgId)
+        if(trackedUser && trackedUser.last_msgId){
+            return {
+                seen: await search(imap, ["SEEN", ['UID', (trackedUser.last_msgId) + ':*']]),
+                unseen: await search(imap, ["UNSEEN", ['UID', (trackedUser.last_msgId) + ':*']])
+            }
+        }
         return {
             seen: await search(imap, ["SEEN"]),
             unseen: await search(imap, ["UNSEEN"])

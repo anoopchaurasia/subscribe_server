@@ -63,8 +63,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
     }
 
-    Static.getLastTrackMessageId = async function(user_id){
-        
+    Static.getLastTrackMessageId = async function(uid){
+        return await EmailTrack.get({user_id:uid})
     }
 
     Static.storeEmailData = async function(data,user_id){
@@ -96,8 +96,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await User.updateInactiveUser({ _id: _id, inactive_at: null }, { "inactive_at": new Date() });
     };
 
-    Static.updateLastTrackMessageId = async function(user_id,last_msgId){
-        return await EmailTrack.updatelastMsgId({ user_id: user_id }, {$set:{ last_msgId: last_msgId }});
+    Static.updateLastTrackMessageId = async function(uid,last_mId){
+        return await EmailTrack.updatelastMsgId({ user_id: uid }, {$set:{ last_msgId:last_mId }});
     }
 
     Static.removeUserByState = async function(state){

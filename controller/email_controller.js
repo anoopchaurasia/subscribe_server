@@ -247,6 +247,8 @@ router.post('/readMailInfo', async (req, res) => {
     }
 });
 
+
+
 /*
 This Api will get Profile/statistic Inforamtion for Subcription.
 This will get all the subscription,Moved subscription,total email and total ubsubscribe email count.

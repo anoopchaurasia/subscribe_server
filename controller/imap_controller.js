@@ -991,26 +991,26 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
 });
 
 
-/* This api will return the emails based on the size, 
-   for example: if i need emails between 1-5MB, 
-   it will return the partucular emails with seen and unseen seperated format */
-router.post('/getEmailsBySize', async (req, res) => {
-    try {
-        let smallerThan = req.body.smallerThan;
-        let largerThan = req.body.largerThan;
-        const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await Controller.extractEmailBySize(doc, 'INBOX', smallerThan, largerThan);
-        emails.unseen.sort((a, b) => {
-            return a.size > b.size ? -1 : 1;
-        })
-        res.status(200).json({
-            error: false,
-            data: emails
-        });
-    } catch (err) {
-        console.log(err);
-    }
-});
+// /* This api will return the emails based on the size, 
+//    for example: if i need emails between 1-5MB, 
+//    it will return the partucular emails with seen and unseen seperated format */
+// router.post('/getEmailsBySize', async (req, res) => {
+//     try {
+//         let smallerThan = req.body.smallerThan;
+//         let largerThan = req.body.largerThan;
+//         const doc = await token_model.findOne({ "token": req.body.token });
+//         let emails = await Controller.extractEmailBySize(doc, 'INBOX', smallerThan, largerThan);
+//         emails.unseen.sort((a, b) => {
+//             return a.size > b.size ? -1 : 1;
+//         })
+//         res.status(200).json({
+//             error: false,
+//             data: emails
+//         });
+//     } catch (err) {
+//         console.log(err);
+//     }
+// });
 
 /* This api will return the emails based on the size, 
    for example: if i need emails between 1-5MB, 
@@ -1020,7 +1020,14 @@ router.post('/getEmailsBySize', async (req, res) => {
         let smallerThan = req.body.smallerThan;
         let largerThan = req.body.largerThan;
         const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
+        let emails;// = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
+        if(largerThan && smallerThan){
+             emails = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
+        }else if(smallerThan){
+            emails = await EmailDataModel.find({user_id:doc.user_id,size:{ $lte:smallerThan*1000000}});
+        }else{
+            emails = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000}});
+        }
         emails.sort((a, b) => {
             return a.size > b.size ? -1 : 1;
         })
@@ -1034,9 +1041,34 @@ router.post('/getEmailsBySize', async (req, res) => {
 });
 
 
-/* This api will return the emails based on the size, 
-   for example: if i need emails between 1-5MB, 
-   it will return the partucular emails with seen and unseen seperated format */
+/* This api will return the emails based on the sender_email and also return total number of email by sender*/
+   router.post('/getEmailsBySenderFromDb', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id } }, {
+            $group: {
+                _id: { "from_email": "$from_email" }, data: {
+                    $push: {
+                        "labelIds": "$labelIds",
+                        "subject":"$subject",
+                        "status":"$status"
+                    }
+                }, count: { $sum: 1 }
+            }
+        },
+        { $sort: { "count": -1 } },
+        { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }])
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+/* This api will return the emails based on the Date from database */
    router.post('/getEmailsByDateFromDb', async (req, res) => {
     try {
         let { data } = req.body;
@@ -1061,93 +1093,31 @@ router.post('/getEmailsBySize', async (req, res) => {
 });
 
 
-/* This api will return the emails based on the size, 
-   for example: if i need emails between 1-5MB, 
-   it will return the partucular emails with seen and unseen seperated format */
-   router.post('/getEmailsByDateFromDb', async (req, res) => {
-    try {
-        let { data } = req.body;
-        const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
-        if(data.isCustom){
-            emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $gte :data.since,$lte:data.before}});
-        }else{
-            if(data.beforeOrAfter==='BEFORE'){
-                emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $lte:data.date}});
-            }else{
-                emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $gte :data.date}});
-            }
-        }
-        res.status(200).json({
-            error: false,
-            data: emails
-        });
-    } catch (err) {
-        console.log(err);
-    }
-});
-
-/* This api will return the emails which is belongs to the input
-   payload:
-   if custom date:
-     { data:{isCustom:true, since:date, before:date}}
-   id before/after particular date:
-     { date:{isCustom:false, beforeOrAfter:"BEFORE/AFTER", date:date}}
-*/
-router.post('/getEmailsByDate', async (req, res) => {
-    try {
-        let { data } = req.body;
-        const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await Controller.extractEmailByDate(doc, 'INBOX', data);
-        res.status(200).json({
-            error: false,
-            data: emails
-        });
-    } catch (err) {
-        console.log(err);
-    }
-});
-
-/* This api will read all the emails and return by labels categorized */
-router.post('/getEmailsByLables', async (req, res) => {
+/* This api will return the emails based on Label from database*/
+   router.post('/getEmailsByLabelFromDb', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await Controller.extractAllEmails(doc, 'INBOX');
-        let { seen, unseen } = emails;
+        let emails = await EmailDataModel.find({user_id:doc.user_id});
         let definedLables = {
             "social": ['facebook', 'twitter', 'instagram'],
             "promotion": ['promotion'],
             "deadEnd": ['noreply', 'no-reply']
         }
         let fliteredByLabel = {
-            'seen': {
-                "social": [], "promotion": [], "deadEnd": []
-            },
-            'unseen': {
-                "social": [], "promotion": [], "deadEnd": []
+            'label': {
+                "social": [], "promotion": [], "deadEnd": [] , "others":[]
             }
         }
-        console.log(seen)
-        seen.forEach(seenSingleData => {
-            if (definedLables.social.some(val => JSON.stringify(seenSingleData).includes(val))) {
-                fliteredByLabel.seen.social.push(seenSingleData)
-            }
-            if (definedLables.promotion.some(val => JSON.stringify(seenSingleData).includes(val))) {
-                fliteredByLabel.seen.promotion.push(seenSingleData)
-            }
-            if (definedLables.deadEnd.some(val => JSON.stringify(seenSingleData).includes(val))) {
-                fliteredByLabel.seen.deadEnd.push(seenSingleData)
-            }
-        })
-        unseen.forEach(unseenSingleData => {
-            if (definedLables.social.some(val => JSON.stringify(unseenSingleData).includes(val))) {
-                fliteredByLabel.unseen.social.push(unseenSingleData)
-            }
-            if (definedLables.promotion.some(val => JSON.stringify(unseenSingleData).includes(val))) {
-                fliteredByLabel.unseen.promotion.push(unseenSingleData)
-            }
-            if (definedLables.deadEnd.some(val => JSON.stringify(unseenSingleData).includes(val))) {
-                fliteredByLabel.unseen.deadEnd.push(unseenSingleData)
+        console.log(emails)
+        emails.forEach(singleData => {
+            if (definedLables.social.some(val => JSON.stringify(singleData).includes(val))) {
+                fliteredByLabel.label.social.push(singleData)
+            }else if (definedLables.promotion.some(val => JSON.stringify(singleData).includes(val))) {
+                fliteredByLabel.label.promotion.push(singleData)
+            }else if (definedLables.deadEnd.some(val => JSON.stringify(singleData).includes(val))) {
+                fliteredByLabel.label.deadEnd.push(singleData)
+            }else{
+                fliteredByLabel.label.others.push(singleData)
             }
         })
         res.status(200).json({
@@ -1158,6 +1128,78 @@ router.post('/getEmailsByLables', async (req, res) => {
         console.log(err);
     }
 });
+
+// /* This api will return the emails which is belongs to the input
+//    payload:
+//    if custom date:
+//      { data:{isCustom:true, since:date, before:date}}
+//    id before/after particular date:
+//      { date:{isCustom:false, beforeOrAfter:"BEFORE/AFTER", date:date}}
+// */
+// router.post('/getEmailsByDate', async (req, res) => {
+//     try {
+//         let { data } = req.body;
+//         const doc = await token_model.findOne({ "token": req.body.token });
+//         let emails = await Controller.extractEmailByDate(doc, 'INBOX', data);
+//         res.status(200).json({
+//             error: false,
+//             data: emails
+//         });
+//     } catch (err) {
+//         console.log(err);
+//     }
+// });
+
+// /* This api will read all the emails and return by labels categorized */
+// router.post('/getEmailsByLables', async (req, res) => {
+//     try {
+//         const doc = await token_model.findOne({ "token": req.body.token });
+//         let emails = await Controller.extractAllEmails(doc, 'INBOX');
+//         let { seen, unseen } = emails;
+//         let definedLables = {
+//             "social": ['facebook', 'twitter', 'instagram'],
+//             "promotion": ['promotion'],
+//             "deadEnd": ['noreply', 'no-reply']
+//         }
+//         let fliteredByLabel = {
+//             'seen': {
+//                 "social": [], "promotion": [], "deadEnd": []
+//             },
+//             'unseen': {
+//                 "social": [], "promotion": [], "deadEnd": []
+//             }
+//         }
+//         console.log(seen)
+//         seen.forEach(seenSingleData => {
+//             if (definedLables.social.some(val => JSON.stringify(seenSingleData).includes(val))) {
+//                 fliteredByLabel.seen.social.push(seenSingleData)
+//             }
+//             if (definedLables.promotion.some(val => JSON.stringify(seenSingleData).includes(val))) {
+//                 fliteredByLabel.seen.promotion.push(seenSingleData)
+//             }
+//             if (definedLables.deadEnd.some(val => JSON.stringify(seenSingleData).includes(val))) {
+//                 fliteredByLabel.seen.deadEnd.push(seenSingleData)
+//             }
+//         })
+//         unseen.forEach(unseenSingleData => {
+//             if (definedLables.social.some(val => JSON.stringify(unseenSingleData).includes(val))) {
+//                 fliteredByLabel.unseen.social.push(unseenSingleData)
+//             }
+//             if (definedLables.promotion.some(val => JSON.stringify(unseenSingleData).includes(val))) {
+//                 fliteredByLabel.unseen.promotion.push(unseenSingleData)
+//             }
+//             if (definedLables.deadEnd.some(val => JSON.stringify(unseenSingleData).includes(val))) {
+//                 fliteredByLabel.unseen.deadEnd.push(unseenSingleData)
+//             }
+//         })
+//         res.status(200).json({
+//             error: false,
+//             data: fliteredByLabel
+//         });
+//     } catch (err) {
+//         console.log(err);
+//     }
+// });
 
 module.exports = router
 

@@ -92,10 +92,12 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     }
 
     this.scrapAll = async function (last_msgId) {
-        let last_msgId = await me.getLastTrackMessageId(me.myImap.user._id);
-        let { seen, unseen } = await Message.getALlEmailList(me.myImap.imap);
+        let trackedUser = await me.getLastTrackMessageId(me.myImap.user._id);
+        console.log(trackedUser)
+        let { seen, unseen } = await Message.getALlEmailList(me.myImap.imap,trackedUser);
         console.log('************************ size based emails uids ********************************')
         console.log({ 'seen': seen.length, 'unseen': unseen.length })
+        console.log(seen,unseen)
         let seenAndUnseenEmails = {
             'unseen': [],
             'seen': []
