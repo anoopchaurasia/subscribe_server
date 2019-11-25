@@ -2,7 +2,7 @@ fm.Include("com.anoop.imap.Controller");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
 let ImapController = com.anoop.imap.Controller;
-RedisDB.BLPopListner('email_update_for_user process_user_login', async function(data){
+RedisDB.BLPopListner('email_update_for_user', async function(data){
     try{
         console.log("user_id", data);
 
