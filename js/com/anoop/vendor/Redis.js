@@ -78,7 +78,7 @@ fm.Class("Redis", function(me) {
                     return next()
                 }
                 try{
-                    await cb(data[1]);
+                  //  await cb(data[1]);
                 } catch(e){
                     console.error(e)
                 } finally {
