@@ -5,9 +5,6 @@ const token_model = require('../models/tokeno');
 
 let ImapController = com.anoop.imap.Controller;
 RedisDB.BLPopListner('process_user_login', async function(token){
-    if(err) {
-        console.error(err);
-    }
     try{
         const doc = await token_model.findOne({ "token": token });
         ImapController.extractEmail(doc).catch(err => {
