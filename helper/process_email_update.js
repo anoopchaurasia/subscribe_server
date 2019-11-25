@@ -7,6 +7,7 @@ RedisDB.BLPopListner('email_update_for_user', async function(err, user_id ){
         console.error(err);
     }
     try{
+        console.log("user_id", user_id);
         await ImapController.updateForUser(user_id);
     }catch(e) {
         console.error(e);
