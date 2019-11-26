@@ -97,15 +97,14 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         console.log(trackedUser)
         let { seen, unseen } = await Message.getALlEmailList(me.myImap.imap,trackedUser);
         console.log(unseen.length,seen.length)
-        await scrapUnReadAllMail(unseen);
         await scrapReadAllMail(seen);
+        await scrapUnReadAllMail(unseen);
     }
-
     async function scrapUnReadAllMail(mailIds) {
         if (mailIds.length <= 0) return;
         console.log('************************ all emails uids ********************************')
         console.log({ 'msgids': mailIds.length })
-        var msgIDS = mailIds.splice(0, 5000);
+        var msgIDS = mailIds.splice(0, 500);
         await mailScrapAndReturnEmailData(msgIDS, ["UNREAD"],'unread');
         return scrapUnReadAllMail(mailIds);
     }
@@ -114,7 +113,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         if (mailIds.length <= 0) return;
         console.log('************************ all emails uids ********************************')
         console.log({ 'msgids': mailIds.length })
-        var msgIDS = mailIds.splice(0, 5000);
+        var msgIDS = mailIds.splice(0, 500);
         await mailScrapAndReturnEmailData(msgIDS, ["READ"],'read');
         return scrapReadAllMail(mailIds);
     }
@@ -211,8 +210,8 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
 
     async function mailScrapAndReturnEmailData(uids, labels,status) {
         // return new Promise(async (resolve, reject) => {
-            let emails = [];
-            console.log(me.myImap.user._id)
+        //     let emails = [];
+        //     console.log(me.myImap.user._id)
             await Message.getBatchMessageAndReturnEmail(me.myImap.imap, uids, async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
                 me.storEmailData({
@@ -232,7 +231,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                 //     'receivedDate': emailbody.header.date.split('Date: ')[1]
                 // });
             })
-        //     resolve(emails)
+            // resolve(emails)
         // });
     }
 

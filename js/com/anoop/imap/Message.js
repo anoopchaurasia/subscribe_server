@@ -168,12 +168,10 @@ fm.Class("Message", function (me) {
             });
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
-                // console.log('before parser')
                 msgs.push(1)
                 detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
                 msgs.pop();
                 msgs.length === 0 && ended && resolve();
-
             });
             let ended = false;
             fetch.on('end', async function () {

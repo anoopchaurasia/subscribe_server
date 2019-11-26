@@ -27,6 +27,6 @@ var emailsdata = new Schema({
         type:Array
     }
 });
-emailsdata.index({ from_email: 1, user_id: 1,email_id:1,receivedDate:1});
+emailsdata.index({ from_email: 1, user_id: 1,receivedDate:1});
 var userdata = mongoose.model('EmailsData', emailsdata);
 module.exports = userdata;
