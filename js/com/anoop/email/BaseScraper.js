@@ -75,6 +75,10 @@ fm.Class('BaseScraper', function (me, BaseController) {
         await BaseController.storeEmailData(data,user_id);
     }
 
+    this.updateLastTrackMessageId = async function(user_id,msg_id){
+        await BaseController.updateLastTrackMessageId(user_id,msg_id);
+    }
+
     this.getLastTrackMessageId = async function(user_id){
         return await BaseController.getLastTrackMessageId(user_id);
     }

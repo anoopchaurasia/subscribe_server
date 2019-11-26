@@ -53,6 +53,15 @@ fm.Class("Message", function (me) {
         });
     };
 
+    Static.deleteMsg = async function(imap,ids){
+        return await new Promise((resolve,reject)=>{
+            imap.addFlags(ids, 'Deleted', function(err) {
+                (err ? reject(err) : resolve());
+             });
+        });
+    };
+   
+
     Static.getEmailsBySender = async function (gmail, sender, formatted_date) {
 
     };
@@ -115,7 +124,6 @@ fm.Class("Message", function (me) {
     };
 
     Static.getALlEmailList = async function (imap,trackedUser) {
-        console.log(trackedUser.last_msgId)
         if(trackedUser && trackedUser.last_msgId){
             return {
                 seen: await search(imap, ["SEEN", ['UID', (trackedUser.last_msgId) + ':*']]),
@@ -160,7 +168,7 @@ fm.Class("Message", function (me) {
             });
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
-                console.log('before parser')
+                // console.log('before parser')
                 msgs.push(1)
                 detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
                 msgs.pop();

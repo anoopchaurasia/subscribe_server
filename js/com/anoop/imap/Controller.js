@@ -303,8 +303,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await me.scanStarted(token.user_id);
         let myImap = await openFolder(token, folderName);
         let scraper = Scraper.new(myImap);        
-        await me.updateLastTrackMessageId(token.user_id,myImap.box.uidnext)
         let emails = await scraper.scrapAll(myImap.box.uidnext);
+        await me.updateLastTrackMessageId(token.user_id,myImap.box.uidnext)
         myImap.imap.end(myImap.imap);
         return emails;
     }
@@ -344,6 +344,13 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let emails = await scraper.getAllEmails();
         myImap.imap.end(myImap.imap);
         return emails;
+    }
+
+    Static.deleteQuickMail = async function(token,ids){
+        let user = await me.getUserById(token.user_id);
+        let myImap = await openFolder(token, "INBOX", user);
+        await Label.setDeleteFlag(myImap, ids);
+        await closeImap(myImap);
     }
 
 });

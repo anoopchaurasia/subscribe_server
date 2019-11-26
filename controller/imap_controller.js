@@ -991,6 +991,26 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
 });
 
 
+/* This api will delete Email from inbox */
+router.post('/deleteQuickMail', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await EmailDataModel.find({user_id:doc.user_id,from_email:{$in:req.body.from_email}},{email_id:1,_id:0});
+        let ids = emails.map(x=>x.email_id)
+        console.log(ids)
+        await Controller.deleteQuickMail(doc, ids);
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+
+
 // /* This api will return the emails based on the size, 
 //    for example: if i need emails between 1-5MB, 
 //    it will return the partucular emails with seen and unseen seperated format */
