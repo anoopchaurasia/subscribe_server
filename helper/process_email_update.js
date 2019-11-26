@@ -3,8 +3,8 @@ fm.Include("com.anoop.imap.Controller", function(){
     let ImapController = com.anoop.imap.Controller;
     RedisDB.BLPopListner('email_update_for_user', async function(data){
         try{
-            console.log("user_id", data);
-            ImapController.updateForUser(user_id);
+            console.log("user_id", data[1]);
+            ImapController.updateForUser(data[1]);
         }catch(e) {
             console.error(e);
         }
