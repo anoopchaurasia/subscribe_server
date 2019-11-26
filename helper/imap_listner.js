@@ -9,12 +9,10 @@ Array.prototype.asynForEach = async function (cb) {
         await cb(this[i]);
     }
 }
-
-
 setTimeout(x=>{
-    onNewUser()
+    onNewUser();
     runJob();
-}, 10*1000);
+}, 5*1000);
 
 
 async function runJob(offset=0 ){

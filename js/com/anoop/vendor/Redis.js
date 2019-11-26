@@ -5,9 +5,9 @@ fm.Class("Redis", function(me) {
     let client;
     Static.main = function(){
         client = require('redis').createClient({host: process.env.IMAP_REDIS_HOST});
-        client.on("error", function (err) {
-            console.error("Error " + err);
-        });
+        // client.on("error", function (err) {
+        //     console.error("Error " + err);
+        // });
     };
 
     Static.getClient = () => client;
@@ -74,6 +74,8 @@ fm.Class("Redis", function(me) {
      };
 
      Static.BLPopListner = async function(key, cb){
+        // blpop block entire client for create new client
+        let client = require('redis').createClient({host: process.env.IMAP_REDIS_HOST});
         function next() {
             console.log("getting next");
             client.blpop(key, 0, async (err, data)=>{
@@ -108,6 +110,8 @@ fm.Class("Redis", function(me) {
     };
 
     Static.onNewUser = function(cb){
+        // blpop block entire client for create new client
+        let client = require('redis').createClient({host: process.env.IMAP_REDIS_HOST});
         function next () {
             client.blpop('new_imap_user', 0, function(err, data){
                 try{

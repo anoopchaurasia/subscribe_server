@@ -1,15 +1,15 @@
 fm.Package('com.anoop.email')
 let redis = require("redis");
+let redis_client = redis.createClient({
+    host: process.env.REDIS_HOST,
+    no_ready_check: true,
+})
+
 fm.Import("..model.Domain");
 fm.Class('BaseRedisData', function(me, Domain){
     'use strict';
     this.setMe=_me=>me=_me;
-    let redis_client;
-    Static.main = function(){
-        redis_client = redis.createClient({
-            host: process.env.REDIS_HOST
-        })
-    }
+    
     Static.getAllDomain = async function () {
         return await Domain.get();
     }

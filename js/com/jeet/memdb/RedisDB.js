@@ -1,6 +1,10 @@
 fm.Package("com.jeet.memdb");
 fm.Class("RedisDB>com.anoop.vendor.Redis", function(me) {
     this.setMe=_me=>me=_me;
+
+    Static.main = function(){
+        var a = 45;
+    };
     Static.findPercent = function(data, is_completed=true){
         var unread = 0;
         var read = 0;
