@@ -1,12 +1,16 @@
 fm.Package("com.anoop.vendor");
-let client = require('redis').createClient({
-    host: process.env.IMAP_REDIS_HOST
-});
-client.on("error", function (err) {
-    console.error("Error " + err);
-});
+
 fm.Class("Redis", function(me) {
     this.setMe = _me => me=_me;
+    let client;
+    Static.main = function(){
+        client = require('redis').createClient({host: process.env.IMAP_REDIS_HOST});
+        client.on("error", function (err) {
+            console.error("Error " + err);
+        });
+    };
+
+    Static.getClient = () => client;
     Static.set = function(key, value){
         return client.set(key, value);
     };
