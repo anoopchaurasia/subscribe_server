@@ -65,7 +65,7 @@ fm.Class("Message", function (me) {
             });
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
-                detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
+                await detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
             });
             fetch.on('end', async function () {
                 console.log("end")
