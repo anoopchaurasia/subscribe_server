@@ -76,7 +76,7 @@ fm.Class("Redis", function(me) {
      Static.BLPopListner = async function(key, cb){
         // blpop block entire client for create new client
         let client = require('redis').createClient({host: process.env.IMAP_REDIS_HOST});
-        function next() {
+        async function next() {
             console.log("getting next");
             client.blpop(key, 0, async (err, data)=>{
                 if(err) {

@@ -3,7 +3,6 @@ const mongodomain = require('../../../../models/domain');
 fm.Class("Domain>.BaseModel", function(me){
     this.setMe=_me=>me=_me;
 
-
     Static.match = function(email){
         return !!(email || "").match(domainListReg);
     };
