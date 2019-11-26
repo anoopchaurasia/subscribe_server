@@ -3,7 +3,6 @@ console.log("is Master in watcher");
 const UserModel = require('../models/user');
 fm.Include("com.anoop.imap.Controller");
 let ImapController = com.anoop.imap.Controller;
-fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
 Array.prototype.asynForEach = async function (cb) {
     for (let i = 0, len = this.length; i < len; i++) {
@@ -13,20 +12,9 @@ Array.prototype.asynForEach = async function (cb) {
 
 
 setTimeout(x=>{
+    onNewUser()
     runJob();
 }, 10*1000);
-
-ImapController.onNewUser(async x=>{
-    let user = await ImapController.getUserById(x);
-    console.log("new user added", user);
-    if(user.listener_active && user.inactive_at==null) {
-        return false;
-    }
-    console.log("setting for new user", user._id);
-    await scrapEmailForIamp(user).catch(err => {
-        console.error(err.message, "user -> ", user.email);
-    });
-});
 
 
 async function runJob(offset=0 ){
@@ -58,3 +46,16 @@ async function scrapEmailForIamp(user){
     });
 };
 
+function onNewUser(){
+    ImapController.onNewUser(async x=>{
+        let user = await ImapController.getUserById(x);
+        console.log("new user added", user);
+        if(user.listener_active && user.inactive_at==null) {
+            return false;
+        }
+        console.log("setting for new user", user._id);
+        await scrapEmailForIamp(user).catch(err => {
+            console.error(err.message, "user -> ", user.email);
+        });
+    });
+}
