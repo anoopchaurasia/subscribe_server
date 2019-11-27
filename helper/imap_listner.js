@@ -55,8 +55,8 @@ if(cluster.isMaster) {
         });
     }
 }else {
-    RedisDB.BLPopListner(LISTEN_USER_KEY, async function([err, user_id]){
-        let user = await ImapController.getUserById(x);
+    RedisDB.BLPopListner(LISTEN_USER_KEY, async function([key, user_id]){
+        let user = await ImapController.getUserById(user_id);
         await scrapEmailForIamp(user).catch(err => {
             console.error(err.message, "user -> ", user.email);
         });
