@@ -54,14 +54,14 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         latestIDCB && latestIDCB([].concat(seen, unseen).sort((a,b)=> b-a)[0])
         console.log(seen, unseen, me.myImap.user.email);
         if (unseen.length != 0) {
-            await mailScrap(unseen, ["UNREAD"], me.handleBasedOnPastAction);
+            await mailScrap(unseen, ["UNREAD"], me.handleBasedOnPastAction, false);
         }
         if (seen.length != 0) {
-            await mailScrap(seen, ["READ"], me.handleBasedOnPastAction);
+            await mailScrap(seen, ["READ"], me.handleBasedOnPastAction, false);
         }
     };
 
-    async function mailScrap(unseen, labels, handleCB) {
+    async function mailScrap(unseen, labels, handleCB, is_get_body) {
         await Message.getBatchMessage(me.myImap.imap, unseen,
             async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
@@ -73,7 +73,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                         await Label.moveInboxToTrashAuto(me.myImap, [data.email_id]);
                     }
                 });
-            })
+            }, is_get_body)
     }
 
     this.getEmaiIdsBySender = async function (sender) {

@@ -120,8 +120,6 @@ fm.Class("MyImap", function (me) {
                 console.log("disconnected", me.user.email);
                 clearInterval(me.interval_const);
                 cb();
-            } else {
-                console.log("connected", me.user.email);              
             }
         }, 10*60*1000);
     };

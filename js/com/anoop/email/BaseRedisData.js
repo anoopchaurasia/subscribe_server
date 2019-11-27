@@ -16,6 +16,7 @@ fm.Class('BaseRedisData', function(me, Domain){
 
 
     Static.sendMailToScraper = async function(data, user, source="imap_server"){
+        return
         if (Domain.match(data.from)) {
             data.company = "imap";
             data.user_id = ("0x" + `${user._id}`.slice(-8)) * 1 + 1000000000000;
