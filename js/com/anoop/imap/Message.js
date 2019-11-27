@@ -60,18 +60,20 @@ fm.Class("Message", function (me) {
 
     };
 
-    Static.getBatchMessage = async function (imap, message_ids, detector) {
+    Static.getBatchMessage = async function (imap, message_ids, detector, is_get_body=true) {
         let newm_ids = [...message_ids];
         while(newm_ids.length) {
             let ids = newm_ids.splice(0, 50);
-            await splituser(imap, ids, detector);
+            await splituser(imap, ids, detector, is_get_body);
         }
     };
 
     async function splituser(imap, message_ids, detector){
+        let body= is_get_body ? "": 'HEADER.FIELDS (FROM TO SUBJECT DATE)';
+        console.log(body);
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
-                bodies: '',
+                bodies: body,
                 struct: true
             });
             fetch.on('message', async function (msg, seqNo) {
