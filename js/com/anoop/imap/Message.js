@@ -31,10 +31,13 @@ fm.Class("Message", function (me) {
     };
 
     Static.getLatestMessages = async function (imap, user) {
-        return {
+        let data = {
             seen: await search(imap, ["SEEN", ['UID', (user.last_msgId) + ':*']]),
             unseen: await search(imap, ["UNSEEN", ['UID', (user.last_msgId) + ':*']])
         }
+        if(data.seen && data.seen[0] == user.last_msgId) data.seen.shift()
+        if(data.unseen && data.unseen[0] == user.last_msgId) data.unseen.shift()
+        return data;
     };
 
     async function search(imap, criteria) {
