@@ -271,6 +271,13 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await me.updateLastMsgId(user._id, myImap.box.uidnext)
     }
 
+    Static.updateTrashLabel = async function(myImap) {
+        let names = await myImap.getLabels();
+        let label = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
+        myImap.user.trash_label = label;
+        me.updateTrashLabelUser(myImap.user.email,label);
+    }
+
     ///////////------------------------ login ------------------------///
     Static.login = async function (email, password, provider) {
         let PASSWORD = MyImap.encryptPassword(password);

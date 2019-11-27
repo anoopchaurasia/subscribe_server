@@ -71,15 +71,25 @@ fm.Class("Message", function (me) {
     async function splituser(imap, message_ids, detector){
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
-                bodies: '',
+                 bodies: 'HEADER.FIELDS (FROM TO SUBJECT DATE)',
                 struct: true
             });
+            const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
-                await detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
+                msgs.push(1);
+                try{
+                    await detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
+                } finally{
+                    msgs.pop();
+                    msgs.length === 0 && ended && resolve();
+                }
             });
+            let ended=false;
             fetch.on('end', async function () {
                 console.log("end")
-                resolve();
+                ended=true;
+                msgs.length === 0 && resolve()
+                // resolve();
             });
         });
     }
@@ -99,7 +109,6 @@ fm.Class("Message", function (me) {
                     stream.on('data', chunk => chunks.push(chunk));
                     stream.once('end', async () => {
                         const raw = Buffer.concat(chunks).toString('utf8');
-
                         let parsed = await simpleParser(raw, { skipHtmlToText: true, skipTextToHtml: true, skipTextLinks: true, skipImageLinks: true });
                         resolve(parsed)
                     });

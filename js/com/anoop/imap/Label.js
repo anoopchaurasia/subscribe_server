@@ -3,8 +3,16 @@ fm.Class("Label>.Message", function (me) {
     this.setMe = _me => me = _me;
 
     Static.moveInboxToTrashAuto = async function (myImap, ids) {
-        // console.log(myImap.user,ids)
-        return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+        try {
+            return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+        } catch (error) {
+           await me.package.Controller.updateTrashLabel(myImap);
+           try {
+               return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+           } catch (error) {
+               console.log(error)
+           }
+        }
     };
 
     Static.moveInboxToUnsubAuto = async function (myImap, ids) {
