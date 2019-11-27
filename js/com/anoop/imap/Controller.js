@@ -258,17 +258,18 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
        // await updateForUser(scraper, myImap, user);
     }
 
-    Static.updateForUser = async function (user_id) {
+    Static.updateForUser = async function (user_id, reset_cb) {
         console.log(user_id);
         let user = await me.getUserById(user_id)
         let myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
-        await scraper.update(function latest_id(id) {
+        await scraper.update(async function latest_id(id, is_more_than_500) {
             id && (myImap.box.uidnext = id);
+            await me.updateLastMsgId(user._id, myImap.box.uidnext);
+            is_more_than_500 && reset_cb();
         });
         myImap.user.last_msgId = myImap.box.uidnext;
         myImap.imap.end(myImap.imap);
-        await me.updateLastMsgId(user._id, myImap.box.uidnext)
     }
 
     Static.updateTrashLabel = async function(myImap) {
