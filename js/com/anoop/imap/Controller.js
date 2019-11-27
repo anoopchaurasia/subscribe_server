@@ -249,10 +249,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         });
         myImap.onEnd(x => {
             console.log("ended", myImap.user.email);
-            process.nextTick(r => me.listenForUser(user, "restarting for user"), new_email_cb);
+            process.nextTick(r => me.listenForUser(user, "restarting for user", new_email_cb) );
         });
         myImap.keepCheckingConnection(x => {
-            process.nextTick(r => me.listenForUser(user, "restarting for user12"), new_email_cb);
+            process.nextTick(r => me.listenForUser(user, "restarting for user12", new_email_cb));
         });
         new_email_cb();
        // await updateForUser(scraper, myImap, user);
