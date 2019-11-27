@@ -92,53 +92,53 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     }
 
 
-    this.scrapAll = async function () {
-        let trackedUser = await me.getLastTrackMessageId(me.myImap.user._id);
-        console.log(trackedUser)
-        let { seen, unseen } = await Message.getALlEmailList(me.myImap.imap,trackedUser);
-        console.log(unseen.length,seen.length)
-        await scrapReadAllMail(seen);
-        await scrapUnReadAllMail(unseen);
-    }
-    async function scrapUnReadAllMail(mailIds) {
-        if (mailIds.length <= 0) return;
-        console.log('************************ all emails uids ********************************')
-        console.log({ 'msgids': mailIds.length })
-        var msgIDS = mailIds.splice(0, 500);
-        await mailScrapAndReturnEmailData(msgIDS, ["UNREAD"],'unread');
-        return scrapUnReadAllMail(mailIds);
-    }
-
-    async function scrapReadAllMail(mailIds) {
-        if (mailIds.length <= 0) return;
-        console.log('************************ all emails uids ********************************')
-        console.log({ 'msgids': mailIds.length })
-        var msgIDS = mailIds.splice(0, 500);
-        await mailScrapAndReturnEmailData(msgIDS, ["READ"],'read');
-        return scrapReadAllMail(mailIds);
-    }
-
-    // this.scrapAll = async function (last_msgId) {
+    // this.scrapAll = async function () {
     //     let trackedUser = await me.getLastTrackMessageId(me.myImap.user._id);
     //     console.log(trackedUser)
     //     let { seen, unseen } = await Message.getALlEmailList(me.myImap.imap,trackedUser);
-    //     console.log('************************ size based emails uids ********************************')
-    //     console.log({ 'seen': seen.length, 'unseen': unseen.length })
-    //     console.log(seen,unseen)
-    //     let seenAndUnseenEmails = {
-    //         'unseen': [],
-    //         'seen': []
-    //     }
-    //     if (unseen.length != 0) {
-    //         let unseenEmail = await mailScrapAndReturnEmailData(unseen, ["UNREAD"],'unread',last_msgId);
-    //         seenAndUnseenEmails.unseen = unseenEmail
-    //     }
-    //     if (seen.length != 0) {
-    //         let seenEmail = await mailScrapAndReturnEmailData(seen, ["READ"],'read',last_msgId);
-    //         seenAndUnseenEmails.seen = seenEmail
-    //     }
-    //     return seenAndUnseenEmails;
+    //     console.log(unseen.length,seen.length)
+    //     await scrapReadAllMail(seen);
+    //     await scrapUnReadAllMail(unseen);
     // }
+    // async function scrapUnReadAllMail(mailIds) {
+    //     if (mailIds.length <= 0) return;
+    //     console.log('************************ all emails uids ********************************')
+    //     console.log({ 'msgids': mailIds.length })
+    //     var msgIDS = mailIds.splice(0, 500);
+    //     await mailScrapAndReturnEmailData(msgIDS, ["UNREAD"],'unread');
+    //     return scrapUnReadAllMail(mailIds);
+    // }
+
+    // async function scrapReadAllMail(mailIds) {
+    //     if (mailIds.length <= 0) return;
+    //     console.log('************************ all emails uids ********************************')
+    //     console.log({ 'msgids': mailIds.length })
+    //     var msgIDS = mailIds.splice(0, 500);
+    //     await mailScrapAndReturnEmailData(msgIDS, ["READ"],'read');
+    //     return scrapReadAllMail(mailIds);
+    // }
+
+    this.scrapAll = async function (last_msgId) {
+        let trackedUser = await me.getLastTrackMessageId(me.myImap.user._id);
+        console.log(trackedUser)
+        let { seen, unseen } = await Message.getALlEmailList(me.myImap.imap,trackedUser);
+        console.log('************************ size based emails uids ********************************')
+        console.log({ 'seen': seen.length, 'unseen': unseen.length })
+        console.log(seen,unseen)
+        let seenAndUnseenEmails = {
+            'unseen': [],
+            'seen': []
+        }
+        if (unseen.length != 0) {
+            let unseenEmail = await mailScrapAndReturnEmailData(unseen, ["UNREAD"],'unread',last_msgId);
+            seenAndUnseenEmails.unseen = unseenEmail
+        }
+        if (seen.length != 0) {
+            let seenEmail = await mailScrapAndReturnEmailData(seen, ["READ"],'read',last_msgId);
+            seenAndUnseenEmails.seen = seenEmail
+        }
+        return seenAndUnseenEmails;
+    }
 
     this.size = async function (smallerThan, largerThan) {
         let { seen, unseen } = await Message.getEmailListsBySize(me.myImap.imap, smallerThan, largerThan);
@@ -165,9 +165,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         if (data.isCustom) {
             var { seen, unseen } = await Message.getUIDByBetweenDate(me.myImap.imap, data.since, data.before);
             console.log('----');
-            
-        }
-        else {
+        }else {
             var { seen, unseen } = await Message.getUIDByBeforeOrAfterParticularDate(me.myImap.imap, data.beforeOrAfter, data.date);
         }
         console.log('************************ date based emails uids ********************************')
@@ -209,10 +207,10 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     }
 
     async function mailScrapAndReturnEmailData(uids, labels,status) {
-        // return new Promise(async (resolve, reject) => {
-        //     let emails = [];
-        //     console.log(me.myImap.user._id)
-            await Message.getBatchMessageAndReturnEmail(me.myImap.imap, uids, async (parsed) => {
+        return new Promise(async (resolve, reject) => {
+            let emails = [];
+            console.log(me.myImap.user._id)
+            await Message.getBatchMessage(me.myImap.imap, uids, async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
                 me.storEmailData({
                     'from_email': emailbody.from_email,
@@ -231,8 +229,8 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                 //     'receivedDate': emailbody.header.date.split('Date: ')[1]
                 // });
             })
-            // resolve(emails)
-        // });
+            resolve(emails)
+        });
     }
 
 });

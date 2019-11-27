@@ -64,24 +64,50 @@ fm.Class("Message", function (me) {
 
     Static.getEmailsBySender = async function (gmail, sender, formatted_date) {
 
+
+    };
+    Static.getBatchMessage = async function (imap, message_ids, detector) {
+        console.log(message_ids.length)
+        let newm_ids = [...message_ids];
+        while(newm_ids.length) {
+            let ids = newm_ids.splice(0, 50);
+            await splituser(imap, ids, detector);
+        }
     };
 
-    Static.getBatchMessage = async function (imap, message_ids, detector) {
+    async function splituser(imap, message_ids, detector){
+        console.log(message_ids.length)
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
                 bodies: '',
                 struct: true
             });
-            const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
-                detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
+                await detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
             });
             fetch.on('end', async function () {
                 console.log("end")
                 resolve();
             });
         });
-    };
+    }
+
+    // Static.getBatchMessage = async function (imap, message_ids, detector) {
+    //     return new Promise((resolve, reject) => {
+    //         const fetch = imap.fetch(message_ids, {
+    //             bodies: '',
+    //             struct: true
+    //         });
+    //         const msgs = [];
+    //         fetch.on('message', async function (msg, seqNo) {
+    //             detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
+    //         });
+    //         fetch.on('end', async function () {
+    //             console.log("end")
+    //             resolve();
+    //         });
+    //     });
+    // };
 
     async function parseMessage(msg) {
         let [atts, parsed] = await Promise.all([
