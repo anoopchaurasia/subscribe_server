@@ -63,7 +63,6 @@ fm.Class("Redis", function(me) {
         });
     };
 
-
      Static.pushFlag = async function (key,data) {
         return me.lPush(key, data);
     };

@@ -263,13 +263,21 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let user = await me.getUserById(user_id)
         let myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
-        await scraper.update(async function latest_id(id, is_more_than_500) {
+        let timeoutconst = setInterval(x=>{
+            if(myImap.imap.state === 'disconnected') {
+                throw new Error("disconnected");
+            }
+        })
+        let is_more_than_500=false
+        await scraper.update(async function latest_id(id, temp) {
             id && (myImap.box.uidnext = id);
-            await me.updateLastMsgId(user._id, myImap.box.uidnext);
-            is_more_than_500 && reset_cb();
+            temp && (is_more_than_500=true);
         });
+        clearInterval(timeoutconst);
         myImap.user.last_msgId = myImap.box.uidnext;
         myImap.imap.end(myImap.imap);
+        await me.updateLastMsgId(user._id, myImap.box.uidnext);
+        is_more_than_500 && reset_cb()
     }
 
     Static.updateTrashLabel = async function(myImap) {
