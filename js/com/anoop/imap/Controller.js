@@ -267,7 +267,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             if(myImap.imap.state === 'disconnected') {
                 throw new Error("disconnected");
             }
-        })
+        }, 30*1000)
         let is_more_than_500=false
         await scraper.update(async function latest_id(id, temp) {
             id && (myImap.box.uidnext = id);
