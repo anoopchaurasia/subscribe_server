@@ -274,6 +274,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.updateTrashLabel = async function(myImap) {
         let names = await myImap.getLabels();
         let label = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
+        if(label == undefined){
+            label = myImap.user.unsub_label;
+        }
         myImap.user.trash_label = label;
         me.updateTrashLabelUser(myImap.user.email,label);
     }
