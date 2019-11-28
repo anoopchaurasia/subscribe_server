@@ -60,7 +60,11 @@ async function runJob(offset = 0) {
 };
 
 
-function new_user_check(){
+async function new_user_check(){
+  if(await RedisDB.listLength(LISTEN_USER_KEY)>0) {
+    console.warn("processing old users returning")
+    return;
+  }
   let cursor = UserModel.find({listener_active: null, email_client:"imap"}, {_id:1}).lean().cursor();
   cursor.eachAsync(async user => {
     RedisDB.notifyListner( user._id.toHexString());

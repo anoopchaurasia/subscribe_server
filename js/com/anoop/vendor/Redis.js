@@ -108,6 +108,15 @@ fm.Class("Redis", function(me) {
         client.expire("new_imap_user", 20);
     };
 
+    Static.listLength = async function (key) {
+        return new Promise((resolve, reject) => {
+            client.llen(key, (err, res) => {
+                if (err) return reject(err);
+                resolve(res);
+            });
+        });
+    }
+
     Static.onNewUser = function(cb){
         // blpop block entire client for create new client
         let client = require('redis').createClient({host: process.env.IMAP_REDIS_HOST});
