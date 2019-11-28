@@ -258,6 +258,28 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
        // await updateForUser(scraper, myImap, user);
     }
 
+    // //////////////////// listen for user delete message ////////////////////
+    // Static.listenForUserDeleteMsg = async function(user,text,new_email_cb){
+    //     text && console.log(text, user.email);
+    //     let myImap = await openFolder("", "Unsubscribed Emails", user);
+    //     let scraper = Scraper.new(myImap);
+    //     let ids = await scraper.getUnsubBefor30Days();
+    //     new_email_cb(x,y);
+    //     myImap.listen(async function (x, y) {
+    //         new_email_cb(x, y);
+    //      //   updateForUser(scraper, myImap, user);
+    //     });
+    //     myImap.onEnd(x => {
+    //         console.log("ended", myImap.user.email);
+    //         process.nextTick(r => me.listenForUser(user, "restarting for user", new_email_cb) );
+    //     });
+    //     myImap.keepCheckingConnection(x => {
+    //         process.nextTick(r => me.listenForUser(user, "restarting for user12", new_email_cb));
+    //     });
+    //     new_email_cb();
+    // }
+    
+
     Static.updateForUser = async function (user_id) {
         console.log(user_id);
         let user = await me.getUserById(user_id)
