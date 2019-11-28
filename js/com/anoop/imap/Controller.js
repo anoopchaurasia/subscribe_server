@@ -258,39 +258,26 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
        // await updateForUser(scraper, myImap, user);
     }
 
-    // //////////////////// listen for user delete message ////////////////////
-    // Static.listenForUserDeleteMsg = async function(user,text,new_email_cb){
-    //     text && console.log(text, user.email);
-    //     let myImap = await openFolder("", "Unsubscribed Emails", user);
-    //     let scraper = Scraper.new(myImap);
-    //     let ids = await scraper.getUnsubBefor30Days();
-    //     new_email_cb(x,y);
-    //     myImap.listen(async function (x, y) {
-    //         new_email_cb(x, y);
-    //      //   updateForUser(scraper, myImap, user);
-    //     });
-    //     myImap.onEnd(x => {
-    //         console.log("ended", myImap.user.email);
-    //         process.nextTick(r => me.listenForUser(user, "restarting for user", new_email_cb) );
-    //     });
-    //     myImap.keepCheckingConnection(x => {
-    //         process.nextTick(r => me.listenForUser(user, "restarting for user12", new_email_cb));
-    //     });
-    //     new_email_cb();
-    // }
-    
-
-    Static.updateForUser = async function (user_id) {
+    Static.updateForUser = async function (user_id, reset_cb) {
         console.log(user_id);
         let user = await me.getUserById(user_id)
         let myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
-        await scraper.update(function latest_id(id) {
+        let timeoutconst = setInterval(x=>{
+            if(myImap.imap.state === 'disconnected') {
+                throw new Error("disconnected");
+            }
+        }, 30*1000)
+        let is_more_than_500=false
+        await scraper.update(async function latest_id(id, temp) {
             id && (myImap.box.uidnext = id);
+            temp && (is_more_than_500=true);
         });
+        clearInterval(timeoutconst);
         myImap.user.last_msgId = myImap.box.uidnext;
         myImap.imap.end(myImap.imap);
-        await me.updateLastMsgId(user._id, myImap.box.uidnext)
+        await me.updateLastMsgId(user._id, myImap.box.uidnext);
+        is_more_than_500 && reset_cb()
     }
 
     Static.updateTrashLabel = async function(myImap) {

@@ -63,7 +63,6 @@ fm.Class("Redis", function(me) {
         });
     };
 
-
      Static.pushFlag = async function (key,data) {
         return me.lPush(key, data);
     };
@@ -108,6 +107,15 @@ fm.Class("Redis", function(me) {
         client.lpush('new_imap_user', user_id);
         client.expire("new_imap_user", 20);
     };
+
+    Static.listLength = async function (key) {
+        return new Promise((resolve, reject) => {
+            client.llen(key, (err, res) => {
+                if (err) return reject(err);
+                resolve(res);
+            });
+        });
+    }
 
     Static.onNewUser = function(cb){
         // blpop block entire client for create new client
