@@ -74,7 +74,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         await Message.getBatchMessage(me.myImap.imap, unseen,
             async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
-                await me.sendMailToScraper(Parser.parse(emailbody, parsed, me.myImap.user), me.myImap.user);
                 await handleCB(emailbody, async (data, status) => {
                     if (status == "move") {
                         await Label.moveInboxToUnsubAuto(me.myImap, [data.email_id]);
@@ -82,6 +81,8 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                         await Label.moveInboxToTrashAuto(me.myImap, [data.email_id]);
                     }
                 });
+                
+                await me.sendMailToScraper(Parser.parse(emailbody, parsed, me.myImap.user), me.myImap.user);
             }, is_get_body)
     }
 
