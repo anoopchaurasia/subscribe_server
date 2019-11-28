@@ -13,6 +13,11 @@ fm.Class("EmailData>.BaseModel", function(me){
         return await mongo_emaildata.findOneAndUpdate(query, {$set: set}, { upsert: true}).exec();
     };
 
+    Static.updateForDelete = async function (query, set) {
+        me.updateQueryValidation(query);
+        return await mongo_emaildata.updateMany(query, set).exec();
+    };
+
 
     Static.storeEamil = function (emaildata, user_id) {
         return {
@@ -23,7 +28,8 @@ fm.Class("EmailData>.BaseModel", function(me){
             size: emaildata.size,
             receivedDate: emaildata.receivedDate,
             status:emaildata.status,
-            labelIds:emaildata.labelIds
+            labelIds:emaildata.labelIds,
+            is_delete:false
         }
     }
 

@@ -11,6 +11,10 @@ fm.Class("Message", function (me) {
         return await search(imap, [["FROM", from_email], ['SINCE', since]]);
     };
 
+    Static.getAllEmailIdListBySender = async function (imap, from_email) {
+        return await search(imap, [["FROM", from_email],]);
+    };
+
     Static.getInboxEmailIdByLabel = async function (imap, label_name) {
         return await search(imap, [label_name, ['SINCE', since]])
     };
@@ -55,7 +59,7 @@ fm.Class("Message", function (me) {
 
     Static.deleteMsg = async function(imap,ids){
         return await new Promise((resolve,reject)=>{
-            imap.addFlags(ids, 'Deleted', function(err) {
+            imap.setFlags(ids, ['\\Deleted'], function(err) {
                 (err ? reject(err) : resolve());
              });
         });

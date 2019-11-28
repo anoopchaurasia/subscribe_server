@@ -977,7 +977,7 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
 });
 
 /* This api will Scrape all the emails from Account and will store into Database. */
-   router.post('/getAllEmail', async (req, res) => {
+router.post('/getAllEmail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
         let emails = await Controller.extractAllEmail(doc, 'INBOX');
@@ -995,10 +995,25 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
 router.post('/deleteQuickMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await EmailDataModel.find({user_id:doc.user_id,from_email:{$in:req.body.from_email}},{email_id:1,_id:0});
-        let ids = emails.map(x=>x.email_id)
+        let emails = await EmailDataModel.find({ user_id: doc.user_id, from_email: { $in: req.body.from_email }, is_delete: false }, { email_id: 1, _id: 0 });
+        let ids = emails.map(x => x.email_id)
         console.log(ids)
         await Controller.deleteQuickMail(doc, ids);
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+/* This api will delete Email from inbox by from Email*/
+router.post('/deleteQuickMailNew', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let from_email = req.body.from_email;
+        await Controller.deleteQuickMailNew(doc, from_email);
         res.status(200).json({
             error: false,
             data: emails
@@ -1032,21 +1047,23 @@ router.post('/deleteQuickMail', async (req, res) => {
 //     }
 // });
 
+
+
 /* This api will return the emails based on the size, 
    for example: if i need emails between 1-5MB, 
    it will return the partucular emails with seen and unseen seperated format */
-   router.post('/getEmailsBySizeFromDb', async (req, res) => {
+router.post('/getEmailsBySizeFromDb', async (req, res) => {
     try {
         let smallerThan = req.body.smallerThan;
         let largerThan = req.body.largerThan;
         const doc = await token_model.findOne({ "token": req.body.token });
         let emails;// = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
-        if(largerThan && smallerThan){
-             emails = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
-        }else if(smallerThan){
-            emails = await EmailDataModel.find({user_id:doc.user_id,size:{ $lte:smallerThan*1000000}});
-        }else{
-            emails = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000}});
+        if (largerThan && smallerThan) {
+            emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $gte: largerThan * 1000000, $lte: smallerThan * 1000000 }, is_delete: false });
+        } else if (smallerThan) {
+            emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $lte: smallerThan * 1000000 }, is_delete: false });
+        } else {
+            emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $gte: largerThan * 1000000 }, is_delete: false });
         }
         emails.sort((a, b) => {
             return a.size > b.size ? -1 : 1;
@@ -1062,16 +1079,16 @@ router.post('/deleteQuickMail', async (req, res) => {
 
 
 /* This api will return the emails based on the sender_email and also return total number of email by sender*/
-   router.post('/getEmailsBySenderFromDb', async (req, res) => {
+router.post('/getEmailsBySenderFromDb', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id } }, {
+        let emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
             $group: {
                 _id: { "from_email": "$from_email" }, data: {
                     $push: {
                         "labelIds": "$labelIds",
-                        "subject":"$subject",
-                        "status":"$status"
+                        "subject": "$subject",
+                        "status": "$status"
                     }
                 }, count: { $sum: 1 }
             }
@@ -1089,18 +1106,18 @@ router.post('/deleteQuickMail', async (req, res) => {
 
 
 /* This api will return the emails based on the Date from database */
-   router.post('/getEmailsByDateFromDb', async (req, res) => {
+router.post('/getEmailsByDateFromDb', async (req, res) => {
     try {
         let { data } = req.body;
         const doc = await token_model.findOne({ "token": req.body.token });
         let emails;
-        if(data.isCustom){
-            emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $gte :data.since,$lte:data.before}});
-        }else{
-            if(data.beforeOrAfter==='BEFORE'){
-                emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $lte:data.date}});
-            }else{
-                emails = await EmailDataModel.find({user_id:doc.user_id,receivedDate: { $gte :data.date}});
+        if (data.isCustom) {
+            emails = await EmailDataModel.find({ user_id: doc.user_id, receivedDate: { $gte: data.since, $lte: data.before }, is_delete: false });
+        } else {
+            if (data.beforeOrAfter === 'BEFORE') {
+                emails = await EmailDataModel.find({ user_id: doc.user_id, receivedDate: { $lte: data.date }, is_delete: false });
+            } else {
+                emails = await EmailDataModel.find({ user_id: doc.user_id, receivedDate: { $gte: data.date }, is_delete: false });
             }
         }
         res.status(200).json({
@@ -1114,10 +1131,10 @@ router.post('/deleteQuickMail', async (req, res) => {
 
 
 /* This api will return the emails based on Label from database*/
-   router.post('/getEmailsByLabelFromDb', async (req, res) => {
+router.post('/getEmailsByLabelFromDb', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await EmailDataModel.find({user_id:doc.user_id});
+        let emails = await EmailDataModel.find({ user_id: doc.user_id, is_delete: false });
         let definedLables = {
             "social": ['facebook', 'twitter', 'instagram'],
             "promotion": ['promotion'],
@@ -1125,18 +1142,18 @@ router.post('/deleteQuickMail', async (req, res) => {
         }
         let fliteredByLabel = {
             'label': {
-                "social": [], "promotion": [], "deadEnd": [] , "others":[]
+                "social": [], "promotion": [], "deadEnd": [], "others": []
             }
         }
         console.log(emails)
         emails.forEach(singleData => {
             if (definedLables.social.some(val => JSON.stringify(singleData).includes(val))) {
                 fliteredByLabel.label.social.push(singleData)
-            }else if (definedLables.promotion.some(val => JSON.stringify(singleData).includes(val))) {
+            } else if (definedLables.promotion.some(val => JSON.stringify(singleData).includes(val))) {
                 fliteredByLabel.label.promotion.push(singleData)
-            }else if (definedLables.deadEnd.some(val => JSON.stringify(singleData).includes(val))) {
+            } else if (definedLables.deadEnd.some(val => JSON.stringify(singleData).includes(val))) {
                 fliteredByLabel.label.deadEnd.push(singleData)
-            }else{
+            } else {
                 fliteredByLabel.label.others.push(singleData)
             }
         })
