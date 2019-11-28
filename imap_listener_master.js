@@ -19,6 +19,7 @@ mongoose.connection.once('connected', function () {
     onNewUser();
     runJob();
   }, 10 * 1000);
+  setInterval(new_user_check, 2*60*1000);
 });
 
 
@@ -43,7 +44,7 @@ async function runJob(offset = 0) {
     "email_client": "imap"
   }, {
     _id: 1
-  }).skip(offset).cursor();
+  }).skip(offset).lean().cursor();
   cursor.eachAsync(async user => {
       RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString());
       counter++;
@@ -57,6 +58,19 @@ async function runJob(offset = 0) {
       console.log('done!')
     })
 };
+
+
+function new_user_check(){
+  let cursor = UserModel.find({listener_active: null, email_client:"imap"}, {_id:1}).lean().cursor();
+  cursor.eachAsync(async user => {
+    RedisDB.notifyListner( user._id.toHexString());
+  }).catch(async e => {
+    console.error("watch error", counter, e);
+  })
+  .then(() => {
+    console.log('done!')
+  })
+}
 
 function onNewUser() {
   ImapController.onNewUser(async x => {
