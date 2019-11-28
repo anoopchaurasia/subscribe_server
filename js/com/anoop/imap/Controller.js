@@ -182,7 +182,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.inboxToTrashBySender = async function (token, sender_email) {
         let emailinfos = await commonBySender(token, sender_email, "trash");
         console.log("coming");
-        
+
         await Emailinfo.bulkInsert(emailinfos);
     }
 
@@ -212,7 +212,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
 
-    Static.extractOnLaunchEmail = async function (token){
+    Static.extractOnLaunchEmail = async function (token) {
         await me.scanStarted(token.user_id);
         let myImap = await openFolder(token, "INBOX");
         await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
@@ -226,18 +226,30 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.imap.end(myImap.imap);
     }
 
-    Static.validCredentialCheck = async function (token){
+    Static.validCredentialCheck = async function (token) {
         await me.scanStarted(token.user_id);
         let myImap = await openFolder(token, "INBOX");
-        if(myImap){
+        if (myImap) {
             myImap.imap.end(myImap.imap);
             return true
-        }else{
+        } else {
             myImap.imap.end(myImap.imap);
             return false
         }
     }
-    
+
+    //////////////////// delete msg for user ///////////////////
+    Static.deletePreviousMsg = async function (user) {
+        let myImap = await openFolder("", user.unsub_label, user);
+        let scraper = Scraper.new(myImap);
+        await scraper.deletePreviousMessages();
+        await closeImap(myImap);
+        myImap = await openFolder("", user.trash_label, user);
+        scraper = Scraper.new(myImap);
+        await scraper.deletePreviousMessages();
+        await closeImap(myImap);
+    }
+
     //////////////////// listen for user //////////////////////
     Static.listenForUser = async function (user, text, new_email_cb) {
 
@@ -245,17 +257,17 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let myImap = await openFolder("", "INBOX", user);
         myImap.listen(async function (x, y) {
             new_email_cb(x, y);
-         //   updateForUser(scraper, myImap, user);
+            //   updateForUser(scraper, myImap, user);
         });
         myImap.onEnd(x => {
             console.log("ended", myImap.user.email);
-            process.nextTick(r => me.listenForUser(user, "restarting for user", new_email_cb) );
+            process.nextTick(r => me.listenForUser(user, "restarting for user", new_email_cb));
         });
         myImap.keepCheckingConnection(x => {
             process.nextTick(r => me.listenForUser(user, "restarting for user12", new_email_cb));
         });
         new_email_cb();
-       // await updateForUser(scraper, myImap, user);
+        // await updateForUser(scraper, myImap, user);
     }
 
     Static.updateForUser = async function (user_id, reset_cb) {
@@ -263,8 +275,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let user = await me.getUserById(user_id)
         let myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
-        let timeoutconst = setInterval(x=>{
-            if(myImap.imap.state === 'disconnected') {
+        let timeoutconst = setInterval(x => {
+            if (myImap.imap.state === 'disconnected') {
                 throw new Error("disconnected");
             }
         }, 30*1000)
@@ -280,14 +292,14 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         is_more_than_limit && reset_cb()
     }
 
-    Static.updateTrashLabel = async function(myImap) {
+    Static.updateTrashLabel = async function (myImap) {
         let names = await myImap.getLabels();
         let label = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
-        if(label == undefined){
+        if (label == undefined) {
             label = myImap.user.unsub_label;
         }
         myImap.user.trash_label = label;
-        me.updateTrashLabelUser(myImap.user.email,label);
+        me.updateTrashLabelUser(myImap.user.email, label);
     }
 
     ///////////------------------------ login ------------------------///

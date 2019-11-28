@@ -495,7 +495,7 @@ router.post('/findEmailProvider', async (req, res) => {
 router.post('/readZohoMail', async (req, res) => {
     try {
         Controller.sendToProcessServer(req.body.token);
-       
+        
         res.status(200).json({
             error: false,
             data: "scrape"

@@ -94,6 +94,15 @@ fm.Class("Label>.Message", function (me) {
     };
 
 
+     ////-------------------------Delete messages
+     Static.setDeleteFlag = async function (myImap, ids) {
+        if (ids.length!=0) {
+               return await me.deleteMsg(myImap.imap, ids);
+        }
+        return        
+    };
+
+
     ////--------------------------Active
 
     Static.moveActiveToTrash = async function (myImap, from_email) {

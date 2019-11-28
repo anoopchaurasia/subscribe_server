@@ -101,4 +101,11 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         return idlist;
     }
 
+    this.deletePreviousMessages = async function(){
+        let ids = await Message.getDeleteEmailList(me.myImap.imap);
+        console.log(ids)
+        return await Label.setDeleteFlag(me.myImap,ids);
+    }
+
+
 });
