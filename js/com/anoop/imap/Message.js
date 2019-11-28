@@ -3,6 +3,7 @@ const MailParser = require('mailparser').MailParser
 const Imap = require('imap');
 const simpleParser = require('mailparser').simpleParser;
 const TWO_MONTH_TIME_IN_MILI = 8 * 30 * 24 * 60 * 60 * 1000;
+const ONE_MONETH_TIME_IN_MILI = 1 * 30 * 24 * 60 * 60 * 1000;
 fm.Class("Message", function (me) {
     this.setMe = _me => me = _me;
 
@@ -13,6 +14,12 @@ fm.Class("Message", function (me) {
 
     Static.getInboxEmailIdByLabel = async function (imap, label_name) {
         return await search(imap, [label_name, ['SINCE', since]])
+    };
+
+
+    Static.getDeleteEmailList = async function (imap) {
+        let before = new Date(Date.now() - ONE_MONETH_TIME_IN_MILI);
+        return await search(imap,[['BEFORE',before]]);
     };
 
     Static.getEmailList = async function (imap) {
@@ -53,6 +60,14 @@ fm.Class("Message", function (me) {
             imap.move(ids, folder_name, function (err) {
                 (err ? reject(err) : resolve());
             });
+        });
+    };
+
+    Static.deleteMsg = async function(imap,ids){
+        return await new Promise((resolve,reject)=>{
+            imap.addFlags(ids, ['\\Deleted'], function(err) {
+                (err ? reject(err) : resolve());
+             });
         });
     };
 

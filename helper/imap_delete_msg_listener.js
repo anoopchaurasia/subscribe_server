@@ -19,11 +19,7 @@ RedisDB.BLPopListner(LISTEN_USER_KEY, async function([key, user_id]){
 });
 async function scrapEmailForIamp(user){
     console.log("here ->",user.email);
-    await ImapController.updateUserById({_id: user._id}, {listener_active: true});
-    await ImapController.listenForUserDeleteMsg(user, "start", function(x, y){
-        console.log(x, y, "new email update");
-        RedisDB.lPush("delete_msg_for_user", user._id.toHexString() );
-    });
+    await ImapController.deletePreviousMsg(user);
 };
 
 
