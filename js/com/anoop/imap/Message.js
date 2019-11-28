@@ -65,7 +65,7 @@ fm.Class("Message", function (me) {
 
     Static.deleteMsg = async function(imap,ids){
         return await new Promise((resolve,reject)=>{
-            imap.addFlags(ids, ['\\Deleted'], function(err) {
+            imap.setFlags(ids, ['\\Deleted'], function(err) {
                 (err ? reject(err) : resolve());
              });
         });

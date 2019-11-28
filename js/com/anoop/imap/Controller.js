@@ -243,10 +243,11 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let myImap = await openFolder("", user.unsub_label, user);
         let scraper = Scraper.new(myImap);
         await scraper.deletePreviousMessages();
-        myImap.imap.end(myImap.imap);
+        await closeImap(myImap);
         myImap = await openFolder("", user.trash_label, user);
         scraper = Scraper.new(myImap);
         await scraper.deletePreviousMessages();
+        await closeImap(myImap);
     }
 
     //////////////////// listen for user //////////////////////

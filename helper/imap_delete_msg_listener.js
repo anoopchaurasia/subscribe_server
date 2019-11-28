@@ -11,16 +11,15 @@ Array.prototype.asynForEach = async function (cb) {
 let LISTEN_USER_KEY = "listen_for_user_delete_msg";
 
 
-RedisDB.BLPopListner(LISTEN_USER_KEY, async function([key, user_id]){
+RedisDB.BLPopListner(LISTEN_USER_KEY, async function ([key, user_id]) {
     let user = await ImapController.getUserById(user_id);
     await scrapEmailForIamp(user).catch(err => {
         console.error(err.message, "user -> ", user.email);
     });
 });
-async function scrapEmailForIamp(user){
-    console.log("here ->",user.email);
+
+
+async function scrapEmailForIamp(user) {
+    console.log("here ->", user.email);
     await ImapController.deletePreviousMsg(user);
 };
-
-
-
