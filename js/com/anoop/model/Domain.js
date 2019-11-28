@@ -9,6 +9,7 @@ fm.Class("Domain>.BaseModel", function(me){
 
     let domainListReg;
     Static.main =async function(){
+        console.log("dfdfdfd")
         loadFromDB();
         ///load data every 30 mins;
         setInterval(loadFromDB, process.env.LOAD_DOMAIN_DB_INTERVAL || 30*60*1000);

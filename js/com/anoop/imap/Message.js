@@ -63,7 +63,7 @@ fm.Class("Message", function (me) {
     Static.getBatchMessage = async function (imap, message_ids, detector, is_get_body) {
         let newm_ids = [...message_ids];
         while(newm_ids.length) {
-            let ids = newm_ids.splice(0, 50);
+            let ids = newm_ids.splice(0, 1000);
             await splituser(imap, ids, detector, is_get_body);
         }
     };
