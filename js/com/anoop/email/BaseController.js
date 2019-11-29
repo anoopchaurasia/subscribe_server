@@ -187,7 +187,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
             name: userInfo.name,
             email_client: "outlook",
             inactive_at: null,
-            primary_email: userInfo.preferred_username ? userInfo.preferred_username : ''
+            primary_email: userInfo.preferred_username ? userInfo.preferred_username : '',
+            platform_source:"webapp"
         };
         return await User.updateUserInfoOutlookWithState({ state: state },
             { $set: userdata });
