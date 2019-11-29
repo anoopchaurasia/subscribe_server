@@ -240,14 +240,19 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     //////////////////// delete msg for user ///////////////////
     Static.deletePreviousMsg = async function (user) {
-        let myImap = await openFolder("", user.unsub_label, user);
-        let scraper = Scraper.new(myImap);
-        await scraper.deletePreviousMessages();
-        await closeImap(myImap);
-        myImap = await openFolder("", user.trash_label, user);
-        scraper = Scraper.new(myImap);
-        await scraper.deletePreviousMessages();
-        await closeImap(myImap);
+        if(user.unsub_label.toLowerCase().indexOf("inbox")==-1){
+            let myImap = await openFolder("", user.unsub_label, user);
+            let scraper = Scraper.new(myImap);
+            await scraper.deletePreviousMessages();
+            await closeImap(myImap);
+        }
+
+        if(user.trash_label.toLowerCase().indexOf("inbox")==-1){
+            myImap = await openFolder("", user.trash_label, user);
+            scraper = Scraper.new(myImap);
+            await scraper.deletePreviousMessages();
+            await closeImap(myImap);
+        }
     }
 
     //////////////////// listen for user //////////////////////
