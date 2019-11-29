@@ -10,8 +10,10 @@ const { google } = require('googleapis');
 const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
+const SenderEmailModel = require("../models/senderMail");
 const APPROX_TWO_MONTH_IN_MS = 4 * 30 * 24 * 60 * 60 * 1000;
 const MailScraper = require("../helper/mailScraper").MailScraper;
+const ecommerce_cmpany = ["no-reply@flipkart.com", "auto-confirm@amazon.in"];
 // fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
@@ -24,12 +26,12 @@ Array.prototype.asyncForEach = async function (cb) {
     }
 }
 
-router.post('/senderEmailNotInEmailDetails',async (req,res)=>{
+router.post('/senderEmailNotInEmailDetails', async (req, res) => {
     let emailIds = await BaseController.senderEmailNotInEmailDetails(req.body.user_id)
     res.status(200).json({
-        error:false,
-        data:{
-            "emailIds":emailIds
+        error: false,
+        data: {
+            "emailIds": emailIds
         }
     })
 });
@@ -221,6 +223,7 @@ router.post('/readMailInfo', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const ecom_data = await SenderEmailModel.findOne({ senderMail: { $in: ecommerce_cmpany } });
         let finished = false;
         let is_finished = await BaseController.isScanFinished(doc.user_id);
         if (is_finished && is_finished == "true") {
@@ -239,7 +242,8 @@ router.post('/readMailInfo', async (req, res) => {
             data: emailinfos,
             unreadData: unreademail,
             totalEmail: total,
-            finished: finished
+            finished: finished,
+            is_ecommerce: ecom_data.length == 0 ? false : true
         })
     } catch (err) {
         console.error(err.message, err.stack, "8");
