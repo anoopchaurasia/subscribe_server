@@ -3,7 +3,7 @@ var Schema = mongoose.Schema;
 
 
 var Domain = new Schema({
-    name: String,
+    company: String,
     domain_name: {
         type: String,
         unique : true, 
