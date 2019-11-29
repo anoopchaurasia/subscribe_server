@@ -8,7 +8,7 @@ global.basedir = process.cwd();
 var Raven = require('raven');
 Raven.config('https://edb20d0741384f7e8ef743a5a22659d5@sentry.expensebit.com/13').install();
 let mongoose = require('mongoose');
-mongoose.connect("mongodb://expensebit:ExpenseBit%23321@cluster0-shard-00-00-pcct0.mongodb.net:27017,cluster0-shard-00-01-pcct0.mongodb.net:27017,cluster0-shard-00-02-pcct0.mongodb.net:27017/unsub_prod?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true&w=majority", {useNewUrlParser: true});
+mongoose.connect(process.env.MONGO_SERVER, {useNewUrlParser: true});
 mongoose.connection.once('connected', function () {
     startMIgration()
 });

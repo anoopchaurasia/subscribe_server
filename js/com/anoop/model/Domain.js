@@ -16,7 +16,8 @@ fm.Class("Domain>.BaseModel", function(me){
     }
 
     async function loadFromDB(){
-        let temp = await mongodomain.find({disabled: {$ne: true}},{domain_name:1,_id:0}).exec();
+        let temp = await mongodomain.find({disabled: {$ne: true}},{domain_name:1,_id:0}).lean().exec();
+        temp = temp.map(x=>x.domain_name);
         domainListReg = new RegExp(temp.join("|"), 'i');
     }
 });
