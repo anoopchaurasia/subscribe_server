@@ -16,7 +16,6 @@ mongoose.connect(process.env.MONGO_SERVER, {
 mongoose.connection.once('connected', function () {
   console.log("Connected to database")
   setTimeout(x => {
-    onNewUser();
     runJob();
   }, 10 * 1000);
 });
@@ -24,8 +23,7 @@ mongoose.connection.once('connected', function () {
 
 'use strict'
 const UserModel = require('./models/user');
-fm.Include("com.anoop.imap.Controller");
-let ImapController = com.anoop.imap.Controller;
+fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
 Array.prototype.asynForEach = async function (cb) {
   for (let i = 0, len = this.length; i < len; i++) {
@@ -57,15 +55,3 @@ async function runJob(offset = 0) {
       console.log('done!')
     })
 };
-
-function onNewUser() {
-  ImapController.onNewUser(async x => {
-    let user = await ImapController.getUserById(x);
-    console.log("new user added", user);
-    if (user.listener_active && user.inactive_at == null) {
-      return false;
-    }
-    RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString());
-    console.log("setting for new user", user._id);
-  });
-}

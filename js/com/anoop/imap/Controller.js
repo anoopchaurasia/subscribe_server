@@ -284,17 +284,17 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             if (myImap.imap.state === 'disconnected') {
                 throw new Error("disconnected");
             }
-        }, 30 * 1000)
-        let is_more_than_500 = false
+        }, 30*1000)
+        let is_more_than_limit=false
         await scraper.update(async function latest_id(id, temp) {
             id && (myImap.box.uidnext = id);
-            temp && (is_more_than_500 = true);
+            temp && (is_more_than_limit=true);
         });
         clearInterval(timeoutconst);
         myImap.user.last_msgId = myImap.box.uidnext;
         myImap.imap.end(myImap.imap);
         await me.updateLastMsgId(user._id, myImap.box.uidnext);
-        is_more_than_500 && reset_cb()
+        is_more_than_limit && reset_cb()
     }
 
     Static.updateTrashLabel = async function (myImap) {

@@ -3,9 +3,15 @@ var Schema = mongoose.Schema;
 
 
 var Domain = new Schema({
+    company: String,
     domain_name: {
-        type: String
-    }
+        type: String,
+        unique : true, 
+        required : true, 
+        "default":"add domain",
+        dropDups: true
+    },
+    disabled: Boolean
 });
 
 
