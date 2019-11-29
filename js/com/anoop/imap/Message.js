@@ -76,6 +76,14 @@ fm.Class("Message", function (me) {
 
     };
 
+    Static.getMessage = async function(data, imap){
+        let data;
+        await splituser(imap, [data.id], async function detector(dd){
+            data = dd;
+        });
+        return data;
+    };
+
     Static.getBatchMessage = async function (imap, message_ids, detector, is_get_body) {
         let newm_ids = [...message_ids];
         while(newm_ids.length) {

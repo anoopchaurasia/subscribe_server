@@ -242,8 +242,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         await Emailinfo.bulkInsert(emailinfos);
     }
 
-    Static.sendMailToScraper = async function (data, user) {
-        await BaseRedisData.sendMailToScraper(data, user);
+    Static.sendMailToScraper = async function (data, user, getBodyCB) {
+        await BaseRedisData.sendMailToScraper(data, user, getBodyCB);
     };
 
     Static.notifyListner = async function (user_id) {
