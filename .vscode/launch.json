@@ -15,7 +15,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
+            "name": "process",
             "program": "${workspaceFolder}/process.js",
         },
         {
