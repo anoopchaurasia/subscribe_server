@@ -64,6 +64,9 @@ var UserSchema = new Schema({
     },
     ipaddress:{
         type:String
+    },
+    platform_source:{
+        type:String
     }
 });
 
