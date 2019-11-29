@@ -72,8 +72,8 @@ fm.Class('BaseScraper', function (me, BaseController) {
         return await BaseController.getUserActionData(user_id);
     }
 
-    this.sendMailToScraper = async function (data, user) {
-        await BaseController.sendMailToScraper(data, user);
+    this.sendMailToScraper = async function (data, user, getBodyCB) {
+        await BaseController.sendMailToScraper(data, user, getBodyCB);
     };
 
     this.notifyListner = async function (user_id) {
