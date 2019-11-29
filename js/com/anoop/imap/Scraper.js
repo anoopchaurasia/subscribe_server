@@ -96,8 +96,8 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                     });
                 });
             }
-            move_list.length && await Label.moveInboxToUnsubAuto(me.myImap, move_list);
             trash_list.length && await Label.moveInboxToTrashAuto(me.myImap, trash_list);
+            move_list.length && await Label.moveInboxToUnsubAuto(me.myImap, move_list);
 
     }
 

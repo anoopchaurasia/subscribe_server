@@ -127,7 +127,7 @@ fm.Class("Label>.Message", function (me) {
     };
 
     Static.create = async function (myImap, name = myImap.user.unsub_label) {
-        if (myImap.provider.includes("inbox.lv")) {
+        if (myImap.provider.provider.includes("inbox.lv")) {
             await myImap.createlabel("INBOX/"+name).catch(e=> console.error(e.message, "create label", name));
         } else {
             await myImap.createlabel(name).catch(e=> console.error(e.message, "create label", name));

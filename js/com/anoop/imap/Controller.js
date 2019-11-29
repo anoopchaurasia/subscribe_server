@@ -10,7 +10,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         user = user || (await me.getUserById(token.user_id));
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
-        let myImap = await MyImap.new(user, provider.provider);
+        let myImap = await MyImap.new(user, provider);
         await myImap.connect(provider).catch(async err => {
             if (err.message.includes("Invalid credentials")) {
                 await me.updateInactiveUser(user._id);
@@ -280,6 +280,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let user = await me.getUserById(user_id)
         let myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
+        
         let timeoutconst = setInterval(x => {
             if (myImap.imap.state === 'disconnected') {
                 throw new Error("disconnected");
