@@ -6,18 +6,18 @@ var cookieParser = require('cookie-parser')
 
 const jwt = require('jsonwebtoken')
 router.use(cookieParser())
-
-router.use('/webapp/auth',require('../controller/auth_controller'));
-router.use('/webapp/email',jwtTokenVerify, require('../controller/email_controller'));
-router.use('/webapp/users', jwtTokenVerify, require('../controller/user_controller'));
-router.use('/webapp/microsoft', require('../controller/microsoft_web_controller'));
 router.use('/auth', require('../controller/auth_controller'));
 router.use('/email', authenticate, require('../controller/email_controller'));
 router.use('/users', authenticate, require('../controller/user_controller'));
 router.use('/microsoft', require('../controller/microsoft_auth'));
 router.use('/imap', require('../controller/imap_controller'));
 router.use('/auth/imap', require('../controller/imap_controller_with_auth'));
+
 router.use('/webapp/imap', require('../controller/imap_web_controller'));
+router.use('/webapp/auth',require('../controller/auth_controller'));
+router.use('/webapp/email',jwtTokenVerify, require('../controller/email_controller'));
+router.use('/webapp/users', jwtTokenVerify, require('../controller/user_controller'));
+router.use('/webapp/microsoft', require('../controller/microsoft_web_controller'));
 router.use('/webapp/auth/imap',jwtTokenVerify, require('../controller/imap_web_controller_with_auth'));
 
 
