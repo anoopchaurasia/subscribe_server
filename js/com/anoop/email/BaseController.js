@@ -9,12 +9,52 @@ fm.Import("..model.SenderMail");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
 var ObjectId = require('mongoose').Types.ObjectId;
-
+const jwt = require('jsonwebtoken');
+var legit = require('legit');
+require('dotenv').config()
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, RedisDB, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
     };
+
+    Static.getProviderInfo = async function (email) {
+        let domainName = email.split('@')[1];
+        let providerInfo = await Provider.get({ "domain_name": domainName });
+        if (providerInfo) {
+            return providerInfo
+        }
+        try{
+            var legitRes = await legit(email);
+        }catch(e){
+            return false
+        }
+        if (!legitRes.isValid) {
+            return false
+        }
+        let mxr = legitRes.mxArray[0].exchange;
+        providerInfo = {
+            provider : "",
+            login_url : "",
+            two_step_url : "",
+            imap_enable_url : "",
+            imap_host : mxr,
+            port : 993,
+            explain_url : "",
+            video_url : null,
+            login_js : null
+        }
+        return providerInfo
+    }
+
+    Static.isEmailExist = async function (emailId) {
+        let emailExistResult = await User.find({ email: emailId });
+        if (emailExistResult) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     Static.senderEmailNotInEmailDetails = async function (user_id) {
         try {
@@ -46,9 +86,9 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
                     "others": []
                 }
             };
-            return await me.getUserAnalyzed(emailDetailsWithInfo,userEmailAnalyziedData);
+            return await me.getUserAnalyzed(emailDetailsWithInfo, userEmailAnalyziedData);
         } catch (error) {
-            console.log(error)
+            console.error(error.message, error.stack, 'getLast7DaysData function')
         }
     }
 
@@ -121,6 +161,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await User.create({ email, passsword, trash_label });
     }
 
+    Static.removeUserByState = async function(state){
+        return await User.removeUserByState({state:state});
+    }
+
     Static.createOutlookUser = async function (stateCode) {
         return await User.createForOutlook({ stateCode });
     }
@@ -147,14 +191,45 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
             name: userInfo.name,
             email_client: "outlook",
             inactive_at: null,
-            primary_email: userInfo.preferred_username ? userInfo.preferred_username : ''
+            primary_email: userInfo.preferred_username ? userInfo.preferred_username : '',
+            platform_source:"webapp"
         };
         return await User.updateUserInfoOutlookWithState({ state: state },
             { $set: userdata });
     };
 
-    Static.createToken = async function (user) {
+    Static.createToken = async function (user, ipaddress) {
         return await Token.create(user);
+    }
+
+    Static.createTokenWeb = async function (user, ipaddress) {
+        let token = await me.generateJWTToken({ user_id: user._id, email: user.email });
+        let refreshTokenInsertedOrUpdated = await Token.findOneAndUpdate(
+            { user_id: user._id },
+            {
+                refresh_token: token.refreshToken,
+                user_id: user._id,
+                last_used_at: new Date(),
+                ipaddress: ipaddress || ''
+            });
+        
+        return {
+            token: token,
+            user: {
+                email: user.email,
+                email_client: user.email_client,
+                primary_email: user.primary_email,
+            }
+        }
+    }
+
+    Static.generateJWTToken = async (user) => {
+        let fiveHoursLater = new Date(new Date().setHours(new Date().getHours() + 5)).toString();
+        return {
+            "accessToken": jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: '5hr' }),
+            "refreshToken": jwt.sign(user, process.env.JWT_REFRESH_TOKEN_SECRET, { expiresIn: '720hr' }),
+            "accessTokenExpireTime": fiveHoursLater
+        }
     }
 
     Static.getUserById = async function (user_id) {
@@ -279,7 +354,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         let keylist = await RedisDB.getKEYS(user_id);
         if (keylist && keylist.length != 0) {
             await keylist.asyncForEach(async element => {
-                // console.log(element)
                 let mail = await RedisDB.popData(element);
                 if (mail.length != 0) {
                     let result = await RedisDB.findPercent(mail);
@@ -298,16 +372,16 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         RedisDB.sendNewUserProcess('process_user_login', token);
     };
 
-    Static.getUserAnalyzed = async function (emailDetailsWithInfo,userEmailAnalyziedData) {
+    Static.getUserAnalyzed = async function (emailDetailsWithInfo, userEmailAnalyziedData) {
         emailDetailsWithInfo.forEach((emaildata, index) => {
             let oneWeekBeforeInMillisecond = 7 * 24 * 60 * 60 * 1000
-            let oneWeekBefore = new Date(Date.now()-oneWeekBeforeInMillisecond);
+            let oneWeekBefore = new Date(Date.now() - oneWeekBeforeInMillisecond);
             let status_date = new Date(emaildata.status_date)
             console.log(`${status_date}---${oneWeekBefore}---${new Date()}`);
-            if (!(status_date >= oneWeekBefore && status_date <= new Date())){
+            if (!(status_date >= oneWeekBefore && status_date <= new Date())) {
                 emailDetailsWithInfo.splice(index, 1);
             }
-        });        
+        });
 
         userEmailAnalyziedData.totalProviders = emailDetailsWithInfo.length;
 

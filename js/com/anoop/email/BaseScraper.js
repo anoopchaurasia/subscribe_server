@@ -21,7 +21,7 @@ fm.Class('BaseScraper', function (me, BaseController) {
     }
 
     this.handleEamil = async function (data, automatic) {
-
+        
         let { emaildetail, emaildetailraw } = await me.handleBasedOnPastAction(data, automatic);
         if(!emaildetailraw){
             return

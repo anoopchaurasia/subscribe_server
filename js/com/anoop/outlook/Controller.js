@@ -134,11 +134,15 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
             await me.updateNewUserInfoOutlook(userInfo, state);
         }
         await OutlookHandler.extract_token(user, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
-            console.log(err);
+            console.error(err.message, err.stack,'createAndStoreToken');
         });
 
         await Label.subscribeToNotification(token.token.access_token, user._id);
         return await me.createToken(user);
+    }
+
+    Static.createToken = async function(user,ipaddress){
+        return await me.createTokenWeb(user,ipaddress);
     }
 
     Static.setPrimaryEmail = async function (user_id, email, ipaddress) {
@@ -157,7 +161,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
                 let instance = await Outlook.getOutlookInstanceForUser(user);
                 let scraper = new Scraper.new(instance);
                 await scraper.getWebhookMail(accessToken, link, user_id).catch(err => {
-                    console.log(err);
+                    console.error(err.message,err.stack,'getNotificationEmailData');
                 });
             }
         });

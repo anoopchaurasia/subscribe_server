@@ -24,16 +24,40 @@ Array.prototype.asyncForEach = async function (cb) {
     }
 }
 
-router.post('/senderEmailNotInEmailDetails',async (req,res)=>{
-    let emailIds = await BaseController.senderEmailNotInEmailDetails(req.body.user_id)
-    res.status(200).json({
-        error:false,
-        data:{
-            "emailIds":emailIds
+router.get('/getProviderInfo/:emailId', async (req, res) => {
+    let providerInfo = await BaseController.getProviderInfo(req.params.emailId);
+    let result = {
+        error: true,
+        msg: "provider not found/invalid"
+    }
+    if (providerInfo) {
+        result = {
+            error: false,
+            data: {
+                provider_info: providerInfo
+            }
         }
+    }
+    res.status(200).json(result);
+});
+
+router.get('/isEmailExist/:emailId', async (req, res) => {
+    let result = await BaseController.isEmailExist(req.params.emailId);
+    res.status(200).json({
+        error: false,
+        isEmailExist: result
     })
 });
 
+router.post('/senderEmailNotInEmailDetails', async (req, res) => {
+    let emailIds = await BaseController.senderEmailNotInEmailDetails(req.body.user_id)
+    res.status(200).json({
+        error: false,
+        data: {
+            "emailIds": emailIds
+        }
+    })
+});
 
 router.post('/getLast7daysData', async (req, res) => {
     let emailDetailsWithInfo = await BaseController.getLast7DaysData(req.body.user_id)
@@ -156,7 +180,6 @@ router.post('/manualUnsubEmailFromUser', async (req, res) => {
             const oauth2Client = await TokenHandler.createAuthCleint(authToken);
             Expensebit.createEmailLabel(token.user_id, oauth2Client);
             let label = await Expensebit.findLabelId(oauth2Client);
-            console.log(sender_email)
             let array = sender_email.split(",") || sender_email.split(";");
             await array.asyncForEach(async element => {
                 await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, element, true);
@@ -202,6 +225,22 @@ router.post('/getMailListForSender', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(doc.user_id, req.body.from_email);
         res.status(200).json({
             error: false,
+            status:200,
+            data: emailinfos
+        })
+    } catch (err) {
+        res.sendStatus(400);
+        console.error(err.message, err.stack, "7");
+    }
+});
+
+router.post('/getMailListForMultipleSender', async (req, res) => {
+    try {
+        const doc = req.token;
+        const emailinfos = await GetEmailQuery.getAllMailBasedOnMultipleSender(doc.user_id, req.body.from_email);
+        res.status(200).json({
+            error: false,
+            status:200,
             data: emailinfos
         })
     } catch (err) {
@@ -223,6 +262,7 @@ router.post('/readMailInfo', async (req, res) => {
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
         let finished = false;
         let is_finished = await BaseController.isScanFinished(doc.user_id);
+        console.log(is_finished)
         if (is_finished && is_finished == "true") {
             console.log("is_finished here-> ", is_finished);
             finished = true;
@@ -397,8 +437,6 @@ async function getRecentEmail(user_id, auth, nextPageToken, label, afterFinishCB
         afterFinishCB()
     }
 }
-
-
 /*
 This api for unsubscribing mail from Inbox.
 This api Currently not using Its under development.
@@ -463,8 +501,6 @@ router.post('/getDeletedEmailDataPage', async (req, res) => {
         console.error(err.message, ex.stack, "18");
     }
 });
-
-
 /*
 This api for changing keeped subscription.(when swipe right)
 this will changed changed is_keeped value in database for keped subscription
@@ -492,8 +528,6 @@ router.post('/keepMailInformation', async (req, res) => {
         res.sendStatus(400);
     }
 });
-
-
 /*
 This Api for getting only keeped subscription Information.
 */

@@ -17,17 +17,17 @@ var UserSchema = new Schema({
     image_url: {
         type: String
     },
-    given_name:{
-        type:String
+    given_name: {
+        type: String
     },
-    family_name:{
-        type:String
+    family_name: {
+        type: String
     },
-    gender:{
-        type:String
+    gender: {
+        type: String
     },
-    birth_date:{
-        type:Date
+    birth_date: {
+        type: Date
     },
     state: {
         type: String
@@ -47,26 +47,29 @@ var UserSchema = new Schema({
     trash_label: {
         type: String
     },
-    last_msgId:{
-        type:Number
+    last_msgId: {
+        type: Number
     },
-    dob:{
-        type:Number
+    dob: {
+        type: Number
     },
-    unsub_label:{
-        type:String
+    unsub_label: {
+        type: String
     },
-    primary_email:{
-        type:String
+    primary_email: {
+        type: String
     },
-    inactive_at:{
-        type:Date
+    inactive_at: {
+        type: Date
     },
-    ipaddress:{
-        type:String
+    ipaddress: {
+        type: String
     },
     listener_active: {
         type: Boolean
+    },
+    platform_source: {
+        type: String
     }
 });
 

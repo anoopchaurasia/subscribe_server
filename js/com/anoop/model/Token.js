@@ -1,6 +1,8 @@
 fm.Package("com.anoop.model");
 const uniqid = require('uniqid');
 const token_model = require('../../../../models/tokeno');
+const refresh_token_model = require('../../../../models/refreshToken');
+
 fm.Class("Token>.BaseModel", function (me) {
     this.setMe = _me => me = _me;
 
@@ -18,6 +20,10 @@ fm.Class("Token>.BaseModel", function (me) {
             "tokenid": token_uniqueid,
             "user": user
         };
+    }
+
+    Static.findOneAndUpdate = async function (query, set, ) {
+        return await refresh_token_model.findOneAndUpdate(query, { $set: set, $inc:{count:1} }, { upsert: true }).exec();
     }
 
 });

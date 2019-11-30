@@ -7,6 +7,10 @@ fm.Class("User>.BaseModel", function (me) {
         me.updateQueryValidation(query, "_id");
         return await mongouser.findOne(query).exec();
     };
+
+    Static.find = async function (query) {
+        return await mongouser.findOne(query).exec();
+    };
     
     Static.getByEmail = async function (query) {
         me.updateQueryValidation(query, "email");
@@ -40,7 +44,8 @@ fm.Class("User>.BaseModel", function (me) {
             "password": query.password,
             "trash_label": query.trash_label,
             "email_client": "imap",
-            "primary_email":query.email
+            "primary_email":query.email,
+            "platform_source":"webapp"
         });
         return await newUser.save().catch(err => {
             console.error(err.message, err.stack);

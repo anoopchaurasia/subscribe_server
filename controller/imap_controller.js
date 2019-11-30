@@ -14,19 +14,22 @@ const loginAnalyticModel = require('../models/loginAnalytic');
 const uniqid = require('uniqid');
 var legit = require('legit');
 var Raven = require('raven');
+const app = express();
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
+const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 fm.Include("com.anoop.email.Email");
 let EmailValidate = com.anoop.email.Email;
 
-
-
-
 //login or signup with the credentials and generate the token and return back to user
 router.post('/loginWithImap', async (req, res) => {
     try {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
-        let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile).catch(err => {
+        let ipaddress = req.header('x-forwarded-for') || req.connection.remoteAddress;
+        let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile, ipaddress, 'app').catch(err => {
             console.error(err.message, err, "imap_connect_error", req.body.username);
             Raven.captureException(err, { tags: { email_domain: req.body.username.split("@")[1], pass_length: req.body.password.length } });
             let attribute = {
@@ -86,10 +89,9 @@ router.post('/loginWithImap', async (req, res) => {
             });
         }
     } catch (error) {
-        console.log("here", error)
+        console.error(error.message, error.stack, 'loginwithimap')
     }
 });
-
 
 let createLogForUser = async (email_id, action_name, action_page, action_event, attribute, api_name) => {
     var userLog = new userAppLog({
@@ -160,7 +162,6 @@ router.post('/saveUnlistedProviderInfo', async (req, res) => {
 });
 
 router.post('/saveAnalyticData', async (req, res) => {
-    // console.log(req.body)
     let email_id = req.body.email;
     let userUniqueId = req.body.uniqueLaunchDeviceId;
     let deviceData = await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
@@ -190,7 +191,6 @@ router.post('/saveAnalyticData', async (req, res) => {
 });
 
 router.post('/saveAnalyticDataWithStep', async (req, res) => {
-    // console.log(req.body)
     let email_id = req.body.email;
     let step_key = req.body.step_key;
     let value = {
@@ -232,7 +232,7 @@ router.post('/getTwoStepUrl', async (req, res) => {
             login_js: response.login_js
         })
     } catch (error) {
-        console.log("here", error)
+        console.error(error.message, error.stack, 'getTwoStepUrl app')
         res.status(401).json({
             error: true,
             data: null
@@ -251,7 +251,7 @@ router.post('/getImapEnableUrl', async (req, res) => {
             login_js: response.login_js
         })
     } catch (error) {
-        console.log("here", error)
+        console.error(error.message, error.stack, 'getImapEnableUrl')
         res.status(401).json({
             error: true,
             data: null
@@ -261,13 +261,11 @@ router.post('/getImapEnableUrl', async (req, res) => {
 
 let saveProviderInfo = async (email) => {
     try {
-        console.log(email)
         var domain = email.split('@')[1];
         let resp = await providerModel.findOne({ "domain_name": domain }).catch(err => {
             console.error(err.message, err.stack, "provider_1");
         });
         if (resp) {
-            console.log("response", resp)
             return resp;
         } else {
             const response = await legit(email);
@@ -444,7 +442,7 @@ let saveProviderInfo = async (email) => {
             }
         }
     } catch (e) {
-        console.log(e);
+        console.error(e.message, e.stack, 'saveProviderInfo method');
     }
 }
 
@@ -491,11 +489,34 @@ router.post('/findEmailProvider', async (req, res) => {
     }
 });
 
+
 // read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
     try {
+        // const doc = await token_model.findOne({ "token": req.body.token });
+        // Controller.extractEmail(doc, 'INBOX').catch(err => {
+        //     console.error(err.message, err.stack);
+        //     Controller.scanFinished(doc.user_id);
+        // });
         Controller.sendToProcessServer(req.body.token);
-        
+        res.status(200).json({
+            error: false,
+            data: "scrape"
+        });
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+    return;
+});
+
+router.post('/readSpamMail', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        Controller.extractEmail(doc, '[Gmail]/Spam').catch(err => {
+            console.error(err.message, err.stack);
+            Controller.scanFinished(doc.user_id);
+        });
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -519,7 +540,7 @@ router.post('/validCredentialCheck', async (req, res) => {
                     error: true,
                     data: "Invalid Credential"
                 });
-            }else{
+            } else {
                 console.error(err.message, "got error here");
                 return res.status(400).json({
                     error: true,
@@ -533,13 +554,36 @@ router.post('/validCredentialCheck', async (req, res) => {
                 error: false,
                 data: "scrape"
             });
-        } else if (response == false){
+        } else if (response == false) {
             console.log("reject");
             return res.status(401).json({
                 error: false,
                 data: "scrscrap errorape"
             });
         }
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+});
+
+router.post('/deleteSpamMail', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let data = await Controller.deleteMail(doc, "[Gmail]/Spam");
+        res.status(200).json(data);
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "6");
+        res.sendStatus(400);
+    }
+    return;
+});
+
+router.post('/deleteTrashMail', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let data = await Controller.deleteMail(doc, "[Gmail]/Trash");
+        res.status(200).json(data);
     } catch (ex) {
         console.error(ex.message, ex.stack, "6");
         res.sendStatus(400);
@@ -965,6 +1009,7 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
         })
     }
 });
+
 
 module.exports = router
 

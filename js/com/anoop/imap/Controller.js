@@ -31,12 +31,23 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     ///------------------------------------- userAction ---------------------///
-
     // Static.updateUserByActionKey = async function(user_id,value){
     //     await me.updateUserByActionKey(user_id,value);
     // }
-
     ///------------------------------------- from unused ---------------------///
+
+    Static.validCredentialCheck = async function (token){
+        await me.scanStarted(token.user_id);
+        let myImap = await openFolder(token, "INBOX");
+        if(myImap){
+            myImap.imap.end(myImap.imap);
+            await me.scanFinished(token.user_id);
+            return true
+        }else{
+            myImap.imap.end(myImap.imap);
+            return false
+        }
+    }
 
     Static.unusedToKeep = async function (token, from_email) {
         await updateMyDetail(token.user_id, from_email, 'keep');
@@ -61,28 +72,32 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.manualUnusedToTrash = async function (token, from_email) {
         let myImap = await openFolder(token, "INBOX");
-        await Label.moveInboxToTrash(myImap, from_email);
+        let resp = await Label.moveInboxToTrash(myImap, from_email);
         await myImap.closeFolder();
-        let data = {
-            user_id: token.user_id,
-            from_email,
-            status: "trash"
-        };
-        await me.saveManualEmailData(token.user_id, data);
+        if(resp){
+            let data = {
+                user_id: token.user_id,
+                from_email,
+                status: "trash"
+            };
+            await me.saveManualEmailData(token.user_id, data);
+        }
         me.updateUserByActionKey(token.user_id, { "last_manual_trash_date": new Date() });
         myImap.imap.end(myImap.imap);
     };
 
     Static.manualUnusedToUnsub = async function (token, from_email) {
         let myImap = await openFolder(token, "INBOX");
-        await Label.moveInboxToUnsub(myImap, from_email);
+        let resp = await Label.moveInboxToUnsub(myImap, from_email);
         await myImap.closeFolder();
-        let data = {
-            user_id: token.user_id,
-            from_email,
-            status: "move"
-        };
-        await me.saveManualEmailData(token.user_id, data);
+        if(resp){
+            let data = {
+                user_id: token.user_id,
+                from_email,
+                status: "move"
+            };
+            await me.saveManualEmailData(token.user_id, data);
+        }
         me.updateUserByActionKey(token.user_id, { "last_manual_unsub_date": new Date() });
         myImap.imap.end(myImap.imap);
     };
@@ -102,7 +117,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     ///------------------------------------- from keep ---------------------///
-
     Static.keepToTrash = async function (token, from_email) {
         await updateMyDetail(token.user_id, from_email, "trash");
         let myImap = await openFolder(token, "INBOX");
@@ -120,7 +134,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     }
     ///---------------------------------------from unsub folder--------------------///
-
     Static.unsubToKeep = async function (token, from_email) {
         await updateMyDetail(token.user_id, from_email, "keep");
         let user = await me.getUserById(token.user_id);
@@ -157,8 +170,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     //-----------------------------by sender id--------------------------------------//
-
-
     Static.inboxToUnsubBySender = async function (token, sender_email) {
         let { emaildetail, ids } = await commonBySender(token, sender_email, "move");
         await Label.bulkUNusedToUnsub(emaildetail)
@@ -186,15 +197,25 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await Emailinfo.bulkInsert(emailinfos);
     }
 
+    Static.deleteMail = async (token,folderName)=>{
+        let myImap = await openFolder(token, folderName);
+        let scraper = Scraper.new(myImap);
+        let result = await scraper.getMailUIdAndDelete();
+        if(result){
+            return {error:false, msg:"mail deleted successfully"}
+        }
+        return {error:true}
+    }
 
     ////---------------------scrap fresh ==================
-
-    Static.extractEmail = async function (token) {
+    Static.extractEmail = async function (token,folderName) {
         await me.scanStarted(token.user_id);
-        let myImap = await openFolder(token, "INBOX");
+        let myImap = await openFolder(token, folderName);
+        
         await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
-        await scraper.start(async function afterEnd() {
+        
+        await scraper.start(folderName,token,async function afterEnd() {
             console.log("is_finished called")
             await me.scanFinished(token.user_id);
             me.updateUserByActionKey(token.user_id, { "last_scan_date": new Date() });
@@ -211,8 +232,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await me.updateLastMsgId(user._id, myImap.box.uidnext)
     }
 
-
-    Static.extractOnLaunchEmail = async function (token) {
+    Static.extractOnLaunchEmail = async function (token){
         await me.scanStarted(token.user_id);
         let myImap = await openFolder(token, "INBOX");
         await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
@@ -309,7 +329,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
     ///////////------------------------ login ------------------------///
-    Static.login = async function (email, password, provider) {
+    Static.login = async function (email, password, provider, ipaddress, clientAccessMode) {
         let PASSWORD = MyImap.encryptPassword(password);
         let myImap = await MyImap.new({
             email,
@@ -317,7 +337,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, provider.provider);
         await myImap.connect(provider);
         let names = await myImap.getLabels();
-        console.log(names)
         if (!names.includes("Unsubscribed Emails")) {
             await Label.create(myImap, "Unsubscribed Emails");
         }
@@ -333,13 +352,18 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
         myImap.imap.end(myImap.imap);
-        let token = await me.createToken(user);
+        let token;
+        if(clientAccessMode == 'web'){
+            token = await me.createTokenWeb(user,ipaddress);
+        }else{
+            token = await me.createToken(user,ipaddress);
+        }
         await me.notifyListner(user._id);
         // delay as active status require to setup listner so that it do not set multi listener for same user
         setTimeout(async x => {
             await me.reactivateUser(user._id);
         }, 1000);
+        console.log("token ==>",token)
         return token;
     }
-
 });
