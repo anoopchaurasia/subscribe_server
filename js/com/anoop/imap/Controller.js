@@ -208,18 +208,18 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
     ////---------------------scrap fresh ==================
-    Static.extractEmail = async function (token,folderName) {
-        await me.scanStarted(token.user_id);
-        let myImap = await openFolder(token, folderName);
+    Static.extractEmail = async function (user_id,folderName="INBOX") {
+        await me.scanStarted(user_id);
+        let myImap = await openFolder({user_id}, folderName);
         
-        await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
+        await mongouser.findOneAndUpdate({ _id: user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         
-        await scraper.start(folderName,token,async function afterEnd() {
+        await scraper.start(async function afterEnd() {
             console.log("is_finished called")
-            await me.scanFinished(token.user_id);
-            me.updateUserByActionKey(token.user_id, { "last_scan_date": new Date() });
-            await me.handleRedis(token.user_id);
+            await me.scanFinished(user_id);
+            me.updateUserByActionKey(user_id, { "last_scan_date": new Date() });
+            await me.handleRedis(user_id);
         });
         myImap.imap.end(myImap.imap);
     }
@@ -246,17 +246,17 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.imap.end(myImap.imap);
     }
 
-    Static.validCredentialCheck = async function (token) {
-        await me.scanStarted(token.user_id);
-        let myImap = await openFolder(token, "INBOX");
-        if (myImap) {
-            myImap.imap.end(myImap.imap);
-            return true
-        } else {
-            myImap.imap.end(myImap.imap);
-            return false
-        }
-    }
+    // Static.validCredentialCheck = async function (token) {
+    //     await me.scanStarted(token.user_id);
+    //     let myImap = await openFolder(token, "INBOX");
+    //     if (myImap) {
+    //         myImap.imap.end(myImap.imap);
+    //         return true
+    //     } else {
+    //         myImap.imap.end(myImap.imap);
+    //         return false
+    //     }
+    // }
 
     //////////////////// delete msg for user ///////////////////
     Static.deletePreviousMsg = async function (user) {

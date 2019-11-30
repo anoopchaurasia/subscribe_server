@@ -43,9 +43,8 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label, My
         return data;
     };
 
-    this.start = async function (folderName, token, cb) {
-        let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
-        console.log(seen, unseen, "sdsds")
+    this.start = async function (cb) {
+        let { seen, unseen, } = (await Message.getEmailList(me.myImap.imap));
         if (unseen.length != 0) {
             await mailScrap(unseen, ["UNREAD"], me.handleEamil);
         }
@@ -56,11 +55,9 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label, My
             cb && await cb();
         }, 5 * 1000);
     };
-
-
+    
     const limit = 2000;
-    this.update = async function (latestIDCB) {
-        let { seen, unseen } = await Message.getLatestMessages(me.myImap.imap, me.myImap.user);
+    function applyLimit({seen, unseen}){
         let arr = [].concat(seen, unseen).sort((a, b) => a - b);
         let is_more_than_limit = false, biggest = arr[arr.length - 1];
         if (arr.length > limit) {
@@ -70,8 +67,14 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label, My
             seen = seen.filter(x => x <= biggest)
             unseen = unseen.filter(x => x <= biggest)
         }
+        return {seen, unseen, biggest, is_more_than_limit};
+    }
+    
+    
+    this.update = async function (latestIDCB) {
+        
+        let { seen, unseen, biggest, is_more_than_limit } = applyLimit(await Message.getLatestMessages(me.myImap.imap, me.myImap.user));
         latestIDCB && latestIDCB(biggest, is_more_than_limit)
-        // latestIDCB && latestIDCB([].concat(seen, unseen).sort((a, b) => b - a)[0])
         console.log(seen, unseen, me.myImap.user.email);
         if (unseen.length != 0) {
             await mailScrap(unseen, ["UNREAD"], me.handleBasedOnPastAction, false);
@@ -97,7 +100,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label, My
                 await me.sendMailToScraper(Parser.parse(emailbody, parsed, me.myImap.user), me.myImap.user,
                     async function getBodyCB(data) {
                         store_list.push(data.id);
-                    });
+                    }, is_get_body);
 
             }, is_get_body);
         if (store_list.length) {

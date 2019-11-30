@@ -23,10 +23,11 @@ let EmailValidate = com.anoop.email.Email;
 router.post('/readZohoMail', async (req, res) => {
     try {
         const doc = req.token;
-        Controller.extractEmail(doc,"INBOX").catch(err => {
-            console.error(err.message, err.stack);
-            Controller.scanFinished(doc.user_id);
-        });
+        // Controller.extractEmail(doc,"INBOX").catch(err => {
+        //     console.error(err.message, err.stack);
+        //     Controller.scanFinished(doc.user_id);
+        // });
+        Controller.sendToProcessServer(doc.user_id);
         res.status(200).json({
             error: false,
             data: "scrape"

@@ -103,7 +103,7 @@ fm.Class("Message", function (me) {
             });
             let ended=false;
             fetch.on('end', async function () {
-                console.log("end")
+                console.log("end msg")
                 ended=true;
                 msgs.length === 0 && resolve()
                 // resolve();
