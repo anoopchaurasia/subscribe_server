@@ -223,7 +223,7 @@ router.post('/readMailInfo', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-        const ecom_data = await SenderEmailModel.findOne({ senderMail: { $in: ecommerce_cmpany } });
+        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:doc.user_id });
         let finished = false;
         let is_finished = await BaseController.isScanFinished(doc.user_id);
         if (is_finished && is_finished == "true") {
