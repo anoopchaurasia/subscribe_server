@@ -85,7 +85,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                 await me.sendMailToScraper(Parser.parse(emailbody, parsed, me.myImap.user), me.myImap.user, 
                     async function getBodyCB(data){
                     store_list.push(data.id);
-                });
+                },is_get_body);
                 
             }, is_get_body);
             if(store_list.length) {

@@ -189,16 +189,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     ////---------------------scrap fresh ==================
 
-    Static.extractEmail = async function (token) {
-        await me.scanStarted(token.user_id);
-        let myImap = await openFolder(token, "INBOX");
-        await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
+    Static.extractEmail = async function (user_id) {
+        await me.scanStarted(user_id);
+        let myImap = await openFolder({user_id}, "INBOX");
+        await mongouser.findOneAndUpdate({ _id: user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd() {
             console.log("is_finished called")
-            await me.scanFinished(token.user_id);
-            me.updateUserByActionKey(token.user_id, { "last_scan_date": new Date() });
-            await me.handleRedis(token.user_id);
+            await me.scanFinished(user_id);
+            me.updateUserByActionKey(user_id, { "last_scan_date": new Date() });
+            await me.handleRedis(user_id);
         });
         myImap.imap.end(myImap.imap);
     }

@@ -15,9 +15,9 @@ fm.Class('BaseRedisData', function(me, Domain){
     };
 
 
-    Static.sendMailToScraper = async function(data, user, getBody){
+    Static.sendMailToScraper = async function(data, user, getBody,is_get_body){
         if (Domain.match(data.from)) {
-            if(!data.html) {
+            if(is_get_body) {
                return await getBody(data);
             }
             data.company = "imap";
