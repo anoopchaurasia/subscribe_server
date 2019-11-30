@@ -243,7 +243,7 @@ router.post('/readMailInfo', async (req, res) => {
             unreadData: unreademail,
             totalEmail: total,
             finished: finished,
-            is_ecommerce: ecom_data && ecom_data.length == 0 ? false : true
+            is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
         })
     } catch (err) {
         console.error(err.message, err.stack, "8");
