@@ -292,7 +292,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             }
         }, 30*1000)
         let user = await me.getUserById(user_id)
-        let myImap = await openFolder("", "INBOX", user);
+        myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
         
         let is_more_than_limit=false
