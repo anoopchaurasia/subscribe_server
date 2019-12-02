@@ -189,7 +189,13 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     ////---------------------scrap fresh ==================
 
-    Static.extractEmail = async function (user_id) {
+    Static.extractEmail = async function (user_id, reset_cb) {
+        let timeoutconst = setInterval(x => {
+            if (myImap.imap.state === 'disconnected') {
+                reset_cb();
+                throw new Error("disconnected", user_id);
+            }
+        }, 30*1000)
         await me.scanStarted(user_id);
         let myImap = await openFolder({user_id}, "INBOX");
         await mongouser.findOneAndUpdate({ _id: user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
@@ -279,6 +285,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         console.log(user_id);
         let timeoutconst = setInterval(x => {
             if (myImap.imap.state === 'disconnected') {
+                reset_cb();
                 throw new Error("disconnected", user_id);
             }
         }, 30*1000)
@@ -295,7 +302,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.user.last_msgId = myImap.box.uidnext;
         myImap.imap.end(myImap.imap);
         await me.updateLastMsgId(user._id, myImap.box.uidnext);
-        is_more_than_limit && reset_cb()
+        is_more_than_limit && reset_cb();
     }
 
     Static.updateTrashLabel = async function (myImap) {
