@@ -287,9 +287,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         console.log(user_id);
         let myImap;
         let timeoutconst = setInterval(x => {
-            if (!myImap || myImap.imap.state === 'disconnected') {
+            if(!myImap) {
+                throw new Error("imap not available" + user_id);
+            }
+            if (myImap.imap.state === 'disconnected') {
                 reset_cb();
-                throw new Error("disconnected"+ !!myImap + user_id);
+                throw new Error("disconnected"+ + user_id);
             }
         }, 2*60*1000)
         let user = await me.getUserById(user_id).catch(error=>{
