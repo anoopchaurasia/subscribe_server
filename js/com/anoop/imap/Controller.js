@@ -291,7 +291,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 throw new Error("disconnected"+ !!myImap + user_id);
             }
         }, 30*1000)
-        let user = await me.getUserById(user_id)
+        let user = await me.getUserById(user_id).catch(error=>{
+            clearInterval(timeoutconst);
+            throw new Error(error);
+        });
         myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
         
