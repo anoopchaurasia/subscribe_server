@@ -277,15 +277,15 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.updateForUser = async function (user_id, reset_cb) {
         console.log(user_id);
+        let timeoutconst = setInterval(x => {
+            if (myImap.imap.state === 'disconnected') {
+                throw new Error("disconnected", user_id);
+            }
+        }, 30*1000)
         let user = await me.getUserById(user_id)
         let myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
         
-        let timeoutconst = setInterval(x => {
-            if (myImap.imap.state === 'disconnected') {
-                throw new Error("disconnected");
-            }
-        }, 30*1000)
         let is_more_than_limit=false
         await scraper.update(async function latest_id(id, temp) {
             id && (myImap.box.uidnext = id);
