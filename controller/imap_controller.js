@@ -494,7 +494,10 @@ router.post('/findEmailProvider', async (req, res) => {
 // read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
     try {
-        Controller.sendToProcessServer(req.body.token);
+        let doc = await token_model.findOne({ "token": req.body.token}).catch(err => {
+            console.error(err.message);
+        });
+        Controller.sendToProcessServer(doc.user_id);
         
         res.status(200).json({
             error: false,
