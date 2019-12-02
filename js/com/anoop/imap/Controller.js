@@ -207,6 +207,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             me.updateUserByActionKey(user_id, { "last_scan_date": new Date() });
             await me.handleRedis(user_id);
         });
+        clearInterval(timeoutconst);
         myImap.imap.end(myImap.imap);
     }
 
