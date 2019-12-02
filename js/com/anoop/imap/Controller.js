@@ -196,7 +196,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 reset_cb();
                 throw new Error("disconnected"+ !!myImap + user_id);
             }
-        }, 30*1000)
+        }, 2*60*1000)
         await me.scanStarted(user_id);
         myImap = await openFolder({user_id}, "INBOX");
         await mongouser.findOneAndUpdate({ _id: user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
@@ -290,7 +290,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 reset_cb();
                 throw new Error("disconnected"+ !!myImap + user_id);
             }
-        }, 30*1000)
+        }, 2*60*1000)
         let user = await me.getUserById(user_id).catch(error=>{
             clearInterval(timeoutconst);
             throw new Error(error);
