@@ -5,7 +5,10 @@ fm.Include("com.anoop.imap.Controller", x=>{
     let ImapController = com.anoop.imap.Controller;
     RedisDB.BLPopListner('process_user_login', async function([key, user_id]){
         try{
-            ImapController.extractEmail(user_id).catch(err => {
+            // const doc = await token_model.findOne({ "token": token });
+            ImapController.extractEmail(user_id,  function(){
+                RedisDB.lPush('process_user_login', data[1]);
+            }).catch(err => {
                 console.error(err.message, err.stack);
                 ImapController.scanFinished(user_id);
             });

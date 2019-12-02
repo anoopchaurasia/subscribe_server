@@ -493,30 +493,12 @@ router.post('/findEmailProvider', async (req, res) => {
 // read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
     try {
-        // const doc = await token_model.findOne({ "token": req.body.token });
-        // Controller.extractEmail(doc, 'INBOX').catch(err => {
-        //     console.error(err.message, err.stack);
-        //     Controller.scanFinished(doc.user_id);
-        // });
-        Controller.sendToProcessServer(req.body.token);
-        res.status(200).json({
-            error: false,
-            data: "scrape"
+        let doc = await token_model.findOne({ "token": req.body.token}).catch(err => {
+            console.error(err.message);
         });
-    } catch (ex) {
-        console.error(ex.message, ex.stack, "6");
-        res.sendStatus(400);
-    }
-    return;
-});
-
-router.post('/readSpamMail', async (req, res) => {
-    try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.extractEmail(doc, '[Gmail]/Spam').catch(err => {
-            console.error(err.message, err.stack);
-            Controller.scanFinished(doc.user_id);
-        });
+        console.log("got user tokane", doc);
+        Controller.sendToProcessServer(doc.user_id);
+        
         res.status(200).json({
             error: false,
             data: "scrape"

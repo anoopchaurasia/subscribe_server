@@ -23,7 +23,5 @@ Array.prototype.asyncForEach = async function (cb) {
       await cb(this[i]);
     }
   }
-
-
 require("./helper/process_email_update");
 require("./helper/process_user_login");
