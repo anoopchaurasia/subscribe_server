@@ -208,10 +208,17 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
     ////---------------------scrap fresh ==================
-    Static.extractEmail = async function (user_id,folderName="INBOX") {
+
+    Static.extractEmail = async function (user_id, reset_cb) {
+        let myImap;
+        let timeoutconst = setInterval(x => {
+            if (!myImap || myImap.imap.state === 'disconnected') {
+                reset_cb();
+                throw new Error("disconnected"+ !!myImap + user_id);
+            }
+        }, 2*60*1000)
         await me.scanStarted(user_id);
-        let myImap = await openFolder({user_id}, folderName);
-        
+        myImap = await openFolder({user_id}, "INBOX");
         await mongouser.findOneAndUpdate({ _id: user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         
@@ -221,6 +228,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             me.updateUserByActionKey(user_id, { "last_scan_date": new Date() });
             await me.handleRedis(user_id);
         });
+        clearInterval(timeoutconst);
         myImap.imap.end(myImap.imap);
     }
 
@@ -297,15 +305,23 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.updateForUser = async function (user_id, reset_cb) {
         console.log(user_id);
-        let user = await me.getUserById(user_id)
-        let myImap = await openFolder("", "INBOX", user);
+        let myImap;
+        let timeoutconst = setInterval(x => {
+            if(!myImap) {
+                throw new Error("imap not available" + user_id);
+            }
+            if (myImap.imap.state === 'disconnected') {
+                reset_cb();
+                throw new Error("disconnected"+ + user_id);
+            }
+        }, 2*60*1000)
+        let user = await me.getUserById(user_id).catch(error=>{
+            clearInterval(timeoutconst);
+            throw new Error(error);
+        });
+        myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
         
-        let timeoutconst = setInterval(x => {
-            if (myImap.imap.state === 'disconnected') {
-                throw new Error("disconnected");
-            }
-        }, 30*1000)
         let is_more_than_limit=false
         await scraper.update(async function latest_id(id, temp) {
             id && (myImap.box.uidnext = id);
@@ -315,7 +331,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.user.last_msgId = myImap.box.uidnext;
         myImap.imap.end(myImap.imap);
         await me.updateLastMsgId(user._id, myImap.box.uidnext);
-        is_more_than_limit && reset_cb()
+        is_more_than_limit && reset_cb();
     }
 
     Static.updateTrashLabel = async function (myImap) {

@@ -317,8 +317,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         await Emailinfo.bulkInsert(emailinfos);
     }
 
-    Static.sendMailToScraper = async function (data, user, getBodyCB, is_get_body) {
-        await BaseRedisData.sendMailToScraper(data, user, getBodyCB, is_get_body);
+    Static.sendMailToScraper = async function (data, user, getBodyCB,is_get_body) {
+        await BaseRedisData.sendMailToScraper(data, user, getBodyCB,is_get_body);
     };
 
     Static.notifyListner = async function (user_id) {
@@ -369,8 +369,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         }
     }
 
-    Static.sendToProcessServer = async function(token){
-        RedisDB.sendNewUserProcess('process_user_login', token);
+    Static.sendToProcessServer = async function(user_id){
+        RedisDB.sendNewUserProcess('process_user_login', user_id);
     };
 
     Static.getUserAnalyzed = async function (emailDetailsWithInfo, userEmailAnalyziedData) {

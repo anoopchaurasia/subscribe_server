@@ -97,11 +97,11 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label, My
                         trash_list.push(data.email_id);
                     }
                 });
-                await me.sendMailToScraper(Parser.parse(emailbody, parsed, me.myImap.user), me.myImap.user,
-                    async function getBodyCB(data) {
-                        store_list.push(data.id);
-                    }, is_get_body);
-
+                await me.sendMailToScraper(Parser.parse(emailbody, parsed, me.myImap.user), me.myImap.user, 
+                    async function getBodyCB(data){
+                    store_list.push(data.id);
+                },is_get_body);
+                
             }, is_get_body);
         if (store_list.length) {
             await Message.getBatchMessage(me.myImap.imap, store_list, async (parsed) => {
