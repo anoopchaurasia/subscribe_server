@@ -10,6 +10,8 @@ const AppVersionModel = require('../models/appVersion');
 const userModel = require('../models/user');
 const router = express.Router();
 const Raven = require('raven');
+
+
 /* 
 This Api for storing FCM Token Into database for firebase notification.
 */
@@ -31,6 +33,7 @@ router.post('/savefcmToken', async (req, res) => {
     });
 });
 
+
 /*
 This Api for storing Device Inforamtion into Database.
 */
@@ -43,7 +46,6 @@ router.post('/saveDeviceInfo', async (req, res) => {
         Raven.captureException(err);
         console.error(err.message, err.stack, "27");
     });
-
     //user does not exisst
     if (!checkUserDevice) {
         // new user identification using unique device id
@@ -85,6 +87,10 @@ router.post('/saveDeviceInfo', async (req, res) => {
     });
 });
 
+
+/*
+    This api for storing app-version into database.
+*/
 router.post('/saveAppVersion', async (req, res) => {
     try {
         let auth_id = req.body.authID;
@@ -110,6 +116,11 @@ router.post('/saveAppVersion', async (req, res) => {
         console.error(ex.message, ex.stack);
     }
 });
+
+
+/*
+    This api for getting app-version from database
+*/
 
 router.get('/getAppVersion', async (req, res) => {
     try {

@@ -161,13 +161,11 @@ router.post('/revertTrashMailToInbox', async (req, res) => {
         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
             console.error(err);
         });
-
         await Controller.revertTrashToInbox(doc.user_id,from_email);
         res.status(200).json({
             error: false,
             data: "revert"
         })
-     
     } catch (ex) {
         res.sendStatus(400);
     }
@@ -180,7 +178,6 @@ router.post('/moveEmailToTrashFromInbox', async (req, res) => {
         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
             console.error(err);
         });
-
         await Controller.moveEmailToTrashFromInbox(doc.user_id,from_email);
         res.status(200).json({
             error: false,
