@@ -192,9 +192,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.extractEmail = async function (user_id, reset_cb) {
         let myImap;
         let timeoutconst = setInterval(x => {
-            if (!myImap || myImap.imap.state === 'disconnected') {
+            if(!myImap) {
+                throw new Error("imap not available" + user_id);
+            }
+            if (myImap.imap.state === 'disconnected') {
                 reset_cb();
-                throw new Error("disconnected"+ !!myImap + user_id);
+                throw new Error("disconnected" + user_id);
             }
         }, 2*60*1000)
         await me.scanStarted(user_id);
@@ -301,7 +304,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         });
         myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
-        
+        if(myImap.user.last_msgId == undefined || myImap.user.last_msgId == "undefined") {
+            myImap.user.last_msgId = myImap.box.uidnext;
+            await me.updateLastMsgId(user._id, myImap.box.uidnext);
+        }
         let is_more_than_limit=false
         await scraper.update(async function latest_id(id, temp) {
             id && (myImap.box.uidnext = id);
