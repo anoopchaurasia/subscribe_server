@@ -291,7 +291,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
                     }
                 }
             });
-            // del_data && await RedisDB.delKEY(keylist);
+            del_data && await RedisDB.delKEY(keylist);
         }
     }
 
