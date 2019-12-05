@@ -11,7 +11,6 @@ const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const APPROX_TWO_MONTH_IN_MS = 4 * 30 * 24 * 60 * 60 * 1000;
-const MailScraper = require("../helper/mailScraper").MailScraper;
 // fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
@@ -23,41 +22,6 @@ Array.prototype.asyncForEach = async function (cb) {
         await cb(this[i], i, this);
     }
 }
-
-router.get('/getProviderInfo/:emailId', async (req, res) => {
-    let providerInfo = await BaseController.getProviderInfo(req.params.emailId);
-    let result = {
-        error: true,
-        msg: "provider not found/invalid"
-    }
-    if (providerInfo) {
-        result = {
-            error: false,
-            data: {
-                provider_info: providerInfo
-            }
-        }
-    }
-    res.status(200).json(result);
-});
-
-router.get('/isEmailExist/:emailId', async (req, res) => {
-    let result = await BaseController.isEmailExist(req.params.emailId);
-    res.status(200).json({
-        error: false,
-        isEmailExist: result
-    })
-});
-
-router.post('/senderEmailNotInEmailDetails', async (req, res) => {
-    let emailIds = await BaseController.senderEmailNotInEmailDetails(req.body.user_id)
-    res.status(200).json({
-        error: false,
-        data: {
-            "emailIds": emailIds
-        }
-    })
-});
 
 router.post('/getLast7daysData', async (req, res) => {
     let emailDetailsWithInfo = await BaseController.getLast7DaysData(req.body.user_id)

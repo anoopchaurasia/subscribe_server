@@ -18,56 +18,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         me = _me;
     };
 
-    Static.getProviderInfo = async function (email) {
-        let domainName = email.split('@')[1];
-        let providerInfo = await Provider.get({ "domain_name": domainName });
-        if (providerInfo) {
-            return providerInfo
-        }
-        try{
-            var legitRes = await legit(email);
-        }catch(e){
-            return false
-        }
-        if (!legitRes.isValid) {
-            return false
-        }
-        let mxr = legitRes.mxArray[0].exchange;
-        providerInfo = {
-            provider : "",
-            login_url : "",
-            two_step_url : "",
-            imap_enable_url : "",
-            imap_host : mxr,
-            port : 993,
-            explain_url : "",
-            video_url : null,
-            login_js : null
-        }
-        return providerInfo
-    }
-
-    Static.isEmailExist = async function (emailId) {
-        let emailExistResult = await User.find({ email: emailId });
-        if (emailExistResult) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    Static.senderEmailNotInEmailDetails = async function (user_id) {
-        try {
-            let conditions = [{ $match: { "user_id": ObjectId(user_id) } }, { $lookup: { from: "sendermails", localField: "user_id", foreignField: "user_id", as: "data" } }];
-            let emailDetailsData = await EmailDetail.executeAggregateQuery(conditions);
-            let senderMails = emailDetailsData[0].data.map(sender => { return sender.senderMail })
-            let emailDetailsMails = emailDetailsData.map(emailDetail => { return emailDetail.from_email })
-            let notCommonMails = senderMails.filter(senderMail => !emailDetailsMails.includes(senderMail))
-            return notCommonMails
-        } catch (error) {
-            console.error(error)
-        }
-    }
 
     Static.getLast7DaysData = async function (user_id) {
         try {
