@@ -26,8 +26,8 @@ async function authenticate(req, res, next) {
     let doc = await token_model.findOne({ "token": req.body.authID }).catch(err => {
         console.error(err.message);
     });
-    if (!doc) {
-        return res.write({ error: "auth failed" });
+    if(!doc) {
+        return res.json({error:"auth failed"});
     }
     req.token = doc;
     next();
