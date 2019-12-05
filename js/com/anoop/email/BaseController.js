@@ -277,6 +277,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
 
     Static.handleRedis = async function (user_id, del_data = true) {
         let keylist = await RedisDB.getKEYS(user_id);
+        console.log(keylist)
         if (keylist && keylist.length != 0) {
             await keylist.asyncForEach(async element => {
                 // console.log(element)
@@ -290,7 +291,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
                     }
                 }
             });
-            del_data && await RedisDB.delKEY(keylist);
+            // del_data && await RedisDB.delKEY(keylist);
         }
     }
 
