@@ -144,33 +144,38 @@ router.post('/disconnectGdprAccount', async (req, res) => {
         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
             console.error(err.message, err.stack, "28");
         });
-        let authoTokon = await AuthTokenModel.remove({ user_id: doc.user_id }).catch(err => {
-            console.error(err.message, err.stack, "delete1");
-        });
+        console.time("delete")
+
         console.log(authoTokon)
         let fcmtoken = await fcmToken.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete2");
         });
+        console.timeLog("delete")
         console.log(fcmtoken)
         let emailDetails = await emailDetailsModel.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete3");
         });
+        console.timeLog("delete")
         console.log(emailDetails)
         let emailInfo = await emailInformationModel.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete4");
         });
+        console.timeLog("delete")
         console.log(token)
         let device = await DeviceInfo.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete6");
         });
+        console.timeLog("delete")
         console.log(device)
         let user = await userModel.remove({ _id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete6");
         });
+        console.timeLog("delete")
         console.log(user)
         res.status(200).send({
             message: "success"
         });
+        console.timeEnd("delete")
     } catch (ex) {
         res.status(401).send({
             message: "reject"
