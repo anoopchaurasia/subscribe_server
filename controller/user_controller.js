@@ -159,10 +159,6 @@ router.post('/disconnectGdprAccount', async (req, res) => {
         let emailInfo = await emailInformationModel.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete4");
         });
-        console.log(emailInfo)
-        let token = await token_model.remove({ "user_id": doc.user_id }).catch(err => {
-            console.error(err.message, err.stack, "delete5");
-        });
         console.log(token)
         let device = await DeviceInfo.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete6");
