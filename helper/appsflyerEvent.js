@@ -16,7 +16,7 @@ class AppsflyerEvent {
             },
             body:
             {
-                appsflyer_id: 'com.inbox.clean.free.gmail.unsubscribe.smart.email.fresh.mailbox',
+                appsflyer_id: user_id,
                 customer_user_id: user_id,
                 eventName: event_name,
                 eventValue: event_value,
