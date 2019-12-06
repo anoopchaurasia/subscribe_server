@@ -1,21 +1,14 @@
 'use strict'
-var request = require("request");
+const https = require('https');
 
 
 
 class AppsflyerEvent {
 
-    static async sendEventToAppsflyer(user_id,event_name,event_value) {
-        var options = {
-            method: 'POST',
-            url: 'https://api2.appsflyer.com/inappevent/com.inbox.clean.free.gmail.unsubscribe.smart.email.fresh.mailbox',
-            headers:
-            {
-                "authentication": 'sc96TP3rY3awNVSj2q3gka',
-                'Content-Type': 'application/json'
-            },
-            body:
-            {
+    static async sendEventToAppsflyer(user_id, event_name, event_value) {
+
+        try {
+            var data = JSON.stringify({
                 appsflyer_id: user_id,
                 customer_user_id: user_id,
                 eventName: event_name,
@@ -24,14 +17,34 @@ class AppsflyerEvent {
                 ip: '1.0.0.0',
                 eventTime: new Date(),
                 af_events_api: 'true'
-            },
-            json: true
-        };
+            });
+            var options = {
+                host: 'api2.appsflyer.com',
+                method: 'POST',
+                path: '/inappevent/com.inbox.clean.free.gmail.unsubscribe.smart.email.fresh.mailbox',
+                headers:
+                {
+                    "authentication": 'sc96TP3rY3awNVSj2q3gka',
+                    'Content-Type': 'application/json'
+                }
+            };
 
-        request(options, function (error, response, body) {
-            if (error) throw new Error(error);
-            console.log(body);
-        });
+            var reqPost = https.request(options, function (res) {
+                console.log("response statusCode: ", res.statusCode);
+                res.on('data', function (data) {
+                    console.log('Posting Result: ', data.toString());
+                });
+            });
+            reqPost.on('error', function (e) {
+                console.error("here", e);
+            });
+
+            reqPost.write(data);
+            reqPost.end();
+        } catch (error) {
+            console.log("appsflyer  =>", error);
+        }
+
     }
 }
 
