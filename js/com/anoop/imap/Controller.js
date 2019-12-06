@@ -203,7 +203,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await me.scanStarted(user_id);
         myImap = await openFolder({user_id}, "INBOX");
         AppsflyerEvent.sendEventToAppsflyer(myImap.user.email,"process_started",{"user":myImap.user.email,"last_mid":myImap.box.uidnext})
-        await mongouser.findOneAndUpdate({ _id: user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
+        await mongouser.findOneAndUpdate({ _id: user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true }).exec();
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd() {
             console.log("is_finished called");

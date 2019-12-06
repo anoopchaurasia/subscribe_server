@@ -5,18 +5,18 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
     this.setMe = _me => me = _me;
 
     Static.getEmailIdsByEmailDetail = async function (emaildetail) {
-        let emails = await mongo_emailInfo.find({ "from_email_id": emaildetail._id }, { "email_id": 1, _id: 0 });
+        let emails = await mongo_emailInfo.find({ "from_email_id": emaildetail._id }, { "email_id": 1, _id: 0 }).exec();
         return emails.map(x => x.email_id);
     };
 
     Static.updateOrCreateAndGet = async function (query, set) {
         me.updateQueryValidation(query, 'from_email_id');
-        return await mongo_emailInfo.findOneAndUpdate(query, { $setOnInsert: set }, { new: true, upsert: true });
+        return await mongo_emailInfo.findOneAndUpdate(query, { $setOnInsert: set }, { new: true, upsert: true }).exec();
     };
 
     Static.updateEmailInfo = async function(query,set){
         me.updateQueryValidation(query, 'email_id');
-        return await mongo_emailInfo.findOneAndUpdate(query, { $set: set }, {  upsert: true });
+        return await mongo_emailInfo.findOneAndUpdate(query, { $set: set }, {  upsert: true }).exec();
     }
 
     Static.fromEamil = async function (data, from_email_id, url) {        
