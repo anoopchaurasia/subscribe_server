@@ -8,7 +8,7 @@ class AppsflyerEvent {
     static async sendEventToAppsflyer(user_id,event_name,event_value) {
         var options = {
             method: 'POST',
-            url: 'https://api2.appsflyer.com/inappevent/<APP_ID>',
+            url: 'https://api2.appsflyer.com/inappevent/com.inbox.clean.free.gmail.unsubscribe.smart.email.fresh.mailbox',
             headers:
             {
                 "authentication": 'sc96TP3rY3awNVSj2q3gka',

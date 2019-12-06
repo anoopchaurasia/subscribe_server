@@ -144,23 +144,16 @@ router.post('/disconnectGdprAccount', async (req, res) => {
         let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
             console.error(err.message, err.stack, "28");
         });
-        let authoTokon = await AuthTokenModel.remove({ user_id: doc.user_id }).catch(err => {
-            console.error(err.message, err.stack, "delete1");
-        });
         console.log(authoTokon)
         let fcmtoken = await fcmToken.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete2");
         });
         console.log(fcmtoken)
-        let emailDetails = await emailDetailsModel.remove({ user_id: doc.user_id }).catch(err => {
+        let emailDetails = await emailDetailsModel.deleteMany({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete3");
         });
         console.log(emailDetails)
-        let emailInfo = await emailInformationModel.remove({ user_id: doc.user_id }).catch(err => {
-            console.error(err.message, err.stack, "delete4");
-        });
-        console.log(emailInfo)
-        let token = await token_model.remove({ "user_id": doc.user_id }).catch(err => {
+        let token = await token_model.deleteMany({ "user_id": doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete5");
         });
         console.log(token)

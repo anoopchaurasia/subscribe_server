@@ -28,7 +28,6 @@ fm.Class("Label>.Message", function (me) {
     ///---------------from inbox ------------
     Static.moveInboxToTrash = async function (myImap, from_email) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
-        console.log(ids)
         if (ids.length!=0) {
             return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
         }

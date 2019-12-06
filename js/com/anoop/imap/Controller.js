@@ -3,7 +3,7 @@ fm.Import(".MyImap");
 fm.Import(".Scraper");
 fm.Import(".Label");
 const mongouser = require('../../../../models/user');
-import AppsflyerEvent from "../../../../helper/appsflyerEvent";
+const AppsflyerEvent =  require("../../../../helper/appsflyerEvent").AppsflyerEvent;
 fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scraper, Label) {
     this.setMe = _me => me = _me;
 
@@ -183,7 +183,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.inboxToTrashBySender = async function (token, sender_email) {
         let emailinfos = await commonBySender(token, sender_email, "trash");
         console.log("coming");
-
         await Emailinfo.bulkInsert(emailinfos);
     }
 
@@ -203,15 +202,15 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, 2*60*1000)
         await me.scanStarted(user_id);
         myImap = await openFolder({user_id}, "INBOX");
-        AppsflyerEvent.sendEventToAppsflyer(myImap.user.email,"process_started",{"user":email,"last_mid":myImap.box.uidnext})
+        AppsflyerEvent.sendEventToAppsflyer(myImap.user.email,"process_started",{"user":myImap.user.email,"last_mid":myImap.box.uidnext})
         await mongouser.findOneAndUpdate({ _id: user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd() {
-            console.log("is_finished called")
+            console.log("is_finished called");
             await me.scanFinished(user_id);
             me.updateUserByActionKey(user_id, { "last_scan_date": new Date() });
             await me.handleRedis(user_id);
-            AppsflyerEvent.sendEventToAppsflyer(myImap.user.email,"process_finished",{"user":email,"last_mid":myImap.box.uidnext})
+            AppsflyerEvent.sendEventToAppsflyer(myImap.user.email,"process_finished",{"user":myImap.user.email,"last_mid":myImap.box.uidnext})
         });
         clearInterval(timeoutconst);
         myImap.imap.end(myImap.imap);
@@ -342,7 +341,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, provider.provider);
         await myImap.connect(provider);
         let names = await myImap.getLabels();
-        console.log(names)
         if (!names.includes("Unsubscribed Emails")) {
             await Label.create(myImap, "Unsubscribed Emails");
         }
