@@ -3,6 +3,7 @@ fm.Import(".MyImap");
 fm.Import(".Scraper");
 fm.Import(".Label");
 const mongouser = require('../../../../models/user');
+import AppsflyerEvent from "../../../../helper/appsflyerEvent";
 fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scraper, Label) {
     this.setMe = _me => me = _me;
 
@@ -202,6 +203,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, 2*60*1000)
         await me.scanStarted(user_id);
         myImap = await openFolder({user_id}, "INBOX");
+        AppsflyerEvent.sendEventToAppsflyer(myImap.user.email,"process_started",{"user":email,"last_mid":myImap.box.uidnext})
         await mongouser.findOneAndUpdate({ _id: user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd() {
@@ -209,6 +211,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await me.scanFinished(user_id);
             me.updateUserByActionKey(user_id, { "last_scan_date": new Date() });
             await me.handleRedis(user_id);
+            AppsflyerEvent.sendEventToAppsflyer(myImap.user.email,"process_finished",{"user":email,"last_mid":myImap.box.uidnext})
         });
         clearInterval(timeoutconst);
         myImap.imap.end(myImap.imap);
