@@ -146,7 +146,6 @@ router.post('/disconnectGdprAccount', async (req, res) => {
         });
         console.time("delete")
 
-        console.log(authoTokon)
         let fcmtoken = await fcmToken.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete2");
         });
@@ -155,11 +154,7 @@ router.post('/disconnectGdprAccount', async (req, res) => {
         let emailDetails = await emailDetailsModel.remove({ user_id: doc.user_id }).catch(err => {
             console.error(err.message, err.stack, "delete3");
         });
-        console.timeLog("delete")
         console.log(emailDetails)
-        let emailInfo = await emailInformationModel.remove({ user_id: doc.user_id }).catch(err => {
-            console.error(err.message, err.stack, "delete4");
-        });
         console.timeLog("delete")
         console.log(token)
         let device = await DeviceInfo.remove({ user_id: doc.user_id }).catch(err => {
