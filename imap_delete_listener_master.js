@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 require("dotenv").config({
   "path": ".listner_env"
 });

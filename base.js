@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 require("dotenv").config();
 require("jsfm");
 fm.basedir = process.cwd() + "/js";

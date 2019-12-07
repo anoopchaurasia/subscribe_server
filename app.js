@@ -1,5 +1,8 @@
-'use strict'
-("./base");
+'use strict';
+let {on_db_connection}  = require("./base");
+on_db_connection(function(){
+    console.log("dsdssdsd")
+})
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
