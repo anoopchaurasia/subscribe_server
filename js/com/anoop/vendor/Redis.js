@@ -1,5 +1,4 @@
 fm.Package("com.anoop.vendor");
-
 fm.Class("Redis", function (me) {
     this.setMe = _me => me = _me;
     let client;
