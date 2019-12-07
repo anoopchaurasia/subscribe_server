@@ -3,7 +3,10 @@ let {on_db_connection}  = require("./base");
 on_db_connection(function(){
     console.log("dsdssdsd")
 })
+const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
   
