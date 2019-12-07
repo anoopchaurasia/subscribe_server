@@ -194,7 +194,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let timeoutconst = setInterval(x => {
             if(!myImap) {
                 let event = "user_"+Math.random().toString(36).slice(2);
-                AppsflyerEvent.sendEventToAppsflyer(event,"process_failed",{"user":event})
+                AppsflyerEvent.sendEventToAppsflyer(event,"process_failed_no_user",{"user":event})
                 throw new Error("imap not available" + user_id);
             }
             if (myImap.imap.state === 'disconnected') {
