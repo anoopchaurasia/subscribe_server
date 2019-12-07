@@ -2,18 +2,9 @@
 require("dotenv").config({
   "path": ".listner_env"
 });
-require("dotenv").config();
-require("jsfm");
-fm.basedir = process.cwd() + "/js";
-global.basedir = process.cwd();
+let {on_db_connection} = require("./base");
 
-var Raven = require('raven');
-Raven.config('https://edb20d0741384f7e8ef743a5a22659d5@sentry.expensebit.com/13').install();
-let mongoose = require('mongoose');
-mongoose.connect(process.env.MONGO_SERVER, {
-  useNewUrlParser: true
-});
-mongoose.connection.once('connected', function () {
+on_db_connection(function () {
   console.log("Connected to database")
   setTimeout(x => {
     onNewUser();
@@ -22,8 +13,6 @@ mongoose.connection.once('connected', function () {
   setInterval(new_user_check, 2*60*1000);
 });
 
-
-'use strict'
 const UserModel = require('./models/user');
 fm.Include("com.anoop.imap.Controller");
 let ImapController = com.anoop.imap.Controller;

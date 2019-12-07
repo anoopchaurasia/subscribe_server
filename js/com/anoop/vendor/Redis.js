@@ -74,10 +74,11 @@ fm.Class("Redis", function (me) {
 
     let listner_count=0;
     Static.BLPopListner = async function (key, cb) {
-        listner_count++;
+        listner_count;
         // blpop block entire client for create new client
         let client = require('redis').createClient({ host: process.env.IMAP_REDIS_HOST });
         let shut_server = false;
+
         async function next() {
             if(shut_server === true) {
                 if(listner_count==0) {
@@ -107,6 +108,7 @@ fm.Class("Redis", function (me) {
         next();
         process.on('SIGINT', function() {
             server_shutting = true;
+            console.log(listner_count, "shutdown")
             if(listner_count==0) {
                 console.log("graceful shuting server");
                 process.exit(0);

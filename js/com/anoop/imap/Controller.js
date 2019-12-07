@@ -299,7 +299,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             }
             if (myImap.imap.state === 'disconnected') {
                 reset_cb();
-                throw new Error("disconnected"+ + user_id);
+                throw new Error("disconnected"+  user_id);
             }
         }, 2*60*1000)
         let user = await me.getUserById(user_id).catch(error=>{
