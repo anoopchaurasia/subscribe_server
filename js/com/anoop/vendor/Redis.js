@@ -4,9 +4,6 @@ fm.Class("Redis", function (me) {
     let client;
     Static.main = function () {
         client = require('redis').createClient({ host: process.env.IMAP_REDIS_HOST });
-        // client.on("error", function (err) {
-        //     console.error("Error " + err);
-        // });
     };
 
     Static.getClient = () => client;
@@ -75,14 +72,26 @@ fm.Class("Redis", function (me) {
         return client.lpush(key, data);
     };
 
+    let listner_count=0;
     Static.BLPopListner = async function (key, cb) {
+        listner_count++;
         // blpop block entire client for create new client
         let client = require('redis').createClient({ host: process.env.IMAP_REDIS_HOST });
+        let shut_server = false;
         async function next() {
+            if(shut_server === true) {
+                if(listner_count==0) {
+                    console.log("graceful shuting server");
+                    process.exit(0);
+                }
+                return;
+            }
             console.log("getting next");
             client.blpop(key, 0, async (err, data) => {
+                listner_count++;
                 if (err) {
                     console.error(err);
+                    listner_count--;
                     return next()
                 }
                 try {
@@ -90,11 +99,22 @@ fm.Class("Redis", function (me) {
                 } catch (e) {
                     console.error(e)
                 } finally {
+                    listner_count--;
                     next();
                 }
             });
         }
         next();
+        process.on('SIGINT', function() {
+            server_shutting = true;
+            if(listner_count==0) {
+                console.log("graceful shuting server");
+                process.exit(0);
+            }
+            setTimeout(x=>{
+                process.exit(1);
+            }, 30*1000);
+         });
     };
 
     Static.popData = async function (key) {
