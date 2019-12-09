@@ -1,24 +1,10 @@
 'use strict'
 const express = require('express');
 const router = express.Router();
-const simpleParser = require('mailparser').simpleParser;
-const Imap = require('imap');
-const DeviceInfo = require('../models/deviceoInfo');
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
-const userAppLog = require('../models/userAppLog');
 const UserModel = require('../models/user');
 const token_model = require('../models/tokeno');
-const providerModel = require('../models/provider');
-const unlistedProviderModel = require('../models/unlistedProvider');
-const loginAnalyticModel = require('../models/loginAnalytic');
-const cheerio = require('cheerio');
-const uniqid = require('uniqid');
-var crypto = require('crypto');
-var randomstring = require("randomstring");
-var dns = require('dns');
-var legit = require('legit');
-var Raven = require('raven');
 const app = express();
 const cookieParser = require('cookie-parser');
 
