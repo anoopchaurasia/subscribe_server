@@ -113,9 +113,6 @@ fm.Class("Redis", function (me) {
                 console.log("graceful shuting server");
                 process.exit(0);
             }
-            setTimeout(x=>{
-                process.exit(1);
-            }, 30*1000);
          });
     };
 
