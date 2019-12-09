@@ -4,6 +4,8 @@ const email = require('../models/emailDetails');
 const Request = require("request");
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 const router = express.Router();
+const SenderEmailModel = require("../models/senderMail");
+const ecommerce_cmpany = ["no-reply@flipkart.com", "auto-confirm@amazon.in"];
 fm.Include("com.anoop.email.BaseController");
 let BaseController = com.anoop.email.BaseController;
 
@@ -61,6 +63,7 @@ router.post('/readMailInfo', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:doc.user_id });
         let finished = false;
         let is_finished = await BaseController.isScanFinished(doc.user_id);
         console.log(is_finished)
@@ -80,7 +83,8 @@ router.post('/readMailInfo', async (req, res) => {
             data: emailinfos,
             unreadData: unreademail,
             totalEmail: total,
-            finished: finished
+            finished: finished,
+            is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
         })
     } catch (err) {
         console.error(err.message, err.stack, "8");
