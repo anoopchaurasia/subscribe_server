@@ -38,13 +38,14 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label, My
 
     this.getMailUIdAndDelete = async function () {
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
-        console.log(seen, unseen)
+        console.log(seen.length, unseen.length, "sdsds")
         let data = await MyImap.deleteMail(me.myImap.imap, seen.concat(unseen))
         return data;
     };
 
     this.start = async function (cb) {
         let { seen, unseen, } = (await Message.getEmailList(me.myImap.imap));
+        console.log(seen.length, unseen.length, "sdsds")
         if (unseen.length != 0) {
             await mailScrap(unseen, ["UNREAD"], me.handleEamil);
         }
