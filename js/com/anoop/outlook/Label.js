@@ -1,6 +1,5 @@
 fm.Package("com.anoop.outlook");
 var axios = require('axios');
-var Request = require('request');
 fm.Class("Label>.Message", function(me){
     'use strict'
     this.setMe=_me=>me=_me;

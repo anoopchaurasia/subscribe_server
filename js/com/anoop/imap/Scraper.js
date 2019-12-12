@@ -19,9 +19,9 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label, My
 
     this.onLauchScrap = async function (cb) {
         let actions = await me.getUserActionData(me.myImap.user._id);
-        if (actions && actions['last_scan_date']) {
-            let { seen, unseen } = await Message.getOnLaunchSpecificEmailList(me.myImap.imap, actions.last_scan_date);
-            console.log(seen, unseen, "launch scan")
+        if(actions && actions['last_scan_date']){
+            let {seen,unseen} = await Message.getOnLaunchSpecificEmailList(me.myImap.imap,actions.last_scan_date);
+            console.log(seen.length, unseen.length, "launch scan")
             if (unseen.length != 0) {
                 await mailScrap(unseen, ["UNREAD"], me.handleEamil);
             }
@@ -75,7 +75,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label, My
         
         let { seen, unseen, biggest, is_more_than_limit } = applyLimit(await Message.getLatestMessages(me.myImap.imap, me.myImap.user));
         latestIDCB && latestIDCB(biggest, is_more_than_limit)
-        console.log(seen, unseen, me.myImap.user.email);
+        console.log(seen.length, unseen.length, me.myImap.user.email);
         if (unseen.length != 0) {
             await mailScrap(unseen, ["UNREAD"], me.handleBasedOnPastAction, false);
         }
@@ -133,8 +133,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label, My
 
     this.deletePreviousMessages = async function () {
         let ids = await Message.getDeleteEmailList(me.myImap.imap);
-        console.log(ids)
-        return await Label.setDeleteFlag(me.myImap, ids);
+        return await Label.setDeleteFlag(me.myImap,ids);
     }
 
 

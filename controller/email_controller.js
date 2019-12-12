@@ -1,9 +1,11 @@
 'use strict'
 const express = require('express');
 const email = require('../models/emailDetails');
-const Request = require("request");
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 const router = express.Router();
+const SenderEmailModel = require("../models/senderMail");
+const ecommerce_cmpany = ["no-reply@flipkart.com", "auto-confirm@amazon.in"];
+// fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
 fm.Include("com.anoop.email.BaseController");
@@ -14,23 +16,6 @@ Array.prototype.asyncForEach = async function (cb) {
         await cb(this[i], i, this);
     }
 }
-
-router.get('/getProviderInfo/:emailId', async (req, res) => {
-    let providerInfo = await BaseController.getProviderInfo(req.params.emailId);
-    let result = {
-        error: true,
-        msg: "provider not found/invalid"
-    }
-    if (providerInfo) {
-        result = {
-            error: false,
-            data: {
-                provider_info: providerInfo
-            }
-        }
-    }
-    res.status(200).json(result);
-});
 
 router.get('/isEmailExist/:emailId', async (req, res) => {
     let result = await BaseController.isEmailExist(req.params.emailId);
@@ -98,6 +83,7 @@ router.post('/readMailInfo', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:doc.user_id });
         let finished = false;
         let is_finished = await BaseController.isScanFinished(doc.user_id);
         console.log(is_finished)
@@ -117,7 +103,8 @@ router.post('/readMailInfo', async (req, res) => {
             data: emailinfos,
             unreadData: unreademail,
             totalEmail: total,
-            finished: finished
+            finished: finished,
+            is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
         })
     } catch (err) {
         console.error(err.message, err.stack, "8");
@@ -229,28 +216,28 @@ router.post('/getEmailSubscription', async (req, res) => {
 This api for unsubscribing mail from Inbox.
 This api Currently not using Its under development.
 */
-router.post('/unSubscribeMail', async (req, res) => {
-    try {
-        const from_email = req.body.from_email;
-        const mailList = await email.findOne({ "from_email": from_email }).catch(err => {
-            console.error(err.message, err.stack, "15");
-        });
-        if (mailList) {
-            const settings = {
-                "url": mailList.unsubscribe,
-                "method": "get"
-            }
-            Request(settings, async (error, response, body) => {
-                if (error) {
-                    return console.error(err.message, err.stack, "16");
-                }
-            });
-        }
-    } catch (ex) {
-        console.error(ex.message, ex.stack, "17");
-        res.sendStatus(400);
-    }
-});
+// router.post('/unSubscribeMail', async (req, res) => {
+//     try {
+//         const from_email = req.body.from_email;
+//         const mailList = await email.findOne({ "from_email": from_email }).catch(err => {
+//             console.error(err.message, err.stack, "15");
+//         });
+//         if (mailList) {
+//             const settings = {
+//                 "url": mailList.unsubscribe,
+//                 "method": "get"
+//             }
+//             Request(settings, async (error, response, body) => {
+//                 if (error) {
+//                     return console.error(err.message, err.stack, "16");
+//                 }
+//             });
+//         }
+//     } catch (ex) {
+//         console.error(ex.message, ex.stack, "17");
+//         res.sendStatus(400);
+//     }
+// });
 
 
 /*

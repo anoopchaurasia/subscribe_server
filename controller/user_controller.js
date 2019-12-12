@@ -152,33 +152,39 @@ This api for Logout/deleting whole data for particular User.
 router.post('/disconnectGdprAccount', async (req, res) => {
     try {
         let auth_id = req.body.authID;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+        let doc = await token_model.findOne({ "token": auth_id }).exec().catch(err => {
             console.error(err.message, err.stack, "28");
         });
-        let authoTokon = await AuthTokenModel.remove({ user_id: doc.user_id }).catch(err => {
-            console.error(err.message, err.stack, "delete1");
-        });
-        let fcmtoken = await fcmToken.remove({ user_id: doc.user_id }).catch(err => {
+        console.time("delete"+doc.user_id)
+
+        let fcmtoken = await fcmToken.deleteMany({ user_id: doc.user_id }).exec().catch(err => {
             console.error(err.message, err.stack, "delete2");
         });
-        let emailDetails = await emailDetailsModel.remove({ user_id: doc.user_id }).catch(err => {
+        console.timeLog("delete"+doc.user_id)
+        console.log(fcmtoken)
+        let emailDetails = await emailDetailsModel.deleteMany({ user_id: doc.user_id }).exec().catch(err => {
             console.error(err.message, err.stack, "delete3");
         });
-        let emailInfo = await emailInformationModel.remove({ user_id: doc.user_id }).catch(err => {
-            console.error(err.message, err.stack, "delete4");
+        console.log(emailDetails)
+        console.timeLog("delete"+doc.user_id)
+        let token = await token_model.deleteMany({ user_id: doc.user_id }).exec().catch(err => {
+            console.error(err.message, err.stack, "28");
         });
-        let token = await token_model.remove({ "user_id": doc.user_id }).catch(err => {
-            console.error(err.message, err.stack, "delete5");
-        });
-        let device = await DeviceInfo.remove({ user_id: doc.user_id }).catch(err => {
+        console.log(token)
+        let device = await DeviceInfo.deleteMany({ user_id: doc.user_id }).exec().catch(err => {
             console.error(err.message, err.stack, "delete6");
         });
-        let user = await userModel.remove({ _id: doc.user_id }).catch(err => {
+        console.timeLog("delete"+doc.user_id)
+        console.log(device)
+        let user = await userModel.deleteMany({ _id: doc.user_id }).exec().catch(err => {
             console.error(err.message, err.stack, "delete6");
         });
+        console.timeLog("delete"+doc.user_id)
+        console.log(user)
         res.status(200).send({
             message: "success"
         });
+        console.timeEnd("delete")
     } catch (ex) {
         res.status(401).send({
             message: "reject"
