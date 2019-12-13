@@ -228,6 +228,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
 
     Static.extractOnLaunchEmail = async function (token) {
+        return;
         await me.scanStarted(token.user_id);
         let myImap = await openFolder(token, "INBOX");
         await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
