@@ -13,7 +13,7 @@ async function authenticate(req, res, next){
         console.error(err.message);
     });
     if(!doc) {
-        return res.write({error:"auth failed"});
+        return res.json({error:"auth failed"});
     }
     req.token = doc;
     next();

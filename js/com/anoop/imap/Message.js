@@ -3,6 +3,7 @@ const MailParser = require('mailparser').MailParser
 const Imap = require('imap');
 const simpleParser = require('mailparser').simpleParser;
 const TWO_MONTH_TIME_IN_MILI = 8 * 30 * 24 * 60 * 60 * 1000;
+const ONE_MONETH_TIME_IN_MILI = 1 * 30 * 24 * 60 * 60 * 1000;
 fm.Class("Message", function (me) {
     this.setMe = _me => me = _me;
 
@@ -17,6 +18,12 @@ fm.Class("Message", function (me) {
 
     Static.getInboxEmailIdByLabel = async function (imap, label_name) {
         return await search(imap, [label_name, ['SINCE', since]])
+    };
+
+
+    Static.getDeleteEmailList = async function (imap) {
+        let before = new Date(Date.now() - ONE_MONETH_TIME_IN_MILI);
+        return await search(imap, [['BEFORE', before]]);
     };
 
     Static.getEmailList = async function (imap) {
@@ -35,10 +42,13 @@ fm.Class("Message", function (me) {
     };
 
     Static.getLatestMessages = async function (imap, user) {
-        return {
+        let data = {
             seen: await search(imap, ["SEEN", ['UID', (user.last_msgId) + ':*']]),
             unseen: await search(imap, ["UNSEEN", ['UID', (user.last_msgId) + ':*']])
         }
+        // if(data.seen && data.seen[0] <= user.last_msgId) data.seen.shift()
+        // if(data.unseen && data.unseen[0] <= user.last_msgId) data.unseen.shift()
+        return data;
     };
 
     async function search(imap, criteria) {
@@ -57,41 +67,49 @@ fm.Class("Message", function (me) {
         });
     };
 
-    Static.deleteMsg = async function(imap,ids){
-        return await new Promise((resolve,reject)=>{
-            imap.setFlags(ids, ['\\Deleted'], function(err) {
+    Static.deleteMsg = async function (imap, ids) {
+        return await new Promise((resolve, reject) => {
+            imap.setFlags(ids, ['\\Deleted'], function (err) {
                 (err ? reject(err) : resolve());
-             });
+            });
         });
     };
-   
+
 
     Static.getEmailsBySender = async function (gmail, sender, formatted_date) {
+    }
 
-
-    };
-    Static.getBatchMessage = async function (imap, message_ids, detector) {
-        console.log(message_ids.length)
+    Static.getBatchMessage = async function (imap, message_ids, detector, is_get_body) {
         let newm_ids = [...message_ids];
-        while(newm_ids.length) {
-            let ids = newm_ids.splice(0, 50);
-            await splituser(imap, ids, detector);
+        while (newm_ids.length) {
+            let ids = newm_ids.splice(0, 1000);
+            await splituser(imap, ids, detector, is_get_body);
         }
     };
 
-    async function splituser(imap, message_ids, detector){
-        console.log(message_ids.length)
+    async function splituser(imap, message_ids, detector, is_get_body = true) {
+        var body = is_get_body === true ? "" : 'HEADER.FIELDS (FROM TO SUBJECT DATE)';
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
-                bodies: '',
+                bodies: body,
                 struct: true
             });
+            const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
-                await detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
+                msgs.push(1);
+                try {
+                    await detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
+                } finally {
+                    msgs.pop();
+                    msgs.length === 0 && ended && resolve();
+                }
             });
+            let ended = false;
             fetch.on('end', async function () {
                 console.log("end")
-                resolve();
+                ended = true;
+                msgs.length === 0 && resolve()
+                // resolve();
             });
         });
     }
@@ -128,7 +146,6 @@ fm.Class("Message", function (me) {
                     stream.on('data', chunk => chunks.push(chunk));
                     stream.once('end', async () => {
                         const raw = Buffer.concat(chunks).toString('utf8');
-
                         let parsed = await simpleParser(raw, { skipHtmlToText: true, skipTextToHtml: true, skipTextLinks: true, skipImageLinks: true });
                         parsed['size'] = info.size;
                         resolve(parsed)
@@ -147,14 +164,14 @@ fm.Class("Message", function (me) {
         smallerThan = smallerThan * 1000000;
         largerThan = largerThan * 1000000;
         return {
-            seen: await search(imap, ["SEEN", ['LARGER', largerThan], ['SMALLER', smallerThan],['SINCE', since]]),
-            unseen: await search(imap, ["UNSEEN", ['LARGER', largerThan], ['SMALLER', smallerThan],['SINCE', since]])
+            seen: await search(imap, ["SEEN", ['LARGER', largerThan], ['SMALLER', smallerThan], ['SINCE', since]]),
+            unseen: await search(imap, ["UNSEEN", ['LARGER', largerThan], ['SMALLER', smallerThan], ['SINCE', since]])
 
         }
     };
 
-    Static.getALlEmailList = async function (imap,trackedUser) {
-        if(trackedUser && trackedUser.last_msgId){
+    Static.getALlEmailList = async function (imap, trackedUser) {
+        if (trackedUser && trackedUser.last_msgId) {
             return {
                 seen: await search(imap, ["SEEN", ['UID', (trackedUser.last_msgId) + ':*']]),
                 unseen: await search(imap, ["UNSEEN", ['UID', (trackedUser.last_msgId) + ':*']])

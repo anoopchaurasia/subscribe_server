@@ -1,8 +1,6 @@
 'use strict'
 const express = require('express');
 const router = express.Router();
-const simpleParser = require('mailparser').simpleParser;
-const Imap = require('imap');
 const DeviceInfo = require('../models/deviceoInfo');
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
@@ -14,22 +12,19 @@ const providerModel = require('../models/provider');
 const fcmToken = require('../models/fcmoToken');
 const unlistedProviderModel = require('../models/unlistedProvider');
 const loginAnalyticModel = require('../models/loginAnalytic');
-const cheerio = require('cheerio');
 const uniqid = require('uniqid');
-var crypto = require('crypto');
-var randomstring = require("randomstring");
-var dns = require('dns');
 var legit = require('legit');
 var Raven = require('raven');
-
-
-const TWO_MONTH_TIME_IN_MILI = 4 * 30 * 24 * 60 * 60 * 1000;
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 fm.Include("com.anoop.email.Email");
 let EmailValidate = com.anoop.email.Email;
 
-
+Array.prototype.asyncForEach = async function (cb) {
+    for (let i = 0, len = this.length; i < len; i++) {
+        await cb(this[i], i, this);
+    }
+}
 
 
 //login or signup with the credentials and generate the token and return back to user
@@ -122,7 +117,10 @@ router.post('/saveOnLaunchDeviceData', async (req, res) => {
     deviceData['user_id'] = null;
     deviceData['userUniqueId'] = userUniqueId;
     deviceData['deviceIpAddress'] = { "ip": req.header('x-forwarded-for') || req.connection.remoteAddress };
-    let dinfo = await DeviceInfo.findOneAndUpdate({ "userUniqueId": userUniqueId }, { $set: deviceData }, { upsert: true }).catch(err => {
+    await DeviceInfo.findOneAndUpdate({ "userUniqueId": userUniqueId }, { $set: deviceData }, { upsert: true }).catch(err => {
+        console.error(err.message, err.stack, "27");
+    });
+    let dinfo = await DeviceInfo.findOne({ "userUniqueId": userUniqueId }).catch(err => {
         console.error(err.message, err.stack, "27");
     });
     let tokenInfo = { "device_id": dinfo._id, "fcm_token": req.body.fcmToken };
@@ -501,11 +499,12 @@ router.post('/findEmailProvider', async (req, res) => {
 // read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.extractEmail(doc).catch(err => {
-            console.error(err.message, err.stack);
-            Controller.scanFinished(doc.user_id);
+        let doc = await token_model.findOne({ "token": req.body.token }).catch(err => {
+            console.error(err.message);
         });
+        console.log("got user tokane", doc);
+        Controller.sendToProcessServer(doc.user_id);
+
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -995,13 +994,14 @@ router.post('/getAllEmail', async (req, res) => {
 router.post('/deleteQuickMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await EmailDataModel.find({ user_id: doc.user_id, from_email: { $in: req.body.from_email }, is_delete: false }, { email_id: 1, _id: 0 });
-        let ids = emails.map(x => x.email_id)
+        // let emails = await EmailDataModel.find({ user_id: doc.user_id, from_email: { $in: req.body.from_email }, is_delete: false }, { email_id: 1, _id: 0 });
+        // let ids = emails.map(x => x.email_id)
+        let ids = req.body.email_ids;
         console.log(ids)
         await Controller.deleteQuickMail(doc, ids);
         res.status(200).json({
             error: false,
-            data: emails
+            data: ids
         });
     } catch (err) {
         console.log(err);
@@ -1052,25 +1052,73 @@ router.post('/deleteQuickMailNew', async (req, res) => {
 /* This api will return the emails based on the size, 
    for example: if i need emails between 1-5MB, 
    it will return the partucular emails with seen and unseen seperated format */
+// router.post('/getEmailsBySizeFromDb', async (req, res) => {
+//     try {
+//         let smallerThan = req.body.smallerThan;
+//         let largerThan = req.body.largerThan;
+//         const doc = await token_model.findOne({ "token": req.body.token });
+//         let emails;// = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
+//         if (largerThan && smallerThan) {
+//             emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $gte: largerThan * 1000000, $lte: smallerThan * 1000000 }, is_delete: false });
+//         } else if (smallerThan) {
+//             emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $lte: smallerThan * 1000000 }, is_delete: false });
+//         } else {
+//             emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $gte: largerThan * 1000000 }, is_delete: false });
+//         }
+//         emails.sort((a, b) => {
+//             return a.size > b.size ? -1 : 1;
+//         })
+//         res.status(200).json({
+//             error: false,
+//             data: emails
+//         });
+//     } catch (err) {
+//         console.log(err);
+//     }
+// });
+
+
+/* This api will return the emails based on the size, 
+   for example: if i need emails between 1-5MB, 
+   it will return the partucular emails with seen and unseen seperated format */
 router.post('/getEmailsBySizeFromDb', async (req, res) => {
     try {
-        let smallerThan = req.body.smallerThan;
-        let largerThan = req.body.largerThan;
+        // let smallerThan = req.body.smallerThan;
+        // let largerThan = req.body.largerThan;
+        let start_date = req.body.start_date;
+        let end_date = req.body.end_date;
         const doc = await token_model.findOne({ "token": req.body.token });
         let emails;// = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
-        if (largerThan && smallerThan) {
-            emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $gte: largerThan * 1000000, $lte: smallerThan * 1000000 }, is_delete: false });
-        } else if (smallerThan) {
-            emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $lte: smallerThan * 1000000 }, is_delete: false });
+        if (start_date == null || end_date == null) {
+            emails = await EmailDataModel.find({ user_id: doc.user_id, is_delete: false });
         } else {
-            emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $gte: largerThan * 1000000 }, is_delete: false });
+            emails = await EmailDataModel.find({ user_id: doc.user_id, is_delete: false, $and: [{ receivedDate: { $gte: start_date } }, { receivedDate: { $lte: end_date } }] });
         }
-        emails.sort((a, b) => {
-            return a.size > b.size ? -1 : 1;
-        })
+        let sizeWiseData = {
+            "data": [
+                { "name": "10", "data": [] },
+                { "name": "5", "data": [] },
+                { "name": "1", "data": [] },
+                { "name": "0", "data": [] }]
+        };
+        // sizeWiseData.data[0].data = emails.filter(x=>x.size>10000000);
+        // sizeWiseData.data[1].data = emails.filter(x=>x.size>5000000);
+        // sizeWiseData.data[2].data = emails.filter(x=>x.size>1000000);
+        // sizeWiseData.data[3].data = emails.filter(x=>x.size<=1000000);
+        await emails.asyncForEach(async email => {
+            if (email.size > 10000000) {
+                sizeWiseData.data.find(x => x.name == "10").data.push(email);
+            } else if (email.size > 5000000) {
+                sizeWiseData.data.find(x => x.name == "5").data.push(email);
+            } else if (email.size > 1000000) {
+                sizeWiseData.data.find(x => x.name == "1").data.push(email);
+            } else {
+                sizeWiseData.data.find(x => x.name == "0").data.push(email);
+            }
+        });
         res.status(200).json({
             error: false,
-            data: emails
+            data: sizeWiseData
         });
     } catch (err) {
         console.log(err);
@@ -1081,20 +1129,51 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
 /* This api will return the emails based on the sender_email and also return total number of email by sender*/
 router.post('/getEmailsBySenderFromDb', async (req, res) => {
     try {
+        let start_date = req.body.start_date;
+        let end_date = req.body.end_date;
         const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
-            $group: {
-                _id: { "from_email": "$from_email" }, data: {
-                    $push: {
-                        "labelIds": "$labelIds",
-                        "subject": "$subject",
-                        "status": "$status"
-                    }
-                }, count: { $sum: 1 }
-            }
-        },
-        { $sort: { "count": -1 } },
-        { $project: { "labelIds": 1, "count": 1, "subject": 1, data: 1 } }])
+        let emails;
+        console.log(start_date, end_date);
+        if (start_date == null || end_date == null) {
+            emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
+                $group: {
+                    _id: { "from_email": "$from_email" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        } else {
+            console.log("came here for date", start_date, end_date)
+            emails = await EmailDataModel.aggregate([{
+                $match: {
+                    $and: [{ "user_id": doc.user_id }, { is_delete: false },
+                    { receivedDate: { $gte: new Date(start_date) } }, { receivedDate: { $lte: new Date(end_date) } }]
+                }
+            }, {
+                $group: {
+                    _id: { "from_email": "$from_email" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        }
+        console.log(emails.length);
         res.status(200).json({
             error: false,
             data: emails
@@ -1130,36 +1209,65 @@ router.post('/getEmailsByDateFromDb', async (req, res) => {
 });
 
 
+/* This api will return the emails based on the Date from database */
+router.post('/getTotalUnreadMail', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await EmailDataModel.countDocuments({ user_id: doc.user_id, status: "unread", is_delete: false });
+
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
 /* This api will return the emails based on Label from database*/
 router.post('/getEmailsByLabelFromDb', async (req, res) => {
     try {
+        let start_date = req.body.start_date;
+        let end_date = req.body.end_date;
         const doc = await token_model.findOne({ "token": req.body.token });
-        let emails = await EmailDataModel.find({ user_id: doc.user_id, is_delete: false });
+        let emails;
+        console.log(start_date, end_date);
+        if (start_date == null || end_date == null) {
+            emails = await EmailDataModel.find({ user_id: doc.user_id, is_delete: false });
+        } else {
+            emails = await EmailDataModel.find({
+                user_id: doc.user_id, is_delete: false,
+                $and: [{ receivedDate: { $gte: start_date } }, { receivedDate: { $lte: end_date } }]
+            });
+        }
+        console.log(emails.length);
         let definedLables = {
-            "social": ['facebook', 'twitter', 'instagram'],
+            "social": ['facebook', 'twitter', 'instagram', 'tumblr', 'linkedin', 'whatsapp', 'snapchat'],
             "promotion": ['promotion'],
             "deadEnd": ['noreply', 'no-reply']
         }
+
         let fliteredByLabel = {
-            'label': {
-                "social": [], "promotion": [], "deadEnd": [], "others": []
-            }
+            "label": [{ "name": "social", "data": [] }, { "name": "promotion", "data": [] }, { "name": "deadEnd", "data": [] }, { "name": "others", "data": [] }]
         }
         console.log(emails)
         emails.forEach(singleData => {
             if (definedLables.social.some(val => JSON.stringify(singleData).includes(val))) {
-                fliteredByLabel.label.social.push(singleData)
+                fliteredByLabel.label.find(x => x.name == "social").data.push(singleData)
             } else if (definedLables.promotion.some(val => JSON.stringify(singleData).includes(val))) {
-                fliteredByLabel.label.promotion.push(singleData)
+                fliteredByLabel.label.find(x => x.name == "promotion").data.push(singleData)
             } else if (definedLables.deadEnd.some(val => JSON.stringify(singleData).includes(val))) {
-                fliteredByLabel.label.deadEnd.push(singleData)
+                fliteredByLabel.label.find(x => x.name == "deadEnd").data.push(singleData)
             } else {
-                fliteredByLabel.label.others.push(singleData)
+                fliteredByLabel.label.find(x => x.name == "others").data.push(singleData)
             }
         })
+        console.log(fliteredByLabel)
         res.status(200).json({
             error: false,
-            data: fliteredByLabel
+            data: fliteredByLabel,
+            // label:key
         });
     } catch (err) {
         console.log(err);

@@ -1,7 +1,8 @@
 fm.Package('com.anoop.email');
 fm.Import(".BaseController")
+fm.Import("com.jeet.memdb.RedisDB")
 const cheerio = require('cheerio');
-fm.Class('BaseScraper', function (me, BaseController) {
+fm.Class('BaseScraper', function (me, BaseController, RedisDB) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -46,9 +47,19 @@ fm.Class('BaseScraper', function (me, BaseController) {
             if(data.from_email ==null || data.from_email_name==null){
                 return
             }
-            delete data.payload;
-            data['source'] = "redis";
-            await com.jeet.memdb.RedisDB.pushData(emaildetailraw.user_id, emaildetailraw.from_email, data);
+            let new_data = {
+                from_email: data.from_email,
+                from_email_name: data.from_email_name,
+                to_email: data.to_email,
+                source: "redis",
+                email_id: data.email_id,
+                historyId: data.historyId,
+                subject: data.subject,
+                labelIds: data.labelIds,
+                receivedDateTime: data['header']?data.header.date.split('Date: ')[1]:data.receivedDateTime
+            }
+            await RedisDB.pushData(emaildetailraw.user_id, emaildetailraw.from_email, new_data);
+            RedisDB.setExpire(emaildetailraw.user_id, emaildetailraw.from_email);
         }
     }
 
@@ -83,8 +94,8 @@ fm.Class('BaseScraper', function (me, BaseController) {
         return await BaseController.getLastTrackMessageId(user_id);
     }
 
-    this.sendMailToScraper = async function (data, user) {
-        await BaseController.sendMailToScraper(data, user);
+    this.sendMailToScraper = async function (data, user, getBodyCB,is_get_body) {
+        await BaseController.sendMailToScraper(data, user, getBodyCB,is_get_body);
     };
 
     this.notifyListner = async function (user_id) {

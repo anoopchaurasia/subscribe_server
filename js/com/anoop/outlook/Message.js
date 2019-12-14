@@ -1,5 +1,5 @@
 fm.Package("com.anoop.outlook");
-var Request = require('request');
+// var Request = require('request');
 var axios = require('axios');
 fm.Class("Message", function (me) {
     'use strict'

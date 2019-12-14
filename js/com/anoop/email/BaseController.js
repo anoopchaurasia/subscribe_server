@@ -193,6 +193,13 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         });
     };
 
+    Static.updateTrashLabelUser = async function (email, trash_label) {
+        return await User.updateUser({ email: email }, {$set:{
+            trash_label,
+            "email_client": "imap"
+        }});
+    };
+
     Static.getByEmailAndClient = async function(userInfo){
         return await User.getByEmailAndClient({email:userInfo.preferred_username,email_client:"outlook"})
     }
@@ -254,16 +261,16 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         await Emailinfo.bulkInsert(emailinfos);
     }
 
-    Static.sendMailToScraper = async function (data, user) {
-        await BaseRedisData.sendMailToScraper(data, user);
+    Static.sendMailToScraper = async function (data, user, getBodyCB,is_get_body) {
+        await BaseRedisData.sendMailToScraper(data, user, getBodyCB,is_get_body);
     };
 
     Static.notifyListner = async function (user_id) {
-        await BaseRedisData.notifyListner(user_id);
+        await RedisDB.notifyListner(user_id);
     };
 
     Static.onNewUser = function (cb) {
-        BaseRedisData.onNewUser(cb);
+        RedisDB.onNewUser(cb);
     };
 
     Static.getUnusedEmails = async function (token) {
@@ -305,6 +312,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
             del_data && await RedisDB.delKEY(keylist);
         }
     }
+
+    Static.sendToProcessServer = async function(user_id){
+        RedisDB.sendNewUserProcess('process_user_login', user_id);
+    };
 
     Static.getUserAnalyzed = async function (emailDetailsWithInfo,userEmailAnalyziedData) {
         emailDetailsWithInfo.forEach((emaildata, index) => {

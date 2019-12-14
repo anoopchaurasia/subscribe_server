@@ -3,8 +3,16 @@ fm.Class("Label>.Message", function (me) {
     this.setMe = _me => me = _me;
 
     Static.moveInboxToTrashAuto = async function (myImap, ids) {
-        // console.log(myImap.user,ids)
-        return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+        try {
+            return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+        } catch (error) {
+           await me.package.Controller.updateTrashLabel(myImap);
+           try {
+               return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+           } catch (error) {
+               console.log(error)
+           }
+        }
     };
 
     Static.moveInboxToUnsubAuto = async function (myImap, ids) {
@@ -20,7 +28,6 @@ fm.Class("Label>.Message", function (me) {
     ///---------------from inbox ------------
     Static.moveInboxToTrash = async function (myImap, from_email) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
-        console.log(ids)
         if (ids.length!=0) {
             return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
         }
@@ -102,6 +109,15 @@ fm.Class("Label>.Message", function (me) {
 
     
 
+     ////-------------------------Delete messages
+     Static.setDeleteFlag = async function (myImap, ids) {
+        if (ids.length!=0) {
+               return await me.deleteMsg(myImap.imap, ids);
+        }
+        return        
+    };
+
+
     ////--------------------------Active
 
     Static.moveActiveToTrash = async function (myImap, from_email) {
@@ -126,10 +142,6 @@ fm.Class("Label>.Message", function (me) {
     };
 
     Static.create = async function (myImap, name = myImap.user.unsub_label) {
-        if (myImap.provider.includes("inbox.lv")) {
-            await myImap.createlabel("INBOX/"+name).catch(e=> console.error(e.message, "create label", name));
-        } else {
-            await myImap.createlabel(name).catch(e=> console.error(e.message, "create label", name));
-        }
+        await myImap.createlabel(name).catch(e=> console.error(e.message, "create label", name));
     };
 });

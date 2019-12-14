@@ -1,7 +1,7 @@
 'use strict'
 const express = require('express');
 const email = require('../models/emailDetails');
-const Request = require("request");
+// const Request = require("request");
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
@@ -10,8 +10,10 @@ const { google } = require('googleapis');
 const gmail = google.gmail('v1');
 const DeleteEmail = require("../helper/deleteEmail").DeleteEmail;
 const TrashEmail = require("../helper/trashEmail").TrashEmail;
+const SenderEmailModel = require("../models/senderMail");
 const APPROX_TWO_MONTH_IN_MS = 4 * 30 * 24 * 60 * 60 * 1000;
 const MailScraper = require("../helper/mailScraper").MailScraper;
+const ecommerce_cmpany = ["no-reply@flipkart.com", "auto-confirm@amazon.in"];
 // fm.Include("com.anoop.email.Parser");
 fm.Include("com.jeet.memdb.RedisDB");
 let RedisDB = com.jeet.memdb.RedisDB;
@@ -24,12 +26,12 @@ Array.prototype.asyncForEach = async function (cb) {
     }
 }
 
-router.post('/senderEmailNotInEmailDetails',async (req,res)=>{
+router.post('/senderEmailNotInEmailDetails', async (req, res) => {
     let emailIds = await BaseController.senderEmailNotInEmailDetails(req.body.user_id)
     res.status(200).json({
-        error:false,
-        data:{
-            "emailIds":emailIds
+        error: false,
+        data: {
+            "emailIds": emailIds
         }
     })
 });
@@ -221,6 +223,7 @@ router.post('/readMailInfo', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:doc.user_id });
         let finished = false;
         let is_finished = await BaseController.isScanFinished(doc.user_id);
         if (is_finished && is_finished == "true") {
@@ -239,7 +242,8 @@ router.post('/readMailInfo', async (req, res) => {
             data: emailinfos,
             unreadData: unreademail,
             totalEmail: total,
-            finished: finished
+            finished: finished,
+            is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
         })
     } catch (err) {
         console.error(err.message, err.stack, "8");
@@ -405,28 +409,28 @@ async function getRecentEmail(user_id, auth, nextPageToken, label, afterFinishCB
 This api for unsubscribing mail from Inbox.
 This api Currently not using Its under development.
 */
-router.post('/unSubscribeMail', async (req, res) => {
-    try {
-        const from_email = req.body.from_email;
-        const mailList = await email.findOne({ "from_email": from_email }).catch(err => {
-            console.error(err.message, err.stack, "15");
-        });
-        if (mailList) {
-            const settings = {
-                "url": mailList.unsubscribe,
-                "method": "get"
-            }
-            Request(settings, async (error, response, body) => {
-                if (error) {
-                    return console.error(err.message, err.stack, "16");
-                }
-            });
-        }
-    } catch (ex) {
-        console.error(ex.message, ex.stack, "17");
-        res.sendStatus(400);
-    }
-});
+// router.post('/unSubscribeMail', async (req, res) => {
+//     try {
+//         const from_email = req.body.from_email;
+//         const mailList = await email.findOne({ "from_email": from_email }).catch(err => {
+//             console.error(err.message, err.stack, "15");
+//         });
+//         if (mailList) {
+//             const settings = {
+//                 "url": mailList.unsubscribe,
+//                 "method": "get"
+//             }
+//             Request(settings, async (error, response, body) => {
+//                 if (error) {
+//                     return console.error(err.message, err.stack, "16");
+//                 }
+//             });
+//         }
+//     } catch (ex) {
+//         console.error(ex.message, ex.stack, "17");
+//         res.sendStatus(400);
+//     }
+// });
 
 
 /*

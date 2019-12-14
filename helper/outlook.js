@@ -2,7 +2,7 @@
 let express = require('express');
 let users = require('../models/user');
 let auth_token = require('../models/authoToken');
-var Request = require('request');
+// var Request = require('request');
 
 Array.prototype.asynForEach = async function (cb) {
     for (let i = 0, len = this.length; i < len; i++) {
@@ -32,42 +32,42 @@ class Outlook {
         });
     }
 
-    static async  createFolderOutlook(accessToken, user_id) {
-        var settings = {
-            "url": "https://graph.microsoft.com/v1.0/me/mailFolders",
-            "method": "POST",
-            "headers": {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
-            },
-            "body": JSON.stringify({ "displayName": "Unsubscribed Emails" })
-        }
-        Request(settings, async (error, response, body) => {
-            if (error) {
-                console.log(error);
-            }
-            if (body) {
-                const res = JSON.parse(body);
-                if (res.id) {
-                    var oldvalue = {
-                        user_id: user_id
-                    };
-                    var newvalues = {
-                        $set: {
-                            "label_id": res.id
-                        }
-                    };
-                    var upsert = {
-                        upsert: true
-                    };
-                    await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
-                        console.log(err);
-                    });
-                    return res.id;
-                }
-            }
-        });
-    }
+    // static async  createFolderOutlook(accessToken, user_id) {
+    //     var settings = {
+    //         "url": "https://graph.microsoft.com/v1.0/me/mailFolders",
+    //         "method": "POST",
+    //         "headers": {
+    //             'Content-Type': 'application/json',
+    //             'Authorization': 'Bearer ' + accessToken
+    //         },
+    //         "body": JSON.stringify({ "displayName": "Unsubscribed Emails" })
+    //     }
+    //     Request(settings, async (error, response, body) => {
+    //         if (error) {
+    //             console.log(error);
+    //         }
+    //         if (body) {
+    //             const res = JSON.parse(body);
+    //             if (res.id) {
+    //                 var oldvalue = {
+    //                     user_id: user_id
+    //                 };
+    //                 var newvalues = {
+    //                     $set: {
+    //                         "label_id": res.id
+    //                     }
+    //                 };
+    //                 var upsert = {
+    //                     upsert: true
+    //                 };
+    //                 await auth_token.updateOne(oldvalue, newvalues, upsert).catch(err => {
+    //                     console.log(err);
+    //                 });
+    //                 return res.id;
+    //             }
+    //         }
+    //     });
+    // }
 
     static async getAuthToken(user_id) {
         return await auth_token.findOne({ "user_id": user_id });
