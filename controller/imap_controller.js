@@ -991,11 +991,9 @@ router.post('/getAllEmail', async (req, res) => {
 
 
 /* This api will delete Email from inbox */
-router.post('/deleteQuickMail', async (req, res) => {
+router.post('/deleteQuickMailnew', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        // let emails = await EmailDataModel.find({ user_id: doc.user_id, from_email: { $in: req.body.from_email }, is_delete: false }, { email_id: 1, _id: 0 });
-        // let ids = emails.map(x => x.email_id)
         let ids = req.body.email_ids;
         console.log(ids)
         await Controller.deleteQuickMail(doc, ids);
@@ -1009,11 +1007,26 @@ router.post('/deleteQuickMail', async (req, res) => {
 });
 
 /* This api will delete Email from inbox by from Email*/
-router.post('/deleteQuickMailNew', async (req, res) => {
+router.post('/deleteQuickMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        let from_email = req.body.from_email;
-        await Controller.deleteQuickMailNew(doc, from_email);
+        let ids = req.body.email_ids;
+        let emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, email_id: { $in: ids } } }, {
+            $group: {
+                _id: "$box_name",
+                data: {
+                    $push: {
+                        "email_id": "$email_id"
+                    }
+                }, count: { $sum: 1 }
+            }
+        },
+        { $sort: { "count": -1 } },
+        { $project: { "email_id": 1, data: 1 } }]);
+        await emails.asyncForEach(async data => {
+            let ids = data.data.map(x => x.email_id);
+            await Controller.deleteQuickMailNew(doc, ids, data._id);
+        });
         res.status(200).json({
             error: false,
             data: emails
@@ -1024,71 +1037,15 @@ router.post('/deleteQuickMailNew', async (req, res) => {
 });
 
 
-
-
-// /* This api will return the emails based on the size, 
-//    for example: if i need emails between 1-5MB, 
-//    it will return the partucular emails with seen and unseen seperated format */
-// router.post('/getEmailsBySize', async (req, res) => {
-//     try {
-//         let smallerThan = req.body.smallerThan;
-//         let largerThan = req.body.largerThan;
-//         const doc = await token_model.findOne({ "token": req.body.token });
-//         let emails = await Controller.extractEmailBySize(doc, 'INBOX', smallerThan, largerThan);
-//         emails.unseen.sort((a, b) => {
-//             return a.size > b.size ? -1 : 1;
-//         })
-//         res.status(200).json({
-//             error: false,
-//             data: emails
-//         });
-//     } catch (err) {
-//         console.log(err);
-//     }
-// });
-
-
-
 /* This api will return the emails based on the size, 
    for example: if i need emails between 1-5MB, 
    it will return the partucular emails with seen and unseen seperated format */
-// router.post('/getEmailsBySizeFromDb', async (req, res) => {
-//     try {
-//         let smallerThan = req.body.smallerThan;
-//         let largerThan = req.body.largerThan;
-//         const doc = await token_model.findOne({ "token": req.body.token });
-//         let emails;// = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
-//         if (largerThan && smallerThan) {
-//             emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $gte: largerThan * 1000000, $lte: smallerThan * 1000000 }, is_delete: false });
-//         } else if (smallerThan) {
-//             emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $lte: smallerThan * 1000000 }, is_delete: false });
-//         } else {
-//             emails = await EmailDataModel.find({ user_id: doc.user_id, size: { $gte: largerThan * 1000000 }, is_delete: false });
-//         }
-//         emails.sort((a, b) => {
-//             return a.size > b.size ? -1 : 1;
-//         })
-//         res.status(200).json({
-//             error: false,
-//             data: emails
-//         });
-//     } catch (err) {
-//         console.log(err);
-//     }
-// });
-
-
-/* This api will return the emails based on the size, 
-   for example: if i need emails between 1-5MB, 
-   it will return the partucular emails with seen and unseen seperated format */
-router.post('/getEmailsBySizeFromDb', async (req, res) => {
+router.post('/getEmailsBySizeNewFromDb', async (req, res) => {
     try {
-        // let smallerThan = req.body.smallerThan;
-        // let largerThan = req.body.largerThan;
         let start_date = req.body.start_date;
         let end_date = req.body.end_date;
         const doc = await token_model.findOne({ "token": req.body.token });
-        let emails;// = await EmailDataModel.find({user_id:doc.user_id,size:{ $gte :largerThan*1000000,$lte:smallerThan*1000000}});
+        let emails;
         if (start_date == null || end_date == null) {
             emails = await EmailDataModel.find({ user_id: doc.user_id, is_delete: false });
         } else {
@@ -1099,7 +1056,8 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
                 { "name": "10", "data": [] },
                 { "name": "5", "data": [] },
                 { "name": "1", "data": [] },
-                { "name": "0", "data": [] }]
+                { "name": "0", "data": [] }
+            ]
         };
         // sizeWiseData.data[0].data = emails.filter(x=>x.size>10000000);
         // sizeWiseData.data[1].data = emails.filter(x=>x.size>5000000);
@@ -1126,6 +1084,62 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
 });
 
 
+router.post('/getEmailsBySizeFromDb', async (req, res) => {
+    try {
+        let start_date = req.body.start_date;
+        let end_date = req.body.end_date;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails;
+        if (start_date == null || end_date == null) {
+            emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
+                $group: {
+                    _id: { "size_group": "$size_group" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id",
+                            "from_email": "$from_email"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "from_email": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        } else {
+            emails = await EmailDataModel.aggregate([{
+                $match: {
+                    $and: [{ "user_id": doc.user_id }, { is_delete: false },
+                    { receivedDate: { $gte: new Date(start_date) } }, { receivedDate: { $lte: new Date(end_date) } }]
+                }
+            }, {
+                $group: {
+                    _id: { "size_group": "$size_group" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        }
+        console.log(emails.length);
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
 /* This api will return the emails based on the sender_email and also return total number of email by sender*/
 router.post('/getEmailsBySenderFromDb', async (req, res) => {
     try {
@@ -1133,7 +1147,6 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
         let end_date = req.body.end_date;
         const doc = await token_model.findOne({ "token": req.body.token });
         let emails;
-        console.log(start_date, end_date);
         if (start_date == null || end_date == null) {
             emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
                 $group: {
@@ -1151,7 +1164,6 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
             { $sort: { "count": -1 } },
             { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
         } else {
-            console.log("came here for date", start_date, end_date)
             emails = await EmailDataModel.aggregate([{
                 $match: {
                     $and: [{ "user_id": doc.user_id }, { is_delete: false },
@@ -1214,7 +1226,6 @@ router.post('/getTotalUnreadMail', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
         let emails = await EmailDataModel.countDocuments({ user_id: doc.user_id, status: "unread", is_delete: false });
-
         res.status(200).json({
             error: false,
             data: emails
@@ -1226,13 +1237,12 @@ router.post('/getTotalUnreadMail', async (req, res) => {
 
 
 /* This api will return the emails based on Label from database*/
-router.post('/getEmailsByLabelFromDb', async (req, res) => {
+router.post('/getEmailsByLabelNewFromDb', async (req, res) => {
     try {
         let start_date = req.body.start_date;
         let end_date = req.body.end_date;
         const doc = await token_model.findOne({ "token": req.body.token });
         let emails;
-        console.log(start_date, end_date);
         if (start_date == null || end_date == null) {
             emails = await EmailDataModel.find({ user_id: doc.user_id, is_delete: false });
         } else {
@@ -1241,17 +1251,14 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
                 $and: [{ receivedDate: { $gte: start_date } }, { receivedDate: { $lte: end_date } }]
             });
         }
-        console.log(emails.length);
         let definedLables = {
             "social": ['facebook', 'twitter', 'instagram', 'tumblr', 'linkedin', 'whatsapp', 'snapchat'],
             "promotion": ['promotion'],
             "deadEnd": ['noreply', 'no-reply']
         }
-
         let fliteredByLabel = {
             "label": [{ "name": "social", "data": [] }, { "name": "promotion", "data": [] }, { "name": "deadEnd", "data": [] }, { "name": "others", "data": [] }]
         }
-        console.log(emails)
         emails.forEach(singleData => {
             if (definedLables.social.some(val => JSON.stringify(singleData).includes(val))) {
                 fliteredByLabel.label.find(x => x.name == "social").data.push(singleData)
@@ -1263,7 +1270,6 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
                 fliteredByLabel.label.find(x => x.name == "others").data.push(singleData)
             }
         })
-        console.log(fliteredByLabel)
         res.status(200).json({
             error: false,
             data: fliteredByLabel,
@@ -1274,78 +1280,62 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
     }
 });
 
-// /* This api will return the emails which is belongs to the input
-//    payload:
-//    if custom date:
-//      { data:{isCustom:true, since:date, before:date}}
-//    id before/after particular date:
-//      { date:{isCustom:false, beforeOrAfter:"BEFORE/AFTER", date:date}}
-// */
-// router.post('/getEmailsByDate', async (req, res) => {
-//     try {
-//         let { data } = req.body;
-//         const doc = await token_model.findOne({ "token": req.body.token });
-//         let emails = await Controller.extractEmailByDate(doc, 'INBOX', data);
-//         res.status(200).json({
-//             error: false,
-//             data: emails
-//         });
-//     } catch (err) {
-//         console.log(err);
-//     }
-// });
 
-// /* This api will read all the emails and return by labels categorized */
-// router.post('/getEmailsByLables', async (req, res) => {
-//     try {
-//         const doc = await token_model.findOne({ "token": req.body.token });
-//         let emails = await Controller.extractAllEmails(doc, 'INBOX');
-//         let { seen, unseen } = emails;
-//         let definedLables = {
-//             "social": ['facebook', 'twitter', 'instagram'],
-//             "promotion": ['promotion'],
-//             "deadEnd": ['noreply', 'no-reply']
-//         }
-//         let fliteredByLabel = {
-//             'seen': {
-//                 "social": [], "promotion": [], "deadEnd": []
-//             },
-//             'unseen': {
-//                 "social": [], "promotion": [], "deadEnd": []
-//             }
-//         }
-//         console.log(seen)
-//         seen.forEach(seenSingleData => {
-//             if (definedLables.social.some(val => JSON.stringify(seenSingleData).includes(val))) {
-//                 fliteredByLabel.seen.social.push(seenSingleData)
-//             }
-//             if (definedLables.promotion.some(val => JSON.stringify(seenSingleData).includes(val))) {
-//                 fliteredByLabel.seen.promotion.push(seenSingleData)
-//             }
-//             if (definedLables.deadEnd.some(val => JSON.stringify(seenSingleData).includes(val))) {
-//                 fliteredByLabel.seen.deadEnd.push(seenSingleData)
-//             }
-//         })
-//         unseen.forEach(unseenSingleData => {
-//             if (definedLables.social.some(val => JSON.stringify(unseenSingleData).includes(val))) {
-//                 fliteredByLabel.unseen.social.push(unseenSingleData)
-//             }
-//             if (definedLables.promotion.some(val => JSON.stringify(unseenSingleData).includes(val))) {
-//                 fliteredByLabel.unseen.promotion.push(unseenSingleData)
-//             }
-//             if (definedLables.deadEnd.some(val => JSON.stringify(unseenSingleData).includes(val))) {
-//                 fliteredByLabel.unseen.deadEnd.push(unseenSingleData)
-//             }
-//         })
-//         res.status(200).json({
-//             error: false,
-//             data: fliteredByLabel
-//         });
-//     } catch (err) {
-//         console.log(err);
-//     }
-// });
+
+/* This api will return the emails based on the sender_email and also return total number of email by sender*/
+router.post('/getEmailsByLabelFromDb', async (req, res) => {
+    try {
+        let start_date = req.body.start_date;
+        let end_date = req.body.end_date;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails;
+        if (start_date == null || end_date == null) {
+            emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
+                $group: {
+                    _id: { "box_name": "$box_name" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id",
+                            "from_email": "$from_email"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "from_email": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        } else {
+            emails = await EmailDataModel.aggregate([{
+                $match: {
+                    $and: [{ "user_id": doc.user_id }, { is_delete: false },
+                    { receivedDate: { $gte: new Date(start_date) } }, { receivedDate: { $lte: new Date(end_date) } }]
+                }
+            }, {
+                $group: {
+                    _id: { "box_name": "$box_name" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        }
+        console.log(emails.length);
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
 
 module.exports = router
-
-

@@ -29,6 +29,8 @@ fm.Class("EmailData>.BaseModel", function(me){
             receivedDate: emaildata.receivedDate,
             status:emaildata.status,
             labelIds:emaildata.labelIds,
+            box_name:emaildata.box_name,
+            size_group : emaildata.size_group,
             is_delete:false
         }
     }

@@ -17,6 +17,9 @@ var emailsdata = new Schema({
     size:{
         type:String
     },
+    size_group:{
+        type: Number
+    },
     receivedDate:{
         type:Date
     },
@@ -28,6 +31,9 @@ var emailsdata = new Schema({
     },
     is_delete:{
         type:Boolean
+    },
+    box_name:{
+        type:String
     }
 });
 emailsdata.index({ from_email: 1, user_id: 1,receivedDate:1});
