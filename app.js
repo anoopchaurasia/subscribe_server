@@ -21,7 +21,7 @@ app.get('/', function (req, res) {
     res.send("welcome!!!!!!!!");
 });
 
-require("./helper/user_action");
+// require("./helper/user_action");
 
 app.listen(process.env.SERVER_PORT, function (err) {
     if (err) {

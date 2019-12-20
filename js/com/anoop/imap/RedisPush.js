@@ -1,16 +1,16 @@
 fm.Package('com.anoop.imap')
 fm.Import("com.jeet.memdb.RedisDB")
-fm.Class('RedisPush', function(me, me){
+fm.Class('RedisPush', function(me, RedisDB){
     'use strict';
     this.setMe=_me=>me=_me;
     
     
-    Static.addDBAction = async function(action, args){
-        RedisDB.pushData('imap_user_actions', {args, action});
+    Static.addImapAction = async function(action, args){
+        RedisDB.base.pushData('imap_user_actions', {args, action});
     };
     
-    Static.addImapAction = async function(args){
-        RedisDB.pushData('db_user_actions', {args});
+    Static.addDBAction = async function(args){
+        RedisDB.base.pushData('db_user_actions', {args});
     };
     ///---------------- unused
     // ImapRedisPush.unusedToKeep
