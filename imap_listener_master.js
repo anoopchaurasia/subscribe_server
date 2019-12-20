@@ -54,7 +54,7 @@ async function new_user_check(){
     console.warn("processing old users returning")
     return;
   }
-  let cursor = UserModel.find({listener_active: null, email_client:"imap"}, {_id:1}).lean().cursor();
+  let cursor = UserModel.find({listener_active: null, inactive_at: null, email_client:"imap"}, {_id:1}).lean().cursor();
   cursor.eachAsync(async user => {
     RedisDB.notifyListner( user._id.toHexString());
   }).catch(async e => {
