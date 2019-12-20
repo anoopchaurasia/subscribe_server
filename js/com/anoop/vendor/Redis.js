@@ -43,7 +43,6 @@ fm.Class("Redis", function (me) {
     };
 
     Static.pushData = async function (key, data) {
-        // console.log(key, data);
         return client.lpush(key, JSON.stringify(data));
     };
 
