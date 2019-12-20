@@ -19,7 +19,11 @@ fm.Class("EmailDetail>.BaseModel", function(me){
 
     Static.updateOrCreateAndGet = async function(query, set) {
         me.updateQueryValidation(query);
-        return await mongo_emaildetail.findOneAndUpdate(query, {$setOnInsert: set}, {new: true, upsert: true}).exec();
+        if(!set.status) {
+            set.status = "unused";
+            console.error("no status provided")
+        }
+        return await mongo_emaildetail.findOneAndUpdate(query, {$setOnInsert: set, $set: {status: set.status}}, {new: true, upsert: true}).exec();
     };
 
     Static.getIfExist = async function (query){
