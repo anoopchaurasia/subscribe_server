@@ -8,6 +8,10 @@ fm.Include("com.anoop.imap.Controller", function(){
             await ImapController[action.action](...action.args);
         }catch(e) {
             console.error(e);
+            if(!e.message.includes("Invalid credentials")) {
+                console.warn("user imap_user_actions crashed restarting reason: ", e.message);
+                RedisDB.lPush('imap_user_actions', data[1])
+            }
         }
     });
 
@@ -17,6 +21,10 @@ fm.Include("com.anoop.imap.Controller", function(){
             await ImapController.updateMyDetail(...action.args);
         }catch(e) {
             console.error(e);
+            if(!e.message.includes("Invalid credentials")) {
+                console.warn("user db_user_actions crashed restarting reason: ", e.message);
+                RedisDB.lPush('db_user_actions', data[1])
+            }
         }
     });
 });

@@ -13,6 +13,9 @@ let LISTEN_USER_KEY = "listen_for_user";
 
 RedisDB.BLPopListner(LISTEN_USER_KEY, async function([key, user_id]){
     let user = await ImapController.getUserById(user_id);
+    if(user.inactive_at != null) {
+        console.warn(user.email, "not active", "not setting listener");
+    }
     await scrapEmailForIamp(user).catch(err => {
         console.error(err.message, "user -> ", user.email);
     });
@@ -23,6 +26,11 @@ async function scrapEmailForIamp(user){
     await ImapController.listenForUser(user, "start", function(x, y){
         console.log(x, y, "new email update");
         RedisDB.lPush("email_update_for_user", user._id.toHexString() );
+    }).catch(e=>{
+        if(!e.message.includes("Invalid credentials")) {
+            console.warn("user listener crashed restarting reason: ", e.message);
+            RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString())
+        }
     });
 };
 

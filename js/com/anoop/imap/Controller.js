@@ -17,7 +17,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 await me.updateInactiveUser(user._id);
             }
             throw new Error(err);
-        });;
+        });
         await myImap.openFolder(folder);
         return myImap;
     };

@@ -98,7 +98,7 @@ fm.Class("Redis", function (me) {
                 try {
                     await cb(data);
                 } catch (e) {
-                    console.error(e)
+                    console.error(e, key, "BLPopListner")
                 } finally {
                     listner_count--;
                     next();
