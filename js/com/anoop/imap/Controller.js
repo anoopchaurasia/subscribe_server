@@ -305,7 +305,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }
         myImap.imap.end(myImap.imap);
         let token = await me.createToken(user);
-        await me.notifyListner(user._id);
+        await me.notifyListner(user._id.toHexString());
         // delay as active status require to setup listner so that it do not set multi listener for same user
         setTimeout(async x => {
             await me.reactivateUser(user._id);
