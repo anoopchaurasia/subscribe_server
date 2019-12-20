@@ -27,9 +27,11 @@ async function scrapEmailForIamp(user){
         console.log(x, y, "new email update");
         RedisDB.lPush("email_update_for_user", user._id.toHexString() );
     }).catch(e=>{
-        if(!e.message.match(/Invalid credentials|Invalid login or password/i)) {
-            console.warn("user listener crashed restarting reason: ", e.message, e.email);
-            RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString())
+        if(!e.message.match(global.INVALID_LOGIN_REGEX)) {
+            console.warn("user listener crashed restarting reason: ", e.message, user.email);
+            setTimeout(x=>{
+                RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString())
+            }, 10*1000)
         }
     });
 };

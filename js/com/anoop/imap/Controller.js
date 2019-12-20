@@ -13,7 +13,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user, provider);
         await myImap.connect(provider).catch(async err => {
-            if (err.message.match(/Invalid credentials|Invalid login or password/i)) {
+            if (err.message.match(global.INVALID_LOGIN_REGEX)) {
                 console.warn("leaving user as not loggedin", user.email)
                 await me.updateInactiveUser(user._id);
             }
