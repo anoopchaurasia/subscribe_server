@@ -102,7 +102,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     };
 
     Static.updateUserByActionKey = async function (user_id, value) {
-        return await UserAction.updateByKey({ _id: user_id }, value);
+        //return await UserAction.updateByKey({ _id: user_id }, value);
     }
 
     Static.getUserActionData = async function (user_id) {
@@ -216,31 +216,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.updateEmailDetailByFromEmail = async function (user_id, from_email, status) {
         return await EmailDetail.updateStatus({ user_id, from_email }, status);
     };
-
-    Static.inboxToUnsubBySender = async function (token, sender_email) {
-        let emailinfos = await commonBySender(token, sender_email, "move");
-        await Emailinfo.bulkInsert(emailinfos);
-    };
-
-    async function commonBySender(token, sender_email, status) {
-        let gmailInstance = await Gmail.getInstanceForUser(user_id);
-        let scraper = Scraper.new(gmailInstance);
-        let ids = await scraper.getEmaiIdsBySender(sender_email);
-        if (ids.length == 0) {
-            throw new Error("no email fond for sender", sender_email, user_id);
-        }
-        let emaildetail_raw = EmailDetail.fromEamil({ from_email: sender_email, from_email_name: sender_email, to_email: null }, user_id);
-        emaildetail_raw.status = status;
-        let emaildetail = await EmailDetail.updateOrCreateAndGet({ user_id: user_id, from_email: sender_email }, emaildetail_raw);
-        return ids.map(x => {
-            return Emailinfo.fromEamil({ email_id: x, labelIds: [] }, emaildetail._id);
-        });
-    }
-
-    Static.inboxToTrashBySender = async function (token, sender_email) {
-        let emailinfos = await commonBySender(token, sender_email, "trash");
-        await Emailinfo.bulkInsert(emailinfos);
-    }
 
     Static.sendMailToScraper = async function (data, user, getBodyCB,is_get_body) {
         await BaseRedisData.sendMailToScraper(data, user, getBodyCB,is_get_body);

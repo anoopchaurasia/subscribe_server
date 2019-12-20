@@ -1,7 +1,6 @@
 'use strict'
 const express = require('express');
 const email = require('../models/emailDetails');
-const Request = require("request");
 const TokenHandler = require("../helper/TokenHandler").TokenHandler;
 const Expensebit = require("../helper/expenseBit").ExpenseBit;
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
@@ -403,32 +402,6 @@ async function getRecentEmail(user_id, auth, nextPageToken, label, afterFinishCB
 }
 
 
-/*
-This api for unsubscribing mail from Inbox.
-This api Currently not using Its under development.
-*/
-router.post('/unSubscribeMail', async (req, res) => {
-    try {
-        const from_email = req.body.from_email;
-        const mailList = await email.findOne({ "from_email": from_email }).catch(err => {
-            console.error(err.message, err.stack, "15");
-        });
-        if (mailList) {
-            const settings = {
-                "url": mailList.unsubscribe,
-                "method": "get"
-            }
-            Request(settings, async (error, response, body) => {
-                if (error) {
-                    return console.error(err.message, err.stack, "16");
-                }
-            });
-        }
-    } catch (ex) {
-        console.error(ex.message, ex.stack, "17");
-        res.sendStatus(400);
-    }
-});
 
 
 /*
