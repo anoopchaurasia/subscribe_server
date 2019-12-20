@@ -15,6 +15,7 @@ RedisDB.BLPopListner(LISTEN_USER_KEY, async function([key, user_id]){
     let user = await ImapController.getUserById(user_id);
     if(user.inactive_at != null) {
         console.warn(user.email, "not active", "not setting listener");
+        return;
     }
     await scrapEmailForIamp(user).catch(err => {
         console.error(err.message, "user -> ", user.email);
@@ -31,7 +32,7 @@ async function scrapEmailForIamp(user){
             console.warn("user listener crashed restarting reason: ", e.message, user.email);
             setTimeout(x=>{
                 RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString())
-            }, 10*1000)
+            }, 60*1000)
         }
     });
 };
