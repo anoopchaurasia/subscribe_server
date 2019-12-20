@@ -19,7 +19,9 @@ app.get('/api/v2/setToken', function (req, res) {
 app.get('/', function (req, res) {
     console.log(req)
     res.send("welcome!!!!!!!!");
-})
+});
+
+require("./helper/user_action");
 
 app.listen(process.env.SERVER_PORT, function (err) {
     if (err) {

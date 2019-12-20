@@ -7,3 +7,4 @@ dump.rdb
 .cron_env
 .listner_env
 test.js
+tmp
