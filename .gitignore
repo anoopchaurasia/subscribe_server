@@ -5,6 +5,7 @@ dump.rdb
 .vscode
 .DS_Store
 .cron_env
+.env_prod
 .listner_env
 test.js
 tmp
