@@ -3,7 +3,7 @@ require("dotenv").config();
 require("jsfm");
 fm.basedir = process.cwd() + "/js";
 global.basedir = process.cwd();
-global.INVALID_LOGIN_REGEX = /Invalid credentials|Invalid login or password|Authentication failed|enabled for IMAP use/i
+global.INVALID_LOGIN_REGEX = /Invalid credentials|Web login required|Invalid login or password|Authentication failed|enabled for IMAP use/i
 var Raven = require('raven');
 Raven.config(process.env.SENTRY_URL || 'https://edb20d0741384f7e8ef743a5a22659d5@sentry.expensebit.com/13').install();
 let mongoose = require('mongoose');
