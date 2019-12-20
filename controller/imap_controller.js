@@ -261,13 +261,11 @@ router.post('/getImapEnableUrl', async (req, res) => {
 
 let saveProviderInfo = async (email) => {
     try {
-        console.log(email)
         var domain = email.split('@')[1];
         let resp = await providerModel.findOne({ "domain_name": domain }).catch(err => {
             console.error(err.message, err.stack, "provider_1");
         });
         if (resp) {
-            console.log("response", resp)
             return resp;
         } else {
             const response = await legit(email);
@@ -497,7 +495,6 @@ router.post('/readZohoMail', async (req, res) => {
         let doc = await token_model.findOne({ "token": req.body.token}).catch(err => {
             console.error(err.message);
         });
-        console.log("got user tokane", doc);
         Controller.sendToProcessServer(doc.user_id);
         
         res.status(200).json({
