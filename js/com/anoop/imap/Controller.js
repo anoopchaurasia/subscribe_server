@@ -19,6 +19,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             }
             throw new Error(err);
         });
+        myImap.keepCheckingConnection(function onFail(){
+            throw new Error("imap disconnected!");
+        }, 20*1000);
         await myImap.openFolder(folder);
         return myImap;
     };
@@ -30,7 +33,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     async function closeImap(myImap) {
         await myImap.closeFolder();
-        myImap.imap.end(myImap.imap);
+        myImap.end(myImap.imap);
     };
 
     ///------------------------------------- userAction ---------------------///
@@ -70,7 +73,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         };
         await me.saveManualEmailData(token.user_id, data);
         me.updateUserByActionKey(token.user_id, { "last_manual_trash_date": new Date() });
-        myImap.imap.end(myImap.imap);
+        myImap.end(myImap.imap);
     };
 
     Static.manualUnusedToUnsub = async function (token, from_email) {
@@ -84,7 +87,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         };
         await me.saveManualEmailData(token.user_id, data);
         me.updateUserByActionKey(token.user_id, { "last_manual_unsub_date": new Date() });
-        myImap.imap.end(myImap.imap);
+        myImap.end(myImap.imap);
     };
 
     ///------------------------------------- from keep ---------------------///
@@ -148,7 +151,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 reset_cb();
                 throw new Error("disconnected" + user_id);
             }
-        }, 2*60*1000)
+        }, 2*60*1000);
         await me.scanStarted(user_id);
         myImap = await openFolder({user_id}, "INBOX");
         AppsflyerEvent.sendEventToAppsflyer(myImap.user.email,"process_started",{"user":myImap.user.email,"last_mid":myImap.box.uidnext})
@@ -162,14 +165,14 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             AppsflyerEvent.sendEventToAppsflyer(myImap.user.email,"process_finished",{"user":myImap.user.email,"last_mid":myImap.box.uidnext})
         });
         clearInterval(timeoutconst);
-        myImap.imap.end(myImap.imap);
+        myImap.end(myImap.imap);
     }
 
     Static.extractEmailForCronJob = async function (user) {
         let myImap = await openFolder("", "INBOX", user);
         let scraper = Scraper.new(myImap);
         await scraper.update();
-        myImap.imap.end(myImap.imap);
+        myImap.end(myImap.imap);
         await me.updateLastMsgId(user._id, myImap.box.uidnext)
     }
 
@@ -186,16 +189,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             me.updateUserByActionKey(token.user_id, { "last_scan_date": new Date() });
             await me.handleRedis(token.user_id);
         });
-        myImap.imap.end(myImap.imap);
+        myImap.end(myImap.imap);
     }
 
     Static.validCredentialCheck = async function (token) {
         let myImap = await openFolder(token, "INBOX");
         if (myImap) {
-            myImap.imap.end(myImap.imap);
+            myImap.end(myImap.imap);
             return true
         } else {
-            myImap.imap.end(myImap.imap);
+            myImap.end(myImap.imap);
             return false
         }
     }
@@ -266,7 +269,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         });
         clearInterval(timeoutconst);
         myImap.user.last_msgId = myImap.box.uidnext;
-        myImap.imap.end(myImap.imap);
+        myImap.end(myImap.imap);
         await me.updateLastMsgId(user._id, myImap.box.uidnext);
         is_more_than_limit && reset_cb();
     }
@@ -304,7 +307,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         } else {
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
-        myImap.imap.end(myImap.imap);
+        myImap.end(myImap.imap);
         let token = await me.createToken(user);
         // delay as active status require to setup listner so that it do not set multi listener for same user
         setTimeout(async x => {

@@ -89,6 +89,7 @@ fm.Class("MyImap", function (me) {
     };
 
     this.end = async function(){
+        clearInterval(me.interval_const);
         return me.imap.end(me.imap);
     };
 
@@ -110,10 +111,10 @@ fm.Class("MyImap", function (me) {
             });
             me.imap.once('error', err => reject(err));
             me.imap.connect();
-        })
+        });
     };
 
-    this.keepCheckingConnection = function(cb){
+    this.keepCheckingConnection = function(cb, timeout){
         clearInterval(me.interval_const);
         me.interval_const = setInterval(x=>{
             if(me.imap.state === 'disconnected') {
@@ -121,7 +122,7 @@ fm.Class("MyImap", function (me) {
                 clearInterval(me.interval_const);
                 cb();
             }
-        }, 10*60*1000);
+        }, timeout || 10*60*1000);
     };
 
     this.onEnd = function(cb){
