@@ -5,6 +5,7 @@ fm.Include("com.anoop.imap.Controller", function(){
     RedisDB.BLPopListner('imap_user_actions', async function(data){
         try{
             let action  = JSON.parse(data[1]);
+            console.log(action.action)
             await ImapController[action.action](...action.args);
         }catch(e) {
             console.error(e);

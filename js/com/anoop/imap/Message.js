@@ -9,7 +9,12 @@ fm.Class("Message", function (me) {
 
     Static.getAllEmailIdList = async function (imap, from_email) {
         let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
-        return await search(imap, [["FROM", from_email], ['SINCE', since]]);
+        console.time("getAllEmailIdList")
+        console.timeLog("getAllEmailIdList")
+        let data = await search(imap, [["FROM", from_email], ['SINCE', since]]);
+        console.timeEnd("getAllEmailIdList")
+        console.log(data.length);
+        return data;
     };
 
     Static.getInboxEmailIdByLabel = async function (imap, label_name) {
