@@ -10,7 +10,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     async function openFolder(token, folder, user) {
         user = user || (await me.getUserById(token.user_id));
         if(!user){
-            throw neew Error("user left system "+ token+ user)
+            throw new Error("user left system "+ token+ user)
         }
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
