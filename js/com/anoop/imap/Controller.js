@@ -15,6 +15,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user, provider);
+        console.log("got imap instace")
         await myImap.connect(provider).catch(async err => {
             if (err.message.match(global.INVALID_LOGIN_REGEX)) {
                 console.warn("leaving user as not loggedin reason:", err.message, user.email)
@@ -22,10 +23,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             }
             throw new Error(err);
         });
+        console.log("imap connected");
         myImap.keepCheckingConnection(function onFail(){
             throw new Error("imap disconnected!");
         }, 20*1000);
         await myImap.openFolder(folder);
+        console.log("imap folder opened");
         return myImap;
     };
     
@@ -52,15 +55,21 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     Static.unusedToTrash = async function (token, from_email) {
+        console.log("openfolder")
         let myImap = await openFolder(token, "INBOX");
+        console.log("trash")
         await Label.moveInboxToTrash(myImap, from_email);
+        console.log("close imap")
         me.updateUserByActionKey(token.user_id, { "last_trash_date": new Date() });
         await closeImap(myImap);
     };
 
     Static.unusedToUnsub = async function (token, from_email) {
+        console.log("openfolder")
         let myImap = await openFolder(token, "INBOX");
+        console.log("move")
         await Label.moveInboxToUnsub(myImap, from_email);
+        console.log("close imap")
         me.updateUserByActionKey(token.user_id, { "last_unsub_date": new Date() });
         await closeImap(myImap);
     };
