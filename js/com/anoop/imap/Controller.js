@@ -7,7 +7,7 @@ const AppsflyerEvent =  require("../../../../helper/appsflyerEvent").AppsflyerEv
 fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scraper, Label) {
     this.setMe = _me => me = _me;
 
-    async function openFolder(token, folder, user) {
+    async function openFolder(token, folder, user, onDisconnect) {
         user = user || (await me.getUserById(token.user_id));
         if(!user){
             throw new Error("user left system "+ token+ user)
@@ -17,6 +17,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let myImap = await MyImap.new(user, provider);
         console.log("got imap instace")
         myImap.keepCheckingConnection(function onFail(){
+            onDisconnect && onDisconnect();
             throw new Error("imap disconnected!");
         }, 60*1000);
         await myImap.connect(provider).catch(async err => {
@@ -55,9 +56,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         me.updateUserByActionKey(token.user_id, { "last_keep_date": new Date() });
     };
 
-    Static.unusedToTrash = async function (token, from_email) {
+    Static.unusedToTrash = async function (token, from_email, onDisconnect) {
         console.log("openfolder")
-        let myImap = await openFolder(token, "INBOX");
+        let myImap = await openFolder(token, "INBOX", undefined, onDisconnect);
         console.log("trash")
         await Label.moveInboxToTrash(myImap, from_email);
         console.log("close imap")
@@ -65,9 +66,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await closeImap(myImap);
     };
 
-    Static.unusedToUnsub = async function (token, from_email) {
+    Static.unusedToUnsub = async function (token, from_email, onDisconnect) {
         console.log("openfolder")
-        let myImap = await openFolder(token, "INBOX");
+        let myImap = await openFolder(token, "INBOX", undefined, onDisconnect);
         console.log("move")
         await Label.moveInboxToUnsub(myImap, from_email);
         console.log("close imap")
@@ -75,8 +76,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await closeImap(myImap);
     };
 
-    Static.manualUnusedToTrash = async function (token, from_email) {
-        let myImap = await openFolder(token, "INBOX");
+    Static.manualUnusedToTrash = async function (token, from_email, onDisconnect) {
+        let myImap = await openFolder(token, "INBOX", undefined, onDisconnect);
         await Label.moveInboxToTrash(myImap, from_email);
         await myImap.closeFolder();
         let data = {
@@ -89,8 +90,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.end(myImap.imap);
     };
 
-    Static.manualUnusedToUnsub = async function (token, from_email) {
-        let myImap = await openFolder(token, "INBOX");
+    Static.manualUnusedToUnsub = async function (token, from_email, onDisconnect) {
+        let myImap = await openFolder(token, "INBOX", undefined, onDisconnect);
         await Label.moveInboxToUnsub(myImap, from_email);
         await myImap.closeFolder();
         let data = {
@@ -105,15 +106,15 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     ///------------------------------------- from keep ---------------------///
 
-    Static.keepToTrash = async function (token, from_email) {
-        let myImap = await openFolder(token, "INBOX");
+    Static.keepToTrash = async function (token, from_email, onDisconnect) {
+        let myImap = await openFolder(token, "INBOX", undefined, onDisconnect);
         await Label.moveActiveToTrash(myImap, from_email);
         me.updateUserByActionKey(token.user_id, { "last_trash_date": new Date() });
         await closeImap(myImap);
     };
 
-    Static.keepToUnsub = async function (token, from_email) {
-        let myImap = await openFolder(token, "INBOX");
+    Static.keepToUnsub = async function (token, from_email, onDisconnect) {
+        let myImap = await openFolder(token, "INBOX", undefined, onDisconnect);
         await Label.moveActiveToUnsub(myImap, from_email);
         me.updateUserByActionKey(token.user_id, { "last_unsub_date": new Date() });
         await closeImap(myImap);
@@ -121,26 +122,26 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
     ///---------------------------------------from unsub folder--------------------///
 
-    Static.unsubToKeep = async function (token, from_email) {
+    Static.unsubToKeep = async function (token, from_email, onDisconnect) {
         let user = await me.getUserById(token.user_id);
-        let myImap = await openFolder(token, user.unsub_label, user);
+        let myImap = await openFolder(token, user.unsub_label, user, onDisconnect);
         await Label.moveUnsubToInbox(myImap, from_email);
         me.updateUserByActionKey(token.user_id, { "last_keep_date": new Date() });
         await closeImap(myImap);
     };
 
-    Static.unsubToTrash = async function (token, from_email) {
+    Static.unsubToTrash = async function (token, from_email, onDisconnect) {
         let user = await me.getUserById(token.user_id);
-        let myImap = await openFolder(token, user.unsub_label, user);
+        let myImap = await openFolder(token, user.unsub_label, user, onDisconnect);
         await Label.moveUnsubToTrash(myImap, from_email);
         me.updateUserByActionKey(token.user_id, { "last_trash_date": new Date() });
         await closeImap(myImap);
     };
     ///------------------------------------from trash folder---------------------///
 
-    Static.trashToKeep = async function (token, from_email) {
+    Static.trashToKeep = async function (token, from_email, onDisconnect) {
         let user = await me.getUserById(token.user_id);
-        let myImap = await openFolder(token, user.trash_label, user);
+        let myImap = await openFolder(token, user.trash_label, user, onDisconnect);
         await Label.moveTrashToInbox(myImap, from_email);
         me.updateUserByActionKey(token.user_id, { "last_keep_date": new Date() });
         await closeImap(myImap);
