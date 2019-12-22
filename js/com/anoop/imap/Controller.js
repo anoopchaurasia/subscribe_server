@@ -16,6 +16,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user, provider);
         console.log("got imap instace")
+        myImap.keepCheckingConnection(function onFail(){
+            throw new Error("imap disconnected!");
+        }, 20*1000);
         await myImap.connect(provider).catch(async err => {
             if (err.message.match(global.INVALID_LOGIN_REGEX)) {
                 console.warn("leaving user as not loggedin reason:", err.message, user.email)
@@ -24,9 +27,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             throw new Error(err);
         });
         console.log("imap connected");
-        myImap.keepCheckingConnection(function onFail(){
-            throw new Error("imap disconnected!");
-        }, 20*1000);
+        
         await myImap.openFolder(folder);
         console.log("imap folder opened");
         return myImap;
