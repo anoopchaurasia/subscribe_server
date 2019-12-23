@@ -502,8 +502,8 @@ router.post('/readZohoMail', async (req, res) => {
         let doc = await token_model.findOne({ "token": req.body.token }).catch(err => {
             console.error(err.message);
         });
-        Controller.sendToProcessServer(doc.user_id);
-
+        Controller.sendToProcessServer(doc.user_id.toHexString());
+        
         res.status(200).json({
             error: false,
             data: "scrape"

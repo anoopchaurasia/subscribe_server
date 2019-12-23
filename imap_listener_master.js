@@ -23,9 +23,10 @@ Array.prototype.asynForEach = async function (cb) {
   }
 }
 
-let LISTEN_USER_KEY = "listen_for_user";
+let LISTEN_USER_KEY = "listen_for_user1";
 
 async function runJob(offset = 0) {
+  return;
   RedisDB.delKEY(LISTEN_USER_KEY);
   console.log("scheduler called for scrapping mail for imap...");
   let counter = offset;
@@ -54,7 +55,7 @@ async function new_user_check(){
     console.warn("processing old users returning")
     return;
   }
-  let cursor = UserModel.find({listener_active: null, email_client:"imap"}, {_id:1}).lean().cursor();
+  let cursor = UserModel.find({listener_active: null, inactive_at: null, email_client:"imap"}, {_id:1}).lean().cursor();
   cursor.eachAsync(async user => {
     RedisDB.notifyListner( user._id.toHexString());
   }).catch(async e => {
@@ -76,3 +77,14 @@ function onNewUser() {
     console.log("setting for new user", user._id);
   });
 }
+
+setInterval(async x=>{
+  let keys = await RedisDB.base.getKEYS("active_listner_for_*");
+  let total = 0;
+  await keys.asynForEach(async k=>{
+    let c= await RedisDB.base.getData(k);
+    total+= c*1;
+    console.log("instance serving",k, c, total);
+  })
+  console.log("total serving", total);
+}, 60*1000);

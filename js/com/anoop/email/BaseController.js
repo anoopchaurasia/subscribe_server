@@ -96,8 +96,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await User.updatelastMsgId({ _id: _id }, { last_msgId: msg_id });
     }
 
-    Static.updateInactiveUser = async function (_id) {
-        return await User.updateInactiveUser({ _id: _id, inactive_at: null }, { "inactive_at": new Date() });
+    Static.updateInactiveUser = async function (_id, reason) {
+        return await User.updateInactiveUser({ _id: _id}, { "inactive_at": new Date(), listener_active: null, inactive_reason: reason });
     };
 
     Static.updateLastTrackMessageId = async function(uid,last_mId){
@@ -194,6 +194,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     };
 
     Static.updateTrashLabelUser = async function (email, trash_label) {
+        console.warn("setting new label", trash_label);
         return await User.updateUser({ email: email }, {$set:{
             trash_label,
             "email_client": "imap"
