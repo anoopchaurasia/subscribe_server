@@ -6,12 +6,9 @@ fm.Include("com.anoop.imap.Controller", function(){
         try{
             let action  = JSON.parse(data[1]);
             console.log(action.action)
-            await ImapController[action.action](...action.args, async function onDIsconect() {
+            await ImapController[action.action](...action.args, function onDIsconect() {
                 console.warn("disconnected crashing");
                 RedisDB.lPush('imap_user_actions', data[1]);
-                return new Promise(x=> {
-                    setTimeout(r=>x(), 1000);
-                });
             });
         }catch(e) {
             console.error(e);
