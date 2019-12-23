@@ -16,7 +16,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user, provider);
         console.log("got imap instace")
-        myImap.keepCheckingConnection(async function onFail(){
+        myImap.keepCheckingConnection(function onFail(){
             onDisconnect && onDisconnect();
             throw new Error("imap disconnected!");
         }, 90*1000);

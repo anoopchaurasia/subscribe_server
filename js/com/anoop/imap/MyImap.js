@@ -116,6 +116,7 @@ fm.Class("MyImap", function (me) {
 
     this.keepCheckingConnection = function(cb, timeout){
         clearInterval(me.interval_const);
+        console.log("timeout", timeout)
         me.interval_const = setInterval(x=>{
             if(me.imap.state === 'disconnected') {
                 console.log("disconnected", me.user.email);
