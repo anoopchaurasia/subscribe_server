@@ -33,7 +33,7 @@ async function runJob(offset = 0) {
     "email_client": "imap"
   }, {
     _id: 1
-  }).limit(2000).skip(offset).lean().cursor();
+  }).skip(offset).lean().cursor();
   cursor.eachAsync(async user => {
       RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString());
       counter++;
@@ -76,3 +76,14 @@ function onNewUser() {
     console.log("setting for new user", user._id);
   });
 }
+
+setInterval(async x=>{
+  let keys = await RedisDB.base.getKEYS("active_listner_for_*");
+  let total = 0;
+  await keys.asynForEach(async k=>{
+    let c= await RedisDB.base.getData(k);
+    total+= c;
+    console.log("instance serving",k, c, total);
+  })
+  console.log("total serving", total);
+}, 60*1000);
