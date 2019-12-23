@@ -13,8 +13,8 @@ let LISTEN_USER_KEY = "listen_for_user1";
 RedisDB.BLPopListner(LISTEN_USER_KEY, async function([key, user_id]){
     let user = await ImapController.getUserById(user_id);
     if(user.inactive_at != null) {
-        console.warn(user.email, "not active", "not setting listener");
-        return;
+        //console.warn(user.email, "not active", "not setting listener");
+      //  return;
     }
     await scrapEmailForIamp(user).catch(err => {
         console.error(err.message, "user -> ", user.email);
