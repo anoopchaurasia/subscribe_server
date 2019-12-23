@@ -82,7 +82,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     }
 
     Static.updateInactiveUser = async function (_id, reason) {
-        return await User.updateInactiveUser({ _id: _id, inactive_at: null }, { "inactive_at": new Date(), listener_active: null, inactive_reason: reason });
+        return await User.updateInactiveUser({ _id: _id}, { "inactive_at": new Date(), listener_active: null, inactive_reason: reason });
     };
 
     Static.removeUserByState = async function(state){
