@@ -67,7 +67,8 @@ var UserSchema = new Schema({
     },
     listener_active: {
         type: Boolean
-    }
+    },
+    inactive_reason: String
 });
 
 
