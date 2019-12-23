@@ -26,6 +26,7 @@ Array.prototype.asynForEach = async function (cb) {
 let LISTEN_USER_KEY = "listen_for_user1";
 
 async function runJob(offset = 0) {
+  return;
   RedisDB.delKEY(LISTEN_USER_KEY);
   console.log("scheduler called for scrapping mail for imap...");
   let counter = offset;
@@ -82,7 +83,7 @@ setInterval(async x=>{
   let total = 0;
   await keys.asynForEach(async k=>{
     let c= await RedisDB.base.getData(k);
-    total+= c;
+    total+= c*1;
     console.log("instance serving",k, c, total);
   })
   console.log("total serving", total);
