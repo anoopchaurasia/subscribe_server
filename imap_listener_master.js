@@ -33,7 +33,7 @@ async function runJob(offset = 0) {
     "email_client": "imap"
   }, {
     _id: 1
-  }).skip(offset).lean().cursor();
+  }).limit(2000).skip(offset).lean().cursor();
   cursor.eachAsync(async user => {
       RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString());
       counter++;
