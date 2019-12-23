@@ -20,11 +20,13 @@ RedisDB.BLPopListner(LISTEN_USER_KEY, async function([key, user_id]){
         console.error(err.message, "user -> ", user.email);
     });
 });
+let listner_counter = 0;
 async function scrapEmailForIamp(user){
     console.log("here ->",user.email);
     await ImapController.updateUserById({_id: user._id}, {listener_active: true});
+    listner_counter++;
     await ImapController.listenForUser(user, "start", function(x, y){
-        console.log(x, y, "new email update");
+        console.log(x, "new email update", listner_counter, user.email);
         RedisDB.lPush("email_update_for_user", user._id.toHexString() );
     }).catch(e=>{
         if(!e.message.match(global.INVALID_LOGIN_REGEX)) {
@@ -32,6 +34,9 @@ async function scrapEmailForIamp(user){
             setTimeout(x=>{
                 RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString())
             }, 60*1000)
+        } else {
+            listner_counter--;
+            console.warn("removed user", user.email, listner_counter);
         }
     });
 };

@@ -68,7 +68,6 @@ fm.Class("Redis", function (me) {
     };
 
     Static.lPush = function (key, data) {
-        console.log(key, data);
         return client.lpush(key, data);
     };
 
