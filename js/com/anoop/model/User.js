@@ -5,12 +5,12 @@ fm.Class("User>.BaseModel", function (me) {
 
     Static.get = async function (query) {
         me.updateQueryValidation(query, "_id");
-        return await mongouser.findOne(query).exec();
+        return await mongouser.findOne(query).lean().exec();
     };
     
     Static.getByEmail = async function (query) {
         me.updateQueryValidation(query, "email");
-        return await mongouser.findOne(query).exec();
+        return await mongouser.findOne(query).lean().exec();
     };
 
     Static.updatelastMsgId = async function (query, set) {

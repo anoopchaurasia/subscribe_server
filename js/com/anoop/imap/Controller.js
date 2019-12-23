@@ -373,7 +373,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.extractEmailBySize = async function (token, folderName, smallerThan, largerThan) {
         await me.scanStarted(token.user_id);
         let myImap = await openFolder(token, folderName);
-        // await mongouser.findOneAndUpdate({ _id: token.user_id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         let emails = await scraper.size(smallerThan, largerThan);
         myImap.imap.end(myImap.imap);

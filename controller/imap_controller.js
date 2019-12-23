@@ -512,7 +512,6 @@ router.post('/readZohoMail', async (req, res) => {
 router.post('/validCredentialCheck', async (req, res) => {
     try {
         const doc = await token_model.findOne({ "token": req.body.token });
-        console.log(doc.user_id)
         let response = await Controller.validCredentialCheck(doc).catch(err => {
             if (err.message.includes("Invalid credentials")) {
                 console.error(err.message, "got error here");

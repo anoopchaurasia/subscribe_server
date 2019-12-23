@@ -46,8 +46,8 @@ fm.Class("Redis", function (me) {
         return client.lpush(key, JSON.stringify(data));
     };
 
-    Static.setExpire = async function (key) {
-        return client.expire(key, process.env.EXPIRE_TIME_IN_SECOND || 1800);
+    Static.setExpire = async function (key, expire_time_in_seconds) {
+        return client.expire(key, expire_time_in_seconds || process.env.EXPIRE_TIME_IN_SECOND || 1800);
     }
 
     Static.setData = async function (key, data) {
