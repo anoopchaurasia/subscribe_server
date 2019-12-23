@@ -9,7 +9,16 @@ fm.Class("Message", function (me) {
 
     Static.getAllEmailIdList = async function (imap, from_email) {
         let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
-        return await search(imap, [["FROM", from_email], ['SINCE', since]]);
+        console.time("getAllEmailIdList")
+        console.timeLog("getAllEmailIdList")
+        let data = await search(imap, [["FROM", from_email], ['SINCE', since]]);
+        console.timeEnd("getAllEmailIdList")
+        console.log(data.length);
+        return data;
+    };
+
+    Static.getAllEmailIdListBySender = async function (imap, from_email) {
+        return await search(imap, [["FROM", from_email],]);
     };
 
     Static.getInboxEmailIdByLabel = async function (imap, label_name) {
@@ -19,7 +28,7 @@ fm.Class("Message", function (me) {
 
     Static.getDeleteEmailList = async function (imap) {
         let before = new Date(Date.now() - ONE_MONETH_TIME_IN_MILI);
-        return await search(imap,[['BEFORE',before]]);
+        return await search(imap, [['BEFORE', before]]);
     };
 
     Static.getEmailList = async function (imap) {
@@ -63,29 +72,28 @@ fm.Class("Message", function (me) {
         });
     };
 
-    Static.deleteMsg = async function(imap,ids){
-        return await new Promise((resolve,reject)=>{
-            imap.setFlags(ids, ['\\Deleted'], function(err) {
+    Static.deleteMsg = async function (imap, ids) {
+        return await new Promise((resolve, reject) => {
+            imap.setFlags(ids, ['\\Deleted'], function (err) {
                 (err ? reject(err) : resolve());
-             });
+            });
         });
     };
 
 
     Static.getEmailsBySender = async function (gmail, sender, formatted_date) {
-
-    };
+    }
 
     Static.getBatchMessage = async function (imap, message_ids, detector, is_get_body) {
         let newm_ids = [...message_ids];
-        while(newm_ids.length) {
+        while (newm_ids.length) {
             let ids = newm_ids.splice(0, 1000);
             await splituser(imap, ids, detector, is_get_body);
         }
     };
 
-    async function splituser(imap, message_ids, detector, is_get_body=true){
-        let body= is_get_body===true ? "": 'HEADER.FIELDS (FROM TO SUBJECT DATE)';
+    async function splituser(imap, message_ids, detector, is_get_body = true) {
+        var body = is_get_body === true ? "" : 'HEADER.FIELDS (FROM TO SUBJECT DATE)';
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
                 bodies: body,
@@ -94,14 +102,14 @@ fm.Class("Message", function (me) {
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
                 msgs.push(1);
-                try{
+                try {
                     await detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
-                } finally{
+                } finally {
                     msgs.pop();
                     msgs.length === 0 && ended && resolve();
                 }
             });
-            let ended=false;
+            let ended = false;
             fetch.on('end', async function () {
                 console.log("end msg")
                 ended=true;
@@ -110,7 +118,6 @@ fm.Class("Message", function (me) {
             });
         });
     }
-
     async function parseMessage(msg) {
         let [atts, parsed] = await Promise.all([
             new Promise(resolve => {
@@ -127,7 +134,7 @@ fm.Class("Message", function (me) {
                     stream.once('end', async () => {
                         const raw = Buffer.concat(chunks).toString('utf8');
                         let parsed = await simpleParser(raw, { skipHtmlToText: true, skipTextToHtml: true, skipTextLinks: true, skipImageLinks: true });
-                        parsed['size'] = info.size
+                        parsed['size'] = info.size;
                         resolve(parsed)
                     });
                 });
@@ -137,5 +144,76 @@ fm.Class("Message", function (me) {
         parsed.flags = atts.flags;
         return parsed;
     }
+
+    Static.getEmailListsBySize = async function (imap, smallerThan, largerThan) {
+
+        let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
+        smallerThan = smallerThan * 1000000;
+        largerThan = largerThan * 1000000;
+        return {
+            seen: await search(imap, ["SEEN", ['LARGER', largerThan], ['SMALLER', smallerThan], ['SINCE', since]]),
+            unseen: await search(imap, ["UNSEEN", ['LARGER', largerThan], ['SMALLER', smallerThan], ['SINCE', since]])
+
+        }
+    };
+
+    Static.getALlEmailList = async function (imap, trackedUser) {
+        if (trackedUser && trackedUser.last_msgId) {
+            return {
+                seen: await search(imap, ["SEEN", ['UID', (trackedUser.last_msgId) + ':*']]),
+                unseen: await search(imap, ["UNSEEN", ['UID', (trackedUser.last_msgId) + ':*']])
+            }
+        }
+        return {
+            seen: await search(imap, ["SEEN"]),
+            unseen: await search(imap, ["UNSEEN"])
+        }
+    };
+
+    Static.getUIDByBeforeOrAfterParticularDate = async function (imap, beforeOrAfter, date) {
+        return {
+            seen: await search(imap, ["SEEN", [beforeOrAfter, date]]),
+            unseen: await search(imap, ["UNSEEN", [beforeOrAfter, date]])
+        }
+    };
+
+    Static.getUIDByBetweenDate = async function (imap, since, before) {
+        console.log(await search(imap, ["SEEN", ['SINCE', since], ['BEFORE', before]]))
+        return {
+            seen: await search(imap, ["SEEN", ['SINCE', since], ['BEFORE', before]]),
+            unseen: await search(imap, ["UNSEEN", ['SINCE', since], ['BEFORE', before]])
+        }
+    };
+
+    Static.getAllUID = async function (imap) {
+        let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
+        return {
+            seen: await search(imap, ["SEEN", ['SINCE', since]]),
+            unseen: await search(imap, ["UNSEEN", ['SINCE', since]])
+        }
+    };
+
+
+    Static.getBatchMessageAndReturnEmail = async function (imap, message_ids, detector) {
+        return new Promise((resolve, reject) => {
+            const fetch = imap.fetch(message_ids, {
+                bodies: '',
+                struct: true
+            });
+            const msgs = [];
+            fetch.on('message', async function (msg, seqNo) {
+                msgs.push(1)
+                detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
+                msgs.pop();
+                msgs.length === 0 && ended && resolve();
+            });
+            let ended = false;
+            fetch.on('end', async function () {
+                console.log("end")
+                ended = true;
+                msgs.length === 0 && resolve();
+            });
+        });
+    };
 
 })

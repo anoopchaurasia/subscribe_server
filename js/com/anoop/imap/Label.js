@@ -28,8 +28,16 @@ fm.Class("Label>.Message", function (me) {
     Static.moveInboxToTrash = async function (myImap, from_email) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         if (ids.length!=0) {
-            await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
-            return true
+            try {
+                return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+            } catch(e) {
+                await me.package.Controller.updateTrashLabel(myImap);
+                try {
+                    return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+                } catch (error) {
+                    console.log(error)
+                }
+            }
         }
         return false
     };
@@ -65,7 +73,16 @@ fm.Class("Label>.Message", function (me) {
     Static.moveUnsubToTrash = async function (myImap, from_email) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         if (ids.length!=0) {
-            return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+            try {
+                return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+            } catch(e) {
+                await me.package.Controller.updateTrashLabel(myImap);
+                try {
+                    return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+                } catch (error) {
+                    console.log(error)
+                }
+            }
         }
         return
     };
@@ -93,6 +110,22 @@ fm.Class("Label>.Message", function (me) {
         return
     };
 
+    ////-------------------------Delete messages
+    Static.setDeleteFlag = async function (myImap, ids) {
+        if (ids.length!=0) {
+            // ids.forEach(async element => {
+               return await me.deleteMsg(myImap.imap, ids);
+            // });
+        }
+        return        
+    };
+
+    Static.moveInboxToTrashAuto = async function (myImap, ids) {
+        // console.log(myImap.user,ids)
+        return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+    };
+
+    
 
      ////-------------------------Delete messages
      Static.setDeleteFlag = async function (myImap, ids) {

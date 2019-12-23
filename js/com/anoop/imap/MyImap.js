@@ -111,7 +111,8 @@ fm.Class("MyImap", function (me) {
         });
     };
 
-    this.end = async function () {
+    this.end = async function(){
+        clearInterval(me.interval_const);
         return me.imap.end(me.imap);
     };
 
@@ -128,26 +129,26 @@ fm.Class("MyImap", function (me) {
                 ssl: true
             });
             me.imap.once('ready', async () => {
-                console.log("connected again", me.user.email);
-                
+                // console.log("connected again", me.user.email);
                 resolve(me.imap);
             });
             me.imap.once('error', err => reject(err));
             me.imap.connect();
-        })
+        });
     };
 
-    this.keepCheckingConnection = function (cb) {
+    this.keepCheckingConnection = function(cb, timeout){
         clearInterval(me.interval_const);
-        me.interval_const = setInterval(x => {
-            if (me.imap.state === 'disconnected') {
+        console.log("timeout", timeout)
+        me.interval_const = setInterval(x=>{
+            if(me.imap.state === 'disconnected') {
                 console.log("disconnected", me.user.email);
                 clearInterval(me.interval_const);
                 cb();
             } else {
                 console.log("connected", me.user.email);
             }
-        }, 10 * 60 * 1000);
+        }, timeout || 10*60*1000);
     };
 
     this.onEnd = function (cb) {

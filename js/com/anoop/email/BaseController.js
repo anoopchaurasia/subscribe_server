@@ -6,13 +6,15 @@ fm.Import("..model.Token");
 fm.Import("..model.Provider");
 fm.Import("..model.UserAction");
 fm.Import("..model.SenderMail");
+fm.Import("..model.EmailData");
+fm.Import("..model.EmailTrack");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
 var ObjectId = require('mongoose').Types.ObjectId;
 const jwt = require('jsonwebtoken');
 var legit = require('legit');
 require('dotenv').config()
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, RedisDB, BaseRedisData) {
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, EmailData,EmailTrack, RedisDB, BaseRedisData) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -51,6 +53,19 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
     }
 
+    Static.getLastTrackMessageId = async function(uid){
+        return await EmailTrack.get({user_id:uid})
+    }
+
+    Static.updateForDelete = async function(user_id,ids){
+        return await EmailData.updateForDelete({user_id:user_id,email_id:{$in:ids}},{$set:{is_delete:true}});
+    }
+
+    Static.storeEmailData = async function(data,user_id){
+        let emailData = await EmailData.storeEamil(data,user_id);
+        await EmailData.updateOrCreateAndGet({from_email:emailData.from_email,email_id:emailData.email_id,user_id:emailData.user_id,receivedDate:emailData.receivedDate},emailData);
+    }
+
     Static.saveManualEmailData = async function (user_id, data) {
         let emaildetailraw = await EmailDetail.storeEamil(data, user_id);
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
@@ -71,9 +86,13 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await User.updatelastMsgId({ _id: _id }, { last_msgId: msg_id });
     }
 
-    Static.updateInactiveUser = async function (_id) {
-        return await User.updateInactiveUser({ _id: _id, inactive_at: null }, { "inactive_at": new Date() });
+    Static.updateInactiveUser = async function (_id, reason) {
+        return await User.updateInactiveUser({ _id: _id}, { "inactive_at": new Date(), listener_active: null, inactive_reason: reason });
     };
+
+    Static.updateLastTrackMessageId = async function(uid,last_mId){
+        return await EmailTrack.updatelastMsgId({ user_id: uid }, {$set:{ last_msgId:last_mId }});
+    }
 
     Static.removeUserByState = async function(state){
         return await User.removeUserByState({state:state});
@@ -92,7 +111,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     };
 
     Static.updateUserByActionKey = async function (user_id, value) {
-        return await UserAction.updateByKey({ _id: user_id }, value);
+        //return await UserAction.updateByKey({ _id: user_id }, value);
     }
 
     Static.getUserActionData = async function (user_id) {
@@ -200,6 +219,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     };
 
     Static.updateTrashLabelUser = async function (email, trash_label) {
+        console.warn("setting new label", trash_label);
         return await User.updateUser({ email: email }, {$set:{
             trash_label,
             "email_client": "imap"
@@ -241,31 +261,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.updateEmailDetailByFromEmail = async function (user_id, from_email, status) {
         return await EmailDetail.updateStatus({ user_id, from_email }, status);
     };
-
-    Static.inboxToUnsubBySender = async function (token, sender_email) {
-        let emailinfos = await commonBySender(token, sender_email, "move");
-        await Emailinfo.bulkInsert(emailinfos);
-    };
-
-    async function commonBySender(token, sender_email, status) {
-        let gmailInstance = await Gmail.getInstanceForUser(user_id);
-        let scraper = Scraper.new(gmailInstance);
-        let ids = await scraper.getEmaiIdsBySender(sender_email);
-        if (ids.length == 0) {
-            throw new Error("no email fond for sender", sender_email, user_id);
-        }
-        let emaildetail_raw = EmailDetail.fromEamil({ from_email: sender_email, from_email_name: sender_email, to_email: null }, user_id);
-        emaildetail_raw.status = status;
-        let emaildetail = await EmailDetail.updateOrCreateAndGet({ user_id: user_id, from_email: sender_email }, emaildetail_raw);
-        return ids.map(x => {
-            return Emailinfo.fromEamil({ email_id: x, labelIds: [] }, emaildetail._id);
-        });
-    }
-
-    Static.inboxToTrashBySender = async function (token, sender_email) {
-        let emailinfos = await commonBySender(token, sender_email, "trash");
-        await Emailinfo.bulkInsert(emailinfos);
-    }
 
     Static.sendMailToScraper = async function (data, user, getBodyCB,is_get_body) {
         await BaseRedisData.sendMailToScraper(data, user, getBodyCB,is_get_body);

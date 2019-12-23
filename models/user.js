@@ -70,7 +70,8 @@ var UserSchema = new Schema({
     },
     platform_source: {
         type: String
-    }
+    },
+    inactive_reason: String
 });
 
 

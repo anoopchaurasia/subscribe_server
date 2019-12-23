@@ -68,7 +68,6 @@ fm.Class("Redis", function (me) {
     };
 
     Static.lPush = function (key, data) {
-        console.log(key, data);
         return client.lpush(key, data);
     };
 
@@ -78,7 +77,6 @@ fm.Class("Redis", function (me) {
         // blpop block entire client for create new client
         let client = require('redis').createClient({ host: process.env.IMAP_REDIS_HOST });
         let shut_server = false;
-
         async function next() {
             if(shut_server === true) {
                 if(listner_count==0) {
@@ -87,7 +85,7 @@ fm.Class("Redis", function (me) {
                 }
                 return;
             }
-            console.log("getting next");
+            console.log("getting next", key);
             client.blpop(key, 0, async (err, data) => {
                 listner_count++;
                 if (err) {
@@ -96,9 +94,13 @@ fm.Class("Redis", function (me) {
                     return next()
                 }
                 try {
+                    console.time(key)
+                    console.timeLog(key);
                     await cb(data);
+                    console.timeEnd(key);
                 } catch (e) {
-                    console.error(e)
+                    console.timeEnd(key);
+                    console.error(e, key, "BLPopListner")
                 } finally {
                     listner_count--;
                     next();

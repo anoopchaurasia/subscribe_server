@@ -4,6 +4,7 @@ const router = express.Router();
 const DeviceInfo = require('../models/deviceoInfo');
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
+const EmailDataModel = require('../models/emailsData');
 const userAppLog = require('../models/userAppLog');
 const UserModel = require('../models/user');
 const token_model = require('../models/tokeno');
@@ -16,9 +17,11 @@ var Raven = require('raven');
 const app = express();
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
-
+var legit = require('legit');
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
+fm.Include("com.anoop.imap.RedisPush");
+let ImapRedisPush = com.anoop.imap.RedisPush;
 fm.Include("com.anoop.email.Email");
 let EmailValidate = com.anoop.email.Email;
 
@@ -263,7 +266,182 @@ let saveProviderInfo = async (email) => {
         let resp = await providerModel.findOne({ "domain_name": domain }).catch(err => {
             console.error(err.message, err.stack, "provider_1");
         });
-        return resp;
+        if (resp) {
+            return resp;
+        } else {
+            const response = await legit(email);
+            if (response.isValid) {
+                let mxString = response.mxArray.map(x => { return x.exchange }).toString();
+                let mxr = response.mxArray[0].exchange;
+                let provider = "";
+                let login_url = "";
+                let two_step_url = "";
+                let imap_enable_url = "";
+                let imap_host = "";
+                let port = "";
+                let explain_url = "";
+                let video_url = null;
+                let login_js = null;
+                // let less_secure_url = "";
+
+                if (mxr.includes("zoho")) {
+                    provider = "zoho";
+                    login_url = "https://accounts.zoho.com/u/h#home";
+                    imap_host = "imappro.zoho.com";
+                    two_step_url = "https://accounts.zoho.com/signin?servicename=AaaServer&serviceurl=%2Fu%2Fh";
+                    imap_enable_url = "https://accounts.zoho.com/signin?servicename=VirtualOffice&signupurl=https://www.zoho.com//mail/zohomail-pricing.html?src=zmail-signup&serviceurl=https%3A%2F%2Fmail.zoho.com%2Fzm%2F"
+                    explain_url = "https://www.zoho.com/mail/help/adminconsole/two-factor-authentication.html";
+                    port = 993;
+                    video_url = "https://www.youtube.com/watch?v=zSOlY0lT_Q0&feature=youtu.be";
+                    login_js = "document.getElementById('lid').value";
+
+                } else if (mxr.includes("aol.mail")) {
+                    provider = "aol";
+                    login_url = "https://login.aol.com/";
+                    imap_host = "imap.aol.com";
+                    two_step_url = "https://login.aol.com/account/security";
+                    imap_enable_url = "https://login.aol.com/account/security";
+                    // explain_url = "https://help.aol.com/articles/allow-apps-that-use-less-secure-sign-in";
+                    explain_url = "https://help.aol.com/articles/2-step-verification-stronger-than-your-password-alone";
+                    port = 993;
+                    login_js = "document.getElementById('login-username').value";
+
+                } else if (mxr.includes("yahoo")) {
+                    provider = "yahoo";
+                    login_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
+                    imap_host = "imap.mail.yahoo.com";
+                    two_step_url = "https://login.yahoo.com/?done=https%3A%2F%2Flogin.yahoo.com%2Faccount%2Fsecurity%3F.scrumb%3D0";
+                    imap_enable_url = "https://login.yahoo.com/";
+                    explain_url = "https://help.yahoo.com/kb/SLN15241.html";
+                    port = 993;
+                    video_url = "https://www.youtube.com/watch?v=T_vwn1JWrWA&feature=youtu.be";
+                    login_js = "document.getElementById('login-username').value";
+
+                } else if (mxr.includes("google")) {
+                    provider = "gmail";
+                    login_url = "https://accounts.google.com/signin/v2/identifier";
+                    imap_host = "imap.gmail.com";
+                    two_step_url = "https://accounts.google.com/signin/v2/sl/pwd?service=accountsettings&hl=en-US&continue=https%3A%2F%2Fmyaccount.google.com%2Fintro%2Fsecurity&csig=AF-SEnaOyCyBzaeOOzFJ%3A1561794482&flowName=GlifWebSignIn&flowEntry=ServiceLogin";
+                    imap_enable_url = "https://accounts.google.com/signin/v2/identifier";
+                    explain_url = "https://support.google.com/mail/answer/185833?hl=en";
+                    port = 993;
+                    login_js = "document.getElementById('identifierId').value";
+
+                } else if (mxr.includes("outlook")) {
+                    provider = "outlook";
+                    login_url = "https://login.live.com/login.srf";
+                    imap_host = "imap-mail.outlook.com";
+                    two_step_url = "https://login.live.com/login.srf?wa=wsignin1.0&rpsnv=13&ct=1562045255&rver=7.0.6738.0&wp=MBI_SSL&wreply=https%3A%2F%2Faccount.microsoft.com%2Fauth%2Fcomplete-signin%3Fru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Daccount.microsoft.com%2526ru%253Dhttps%25253A%25252F%25252Faccount.microsoft.com%25252Fsecurity%25253Frefd%25253Dsupport.microsoft.com%2526destrt%253Dsecurity-landing%2526refp%253Dsignedout-index&lc=1033&id=292666&lw=1&fl=easi2&ru=https%3A%2F%2Faccount.microsoft.com%2Faccount%2FManageMyAccount%3Frefd%3Dsupport.microsoft.com%26ru%3Dhttps%253A%252F%252Faccount.microsoft.com%252Fsecurity%253Frefd%253Dsupport.microsoft.com%26destrt%3Dsecurity-landing";
+                    imap_enable_url = "https://login.live.com/login.srf";
+                    explain_url = "https://support.microsoft.com/en-us/help/12408/";
+                    port = 993;
+                    login_js = "document.getElementById('i0116').value";
+
+                } else if (mxr.includes("rediffmail")) {
+                    provider = "rediffmail";
+                    login_url = "https://mail.rediff.com/cgi-bin/login.cgi";
+                    imap_host = "imap.rediffmail.com";
+                    two_step_url = "https://mail.rediff.com/cgi-bin/login.cgi";
+                    imap_enable_url = "https://mail.rediff.com/cgi-bin/login.cgi";
+                    explain_url = "";
+                    port = 143;
+
+                } else if (mxr.includes("yandex")) {
+                    provider = "yandex";
+                    login_url = "https://passport.yandex.com/auth";
+                    imap_host = "imap.yandex.ru";
+                    two_step_url = "https://passport.yandex.com/profile/access/2fa?origin=passport_profile&uid=900317203";
+                    imap_enable_url = "https://passport.yandex.com/auth";
+                    explain_url = "https://yandex.com/support/passport/authorization/twofa-on.html";
+                    port = 993;
+                    video_url = "https://www.youtube.com/watch?v=fd92FquFodU&feature=youtu.be";
+                    login_js = "document.getElementById('passp-field-login').value";
+
+                } else if (mxr.includes("gmx")) {
+                    provider = "gmx";
+                    login_url = "https://www.gmx.com/";
+                    imap_host = "imap.gmx.com";
+                    two_step_url = "https://www.gmx.com/";
+                    imap_enable_url = "https://www.gmx.com/";
+                    explain_url = "https://www.gmx.com/";
+                    port = 993;
+                    login_js = "document.getElementById('login-email').value";
+
+                } else if (mxr.includes("mail.ru")) {
+                    provider = "mail.ru";
+                    login_url = "https://e.mail.ru/login";
+                    imap_host = "imap.mail.ru";
+                    two_step_url = "https://e.mail.ru/login";
+                    imap_enable_url = "https://e.mail.ru/login";
+                    explain_url = "https://help.mail.ru/mail-help/security/2auth/activate";
+                    port = 993;
+
+                } else if (mxr.includes("protonmail")) {
+                    provider = "protonmail";
+                    login_url = "https://mail.protonmail.com/login";
+                    imap_host = "imap.protonmail.com";
+                    two_step_url = "https://mail.protonmail.com/login";
+                    imap_enable_url = "https://mail.protonmail.com/login";
+                    explain_url = "https://protonmail.com/support/knowledge-base/two-factor-authentication/";
+                    port = 993;
+
+                } else if (mxr.includes("me.com")) {
+                    provider = "me.com";
+                    login_url = "https://appleid.apple.com/#!&page=signin";
+                    imap_host = "imap.mail.me.com";
+                    two_step_url = "https://appleid.apple.com/";
+                    imap_enable_url = "https://appleid.apple.com/#!&page=signin";
+                    explain_url = "https://support.apple.com/en-in/HT207198";
+                    port = 993;
+                    login_js = "document.getElementById('imapuser').value";
+
+                } else if (mxr.includes("icloud.com")) {
+                    provider = "icloud";
+                    login_url = "https://appleid.apple.com/#!&page=signin";
+                    imap_host = "imap.mail.me.com";
+                    two_step_url = "https://appleid.apple.com/";
+                    imap_enable_url = "https://appleid.apple.com/#!&page=signin";
+                    explain_url = "https://support.apple.com/en-in/HT207198";
+                    port = 993;
+                    login_js = "document.getElementById('imapuser').value";
+
+                } else if (mxr.includes("inbox")) {
+                    provider = "inbox.lv";
+                    login_url = "https://www.inbox.lv/";
+                    imap_host = "mail.inbox.lv";
+                    two_step_url = "https://www.inbox.lv/";
+                    imap_enable_url = "https://www.inbox.lv/";
+                    explain_url = "https://www.inbox.lv/";
+                    port = 993;
+                    login_js = "document.getElementById('imapuser').value";
+
+                } else if (mxr.includes("mail.com")) {
+                    provider = "mail.com";
+                    login_url = "https://www.mail.com/int/";
+                    imap_host = "imap.mail.com";
+                    two_step_url = "https://www.mail.com/int/";
+                    imap_enable_url = "https://www.mail.com/int/";
+                    explain_url = "https://www.mail.com/int/";
+                    port = 993;
+                    login_js = "";
+
+                } else {
+                    provider = null;
+                    login_url = "null";
+                    imap_host = "null";
+                    two_step_url = "null";
+                    imap_enable_url = "null";
+                    explain_url = "";
+                    port = null;
+                }
+                let resp = await providerModel.findOneAndUpdate({ "domain_name": domain }, { $set: { login_js, video_url, explain_url, port, imap_host, mxString, provider, login_url, two_step_url, imap_enable_url } }, { upsert: true, new: true }).catch(err => {
+                    console.error(err.message, err.stack, "provider_2");
+                });
+                return resp;
+            } else {
+                return response;
+            }
+        }
     } catch (e) {
         console.error(e.message, e.stack, 'saveProviderInfo method');
     }
@@ -316,11 +494,10 @@ router.post('/findEmailProvider', async (req, res) => {
 // read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
     try {
-        let doc = await token_model.findOne({ "token": req.body.token}).catch(err => {
+        let doc = await token_model.findOne({ "token": req.body.token }).catch(err => {
             console.error(err.message);
         });
-        console.log("got user tokane", doc);
-        Controller.sendToProcessServer(doc.user_id);
+        Controller.sendToProcessServer(doc.user_id.toHexString());
         
         res.status(200).json({
             error: false,
@@ -358,6 +535,7 @@ router.post('/validCredentialCheck', async (req, res) => {
                 data: "scrape"
             });
         } else if (response == false) {
+            console.log("reject");
             return res.status(401).json({
                 error: false,
                 data: "scrscrap errorape"
@@ -629,8 +807,8 @@ async function getAllTrashSubscription(user_id) {
 
 router.post('/trashZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.unusedToTrash(doc, req.body.fromEmail);
+        const token = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.unusedToTrash(token, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -646,8 +824,8 @@ router.post('/trashZohoMail', async (req, res) => {
 
 router.post('/keepZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.unusedToKeep(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.unusedToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "keep"
@@ -660,8 +838,8 @@ router.post('/keepZohoMail', async (req, res) => {
 
 router.post('/unsubscribeZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.unusedToUnsub(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.unusedToUnsub(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -677,8 +855,8 @@ router.post('/unsubscribeZohoMail', async (req, res) => {
 
 router.post('/revertUnsubscribeZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.unsubToKeep(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.unsubToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtokeep"
@@ -694,8 +872,8 @@ router.post('/revertUnsubscribeZohoMail', async (req, res) => {
 
 router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.unsubToTrash(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.unsubToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtotrash"
@@ -712,8 +890,8 @@ router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
 
 router.post('/leftInboxToTrashZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.keepToTrash(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.keepToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -778,8 +956,8 @@ router.post('/imapManualTrashEmailFromUser', async (req, res) => {
 
 router.post('/revertTrashZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.trashToKeep(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.trashToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -795,8 +973,8 @@ router.post('/revertTrashZohoMail', async (req, res) => {
 
 router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.keepToUnsub(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.keepToUnsub(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -810,7 +988,276 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
     }
 });
 
+/* This api will Scrape all the emails from Account and will store into Database. */
+router.post('/getAllEmail', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await Controller.extractAllEmail(doc, 'INBOX');
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+/* This api will delete Email from inbox */
+router.post('/deleteQuickMailnew', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let ids = req.body.email_ids;
+        console.log(ids)
+        await Controller.deleteQuickMail(doc, ids);
+        res.status(200).json({
+            error: false,
+            data: ids
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+/* This api will delete Email from inbox by from Email*/
+router.post('/deleteQuickMail', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let ids = req.body.email_ids;
+        let emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, email_id: { $in: ids } } }, {
+            $group: {
+                _id: "$box_name",
+                data: {
+                    $push: {
+                        "email_id": "$email_id"
+                    }
+                }, count: { $sum: 1 }
+            }
+        },
+        { $sort: { "count": -1 } },
+        { $project: { "email_id": 1, data: 1 } }]);
+        await emails.asyncForEach(async data => {
+            let ids = data.data.map(x => x.email_id);
+            await Controller.deleteQuickMailNew(doc, ids, data._id);
+        });
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+
+router.post('/getEmailsBySizeFromDb', async (req, res) => {
+    try {
+        let start_date = req.body.start_date;
+        let end_date = req.body.end_date;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails;
+        if (start_date == null || end_date == null) {
+            emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
+                $group: {
+                    _id: { "size_group": "$size_group" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id",
+                            "from_email": "$from_email"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "from_email": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        } else {
+            emails = await EmailDataModel.aggregate([{
+                $match: {
+                    $and: [{ "user_id": doc.user_id }, { is_delete: false },
+                    { receivedDate: { $gte: new Date(start_date) } }, { receivedDate: { $lte: new Date(end_date) } }]
+                }
+            }, {
+                $group: {
+                    _id: { "size_group": "$size_group" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        }
+        console.log(emails.length);
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+/* This api will return the emails based on the sender_email and also return total number of email by sender*/
+router.post('/getEmailsBySenderFromDb', async (req, res) => {
+    try {
+        let start_date = req.body.start_date;
+        let end_date = req.body.end_date;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails;
+        if (start_date == null || end_date == null) {
+            emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
+                $group: {
+                    _id: { "from_email": "$from_email" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        } else {
+            emails = await EmailDataModel.aggregate([{
+                $match: {
+                    $and: [{ "user_id": doc.user_id }, { is_delete: false },
+                    { receivedDate: { $gte: new Date(start_date) } }, { receivedDate: { $lte: new Date(end_date) } }]
+                }
+            }, {
+                $group: {
+                    _id: { "from_email": "$from_email" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        }
+        console.log(emails.length);
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+/* This api will return the emails based on the Date from database */
+router.post('/getEmailsByDateFromDb', async (req, res) => {
+    try {
+        let { data } = req.body;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails;
+        if (data.isCustom) {
+            emails = await EmailDataModel.find({ user_id: doc.user_id, receivedDate: { $gte: data.since, $lte: data.before }, is_delete: false });
+        } else {
+            if (data.beforeOrAfter === 'BEFORE') {
+                emails = await EmailDataModel.find({ user_id: doc.user_id, receivedDate: { $lte: data.date }, is_delete: false });
+            } else {
+                emails = await EmailDataModel.find({ user_id: doc.user_id, receivedDate: { $gte: data.date }, is_delete: false });
+            }
+        }
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+/* This api will return the emails based on the Date from database */
+router.post('/getTotalUnreadMail', async (req, res) => {
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails = await EmailDataModel.countDocuments({ user_id: doc.user_id, status: "unread", is_delete: false });
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+
+
+/* This api will return the emails based on the sender_email and also return total number of email by sender*/
+router.post('/getEmailsByLabelFromDb', async (req, res) => {
+    try {
+        let start_date = req.body.start_date;
+        let end_date = req.body.end_date;
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let emails;
+        if (start_date == null || end_date == null) {
+            emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
+                $group: {
+                    _id: { "box_name": "$box_name" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id",
+                            "from_email": "$from_email"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "from_email": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        } else {
+            emails = await EmailDataModel.aggregate([{
+                $match: {
+                    $and: [{ "user_id": doc.user_id }, { is_delete: false },
+                    { receivedDate: { $gte: new Date(start_date) } }, { receivedDate: { $lte: new Date(end_date) } }]
+                }
+            }, {
+                $group: {
+                    _id: { "box_name": "$box_name" }, data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                            "status": "$status",
+                            "size": "$size",
+                            "email_id": "$email_id"
+                        }
+                    }, count: { $sum: 1 }
+                }
+            },
+            { $sort: { "count": -1 } },
+            { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+        }
+        console.log(emails.length);
+        res.status(200).json({
+            error: false,
+            data: emails
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
 
 module.exports = router
-
-
