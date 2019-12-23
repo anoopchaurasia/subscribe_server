@@ -17,6 +17,8 @@ var legit = require('legit');
 var Raven = require('raven');
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
+fm.Include("com.anoop.imap.RedisPush");
+let ImapRedisPush = com.anoop.imap.RedisPush;
 fm.Include("com.anoop.email.Email");
 let EmailValidate = com.anoop.email.Email;
 
@@ -266,13 +268,11 @@ router.post('/getImapEnableUrl', async (req, res) => {
 
 let saveProviderInfo = async (email) => {
     try {
-        console.log(email)
         var domain = email.split('@')[1];
         let resp = await providerModel.findOne({ "domain_name": domain }).catch(err => {
             console.error(err.message, err.stack, "provider_1");
         });
         if (resp) {
-            console.log("response", resp)
             return resp;
         } else {
             const response = await legit(email);
@@ -502,7 +502,6 @@ router.post('/readZohoMail', async (req, res) => {
         let doc = await token_model.findOne({ "token": req.body.token }).catch(err => {
             console.error(err.message);
         });
-        console.log("got user tokane", doc);
         Controller.sendToProcessServer(doc.user_id);
 
         res.status(200).json({
@@ -794,8 +793,8 @@ async function getAllTrashSubscription(user_id) {
 
 router.post('/trashZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.unusedToTrash(doc, req.body.fromEmail);
+        const token = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.unusedToTrash(token, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -811,8 +810,8 @@ router.post('/trashZohoMail', async (req, res) => {
 
 router.post('/keepZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.unusedToKeep(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.unusedToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "keep"
@@ -825,8 +824,8 @@ router.post('/keepZohoMail', async (req, res) => {
 
 router.post('/unsubscribeZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.unusedToUnsub(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.unusedToUnsub(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "move"
@@ -842,8 +841,8 @@ router.post('/unsubscribeZohoMail', async (req, res) => {
 
 router.post('/revertUnsubscribeZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.unsubToKeep(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.unsubToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtokeep"
@@ -859,8 +858,8 @@ router.post('/revertUnsubscribeZohoMail', async (req, res) => {
 
 router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.unsubToTrash(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.unsubToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "unsubtotrash"
@@ -877,8 +876,8 @@ router.post('/leftUnsubToTrashZohoMail', async (req, res) => {
 
 router.post('/leftInboxToTrashZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.keepToTrash(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.keepToTrash(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -943,8 +942,8 @@ router.post('/imapManualTrashEmailFromUser', async (req, res) => {
 
 router.post('/revertTrashZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.trashToKeep(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.trashToKeep(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
@@ -960,8 +959,8 @@ router.post('/revertTrashZohoMail', async (req, res) => {
 
 router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
-        Controller.keepToUnsub(doc, req.body.fromEmail);
+        const doc = await token_model.findOne({ "token": req.body.token }, {user_id:1}).lean().exec();
+        ImapRedisPush.keepToUnsub(doc, req.body.fromEmail);
         return res.status(200).json({
             error: false,
             data: "trashtoinbox"
