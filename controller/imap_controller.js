@@ -1037,52 +1037,6 @@ router.post('/deleteQuickMail', async (req, res) => {
 });
 
 
-/* This api will return the emails based on the size, 
-   for example: if i need emails between 1-5MB, 
-   it will return the partucular emails with seen and unseen seperated format */
-router.post('/getEmailsBySizeNewFromDb', async (req, res) => {
-    try {
-        let start_date = req.body.start_date;
-        let end_date = req.body.end_date;
-        const doc = await token_model.findOne({ "token": req.body.token });
-        let emails;
-        if (start_date == null || end_date == null) {
-            emails = await EmailDataModel.find({ user_id: doc.user_id, is_delete: false });
-        } else {
-            emails = await EmailDataModel.find({ user_id: doc.user_id, is_delete: false, $and: [{ receivedDate: { $gte: start_date } }, { receivedDate: { $lte: end_date } }] });
-        }
-        let sizeWiseData = {
-            "data": [
-                { "name": "10", "data": [] },
-                { "name": "5", "data": [] },
-                { "name": "1", "data": [] },
-                { "name": "0", "data": [] }
-            ]
-        };
-        // sizeWiseData.data[0].data = emails.filter(x=>x.size>10000000);
-        // sizeWiseData.data[1].data = emails.filter(x=>x.size>5000000);
-        // sizeWiseData.data[2].data = emails.filter(x=>x.size>1000000);
-        // sizeWiseData.data[3].data = emails.filter(x=>x.size<=1000000);
-        await emails.asyncForEach(async email => {
-            if (email.size > 10000000) {
-                sizeWiseData.data.find(x => x.name == "10").data.push(email);
-            } else if (email.size > 5000000) {
-                sizeWiseData.data.find(x => x.name == "5").data.push(email);
-            } else if (email.size > 1000000) {
-                sizeWiseData.data.find(x => x.name == "1").data.push(email);
-            } else {
-                sizeWiseData.data.find(x => x.name == "0").data.push(email);
-            }
-        });
-        res.status(200).json({
-            error: false,
-            data: sizeWiseData
-        });
-    } catch (err) {
-        console.log(err);
-    }
-});
-
 
 router.post('/getEmailsBySizeFromDb', async (req, res) => {
     try {
@@ -1229,51 +1183,6 @@ router.post('/getTotalUnreadMail', async (req, res) => {
         res.status(200).json({
             error: false,
             data: emails
-        });
-    } catch (err) {
-        console.log(err);
-    }
-});
-
-
-/* This api will return the emails based on Label from database*/
-router.post('/getEmailsByLabelNewFromDb', async (req, res) => {
-    try {
-        let start_date = req.body.start_date;
-        let end_date = req.body.end_date;
-        const doc = await token_model.findOne({ "token": req.body.token });
-        let emails;
-        if (start_date == null || end_date == null) {
-            emails = await EmailDataModel.find({ user_id: doc.user_id, is_delete: false });
-        } else {
-            emails = await EmailDataModel.find({
-                user_id: doc.user_id, is_delete: false,
-                $and: [{ receivedDate: { $gte: start_date } }, { receivedDate: { $lte: end_date } }]
-            });
-        }
-        let definedLables = {
-            "social": ['facebook', 'twitter', 'instagram', 'tumblr', 'linkedin', 'whatsapp', 'snapchat'],
-            "promotion": ['promotion'],
-            "deadEnd": ['noreply', 'no-reply']
-        }
-        let fliteredByLabel = {
-            "label": [{ "name": "social", "data": [] }, { "name": "promotion", "data": [] }, { "name": "deadEnd", "data": [] }, { "name": "others", "data": [] }]
-        }
-        emails.forEach(singleData => {
-            if (definedLables.social.some(val => JSON.stringify(singleData).includes(val))) {
-                fliteredByLabel.label.find(x => x.name == "social").data.push(singleData)
-            } else if (definedLables.promotion.some(val => JSON.stringify(singleData).includes(val))) {
-                fliteredByLabel.label.find(x => x.name == "promotion").data.push(singleData)
-            } else if (definedLables.deadEnd.some(val => JSON.stringify(singleData).includes(val))) {
-                fliteredByLabel.label.find(x => x.name == "deadEnd").data.push(singleData)
-            } else {
-                fliteredByLabel.label.find(x => x.name == "others").data.push(singleData)
-            }
-        })
-        res.status(200).json({
-            error: false,
-            data: fliteredByLabel,
-            // label:key
         });
     } catch (err) {
         console.log(err);

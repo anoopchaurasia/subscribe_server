@@ -445,18 +445,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.deleteQuickMailNew = async function (token, ids, box_name) {
         let user = await me.getUserById(token.user_id);
-        console.log(box_name);
-        console.log(ids);
         let myImap = await openFolder(token, box_name, user);
         await Label.setDeleteFlag(myImap, ids);
         await me.updateForDelete(token.user_id, ids);
         await closeImap(myImap);
-        // let user = await me.getUserById(token.user_id);
-        // let myImap = await openFolder(token, "INBOX", user);
-        // let scraper = Scraper.new(myImap);
-        // await scraper.deleteQuickMail(from_email);
-        // await me.updateForDelete(token.user_id, ids);
-        // await closeImap(myImap);
     }
 
 });
