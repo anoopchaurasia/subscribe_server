@@ -16,14 +16,6 @@ app.get('/api/v2/setToken', function (req, res) {
     console.log(req)
 })
 
-
-
-
-Array.prototype.asyncForEach = async function (cb) {
-    for (let i = 0, len = this.length; i < len; i++) {
-        await cb(this[i], i, this);
-    }
-}
 app.get('/', function (req, res) {
     console.log(req)
     res.send("welcome!!!!!!!!");

@@ -22,13 +22,6 @@ let ImapRedisPush = com.anoop.imap.RedisPush;
 fm.Include("com.anoop.email.Email");
 let EmailValidate = com.anoop.email.Email;
 
-Array.prototype.asyncForEach = async function (cb) {
-    for (let i = 0, len = this.length; i < len; i++) {
-        await cb(this[i], i, this);
-    }
-}
-
-
 //login or signup with the credentials and generate the token and return back to user
 router.post('/loginWithImap', async (req, res) => {
     try {

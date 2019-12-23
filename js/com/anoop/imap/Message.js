@@ -118,24 +118,6 @@ fm.Class("Message", function (me) {
             });
         });
     }
-
-    // Static.getBatchMessage = async function (imap, message_ids, detector) {
-    //     return new Promise((resolve, reject) => {
-    //         const fetch = imap.fetch(message_ids, {
-    //             bodies: '',
-    //             struct: true
-    //         });
-    //         const msgs = [];
-    //         fetch.on('message', async function (msg, seqNo) {
-    //             detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
-    //         });
-    //         fetch.on('end', async function () {
-    //             console.log("end")
-    //             resolve();
-    //         });
-    //     });
-    // };
-
     async function parseMessage(msg) {
         let [atts, parsed] = await Promise.all([
             new Promise(resolve => {
