@@ -29,7 +29,16 @@ fm.Class("Label>.Message", function (me) {
     Static.moveInboxToTrash = async function (myImap, from_email) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         if (ids.length!=0) {
-            return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+            try {
+                return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+            } catch(e) {
+                await me.package.Controller.updateTrashLabel(myImap);
+                try {
+                    return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+                } catch (error) {
+                    console.log(error)
+                }
+            }
         }
         return
     };
@@ -64,7 +73,16 @@ fm.Class("Label>.Message", function (me) {
     Static.moveUnsubToTrash = async function (myImap, from_email) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         if (ids.length!=0) {
-            return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+            try {
+                return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+            } catch(e) {
+                await me.package.Controller.updateTrashLabel(myImap);
+                try {
+                    return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
+                } catch (error) {
+                    console.log(error)
+                }
+            }
         }
         return
     };
