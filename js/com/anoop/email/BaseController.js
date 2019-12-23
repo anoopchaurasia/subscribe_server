@@ -175,6 +175,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     };
 
     Static.updateTrashLabelUser = async function (email, trash_label) {
+        console.warn("setting new label", trash_label);
         return await User.updateUser({ email: email }, {$set:{
             trash_label,
             "email_client": "imap"
