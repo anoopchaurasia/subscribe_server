@@ -4,7 +4,6 @@ const express = require('express');
 const router = express.Router();
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
-const UserModel = require('../models/user');
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 
@@ -195,10 +194,10 @@ router.post('/saveProfileInfo', async (req, res) => {
         if (req.body.email != null) {
             userObj.primary_email = req.body.email;
         }
-        await UserModel.findOneAndUpdate({ "_id": user._id }, userObj, { upsert: true }).catch(err => {
+        await Controller.UserModel.updateUserById({ "_id": user._id }, {$set: userObj}).catch(err => {
             console.error(err.message, err.stack);
-        })
-        user = await UserModel.findOne({ "_id": user._id });
+        });
+        user = await Controller.UserModel.getById(user._id);
         res.status(200).json({
             error: false,
             status: 200,

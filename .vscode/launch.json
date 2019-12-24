@@ -15,8 +15,8 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "process",
-            "program": "${workspaceFolder}/process.js",
+            "name": "all",
+            "program": "${workspaceFolder}/all.js",
         },
         {
             "type": "node",

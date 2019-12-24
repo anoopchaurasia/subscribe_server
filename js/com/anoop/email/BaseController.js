@@ -18,6 +18,9 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         me = _me;
     };
 
+    Static.UserModel = User;
+    Static.TokenModel = Token;
+
     Static.createSenderMail = async function (fromEamil, user_id) {
         return await SenderMail.findOneAndUpdate({ user_id: user_id, senderMail: fromEamil }, { user_id: user_id, senderMail: fromEamil });
     }
@@ -149,12 +152,12 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     }
 
     Static.updateUser = async function (email, unsub_label, trash_label, password) {
-        return await User.updateUser({ email: email }, {
+        return await User.updateUser({ email: email }, {$set: {
             unsub_label,
             trash_label,
             password,
             "email_client": "imap"
-        });
+        }});
     };
 
     Static.updateTrashLabelUser = async function (email, trash_label) {
@@ -253,8 +256,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         }
     }
 
-    Static.sendToProcessServer = async function(user_id){
-        RedisDB.sendNewUserProcess('process_user_login', user_id);
+    Static.sendToProcessServer = async function(client_token){
+        RedisDB.sendNewUserProcess('process_user_login', client_token);
     };
 
     Static.getUserAnalyzed = async function (emailDetailsWithInfo,userEmailAnalyziedData) {

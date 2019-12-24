@@ -21,7 +21,11 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
             "tokenid": token_uniqueid,
             "user": user
         };
-    }
+    };
+
+    Static.getLastClientToken = async function(user){
+        return (await token_model.find({user_id:user._id}, {token:1, _id:0}).sort({_id:1}).limit(1).lean().exec())[0].token
+    };
 
     Static.getUserByToken = async function (token){
         let user = await RedisDB.base.getData(token);

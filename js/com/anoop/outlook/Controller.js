@@ -9,7 +9,6 @@ const OutlookHandler = require("./../../../../helper/outlook").Outlook;
 fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scraper, Label, ScraperMailSend) {
     'use strict'
     this.setMe = _me => me = _me;
-
     async function getEmailDetailsAndIds(user_id, from_email,status) {
         let { emaildetail, emailids } = await me.getEmailDetailAndInfos(user_id, from_email);
         me.updateEmailDetailStatus(emaildetail._id, status);
@@ -142,7 +141,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
     }
 
     Static.setPrimaryEmail = async function (user_id, email, ipaddress) {
-        await me.updateUserById({ "_id": user_id }, { $set: { primary_email: email, ipaddress } });
+        await me.updateUserById({ "_id": user_id },{$set: { primary_email: email, ipaddress }} );
     }
 
     Static.getNotificationEmailData = async function (data) {

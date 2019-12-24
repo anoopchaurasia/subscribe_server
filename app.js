@@ -21,7 +21,7 @@ app.get('/', function (req, res) {
     res.send("welcome!!!");
 });
 
-app.listen(process.env.SERVER_PORT, "abcd.com", function (err) {
+app.listen(process.env.SERVER_PORT, function (err) {
     if (err) {
         throw err
     }

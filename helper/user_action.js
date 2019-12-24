@@ -1,5 +1,3 @@
-fm.Include("com.anoop.model.Token");
-let Token = com.anoop.model.Token;
 fm.Include("com.anoop.imap.Controller", function(){
     let RedisDB = com.jeet.memdb.RedisDB;
     let ImapController = com.anoop.imap.Controller;
@@ -9,7 +7,7 @@ fm.Include("com.anoop.imap.Controller", function(){
             let action  = JSON.parse(data[1]);
             console.log(action.action)
             //replace client_token with user;
-            action.args[0] = await Token.getUserByToken(action.args[0]);
+            action.args[0] = await ImapController.TokenModel.getUserByToken(action.args[0]);
             await ImapController[action.action](...action.args, function onDIsconect() {
                 console.warn("disconnected crashing");
                 RedisDB.lPush('imap_user_actions', data[1]);
