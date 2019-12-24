@@ -26,7 +26,6 @@ Array.prototype.asynForEach = async function (cb) {
 let LISTEN_USER_KEY = "listen_for_user1";
 
 async function runJob(offset = 0) {
-  return;
   RedisDB.delKEY(LISTEN_USER_KEY);
   console.log("scheduler called for scrapping mail for imap...");
   let counter = offset;
