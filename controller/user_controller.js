@@ -3,9 +3,7 @@ const express = require('express');
 const fcmToken = require('../models/fcmoToken');
 const token_model = require('../models/tokeno');
 const DeviceInfo = require('../models/deviceoInfo');
-const AuthTokenModel = require('../models/authoToken');
 const emailDetailsModel = require('../models/emailDetails');
-const emailInformationModel = require('../models/emailInfo');
 const AppVersionModel = require('../models/appVersion');
 const userModel = require('../models/user');
 const router = express.Router();
@@ -13,19 +11,7 @@ const Raven = require('raven');
 /* 
 This Api for storing FCM Token Into database for firebase notification.
 */
-router.post('/savefcmToken', async (req, res) => {
-    let token = req.token;
-    console.log(token)
-    // let userDevice = await DeviceInfo.findOne({ "user_id": token.user_id }).catch(err => {
-        //Raven.captureException(err);
-    //     console.error(err.message, err.stack, "27");
-    // });
-    // console.log(userDevice)
-    // let tokenInfo = { "user_id": token.user_id, "fcm_token": req.body.fcmToken,"device_id":userDevice._id };
-    // await fcmToken.findOneAndUpdate({ "device_id": userDevice._id }, tokenInfo, { upsert: true }).catch(err => {
-        //Raven.captureException(err);
-    //     console.error(err.message, err.stack, "26");
-    // });
+router.post('/savefcmToken', async (req, res) => {   
     res.json({
         message: "success"
     });
@@ -36,7 +22,8 @@ This Api for storing Device Inforamtion into Database.
 */
 router.post('/saveDeviceInfo', async (req, res) => {
     let deviceData = req.body.data;
-    deviceData['user_id'] = req.token.user_id;
+    let user = req.user;
+    deviceData['user_id'] = req.user._id;
     deviceData['deviceIpAddress'] = { "ip": req.header('x-forwarded-for') || req.connection.remoteAddress };
     let uniqueLaunchDeviceId = req.body['uniqueLaunchDeviceId'];
     let checkUserDevice = await DeviceInfo.findOne({ "user_id": deviceData['user_id'] }).catch(err => {
@@ -76,10 +63,10 @@ router.post('/saveDeviceInfo', async (req, res) => {
             message: "success"
         });
     }
-    let userDevice = await DeviceInfo.findOne({ "user_id": req.token.user_id }).catch(err => {
+    let userDevice = await DeviceInfo.findOne({ "user_id": user._id }).catch(err => {
         console.error(err.message, err.stack, "27");
     });
-    let tokenInfo = { "user_id": req.token.user_id,"device_id":userDevice._id };
+    let tokenInfo = { "user_id": user._id,"device_id":userDevice._id };
     await fcmToken.findOneAndUpdate({ "device_id": userDevice._id }, tokenInfo, { upsert: true }).catch(err => {
         console.error(err.message, err.stack, "26");
     });
@@ -113,24 +100,18 @@ router.post('/saveAppVersion', async (req, res) => {
 
 router.get('/getAppVersion', async (req, res) => {
     try {
-        let auth_id = req.body.authID;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
+        let versionData = await AppVersionModel.findOne().sort({ version_name: -1 }).limit(1).catch(err => {
             console.error(err.message, err.stack);
         });
-        if (doc) {
-            let versionData = await AppVersionModel.findOne().sort({ version_name: -1 }).limit(1).catch(err => {
-                console.error(err.message, err.stack);
-            });
-            return res.json({
-                message: "success",
-                version: versionData.version_name
-            });
-        }
-        return res.status(400).json({
-            message: "fail"
+        return res.json({
+            message: "success",
+            version: versionData.version_name
         });
     } catch (ex) {
         console.error(ex.message, ex.stack);
+            return res.status(400).json({
+                message: "fail"
+            });
     }
 });
 
@@ -140,35 +121,32 @@ This api for Logout/deleting whole data for particular User.
 */
 router.post('/disconnectGdprAccount', async (req, res) => {
     try {
-        let auth_id = req.body.authID;
-        let doc = await token_model.findOne({ "token": auth_id }).exec().catch(err => {
-            console.error(err.message, err.stack, "28");
-        });
-        console.time("delete"+doc.user_id)
+        let user = req.user;
+        console.time("delete"+user._id)
 
-        let fcmtoken = await fcmToken.deleteMany({ user_id: doc.user_id }).exec().catch(err => {
+        let fcmtoken = await fcmToken.deleteMany({ user_id: user._id }).exec().catch(err => {
             console.error(err.message, err.stack, "delete2");
         });
-        console.timeLog("delete"+doc.user_id)
+        console.timeLog("delete"+user._id)
         console.log(fcmtoken)
-        let emailDetails = await emailDetailsModel.deleteMany({ user_id: doc.user_id }).exec().catch(err => {
+        let emailDetails = await emailDetailsModel.deleteMany({ user_id: user._id }).exec().catch(err => {
             console.error(err.message, err.stack, "delete3");
         });
         console.log(emailDetails)
-        console.timeLog("delete"+doc.user_id)
-        let token = await token_model.deleteMany({ user_id: doc.user_id }).exec().catch(err => {
+        console.timeLog("delete"+user._id)
+        let token = await token_model.deleteMany({ user_id: user._id }).exec().catch(err => {
             console.error(err.message, err.stack, "28");
         });
         console.log(token)
-        let device = await DeviceInfo.deleteMany({ user_id: doc.user_id }).exec().catch(err => {
+        let device = await DeviceInfo.deleteMany({ user_id: user._id }).exec().catch(err => {
             console.error(err.message, err.stack, "delete6");
         });
-        console.timeLog("delete"+doc.user_id)
+        console.timeLog("delete"+user._id)
         console.log(device)
-        let user = await userModel.deleteMany({ _id: doc.user_id }).exec().catch(err => {
+        let user = await userModel.deleteMany({ _id: user._id }).exec().catch(err => {
             console.error(err.message, err.stack, "delete6");
         });
-        console.timeLog("delete"+doc.user_id)
+        console.timeLog("delete"+user._id)
         console.log(user)
         res.status(200).send({
             message: "success"

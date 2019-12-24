@@ -14,50 +14,50 @@ fm.Class('RedisPush', function(me, RedisDB){
     };
     ///---------------- unused
     // ImapRedisPush.unusedToKeep
-    Static.unusedToKeep = async function (token, from_email) {
-        me.addDBAction([token.user_id, from_email, "keep"]);
+    Static.unusedToKeep = async function (user, from_email) {
+        me.addDBAction([user._id, from_email, "keep"]);
     };
     // ImapRedisPush.unusedToTrash
-    Static.unusedToTrash = async function (token, from_email) {
-        me.addDBAction([token.user_id, from_email, "trash"]);
-        me.addImapAction("unusedToTrash", [token, from_email]);
+    Static.unusedToTrash = async function (user, from_email) {
+        me.addDBAction([user._id, from_email, "trash"]);
+        me.addImapAction("unusedToTrash", [user, from_email]);
     };
     // ImapRedisPush.unusedToUnsub
-    Static.unusedToUnsub = async function (token, from_email) {
-        me.addDBAction([token.user_id, from_email, "move"]);
-        me.addImapAction("unusedToUnsub", [token, from_email]);
+    Static.unusedToUnsub = async function (user, from_email) {
+        me.addDBAction([user._id, from_email, "move"]);
+        me.addImapAction("unusedToUnsub", [user, from_email]);
     };
     ///--------------- keep
     // ImapRedisPush.keepToTrash
-    Static.keepToTrash = async function (token, from_email) {
-        me.addDBAction([token.user_id, from_email, "trash"]);
-        me.addImapAction("keepToTrash", [token, from_email]);
+    Static.keepToTrash = async function (user, from_email) {
+        me.addDBAction([user._id, from_email, "trash"]);
+        me.addImapAction("keepToTrash", [user, from_email]);
     };
     // ImapRedisPush.keepToUnsub
-    Static.keepToUnsub = async function (token, from_email) {
-        me.addDBAction([token.user_id, from_email, "move"]);
-        me.addImapAction("keepToUnsub", [token, from_email]);
+    Static.keepToUnsub = async function (user, from_email) {
+        me.addDBAction([user._id, from_email, "move"]);
+        me.addImapAction("keepToUnsub", [user, from_email]);
     };
     ///------------- move
     // ImapRedisPush.unsubToKeep
-    Static.unsubToKeep = async function (token, from_email) {
-        me.addDBAction([token.user_id, from_email, "keep"]);
-        me.addImapAction("unsubToKeep", [token, from_email]);
+    Static.unsubToKeep = async function (user, from_email) {
+        me.addDBAction([user._id, from_email, "keep"]);
+        me.addImapAction("unsubToKeep", [user, from_email]);
     };
     // ImapRedisPush.unsubToTrash
-    Static.unsubToTrash = async function (token, from_email) {
-        me.addDBAction([token.user_id, from_email, "trash"]);
-        me.addImapAction("unsubToTrash", [token, from_email]);
+    Static.unsubToTrash = async function (user, from_email) {
+        me.addDBAction([user._id, from_email, "trash"]);
+        me.addImapAction("unsubToTrash", [user, from_email]);
     };
     ///----------------trash
     // ImapRedisPush.trashToKeep
-    Static.trashToKeep = async function (token, from_email) {
-        me.addDBAction([token.user_id, from_email, "keep"]);
-        me.addImapAction("trashToKeep", [token, from_email]);
+    Static.trashToKeep = async function (user, from_email) {
+        me.addDBAction([user._id, from_email, "keep"]);
+        me.addImapAction("trashToKeep", [user, from_email]);
     };
     /// not in use
-    Static.trashToUnsub = async function (token, from_email) {
-        me.addDBAction([token.user_id, from_email, "move"]);
-        me.addImapAction("trashToUnsub", [token, from_email]);
+    Static.trashToUnsub = async function (user, from_email) {
+        me.addDBAction([user._id, from_email, "move"]);
+        me.addImapAction("trashToUnsub", [user, from_email]);
     };
 });

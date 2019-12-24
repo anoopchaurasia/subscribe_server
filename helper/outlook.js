@@ -1,5 +1,3 @@
-
-let express = require('express');
 let users = require('../models/user');
 let auth_token = require('../models/authoToken');
 // var Request = require('request');

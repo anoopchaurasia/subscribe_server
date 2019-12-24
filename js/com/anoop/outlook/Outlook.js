@@ -1,5 +1,4 @@
 fm.Package("com.anoop.outlook");
-let TokenHandler = require("./../../../../helper/TokenHandler").TokenHandler;
 const OutlookHandler = require("./../../../../helper/outlook").Outlook;
 const { google } = require('googleapis');
 
@@ -24,14 +23,6 @@ fm.Class("Outlook", function(me){
         this.oauth2 = oauth2;
         this.user = user;
         this.error = null;
-    };
-
-    Static.getInstanceForUser = async function(user_id) {
-        const authToken = await TokenHandler.getAccessToken(user_id).catch(e => console.error(e,"80"));
-        let oauth2Client = await TokenHandler.createAuthCleint(authToken);
-        let instace = new me(oauth2Client, authToken, user_id);
-        instace.error = oauth2Client == null || authToken.isExpired ? new Error("failed auth"): null;
-        return instace;
     };
 
     Static.getOutlookInstance = async function(){

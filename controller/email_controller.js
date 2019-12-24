@@ -27,31 +27,11 @@ router.post('/getLast7daysData', async (req, res) => {
 
 
 router.post('/manualUnsubEmailFromUser', async (req, res) => {
-    try {
-        const token = req.token;
-        if (token) {
-            
-            res.status(200).json({
-                error: false,
-                data: "scrape"
-            })
-        }
-    } catch (ex) {
-        console.error(ex.message, ex.stack, "6");
-        res.sendStatus(400);
-    }
+    
 });
 
 router.post('/manualTrashEmailFromUser', async (req, res) => {
-    try {
-        const token = req.token;
-        if (token) {
-           
-        }
-    } catch (ex) {
-        console.error(ex.message, ex.stack, "6");
-        res.sendStatus(400);
-    }
+   
 });
 
 
@@ -61,25 +41,25 @@ This will get Filter subcription(new subscription only), unread Mail Info and to
 */
 router.post('/readMailInfo', async (req, res) => {
     try {
-        const doc = req.token;
+        const user = req.user;
 
-        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
-        const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
-        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:doc.user_id });
+        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(user._id);
+        const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
+        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
         let finished = false;
-        let is_finished = await BaseController.isScanFinished(doc.user_id);
+        let is_finished = await BaseController.isScanFinished(user._id);
         if (is_finished && is_finished == "true") {
             console.log("is_finished here-> ", is_finished);
             finished = true;
-            BaseController.updateUserByActionKey(doc.user_id, { "last_launch_date": new Date() }).catch(err => {
+            BaseController.updateUserByActionKey(user._id, { "last_launch_date": new Date() }).catch(err => {
                 console.error(err.message, err.stack, "launch date set error");
             });
         }
         if (is_finished === null) {
-            await BaseController.scanFinished(doc.user_id);
+            await BaseController.scanFinished(user._id);
         }
-        await BaseController.handleRedis(doc.user_id, false);
+        await BaseController.handleRedis(user._id, false);
         res.status(200).json({
             error: false,
             data: emailinfos,
@@ -102,14 +82,14 @@ This will get all the subscription,Moved subscription,total email and total ubsu
 */
 router.post('/readProfileInfo', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllSubscription(doc.user_id);
-        const movedMail = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
-        const totalEmail = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-        const keepCount = await GetEmailQuery.getTotalKeepSubscription(doc.user_id);
-        const trashCount = await GetEmailQuery.getTotalTrashSubscription(doc.user_id);
-        const moveCount = await GetEmailQuery.getTotalMoveSubscription(doc.user_id);
-        const totalUnscribeEmail = await GetEmailQuery.getTotalUnsubscribeEmailCount(doc.user_id);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllSubscription(user._id);
+        const movedMail = await GetEmailQuery.getAllMovedSubscription(user._id);
+        const totalEmail = await GetEmailQuery.getTotalEmailCount(user._id);
+        const keepCount = await GetEmailQuery.getTotalKeepSubscription(user._id);
+        const trashCount = await GetEmailQuery.getTotalTrashSubscription(user._id);
+        const moveCount = await GetEmailQuery.getTotalMoveSubscription(user._id);
+        const totalUnscribeEmail = await GetEmailQuery.getTotalUnsubscribeEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
@@ -127,11 +107,11 @@ router.post('/readProfileInfo', async (req, res) => {
 
 router.post('/readMailInfoPage', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllFilteredSubscriptionPage(doc.user_id, req.body.skipcount);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllFilteredSubscriptionPage(user._id, req.body.skipcount);
 
-        const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
-        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
@@ -149,10 +129,10 @@ This api will get All unsubscribe Subscription Related Information.
 */
 router.post('/getUnsubscribeMailInfo', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllMovedSubscription(doc.user_id);
-        let unreadData = await GetEmailQuery.getUnreadMovedEmail(doc.user_id);
-        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllMovedSubscription(user._id);
+        let unreadData = await GetEmailQuery.getUnreadMovedEmail(user._id);
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
@@ -166,10 +146,10 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
 
 router.post('/getUnsubscribeMailInfoPage', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllMovedSubscriptionPage(doc.user_id);
-        let unreadData = await GetEmailQuery.getUnreadMovedEmail(doc.user_id);
-        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllMovedSubscriptionPage(user._id);
+        let unreadData = await GetEmailQuery.getUnreadMovedEmail(user._id);
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
@@ -186,8 +166,8 @@ This api will get Filer subsciption(new only).
 */
 router.post('/getEmailSubscription', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos
@@ -203,10 +183,10 @@ This api for getting only trash suscription information.
 */
 router.post('/getDeletedEmailData', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllTrashSubscription(doc.user_id);
-        let unreadData = await GetEmailQuery.getUnreadTrashEmail(doc.user_id);
-        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllTrashSubscription(user._id);
+        let unreadData = await GetEmailQuery.getUnreadTrashEmail(user._id);
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
@@ -220,10 +200,10 @@ router.post('/getDeletedEmailData', async (req, res) => {
 
 router.post('/getDeletedEmailDataPage', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllTrashSubscriptionPage(doc.user_id);
-        let unreadData = await GetEmailQuery.getUnreadTrashEmail(doc.user_id);
-        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllTrashSubscriptionPage(user._id);
+        let unreadData = await GetEmailQuery.getUnreadTrashEmail(user._id);
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
@@ -243,10 +223,10 @@ this will changed changed is_keeped value in database for keped subscription
 router.post('/keepMailInformation', async (req, res) => {
     try {
         const from_email = req.body.from_email;
-        const doc = req.token;
+        const user = req.user;
         var oldvalue = {
             "from_email": from_email,
-            "user_id": doc.user_id
+            "user_id": user._id
         };
         var newvalues = {
             $set: {
@@ -270,10 +250,10 @@ This Api for getting only keeped subscription Information.
 */
 router.post('/getKeepedMailInfo', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllKeepedSubscription(doc.user_id);
-        let unreadData = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
-        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllKeepedSubscription(user._id);
+        let unreadData = await GetEmailQuery.getUnreadKeepedEmail(user._id);
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
@@ -287,10 +267,10 @@ router.post('/getKeepedMailInfo', async (req, res) => {
 
 router.post('/getKeepedMailInfoPage', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllKeepedSubscriptionPage(doc.user_id);
-        let unreadData = await GetEmailQuery.getUnreadKeepedEmail(doc.user_id);
-        const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllKeepedSubscriptionPage(user._id);
+        let unreadData = await GetEmailQuery.getUnreadKeepedEmail(user._id);
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
