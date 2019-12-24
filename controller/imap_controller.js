@@ -494,6 +494,13 @@ router.post('/findEmailProvider', async (req, res) => {
 // read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
     try {
+        let is_finished = await Controller.isScanFinished(doc.user_id);
+        if (is_finished == "false") {
+            return res.status(202).json({
+                error: false,
+                data: "already scaning"
+            });
+        }
         let doc = await token_model.findOne({ "token": req.body.token }).catch(err => {
             console.error(err.message);
         });
