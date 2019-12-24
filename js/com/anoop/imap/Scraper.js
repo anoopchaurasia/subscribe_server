@@ -163,17 +163,19 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             console.log(me.myImap.user._id)
             await Message.getBatchMessage(me.myImap.imap, uids, async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
-                me.storEmailData({
-                    'from_email': emailbody.from_email,
-                    'subject': emailbody.subject,
-                    'email_id': emailbody.email_id,
-                    'size': emailbody.size,
-                    'size_group': emailbody.size > 10000000 ? 10 : emailbody.size > 5000000 ? 5 : emailbody.size > 1000000 ? 1 : 0,
-                    'receivedDate': emailbody.header.date.split('Date: ')[1],
-                    'status': status,
-                    'labelIds': emailbody.labelIds,
-                    'box_name': me.myImap.box.name
-                }, me.myImap.user._id);
+                if(emailbody.from_email!=null){
+                    me.storEmailData({
+                        'from_email': emailbody.from_email,
+                        'subject': emailbody.subject,
+                        'email_id': emailbody.email_id,
+                        'size': emailbody.size,
+                        'size_group': emailbody.size > 10000000 ? 10 : emailbody.size > 5000000 ? 5 : emailbody.size > 1000000 ? 1 : 0,
+                        'receivedDate': emailbody.header.date.split('Date: ')[1],
+                        'status': status,
+                        'labelIds': emailbody.labelIds,
+                        'box_name': me.myImap.box.name
+                    }, me.myImap.user._id);
+                }
             }, false);
             resolve(emails);
         });

@@ -136,6 +136,20 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await RedisDB.getData(user_id, "is_finished");
     }
 
+
+    Static.scanStartedQuickClean = async function (user_id) {
+        await RedisDB.setData(user_id, "is_finished_quick_clean", false);
+    }
+
+    Static.scanFinishedQuickClean = async function (user_id) {
+        await RedisDB.setData(user_id, "is_finished_quick_clean", true);
+    };
+    
+    Static.isScanFinishedQuickClean = async function (user_id) {
+        return await RedisDB.getData(user_id, "is_finished_quick_clean");
+    }
+
+
     Static.createUser = async function (email, passsword, trash_label) {
         return await User.create({ email, passsword, trash_label });
     }

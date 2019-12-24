@@ -36,10 +36,10 @@ Array.prototype.asynForEach = async function (cb) {
     on_connect = cb;
   };
 
-  process.on('SIGINT', function() {
-      console.log("shut server")
-    setTimeout(x=>{
-        console.log("shut server");
-        process.exit(1);
-    }, 30*1000);
- });
+//   process.on('SIGINT', function() {
+//       console.log("shut server")
+//     setTimeout(x=>{
+//         console.log("shut server");
+//         process.exit(1);
+//     }, 30*1000);
+//  });

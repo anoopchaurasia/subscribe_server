@@ -347,13 +347,14 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.extractAllEmail = async function (token, folderName) {
         let lastmsg_id;
-        await me.scanStarted(token.user_id);
+        await me.scanStartedQuickClean(token.user_id);
         let myImap = await openFolder(token, folderName);
         let scraper = Scraper.new(myImap);
         let emails = await scraper.scrapAll(myImap.box.uidnext);
         let names = await myImap.getLabels();
         lastmsg_id = myImap.box.uidnext;
         myImap.imap.end(myImap.imap);
+        console.log(names)
         await names.asyncForEach(async element => {
             if (element != "INBOX" && (element.indexOf('[') == -1 || element.indexOf('[') == -1)) {
                 let myImap = await openFolder(token, element);
@@ -367,6 +368,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             }
         });
         await me.updateLastTrackMessageId(token.user_id, lastmsg_id)
+        console.log("last one came");
+        await me.scanFinishedQuickClean(token.user_id);
         return emails;
     }
 

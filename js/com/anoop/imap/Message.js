@@ -93,7 +93,7 @@ fm.Class("Message", function (me) {
     };
 
     async function splituser(imap, message_ids, detector, is_get_body = true) {
-        var body = is_get_body === true ? "" : 'HEADER.FIELDS (FROM TO SUBJECT DATE)';
+        var body = is_get_body === true ? "" : ['HEADER.FIELDS (FROM TO SUBJECT DATE)'];
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
                 bodies: body,
@@ -118,10 +118,23 @@ fm.Class("Message", function (me) {
             });
         });
     }
+
+    async function fetchSize(atts, size_arr=[]){
+        if(Array.isArray(atts)) {
+            atts.forEach(x=> fetchSize(x, size_arr));
+            return size_arr;
+        }
+        size_arr.push({size:atts.size, part_id: atts.partID})
+        return size_arr;
+    }
+
+
     async function parseMessage(msg) {
         let [atts, parsed] = await Promise.all([
             new Promise(resolve => {
-                msg.on('attributes', atts => {
+                msg.on('attributes',async atts => {
+                    let size = await fetchSize(atts.struct);
+                    atts['size']=size.map(x=>x.size>0?x.size:0).reduce((a, b) => a + b, 0);
                     resolve(atts)
                 });
                 msg.on('error', atts => reject(err));
@@ -134,7 +147,6 @@ fm.Class("Message", function (me) {
                     stream.once('end', async () => {
                         const raw = Buffer.concat(chunks).toString('utf8');
                         let parsed = await simpleParser(raw, { skipHtmlToText: true, skipTextToHtml: true, skipTextLinks: true, skipImageLinks: true });
-                        parsed['size'] = info.size;
                         resolve(parsed)
                     });
                 });
@@ -142,6 +154,7 @@ fm.Class("Message", function (me) {
         ]);
         parsed.uid = atts.uid;
         parsed.flags = atts.flags;
+        parsed.size = atts['size'];
         return parsed;
     }
 
