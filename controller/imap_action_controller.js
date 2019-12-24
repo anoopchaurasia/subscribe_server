@@ -190,3 +190,5 @@ router.post('/revertInboxToUnsubscribeImapZohoMail', async (req, res) => {
         })
     }
 });
+
+module.exports = router

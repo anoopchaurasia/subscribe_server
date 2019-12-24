@@ -1,6 +1,5 @@
 fm.Package("com.anoop.outlook");
 const OutlookHandler = require("./../../../../helper/outlook").Outlook;
-const { google } = require('googleapis');
 
 const credentials = {
     client: {

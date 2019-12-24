@@ -124,7 +124,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     ///---------------------------------------from unsub folder--------------------///
 
     Static.unsubToKeep = async function (user, from_email, onDisconnect) {
-        let user = await me.getUserById(user._id);
         let myImap = await openFolder(user, user.unsub_label, onDisconnect);
         await Label.moveUnsubToInbox(myImap, from_email);
         me.updateUserByActionKey(user._id, { "last_keep_date": new Date() });
@@ -132,7 +131,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     Static.unsubToTrash = async function (user, from_email, onDisconnect) {
-        let user = await me.getUserById(user._id);
         let myImap = await openFolder(user, user.unsub_label, onDisconnect);
         await Label.moveUnsubToTrash(myImap, from_email);
         me.updateUserByActionKey(user._id, { "last_trash_date": new Date() });
@@ -141,7 +139,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     ///------------------------------------from trash folder---------------------///
 
     Static.trashToKeep = async function (user, from_email, onDisconnect) {
-        let user = await me.getUserById(user._id);
         let myImap = await openFolder(user, user.trash_label, onDisconnect);
         await Label.moveTrashToInbox(myImap, from_email);
         me.updateUserByActionKey(user._id, { "last_keep_date": new Date() });
@@ -386,7 +383,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
     Static.deleteQuickMail = async function (user, ids) {
-        let user = await me.getUserById(user._id);
         console.log(user.email);
         console.log(ids);
         let myImap = await openFolder(user, "INBOX");
@@ -396,7 +392,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
     Static.deleteQuickMailNew = async function (user, ids, box_name) {
-        let user = await me.getUserById(user._id);
         let myImap = await openFolder(user, box_name);
         await Label.setDeleteFlag(myImap, ids);
         await me.updateForDelete(user._id, ids);

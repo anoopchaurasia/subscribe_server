@@ -18,10 +18,10 @@ app.get('/api/v2/setToken', function (req, res) {
 
 app.get('/', function (req, res) {
     console.log(req)
-    res.send("welcome!!!!!!!!");
+    res.send("welcome!!!");
 });
 
-app.listen(process.env.SERVER_PORT, function (err) {
+app.listen(process.env.SERVER_PORT, "unsub.expensebit.com", function (err) {
     if (err) {
         throw err
     }

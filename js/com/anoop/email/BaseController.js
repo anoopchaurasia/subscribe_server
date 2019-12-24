@@ -18,42 +18,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         me = _me;
     };
 
-    Static.senderEmailNotInEmailDetails = async function (user_id) {
-        try {
-            let conditions = [{ $match: { "user_id": ObjectId(user_id) } }, { $lookup: { from: "sendermails", localField: "user_id", foreignField: "user_id", as: "data" } }];
-            let emailDetailsData = await EmailDetail.executeAggregateQuery(conditions);
-            let senderMails = emailDetailsData[0].data.map(sender => { return sender.senderMail })
-            let emailDetailsMails = emailDetailsData.map(emailDetail => { return emailDetail.from_email })
-            let notCommonMails = senderMails.filter(senderMail => !emailDetailsMails.includes(senderMail))
-            return notCommonMails
-        } catch (error) {
-            console.error(error)
-        }
-    }
-
-    Static.getLast7DaysData = async function (user_id) {
-        try {
-            let conditions = [{ $match: { user_id: ObjectId(user_id) } }, { $lookup: { from: "emailinfos", localField: "_id", foreignField: "from_email_id", as: "emailInfo" } }];
-            let emailDetailsWithInfo = await EmailDetail.executeAggregateQuery(conditions);
-            let userEmailAnalyziedData = {
-                "totalProviders": 0,
-                "providerEmails": [],
-                "unused": 0,
-                "totalEmails": 0,
-                "mailCategories": {
-                    "banking": [],
-                    "ecommerce": [],
-                    "social": [],
-                    "jobs": [],
-                    "others": []
-                }
-            };
-            return await me.getUserAnalyzed(emailDetailsWithInfo,userEmailAnalyziedData);
-        } catch (error) {
-            console.log(error)
-        }
-    }
-
     Static.createSenderMail = async function (fromEamil, user_id) {
         return await SenderMail.findOneAndUpdate({ user_id: user_id, senderMail: fromEamil }, { user_id: user_id, senderMail: fromEamil });
     }

@@ -196,10 +196,10 @@ router.post('/saveProfileInfo', async (req, res) => {
         if (req.body.email != null) {
             userObj.primary_email = req.body.email;
         }
-        await UserModel.findOneAndUpdate({ "_id": user_id }, userObj, { upsert: true }).catch(err => {
+        await UserModel.findOneAndUpdate({ "_id": user._id }, userObj, { upsert: true }).catch(err => {
             console.error(err.message, err.stack);
         })
-        let user = await UserModel.findOne({ "_id": user_id });
+        user = await UserModel.findOne({ "_id": user._id });
         res.status(200).json({
             error: false,
             status: 200,
@@ -318,3 +318,5 @@ router.post('/onLaunchScrapEmail', async (req, res) => {
     }
     return;
 });
+
+module.exports = router

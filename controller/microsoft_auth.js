@@ -4,7 +4,6 @@ let users = require('../models/user');
 let token_model = require('../models/tokeno');
 let router = express.Router();
 const Outlook = require("../helper/outlook").Outlook;
-fm.Include("com.anoop.email.BaseController");
 
 Array.prototype.asynForEach = async function (cb) {
     for (let i = 0, len = this.length; i < len; i++) {
@@ -50,27 +49,25 @@ router.get('/getAuthTokenForApi', async function (req, res) {
     let user = await users.findOne({ state: state_code }).catch(err => {
         console.error(err);
     });
-    users.findOne({ state: state_code }, async function (err, user) {
-        if (user) {
-            let tokenData = await token_model.findOne({ "user_id": user._id }).catch(err => {
-                console.error(err);
-            });
-            var userdata = {
-                state: null
-            };
-            await Outlook.updateUserInfo({ "state": state_code }, userdata);
-            res.status(200).json({
-                error: false,
-                data: tokenData,
-                user: user
-            })
-        } else {
-            res.status(404).json({
-                error: true,
-                data: "no user found"
-            })
-        }
-    });
+    if (user) {
+        let tokenData = await token_model.findOne({ "user_id": user._id }).catch(err => {
+            console.error(err);
+        });
+        var userdata = {
+            state: null
+        };
+        await Outlook.updateUserInfo({ "state": state_code }, userdata);
+        res.status(200).json({
+            error: false,
+            data: tokenData,
+            user: user
+        })
+    } else {
+        res.status(404).json({
+            error: true,
+            data: "no user found"
+        })
+    }
 });
 
 
@@ -89,9 +86,8 @@ router.post('/getPushNotification', async function (req, res) {
 });
 
 router.post('/getMail', async function (req, resp, next) {
-    let authCode = req.body.authID;
-    let userInfo = await token_model.findOne({ token: authCode }).catch(e => console.error(e));
-    await Controller.extractEmail(userInfo.user_id).catch(e => console.error(e));
+    let user = req.user;
+    await Controller.extractEmail(user._id).catch(e => console.error(e));
     resp.status(200).json({
         error: false,
         message: "scrapping"
@@ -100,11 +96,11 @@ router.post('/getMail', async function (req, resp, next) {
 
 router.post('/setPrimaryEmail', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.authID });
+        let user = req.user;
         let email = req.body.email;
         let ipaddress = req.header('x-forwarded-for') || req.connection.remoteAddress;
         if (email != null) {
-            await Controller.setPrimaryEmail(doc.user_id, email, ipaddress);
+            await Controller.setPrimaryEmail(user._id, email, ipaddress);
             res.status(200).json({
                 error: false,
                 status: 200
@@ -123,12 +119,9 @@ router.post('/setPrimaryEmail', async (req, res) => {
 
 router.post('/moveEmailFromInbox', async (req, res) => {
     try {
-        let auth_id = req.body.authID;
         let from_email = req.body.from_email;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.error(err);
-        });
-        await Controller.moveEmailFromInbox(doc.user_id,from_email);
+        let user = req.user;
+        await Controller.moveEmailFromInbox(user._id,from_email);
         res.status(200).json({
             error: false,
             data: "moving"
@@ -140,12 +133,9 @@ router.post('/moveEmailFromInbox', async (req, res) => {
 
 router.post('/revertMailToInbox', async (req, res) => {
     try {
-        let auth_id = req.body.authID;
         let from_email = req.body.from_email;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.error(err);
-        });
-        await Controller.revertUnsubToInbox(doc.user_id,from_email);
+        let user = req.user;
+        await Controller.revertUnsubToInbox(user._id,from_email);
         res.status(200).json({
             error: false,
             data: "revert"
@@ -157,13 +147,10 @@ router.post('/revertMailToInbox', async (req, res) => {
 
 router.post('/revertTrashMailToInbox', async (req, res) => {
     try {
-        let auth_id = req.body.authID;
         let from_email = req.body.from_email;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.error(err);
-        });
+       let user = req.user;
 
-        await Controller.revertTrashToInbox(doc.user_id,from_email);
+        await Controller.revertTrashToInbox(user._id,from_email);
         res.status(200).json({
             error: false,
             data: "revert"
@@ -176,13 +163,9 @@ router.post('/revertTrashMailToInbox', async (req, res) => {
 
 router.post('/moveEmailToTrashFromInbox', async (req, res) => {
     try {
-        let auth_id = req.body.authID;
         let from_email = req.body.from_email;
-        let doc = await token_model.findOne({ "token": auth_id }).catch(err => {
-            console.error(err);
-        });
-
-        await Controller.moveEmailToTrashFromInbox(doc.user_id,from_email);
+        let user = req.user;
+        await Controller.moveEmailToTrashFromInbox(user._id,from_email);
         res.status(200).json({
             error: false,
             data: "trash"

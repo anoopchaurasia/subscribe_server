@@ -7,24 +7,6 @@ const SenderEmailModel = require("../models/senderMail");
 const ecommerce_cmpany = ["no-reply@flipkart.com", "auto-confirm@amazon.in"];
 fm.Include("com.anoop.email.BaseController");
 let BaseController = com.anoop.email.BaseController;
-router.post('/senderEmailNotInEmailDetails', async (req, res) => {
-    let emailIds = await BaseController.senderEmailNotInEmailDetails(req.body.user_id)
-    res.status(200).json({
-        error: false,
-        data: {
-            "emailIds": emailIds
-        }
-    })
-});
-
-router.post('/getLast7daysData', async (req, res) => {
-    let emailDetailsWithInfo = await BaseController.getLast7DaysData(req.body.user_id)
-    res.json({
-        error: false,
-        data: emailDetailsWithInfo
-    })
-});
-
 
 router.post('/manualUnsubEmailFromUser', async (req, res) => {
     

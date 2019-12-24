@@ -143,7 +143,7 @@ router.post('/disconnectGdprAccount', async (req, res) => {
         });
         console.timeLog("delete"+user._id)
         console.log(device)
-        let user = await userModel.deleteMany({ _id: user._id }).exec().catch(err => {
+        user = await userModel.deleteMany({ _id: user._id }).exec().catch(err => {
             console.error(err.message, err.stack, "delete6");
         });
         console.timeLog("delete"+user._id)
