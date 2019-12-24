@@ -1,22 +1,12 @@
 'use strict'
 const express = require('express');
 const email = require('../models/emailDetails');
-const TokenHandler = require("../helper/TokenHandler").TokenHandler;
-const Expensebit = require("../helper/expenseBit").ExpenseBit;
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 const router = express.Router();
-const TrashEmail = require("../helper/trashEmail").TrashEmail;
 const SenderEmailModel = require("../models/senderMail");
-const APPROX_TWO_MONTH_IN_MS = 4 * 30 * 24 * 60 * 60 * 1000;
-const MailScraper = require("../helper/mailScraper").MailScraper;
 const ecommerce_cmpany = ["no-reply@flipkart.com", "auto-confirm@amazon.in"];
-// fm.Include("com.anoop.email.Parser");
-fm.Include("com.jeet.memdb.RedisDB");
-let RedisDB = com.jeet.memdb.RedisDB;
 fm.Include("com.anoop.email.BaseController");
 let BaseController = com.anoop.email.BaseController;
-
-
 router.post('/senderEmailNotInEmailDetails', async (req, res) => {
     let emailIds = await BaseController.senderEmailNotInEmailDetails(req.body.user_id)
     res.status(200).json({
@@ -26,7 +16,6 @@ router.post('/senderEmailNotInEmailDetails', async (req, res) => {
         }
     })
 });
-
 
 router.post('/getLast7daysData', async (req, res) => {
     let emailDetailsWithInfo = await BaseController.getLast7DaysData(req.body.user_id)
@@ -41,16 +30,7 @@ router.post('/manualUnsubEmailFromUser', async (req, res) => {
     try {
         const token = req.token;
         if (token) {
-            let sender_email = req.body.sender_email;
-            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack, "5"));
-            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
-            Expensebit.createEmailLabel(token.user_id, oauth2Client);
-            let label = await Expensebit.findLabelId(oauth2Client);
-            console.log(sender_email)
-            let array = sender_email.split(",") || sender_email.split(";");
-            await array.asyncForEach(async element => {
-                await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, element, true);
-            });
+            
             res.status(200).json({
                 error: false,
                 data: "scrape"
@@ -66,19 +46,7 @@ router.post('/manualTrashEmailFromUser', async (req, res) => {
     try {
         const token = req.token;
         if (token) {
-            let sender_email = req.body.sender_email;
-            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack, "5"));
-            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
-            Expensebit.createEmailLabel(token.user_id, oauth2Client);
-            let label = await Expensebit.findLabelId(oauth2Client);
-            let array = sender_email.split(",") || sender_email.split(";");
-            await array.asyncForEach(async element => {
-                await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, element, false);
-            });
-            res.status(200).json({
-                error: false,
-                data: "scrape"
-            })
+           
         }
     } catch (ex) {
         console.error(ex.message, ex.stack, "6");
@@ -231,58 +199,6 @@ router.post('/getEmailSubscription', async (req, res) => {
 
 
 /*
-This for function for scrapping Inbox for particular user.
-This will Get List of email in Batch of 100 for given Time period and will parsed mail.
-*/
-async function getRecentEmail(user_id, auth, nextPageToken, label, afterFinishCB) {
-    let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
-    let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`; // "2019/2/1";
-    let responseList = await gmail.users.messages.list({ auth: auth, userId: 'me', /*includeSpamTrash: true,*/ maxResults: 100, 'pageToken': nextPageToken, q: `from:* AND after:${formatted_date}` });
-    if (responseList && responseList['data']['messages']) {
-        await responseList['data']['messages'].asyncForEach(async element => {
-            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
-            if (response) {
-                if (response.data.payload || response.data.payload['parts']) {
-                    let unsub_url;
-                    let header_raw = response['data']['payload']['headers'];
-                    header_raw.forEach(async data => {
-                        if (data.name == "List-Unsubscribe") {
-                            unsub_url = data.value;
-                        }
-                    })
-                    try {
-                        if (unsub_url) {
-                            await Expensebit.checkEmailWithInscribeHeader(unsub_url, response['data'], user_id, auth);
-                        } else {
-                            let parsed = getParts(response['data']['payload']) || getPlainText(response['data']['payload'])
-                            let bodydata = new Buffer(parsed, 'base64').toString('utf-8')
-                            try {
-                                // await MailScraper.sendMailToScraper(com.anoop.email.Parser.parse(response['data'], bodydata), user_id);
-                            } catch (e) {
-                                require('raven').captureException(e);
-                            }
-                            await Expensebit.checkEmailNew(bodydata, response['data'], user_id, auth, label);
-                        }
-                    } catch (e) {
-                        console.error(e.message, e.stack, "14");
-                        return
-                    }
-                }
-            }
-        });
-    }
-    nextPageToken = responseList['data'].nextPageToken;
-    if (responseList['data'].nextPageToken) {
-        await getRecentEmail(user_id, auth, responseList['data'].nextPageToken, label, afterFinishCB);
-    } else {
-        afterFinishCB()
-    }
-}
-
-
-
-
-/*
 This api for getting only trash suscription information.
 */
 router.post('/getDeletedEmailData', async (req, res) => {
@@ -385,67 +301,6 @@ router.post('/getKeepedMailInfoPage', async (req, res) => {
         console.error(err.message, ex.stack, "21");
     }
 });
-
-function getPlainText(payload) {
-    var str = "";
-    var isHtmlTag;
-    if (payload.parts) {
-        for (var i = 0; i < payload.parts.length; i++) {
-            str += getPlainText(payload.parts[i]);
-        };
-    }
-    if (payload.mimeType == "text/plain") {
-        return payload["body"]["data"];
-    }
-    return str;
-}
-
-function getParts(payload) {
-    var str = "";
-    var isHtmlTag;
-    if (payload.parts) {
-        for (var i = 0; i < payload.parts.length; i++) {
-            if (payload.mimeType == "multipart/alternative" && payload.parts[i].mimeType != 'text/html') continue;
-            str += getParts(payload.parts[i]);
-        };
-    } else if ((payload.mimeType == "text/html")) {
-        return payload["body"]["data"];
-    }
-    return str;
-}
-
-async function getEmailFromSpecificSender(user_id, auth, nextPageToken, label, sender_email, is_move) {
-    let date = new Date(Date.now() - APPROX_TWO_MONTH_IN_MS);
-    let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
-    let responseList = await gmail.users.messages.list({
-        auth: auth, userId: 'me', maxResults: 100,
-        'pageToken': nextPageToken,
-        q: `from:${sender_email} AND after:${formatted_date}`
-    });
-    if (responseList && responseList['data']['messages']) {
-        responseList['data']['messages'].forEach(async element => {
-            let response = await gmail.users.messages.get({ auth: auth, userId: 'me', 'id': element['id'] });
-            if (response) {
-                if (response.data.payload || response.data.payload['parts']) {
-                    try {
-                        if (is_move) {
-                            await Expensebit.manualMoveMail(response['data'], user_id, auth, label);
-                        } else {
-                            await Expensebit.manualTrashMail(response['data'], user_id, auth, label);
-                        }
-                    } catch (e) {
-                        console.error(e.message, e.stack, "14");
-                        return
-                    }
-                }
-            }
-        });
-    }
-    nextPageToken = responseList['data'].nextPageToken;
-    if (responseList['data'].nextPageToken) {
-        await getEmailFromSpecificSender(user_id, auth, responseList['data'].nextPageToken, label, sender_email, is_move);
-    }
-}
 
 module.exports = router
 
