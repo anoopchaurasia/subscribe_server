@@ -51,6 +51,7 @@ fm.Class("Redis", function (me) {
     }
 
     Static.setData = async function (key, data) {
+        console.log(key, "set data");
         return client.set(key, data);
     };
 

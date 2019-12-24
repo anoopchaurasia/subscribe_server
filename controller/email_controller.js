@@ -87,25 +87,6 @@ router.post('/readProfileInfo', async (req, res) => {
     }
 });
 
-router.post('/readMailInfoPage', async (req, res) => {
-    try {
-        const user = req.user;
-        const emailinfos = await GetEmailQuery.getAllFilteredSubscriptionPage(user._id, req.body.skipcount);
-
-        const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
-        const total = await GetEmailQuery.getTotalEmailCount(user._id);
-        res.status(200).json({
-            error: false,
-            data: emailinfos,
-            unreadData: unreademail,
-            totalEmail: total
-        })
-    } catch (err) {
-        console.error(err.message, err.stack, "10");
-        res.sendStatus(400);
-    }
-});
-
 /*
 This api will get All unsubscribe Subscription Related Information.
 */
@@ -126,22 +107,6 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
     }
 });
 
-router.post('/getUnsubscribeMailInfoPage', async (req, res) => {
-    try {
-        const user = req.user;
-        const emailinfos = await GetEmailQuery.getAllMovedSubscriptionPage(user._id);
-        let unreadData = await GetEmailQuery.getUnreadMovedEmail(user._id);
-        const total = await GetEmailQuery.getTotalEmailCount(user._id);
-        res.status(200).json({
-            error: false,
-            data: emailinfos,
-            unreadData: unreadData,
-            totalEmail: total
-        })
-    } catch (err) {
-        console.error(err.message, err.stack, "11");
-    }
-});
 
 /*
 This api will get Filer subsciption(new only).
@@ -167,23 +132,6 @@ router.post('/getDeletedEmailData', async (req, res) => {
     try {
         const user = req.user;
         const emailinfos = await GetEmailQuery.getAllTrashSubscription(user._id);
-        let unreadData = await GetEmailQuery.getUnreadTrashEmail(user._id);
-        const total = await GetEmailQuery.getTotalEmailCount(user._id);
-        res.status(200).json({
-            error: false,
-            data: emailinfos,
-            unreadData: unreadData,
-            totalEmail: total
-        })
-    } catch (err) {
-        console.error(err.message, ex.stack, "18");
-    }
-});
-
-router.post('/getDeletedEmailDataPage', async (req, res) => {
-    try {
-        const user = req.user;
-        const emailinfos = await GetEmailQuery.getAllTrashSubscriptionPage(user._id);
         let unreadData = await GetEmailQuery.getUnreadTrashEmail(user._id);
         const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
@@ -247,22 +195,6 @@ router.post('/getKeepedMailInfo', async (req, res) => {
     }
 });
 
-router.post('/getKeepedMailInfoPage', async (req, res) => {
-    try {
-        const user = req.user;
-        const emailinfos = await GetEmailQuery.getAllKeepedSubscriptionPage(user._id);
-        let unreadData = await GetEmailQuery.getUnreadKeepedEmail(user._id);
-        const total = await GetEmailQuery.getTotalEmailCount(user._id);
-        res.status(200).json({
-            error: false,
-            data: emailinfos,
-            unreadData: unreadData,
-            totalEmail: total
-        })
-    } catch (err) {
-        console.error(err.message, ex.stack, "21");
-    }
-});
 
 module.exports = router
 

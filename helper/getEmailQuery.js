@@ -25,23 +25,6 @@ class GetEmailQuery {
     }
 
 
-    static async getAllFilteredSubscriptionPage(user_id, skipcount = 0) {
-        const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(skipcount).limit(12).exec()
-        const senddata = [];
-        for (let i = 0, len = emails.length; i < len; i++) {
-            let x = emails[i];
-            senddata.push({
-                _id: {
-                    from_email: x.from_email
-                },
-                data: [{ from_email_name: x.from_email_name }],
-                count: await emailInformation.countDocuments({ "from_email_id": x._id }).catch(err => {
-                    console.error(err.message, err.stack, "2eq");
-                })
-            })
-        }
-        return senddata;
-    }
 
     static async getTotalKeepSubscription(user_id) {
         let totalNL = await email.countDocuments({ "user_id": user_id, "status": "keep" }).catch(err => {
@@ -62,31 +45,6 @@ class GetEmailQuery {
             console.error(err.message, err.stack, "1eeq");
         });
         return totalNL;
-    }
-
-
-
-    static async getAllMailBasedOnSender(user_id, from_email) {
-        let mail = await email.findOne({ "from_email": from_email, "user_id": user_id }).catch(err => { console.error(err.message, err.stack, "3eq"); });
-        let mailList;
-        if (mail) {
-            mailList = await emailInformation.find({ "from_email_id": mail._id }).catch(err => { console.error(err.message, err.stack, "4eq"); });
-        }
-        return mailList;
-    }
-
-
-
-    /*
-        This function will return all unread subscription Information.
-    */
-    static async getUnreadEmail(user_id) {
-        const emails = await email.aggregate([{ $match: { $text: { $search: "UNREAD" }, "status": "unused", "user_id": user_id } },
-        { $group: { _id: { "from_email": "$from_email" }, count: { $sum: 1 } } },
-        { $project: { "count": 1 } }]).catch(err => {
-            console.error(err.message, err.stack, "5eq");
-        });
-        return emails;
     }
 
     /*
@@ -211,24 +169,6 @@ class GetEmailQuery {
 
     }   
 
-    static async getAllMovedSubscriptionPage(user_id,skipcount=0) {
-        const emails = await email.find({ "status": "move", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(skipcount).limit(25).exec()
-        const senddata = [];
-        for (let i = 0, len = emails.length; i < len; i++) {
-            let x = emails[i];
-            senddata.push({
-                _id: {
-                    from_email: x.from_email
-                },
-                data: [{ from_email_name: x.from_email_name }],
-                count: await emailInformation.countDocuments({ "from_email_id": x._id }).catch(err => {
-                    console.error(err.message, err.stack, "15eq");
-                })
-            })
-        }
-        return senddata;
-
-    }
 
     /*
         This function will return All keeped subscription List for particular user.
@@ -252,24 +192,7 @@ class GetEmailQuery {
         return senddata;
     }
 
-    static async getAllKeepedSubscriptionPage(user_id,skipcount=0) {
-        const emails = await email.find({ "status": "keep", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(skipcount).limit(12).exec()
-        const senddata = [];
-        for (let i = 0, len = emails.length; i < len; i++) {
-            let x = emails[i];
-            senddata.push({
-                _id: {
-                    from_email: x.from_email
-                },
-                data: [{ from_email_name: x.from_email_name }],
-                count: await emailInformation.countDocuments({ "from_email_id": x._id }).catch(err => {
-                    console.error(err.message, err.stack, "16eq");
-                })
-            })
-        }
 
-        return senddata;
-    }
 
     
 
@@ -297,24 +220,6 @@ class GetEmailQuery {
     */
     static async getAllTrashSubscription(user_id) {
         const emails = await email.find({ "status": "trash", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).exec()
-        const senddata = [];
-        for (let i = 0, len = emails.length; i < len; i++) {
-            let x = emails[i];
-            senddata.push({
-                _id: {
-                    from_email: x.from_email
-                },
-                data: [{ from_email_name: x.from_email_name }],
-                count: await emailInformation.countDocuments({ "from_email_id": x._id }).catch(err => {
-                    console.error(err.message, err.stack, "19eq");
-                })
-            })
-        }
-        return senddata;
-    }
-
-    static async getAllTrashSubscriptionPage(user_id,skipcount=0) {
-        const emails = await email.find({ "status": "trash", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(skipcount).limit(12).exec()
         const senddata = [];
         for (let i = 0, len = emails.length; i < len; i++) {
             let x = emails[i];

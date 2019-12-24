@@ -28,12 +28,14 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
         if(user) {
             user = JSON.parse(user);
             user._id = ObjectId(user._id);
+            console.log(user._id);
             return user;
         }
         token = await token_model.findOne({ "token": token }).exec();
         user = await User.get({_id: token.user_id});
-        await RedisDB.base.setData(token, JSON.stringify(user));
-        RedisDB.base.setExpire(token, 30*60*1000);
+        user._id = user._id.toHexString();
+        await RedisDB.base.setData(token.token, JSON.stringify(user));
+        RedisDB.base.setExpire(token.token, 30*60*1000);
         return user;
     };
 });

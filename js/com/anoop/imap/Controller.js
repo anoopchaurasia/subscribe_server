@@ -34,11 +34,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         console.log("imap folder opened");
         return myImap;
     };
-    
-    Static.updateMyDetail = updateMyDetail; 
-    async function updateMyDetail(user_id, from_email, status) {
-        await me.updateEmailDetailByFromEmail(user_id, from_email, status);
-    };
 
     async function closeImap(myImap) {
         await myImap.closeFolder();

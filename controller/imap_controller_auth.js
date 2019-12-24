@@ -5,7 +5,6 @@ const router = express.Router();
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
 const UserModel = require('../models/user');
-const token_model = require('../models/tokeno');
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 
@@ -27,14 +26,14 @@ router.post('/getAllEmail', async (req, res) => {
 router.post('/readZohoMail', async (req, res) => {
     try {
         let user = req.user; 
-        let is_finished = await Controller.isScanFinished(user);
+        let is_finished = await Controller.isScanFinished(user._id);
         if (is_finished == "false") {
             return res.status(202).json({
                 error: false,
                 data: "already scaning"
             });
         }
-        Controller.sendToProcessServer(user._id.toHexString());
+        Controller.sendToProcessServer(req.client_token);
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -185,7 +184,7 @@ router.post('/getEmailSubscription', async (req, res) => {
 
 router.post('/saveProfileInfo', async (req, res) => {
     try {
-        const user = req.user;
+        let user = req.user;
         let userObj = {
             name: req.body.name,
             "dob": req.body.dob,
