@@ -91,6 +91,7 @@ class Outlook {
                 accessToken = token.access_token;
                 return accessToken;
             } else {
+                console.log("dsjhgcfhdjcjnsdkch")
                 const refresh_token = token.refresh_token;
                 let authToken = {};
                 if (refresh_token) {

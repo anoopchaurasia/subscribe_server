@@ -74,6 +74,7 @@ class TokenHandler {
         let authToken = await AuthToken.findOne({ "user_id": user_id }).catch(err => {
             console.error(err.message, err.stack,"33");
         });
+        console.log(authToken)
         if(authToken && authToken.expiry_date < new Date())
          {
             let authTokenInfo = await TokenHandler.refreshToken(authToken);

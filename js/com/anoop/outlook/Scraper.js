@@ -140,4 +140,50 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         });
     }
 
+    this.scrapManualEmail = async function (accessToken, user_id, from_email, action) {
+        let folderList = await Message.getMailFolders(accessToken);
+        await folderList.value.asynForEach(async folder => {
+            if (folder.displayName == 'Inbox') {
+                // let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$skip=0');
+                let link = encodeURI('https://graph.microsoft.com/v1.0/me/mailFolders/' + folder.id + '/messages?$search="from:' + from_email + '"');
+                await getEmailInBulkForManual(accessToken, link, user_id, from_email, action);
+            }
+        });
+    }
+
+
+    async function getEmailInBulkForManual(accessToken, link, user_id, from_email, action) {
+        let mailList = await Message.getBulkEmail(accessToken, link);
+        await mailList.value.asynForEach(async oneEmail => {
+            await checkEmailForManualAction(oneEmail, accessToken, user_id, from_email, action)
+        });
+        if (mailList['@odata.nextLink']) {
+            await getEmailInBulkForManual(accessToken, encodeURI(mailList['@odata.nextLink']), user_id, from_email, action);
+        } else {
+            // await BaseController.scanFinished(user_id);
+        }
+    }
+
+    async function checkEmailForManualAction(body, accessToken, user_id, from_email, action) {
+        body = await getFormatedEmailBody(body, user_id);
+        await me.sendMailToScraper(Parser.parse(body, user_id, null), me.outlook.user);
+        console.log(body)
+      
+        if (action === "move") {
+            let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0";
+            let folder_id = await me.getFolderId(accessToken, user_id, link, "Unsubscribed Emails");
+            await automaticMailAction(accessToken, user_id, folder_id, body);
+        } else if (action === "trash") {
+            let link = "https://graph.microsoft.com/v1.0/me/mailFolders?$skip=0"
+            let folder_id = await me.getFolderId(accessToken, user_id, link, "Junk Email");
+            await automaticMailAction(accessToken, user_id, folder_id, body);
+        }
+        let data_info = {
+            user_id: user_id,
+            from_email,
+            status: "move"
+        };
+        await me.saveManualEmailData(user_id, data_info);
+    }
+
 });
