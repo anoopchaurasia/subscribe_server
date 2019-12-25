@@ -93,7 +93,7 @@ fm.Class("Message", function (me) {
     };
 
     async function splituser(imap, message_ids, detector, is_get_body = true) {
-        var body = is_get_body === true ? "" : ['HEADER.FIELDS (FROM TO SUBJECT DATE)'];
+        var body = is_get_body === true ? "" : 'HEADER.FIELDS (FROM TO SUBJECT DATE)';
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
                 bodies: body,

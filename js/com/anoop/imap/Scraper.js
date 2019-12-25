@@ -162,9 +162,12 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             let emails = [];
             await Message.getBatchMessage(me.myImap.imap, uids, async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
-                if(emailbody.from_email!=null){
+                if(emailbody.from_email==null && emailbody.from_email_name==null){
+                    console.log(" here data ",emailbody,"=>",parsed)
+                }
+                // if(emailbody.from_email!=null){
                     me.storEmailData({
-                        'from_email': emailbody.from_email,
+                        'from_email': emailbody.from_email||emailbody.from_email_name,
                         'subject': emailbody.subject,
                         'email_id': emailbody.email_id,
                         'size': emailbody.size,
@@ -174,7 +177,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                         'labelIds': emailbody.labelIds,
                         'box_name': me.myImap.box.name
                     }, me.myImap.user._id);
-                }
+                // }
             }, false);
             resolve(emails);
         });
