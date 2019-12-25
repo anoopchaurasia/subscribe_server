@@ -13,7 +13,6 @@ fm.Class("Parser>.Message", function (me, Header) {
     }
 
     Static.getEmailBody = function (parse, labels) {
-        console.log(parse)
         let header = parseHeaderLines(parse.headerLines);
         let from_email_name = parse.from.text;
         let from = parse.from.text.indexOf("<") != -1 ? parse.from.text.split("<")[1].replace(">", "") : header.from.text;

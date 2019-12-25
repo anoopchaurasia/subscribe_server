@@ -160,7 +160,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     async function mailScrapAndReturnEmailData(uids, labels, status) {
         return new Promise(async (resolve, reject) => {
             let emails = [];
-            console.log(me.myImap.user._id)
             await Message.getBatchMessage(me.myImap.imap, uids, async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
                 if(emailbody.from_email!=null){
