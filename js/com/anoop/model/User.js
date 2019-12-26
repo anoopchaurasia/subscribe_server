@@ -17,14 +17,27 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
     Static.updatelastMsgId = async function (user, last_msgId) {
         if(user.last_msgId == last_msgId) return;
         await RedisDB.base.setData("last_msgId->"+user._id.toHexString(), last_msgId);
-        return me.updateUserById({_id: user._id},  {$set: {last_msgId}});
+        let query = {_id: user._id};
+        let set = {$set: {last_msgId}}
+        me.updateQueryValidation(query, "_id");
+        return await mongouser.findOneAndUpdate(query, set).exec();
     };
 
     Static.getLastMsgId = async function(user){
         return await RedisDB.base.getData("last_msgId->"+user._id.toHexString());
     };
 
-    Static.updateInactiveUser = async function (query,set) {
+    Static.deleteRedisUser = async function (user) {
+        console.log("deleting redis user ");
+        if(user.client_token) {
+            return await RedisDB.delKEY(user.client_token);
+        }
+        console.warn("client_token not found for user", user._id);  
+    };
+
+    Static.updateInactiveUser = async function (user, set) {
+        me.deleteRedisUser(user);
+        let query = {_id: user._id};
         me.updateQueryValidation(query, "_id");
         console.log(query, set);
         return await mongouser.findOneAndUpdate(query, { '$set': set}).exec();
@@ -90,6 +103,7 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
     };;
 
     Static.deleteMe = async function(user){
+        await me.deleteRedisUser(user);
         return await mongouser.deleteOne({ _id: user._id }).exec().catch(err => {
             console.error(err.message, err.stack, "delete6");
         });

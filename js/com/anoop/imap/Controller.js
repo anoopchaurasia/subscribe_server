@@ -23,7 +23,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await myImap.connect(provider).catch(async err => {
             if (err.message.match(global.INVALID_LOGIN_REGEX)) {
                 console.warn("leaving user as not loggedin reason:", err.message, user.email)
-                await me.updateInactiveUser(user._id, err.message);
+                await me.UserModel.updateInactiveUser(user, err.message);
             }
             throw new Error(err);
         });
@@ -300,9 +300,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }
         myImap.end(myImap.imap);
         let token = await me.createToken(user);
+        await me.UserModel.deleteRedisUser({client_token: token.token});
         // delay as active status require to setup listner so that it do not set multi listener for same user
-        setTimeout(async x => {
-            await me.reactivateUser(user._id);
+        setTimeout(async () => {
+            await me.UserModel.updateInactiveUser(user, { "inactive_at": null });
             await me.notifyListner(user._id.toHexString());
         }, 1000);
         return token;

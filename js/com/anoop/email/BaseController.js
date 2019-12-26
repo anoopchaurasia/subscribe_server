@@ -59,10 +59,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return { emaildetail, emailids };
     };
 
-    Static.updateInactiveUser = async function (_id, reason) {
-        return await User.updateInactiveUser({ _id: _id}, { "inactive_at": new Date(), listener_active: null, inactive_reason: reason });
-    };
-
     Static.updateLastTrackMessageId = async function(uid,last_mId){
         return await EmailTrack.updatelastMsgId({ user_id: uid }, {$set:{ last_msgId:last_mId }});
     }
@@ -74,10 +70,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.updateEmailInfoForOutlook = async function (email_id, new_email_id) {
         return await EmailInfo.updateEmailInfo({ email_id: email_id }, { email_id: new_email_id });
     }
-
-    Static.reactivateUser = async function (_id) {
-        return await User.updateInactiveUser({ _id: _id }, { "inactive_at": null });
-    };
 
     Static.scanFinished = async function (user_id) {
         await RedisDB.setData(user_id, "is_finished", true);

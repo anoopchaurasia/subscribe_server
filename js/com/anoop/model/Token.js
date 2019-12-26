@@ -8,6 +8,9 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
     this.setMe = _me => me = _me;
 
     Static.create = async function(user){
+        let token = await token_model.findOne({ user_id: user._id }).exec();
+        
+        if(token) return token;
         var token_uniqueid = uniqid() + uniqid() + uniqid()+ uniqid()+ uniqid();
         var tokmodel = new token_model({
             "user_id": user._id,
@@ -32,6 +35,7 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
         if(user) {
             user = JSON.parse(user);
             user._id = ObjectId(user._id);
+            user.client_token = token;
             console.log(user._id);
             return user;
         }
@@ -50,7 +54,7 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
             })
         user._id = user._id.toHexString();
         await RedisDB.base.setData(token.token, JSON.stringify(user));
-        RedisDB.base.setExpire(token.token, 30*60*1000);
+        RedisDB.base.setExpire(token.token, 15*60*1000);
         return user;
     };
 });
