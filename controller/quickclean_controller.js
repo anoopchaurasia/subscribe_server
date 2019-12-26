@@ -15,6 +15,7 @@ router.post('/getAllEmail', async (req, res) => {
     try {
         const doc = req.token;
         let emails = await Controller.extractAllEmail(doc, 'INBOX').catch(async err => {
+            console.log(err);
             await BaseController.scanFinishedQuickClean();
         });;
         res.status(200).json({

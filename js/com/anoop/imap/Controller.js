@@ -356,15 +356,19 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.imap.end(myImap.imap);
         console.log(names)
         await names.asyncForEach(async element => {
-            if (element != "INBOX" && (element.indexOf('[') == -1 || element.indexOf('[') == -1)) {
-                let myImap = await openFolder(token, element);
-                console.log("box name => ",myImap.box.name);
-                if (myImap.box.uidnext > lastmsg_id) {
-                    lastmsg_id = myImap.box.uidnext;
-                }
-                let scraper = Scraper.new(myImap);
-                let emails = await scraper.scrapAll(myImap.box.uidnext);
-                myImap.imap.end(myImap.imap);
+            if (element != "INBOX" &&  element != '[Gmail]/All Mail'){//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
+               try {
+                   let myImap = await openFolder(token, element);
+                   console.log("box name => ",myImap.box.name);
+                   if (myImap.box.uidnext > lastmsg_id) {
+                       lastmsg_id = myImap.box.uidnext;
+                   }
+                   let scraper = Scraper.new(myImap);
+                   let emails = await scraper.scrapAll(myImap.box.uidnext);
+                   myImap.imap.end(myImap.imap);
+               } catch (error) {
+                   console.log(error)
+               }
             }
         });
         await me.updateLastTrackMessageId(token.user_id, lastmsg_id)
