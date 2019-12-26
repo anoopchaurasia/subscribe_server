@@ -8,7 +8,7 @@ Array.prototype.asynForEach = async function (cb) {
     }
 }
 
-let LISTEN_USER_KEY = "listen_for_user1";
+let LISTEN_USER_KEY = "listen_for_user2";
 
 RedisDB.BLPopListner(LISTEN_USER_KEY, async function([key, user_id]){
     let user = await ImapController.getUserById(user_id);
