@@ -23,11 +23,6 @@ fm.Include("com.anoop.outlook.Controller");
 let OutlookController = com.anoop.outlook.Controller;
 fm.Include("com.anoop.email.Email");
 let EmailValidate = com.anoop.email.Email;
-Array.prototype.asyncForEach = async function (cb) {
-    for (let i = 0, len = this.length; i < len; i++) {
-        await cb(this[i], i, this);
-    }
-}
 
 router.post('/senderEmailNotInEmailDetails', async (req, res) => {
     let emailIds = await BaseController.senderEmailNotInEmailDetails(req.body.user_id)
