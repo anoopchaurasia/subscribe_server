@@ -1,19 +1,17 @@
+/* eslint-disable prefer-const */
+/* eslint-disable indent */
 'use strict'
 const express = require('express');
 const AppVersionModel = require('../models/appVersion');
 const router = express.Router();
 
-/*
+false/*
 This is the Login api. 
 Using This api use can logged-in into system.
 ====
 This api will get code/authentication code from application and using that application
 code extracting token and user data. and saving and updating into database.
 */
-router.post('/signin', async (req, res) => {
-        
-});
-
 
 router.get('/getAppVersion', async (req, res) => {
     try {

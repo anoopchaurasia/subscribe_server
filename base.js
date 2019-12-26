@@ -35,11 +35,12 @@ Array.prototype.asynForEach = async function (cb) {
     }
     on_connect = cb;
   };
-
-  //   process.on('SIGINT', function() {
-  //       console.log("shut server")
-  //     setTimeout(x=>{
-  //         console.log("shut server");
-  //         process.exit(1);
-  //     }, 30*1000);
-  //  });
+if(process.env.NODE_ENV=="production") {
+  process.on('SIGINT', function() {
+      console.log("shuting server in 30 secs")
+    setTimeout(x=>{
+        console.log("shut server");
+        process.exit(1);
+    }, 30*1000);
+ });
+}

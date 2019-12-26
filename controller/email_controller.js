@@ -4,9 +4,11 @@ const email = require('../models/emailDetails');
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 const router = express.Router();
 const SenderEmailModel = require("../models/senderMail");
+// eslint-disable-next-line quotes
 const ecommerce_cmpany = ["no-reply@flipkart.com", "auto-confirm@amazon.in"];
 fm.Include("com.anoop.email.BaseController");
 let BaseController = com.anoop.email.BaseController;
+
 
 router.post('/manualUnsubEmailFromUser', async (req, res) => {
     
@@ -15,7 +17,6 @@ router.post('/manualUnsubEmailFromUser', async (req, res) => {
 router.post('/manualTrashEmailFromUser', async (req, res) => {
    
 });
-
 
 /*
 This Api for Getting all Mail Subscri for Home screen for App.
