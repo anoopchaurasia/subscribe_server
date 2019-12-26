@@ -1,4 +1,5 @@
 fm.Package("com.anoop.model");
+let ObjectId = require("mongoose").Types.ObjectId;
 const mongouser = require('../../../../models/user');
 fm.Import("...jeet.memdb.RedisDB");
 fm.Class("User>.BaseModel", function (me, RedisDB) {
@@ -111,5 +112,32 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
 
     Static.getCursor = async function(query, filter={}, offset=0){
         return await mongouser.find(query, filter).skip(offset).lean().cursor()
+    };
+
+    Static.getRedisUser = async function(user_id){
+        let user = await RedisDB.base.getJSON("u_"+user_id);
+        if(user) {
+            user._id = ObjectId(user._id);
+            console.log("got redis user");
+            return user;
+        }
+        console.warn("missing redis user");
+        user  = await me.get({_id: ObjectId(user_id) });
+        ["image_url",
+        "name",
+            "family_name",
+            "given_name",
+            "birth_date",
+            "last_name",
+            "gender",
+            "primary_email",
+            "inactive_reason"].forEach(x=>{
+                delete user[x];
+        });
+        let u = {...user};
+        u._id = u._id.toHexString()
+        await RedisDB.base.setJSON("u_"+user_id, u);
+        RedisDB.base.setExpire("u_"+user_id, 15*60*1000);
+        return user;
     };
 });

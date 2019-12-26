@@ -4,7 +4,7 @@ fm.Include("com.anoop.imap.Controller", function(){
     RedisDB.BLPopListner('email_update_for_user', async function(data){
         try{
             console.log("token", data[1]);
-            let user = await ImapController.TokenModel.getUserByToken(data[1]);
+            let user = await ImapController.UserModel.getRedisUser(data[1]);
             let last_msgId = await ImapController.UserModel.getLastMsgId(user);
             if(last_msgId) {
                 user.last_msgId = last_msgId;

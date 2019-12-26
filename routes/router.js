@@ -18,8 +18,6 @@ async function authenticate(req, res, next){
     if(!user) {
         return res.json({error:"auth failed"});
     }
-    req.client_token = token;
-    user.client_token = token;
     req.user = user;
 
     next();

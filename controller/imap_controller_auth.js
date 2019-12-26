@@ -32,7 +32,7 @@ router.post('/readZohoMail', async (req, res) => {
                 data: "already scaning"
             });
         }
-        Controller.sendToProcessServer(req.client_token);
+        Controller.sendToProcessServer(req.user._id.toHexString());
         res.status(200).json({
             error: false,
             data: "scrape"
@@ -197,7 +197,7 @@ router.post('/saveProfileInfo', async (req, res) => {
         await Controller.UserModel.updateUserById({ "_id": user._id }, {$set: userObj}).catch(err => {
             console.error(err.message, err.stack);
         });
-        user = await Controller.UserModel.getById(user._id);
+        user = await Controller.UserModel.get({_id: user._id});
         res.status(200).json({
             error: false,
             status: 200,

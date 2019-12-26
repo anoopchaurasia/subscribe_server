@@ -7,7 +7,7 @@ fm.Include("com.anoop.imap.Controller", function(){
             let action  = JSON.parse(data[1]);
             console.log(action.action)
             //replace client_token with user;
-            action.args[0] = await ImapController.TokenModel.getUserByToken(action.args[0]);
+            action.args[0] = await ImapController.UserModel.getRedisUser(action.args[0]);
             await ImapController[action.action](...action.args, function onDIsconect() {
                 console.warn("disconnected crashing");
                 RedisDB.lPush('imap_user_actions', data[1]);

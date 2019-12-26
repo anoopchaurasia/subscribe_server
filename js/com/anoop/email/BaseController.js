@@ -244,8 +244,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         }
     }
 
-    Static.sendToProcessServer = async function(client_token){
-        RedisDB.sendNewUserProcess('process_user_login', client_token);
+    Static.sendToProcessServer = async function(user_id){
+        RedisDB.sendNewUserProcess('process_user_login', user_id);
     };
 
     Static.getUserAnalyzed = async function (emailDetailsWithInfo,userEmailAnalyziedData) {

@@ -7,12 +7,14 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     this.setMe = _me => me = _me;
 
     async function openFolder(user, folder, onDisconnect) {
+        console.time("openFolder")
         if(!user){
             throw new Error("user left system "+ user)
         }
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user, provider);
+        console.timeLog("openFolder")
         console.log("got imap instace")
         if(onDisconnect) {
             myImap.keepCheckingConnection(function onFail(){
@@ -20,6 +22,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 throw new Error("imap disconnected!");
             }, 90*1000);
         }
+
         await myImap.connect(provider).catch(async err => {
             if (err.message.match(global.INVALID_LOGIN_REGEX)) {
                 console.warn("leaving user as not loggedin reason:", err.message, user.email)
@@ -27,10 +30,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             }
             throw new Error(err);
         });
+        console.timeLog("openFolder")
         console.log("imap connected");
         
         await myImap.openFolder(folder);
         console.log("imap folder opened");
+        console.timeEnd("openFolder")
         return myImap;
     };
 
