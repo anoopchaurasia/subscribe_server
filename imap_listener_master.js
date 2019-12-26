@@ -76,7 +76,7 @@ function onNewUser() {
 }
 
 setInterval(async x=>{
-  let keys = await RedisDB.base.getKEYS("active_listner_for_*");
+  let keys = await RedisDB.base.getKEYS("2active_listner_for_*");
   let total = 0;
   await keys.asynForEach(async k=>{
     let c= await RedisDB.base.getData(k);

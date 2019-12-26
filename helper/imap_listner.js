@@ -23,7 +23,7 @@ async function scrapEmailForIamp(user){
     await ImapController.updateUserById({_id: user._id}, {$set: {listener_active: true}} );
     let token = await  ImapController.TokenModel.getLastClientToken(user);
     listner_counter++;
-    RedisDB.base.setData("active_listner_for_"+process.env.pm_id, listner_counter);
+    RedisDB.base.setData("2active_listner_for_"+process.env.pm_id, listner_counter);
     await ImapController.listenForUser(user, "start", function(x, y){
         console.log(x, "new email update", listner_counter, total_received, failed_counter, user.email);
         RedisDB.lPush("email_update_for_user", token);
