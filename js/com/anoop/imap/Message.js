@@ -97,7 +97,8 @@ fm.Class("Message", function (me) {
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
                 bodies: body,
-                struct: true
+                struct: true,
+                size:true
             });
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
@@ -133,8 +134,6 @@ fm.Class("Message", function (me) {
         let [atts, parsed] = await Promise.all([
             new Promise(resolve => {
                 msg.on('attributes',async atts => {
-                    let size = await fetchSize(atts.struct);
-                    atts['size']=size.map(x=>x.size>0?x.size:0).reduce((a, b) => a + b, 0);
                     resolve(atts)
                 });
                 msg.on('error', atts => reject(err));
@@ -154,7 +153,7 @@ fm.Class("Message", function (me) {
         ]);
         parsed.uid = atts.uid;
         parsed.flags = atts.flags;
-        parsed.size = atts['size'];
+        parsed.size = atts.size;
         return parsed;
     }
 
