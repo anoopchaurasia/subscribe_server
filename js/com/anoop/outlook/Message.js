@@ -17,7 +17,6 @@ fm.Class("Message", function (me) {
     }
 
     Static.getMailFolders = async function (accessToken) {
-        console.log(accessToken)
         var settings = {
             "url": "https://graph.microsoft.com/v1.0/me/mailFolders",
             "method": "GET",

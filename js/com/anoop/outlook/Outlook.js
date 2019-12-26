@@ -57,7 +57,6 @@ fm.Class("Outlook", function(me){
 
     Static.getAccessToken = async function(user_id){
         let authToken = await OutlookHandler.getAuthToken(user_id);
-        console.log(authToken)
         return await OutlookHandler.check_Token_info(user_id, authToken);
     }
 

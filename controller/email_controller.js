@@ -154,65 +154,48 @@ router.post('/getMailInfo', async (req, res) => {
 
 router.post('/manualUnsubEmailFromUser', async (req, res) => {
     try {
-                const doc = await token_model.findOne({ "token": req.body.token });
-                let sender_email = req.body.sender_email;
-                let array = sender_email.split(",") || sender_email.split(";");
-                array.forEach(async element => {
-                    console.log(element)
-                    element = element.trim();
-                    let validate = await EmailValidate.validate(element);
-                    console.log("is valid", validate)
-                    if (validate) {
-                        await OutlookController.manualEmailAction(doc.user_id, element,"move");
-                    }
-                });
-                res.status(200).json({
-                    error: false,
-                    data: "scrape"
-                })
-       
-        // if (token) {
-        //     let sender_email = req.body.sender_email;
-        //     const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack, "5"));
-        //     const oauth2Client = await TokenHandler.createAuthCleint(authToken);
-        //     Expensebit.createEmailLabel(token.user_id, oauth2Client);
-        //     let label = await Expensebit.findLabelId(oauth2Client);
-        //     console.log(sender_email)
-        //     let array = sender_email.split(",") || sender_email.split(";");
-        //     await array.asyncForEach(async element => {
-        //         await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, element, true);
-        //     });
-        //     res.status(200).json({
-        //         error: false,
-        //         data: "scrape"
-        //     })
-        // }
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let sender_email = req.body.sender_email;
+        let array = sender_email.split(",") || sender_email.split(";");
+        array.forEach(async element => {
+            console.log(element)
+            element = element.trim();
+            let validate = await EmailValidate.validate(element);
+            console.log("is valid", validate)
+            if (validate) {
+                await OutlookController.manualEmailAction(doc.user_id, element, "move");
+            }
+        });
+        res.status(200).json({
+            error: false,
+            data: "done"
+        })
     } catch (ex) {
-        console.error(ex.message, ex.stack, "6");
+        console.error(ex.message, ex.stack, "699");
         res.sendStatus(400);
     }
 });
 
 router.post('/manualTrashEmailFromUser', async (req, res) => {
     try {
-        const token = req.token;
-        if (token) {
-            let sender_email = req.body.sender_email;
-            const authToken = await TokenHandler.getAccessToken(token.user_id).catch(e => console.error(e.message, e.stack, "5"));
-            const oauth2Client = await TokenHandler.createAuthCleint(authToken);
-            Expensebit.createEmailLabel(token.user_id, oauth2Client);
-            let label = await Expensebit.findLabelId(oauth2Client);
-            let array = sender_email.split(",") || sender_email.split(";");
-            await array.asyncForEach(async element => {
-                await getEmailFromSpecificSender(token.user_id, oauth2Client, null, label, element, false);
-            });
-            res.status(200).json({
-                error: false,
-                data: "scrape"
-            })
-        }
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let sender_email = req.body.sender_email;
+        let array = sender_email.split(",") || sender_email.split(";");
+        array.forEach(async element => {
+            console.log(element)
+            element = element.trim();
+            let validate = await EmailValidate.validate(element);
+            console.log("is valid", validate)
+            if (validate) {
+                await OutlookController.manualEmailAction(doc.user_id, element, "trash");
+            }
+        });
+        res.status(200).json({
+            error: false,
+            data: "done"
+        })
     } catch (ex) {
-        console.error(ex.message, ex.stack, "6");
+        console.error(ex.message, ex.stack, "679");
         res.sendStatus(400);
     }
 });
@@ -242,7 +225,7 @@ router.post('/readMailInfo', async (req, res) => {
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(doc.user_id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(doc.user_id);
         const total = await GetEmailQuery.getTotalEmailCount(doc.user_id);
-        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:doc.user_id });
+        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany }, user_id: doc.user_id });
         let finished = false;
         let is_finished = await BaseController.isScanFinished(doc.user_id);
         if (is_finished && is_finished == "true") {

@@ -106,6 +106,10 @@ fm.Class('BaseScraper', function (me, BaseController, RedisDB) {
         return await BaseController.saveManualEmailData(user_id,data);
     }
 
+    this.saveManualEmailInfoForOutlook = async function(user_id,data){
+        return await BaseController.saveManualEmailInfoForOutlook(user_id,data);
+    }
+
     this.updateEmailInfoForOutlook  = async function(element_id, new_email_id){
         await BaseController.updateEmailInfoForOutlook(element_id, new_email_id);
     }
