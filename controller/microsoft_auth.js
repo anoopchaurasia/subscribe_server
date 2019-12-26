@@ -91,6 +91,7 @@ router.post('/getPushNotification', async function (req, res) {
 router.post('/getMail', async function (req, resp, next) {
     let authCode = req.body.authID;
     let userInfo = await token_model.findOne({ token: authCode }).catch(e => console.error(e));
+    console.log(userInfo);
     await Controller.extractEmail(userInfo.user_id).catch(e => console.error(e));
     resp.status(200).json({
         error: false,

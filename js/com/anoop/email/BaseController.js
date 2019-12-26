@@ -80,6 +80,13 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         let emaildetailraw = await EmailDetail.storeEamil(data, user_id);
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
     }
+    
+
+    Static.saveManualEmailInfoForOutlook = async function (user_id, data) {
+        let emaildetail = await me.saveManualEmailData(user_id,data);
+        let emailinforaw = await EmailInfo.fromEamil(data, emaildetail._id, null);
+        return await EmailInfo.updateOrCreateAndGet({ from_email_id: emaildetail._id, email_id: emailinforaw.email_id }, emailinforaw);
+    };
 
     Static.updateOrCreateAndGetEMailInfoFromData = async function (emaildetail, data, url) {
         let emailinforaw = await EmailInfo.fromEamil(data, emaildetail._id, url);
