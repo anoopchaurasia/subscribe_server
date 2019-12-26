@@ -35,9 +35,9 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
         console.warn("client_token not found for user", user._id);  
     };
 
-    Static.updateInactiveUser = async function (user, set) {
+    Static.updateInactiveUser = async function (user, set, query) {
         me.deleteRedisUser(user);
-        let query = {_id: user._id};
+        query = query || {_id: user._id};
         me.updateQueryValidation(query, "_id");
         console.log(query, set);
         return await mongouser.findOneAndUpdate(query, { '$set': set}).exec();

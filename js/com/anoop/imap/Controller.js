@@ -23,7 +23,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await myImap.connect(provider).catch(async err => {
             if (err.message.match(global.INVALID_LOGIN_REGEX)) {
                 console.warn("leaving user as not loggedin reason:", err.message, user.email)
-                await me.UserModel.updateInactiveUser(user, err.message);
+                await me.UserModel.updateInactiveUser(user, {inactive_reason: err.message, inactive_at: new Date}, {_id: user._id, inactive_at: null});
             }
             throw new Error(err);
         });
