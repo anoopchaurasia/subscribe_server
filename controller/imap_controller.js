@@ -81,7 +81,6 @@ router.post('/loginWithImap', async (req, res) => {
     }
 });
 
-
 let createLogForUser = async (email_id, action_name, action_page, action_event, attribute, api_name) => {
     var userLog = new userAppLog({
         email_id,
@@ -479,12 +478,5 @@ router.post('/findEmailProvider', async (req, res) => {
         })
     }
 });
-
-
-
-
-
-
-
 
 module.exports = router
