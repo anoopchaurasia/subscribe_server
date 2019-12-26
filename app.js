@@ -17,11 +17,10 @@ app.get('/api/v2/setToken', function (req, res) {
 })
 
 app.get('/', function (req, res) {
-    console.log(req)
     res.send("welcome!!!");
 });
 
-app.listen(process.env.SERVER_PORT, function (err) {
+app.listen(process.env.SERVER_PORT, process.env.SERVER_HOST||"localhost", function (err) {
     if (err) {
         throw err
     }

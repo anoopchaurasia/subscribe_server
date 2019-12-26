@@ -142,7 +142,7 @@ router.post('/getDeletedEmailData', async (req, res) => {
             totalEmail: total
         })
     } catch (err) {
-        console.error(err.message, ex.stack, "18");
+        console.error(err.message, err.stack, "18");
     }
 });
 
@@ -192,7 +192,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
             totalEmail: total
         })
     } catch (err) {
-        console.error(err.message, ex.stack, "21");
+        console.error(err.message, err.stack, "21");
     }
 });
 

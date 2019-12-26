@@ -5,7 +5,8 @@ const token_model = require('../models/tokeno');
 const DeviceInfo = require('../models/deviceoInfo');
 const emailDetailsModel = require('../models/emailDetails');
 const AppVersionModel = require('../models/appVersion');
-const userModel = require('../models/user');
+fm.include("com.anoop.email.BaseController");
+let BaseController = com.anoop.email.BaseController;
 const router = express.Router();
 const Raven = require('raven');
 /* 
@@ -142,10 +143,8 @@ router.post('/disconnectGdprAccount', async (req, res) => {
             console.error(err.message, err.stack, "delete6");
         });
         console.timeLog("delete"+user._id)
-        console.log(device)
-        user = await userModel.deleteMany({ _id: user._id }).exec().catch(err => {
-            console.error(err.message, err.stack, "delete6");
-        });
+        console.log(device);
+        BaseController.UserModel.deleteMe(user);
         console.timeLog("delete"+user._id)
         console.log(user)
         res.status(200).send({

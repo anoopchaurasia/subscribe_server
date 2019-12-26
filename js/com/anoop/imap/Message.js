@@ -51,12 +51,11 @@ fm.Class("Message", function (me) {
             seen: await search(imap, ["SEEN", ['UID', (user.last_msgId) + ':*']]),
             unseen: await search(imap, ["UNSEEN", ['UID', (user.last_msgId) + ':*']])
         }
-        // if(data.seen && data.seen[0] <= user.last_msgId) data.seen.shift()
-        // if(data.unseen && data.unseen[0] <= user.last_msgId) data.unseen.shift()
         return data;
     };
 
     async function search(imap, criteria) {
+        console.log("search", criteria);
         return new Promise((resolve, reject) => {
             imap.search(criteria, function (err, uids) {
                 (err ? reject(err) : resolve(uids));

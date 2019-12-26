@@ -10,10 +10,6 @@ var UserSchema = new Schema({
         type: String,
         unique: true
     },
-    user_id: {
-        type: String,
-        index: true
-    },
     image_url: {
         type: String
     },
@@ -39,9 +35,6 @@ var UserSchema = new Schema({
         type: String
     },
     last_name: {
-        type: String
-    },
-    gender: {
         type: String
     },
     trash_label: {

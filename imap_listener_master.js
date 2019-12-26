@@ -13,7 +13,6 @@ on_db_connection(function () {
   setInterval(new_user_check, 2*60*1000);
 });
 
-const UserModel = require('./models/user');
 fm.Include("com.anoop.imap.Controller");
 let ImapController = com.anoop.imap.Controller;
 let RedisDB = com.jeet.memdb.RedisDB;
@@ -29,11 +28,9 @@ async function runJob(offset = 0) {
   RedisDB.delKEY(LISTEN_USER_KEY);
   console.log("scheduler called for scrapping mail for imap...");
   let counter = offset;
-  const cursor = await UserModel.find({
+  const cursor = await ImapController.UserModel.getCursor({
     "email_client": "imap"
-  }, {
-    _id: 1
-  }).skip(offset).lean().cursor();
+  }, {_id:1}, offset);
   cursor.eachAsync(async user => {
       RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString());
       counter++;
@@ -54,11 +51,12 @@ async function new_user_check(){
     console.warn("processing old users returning")
     return;
   }
-  let cursor = UserModel.find({listener_active: null, inactive_at: null, email_client:"imap"}, {_id:1}).lean().cursor();
-  cursor.eachAsync(async user => {
+  let cursor = await ImapController.UserModel.getCursor({listener_active: null, inactive_at: null, email_client:"imap"},
+  {_id:1})
+    cursor.eachAsync(async user => {
     RedisDB.notifyListner( user._id.toHexString());
   }).catch(async e => {
-    console.error("watch error", counter, e);
+    console.error("watch error", e);
   })
   .then(() => {
     console.log('done!')

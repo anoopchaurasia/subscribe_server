@@ -2,7 +2,6 @@ fm.Package("com.anoop.imap");
 fm.Import(".MyImap");
 fm.Import(".Scraper");
 fm.Import(".Label");
-const mongouser = require('../../../../models/user');
 const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
 fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scraper, Label) {
     this.setMe = _me => me = _me;
@@ -162,7 +161,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await me.scanStarted(user._id);
         myImap = await openFolder( user, "INBOX");
         AppsflyerEvent.sendEventToAppsflyer(myImap.user.email, "process_started", { "user": myImap.user.email, "last_mid": myImap.box.uidnext })
-        await mongouser.findOneAndUpdate({ _id: user._id }, { last_msgId: myImap.box.uidnext }, { upsert: true }).exec();
+        await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd() {
             console.log("is_finished called");
@@ -180,7 +179,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let scraper = Scraper.new(myImap);
         await scraper.update();
         myImap.end(myImap.imap);
-        await me.updateLastMsgId(user._id, myImap.box.uidnext)
+        await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
     }
 
 
@@ -222,7 +221,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let myImap = await openFolder(user, "INBOX");
         myImap.listen(async function (x, y) {
             new_email_cb(x, y);
-            //   updateForUser(scraper, myImap, user);
         });
         myImap.onEnd(x => {
             console.log("ended", myImap.user.email);
@@ -232,7 +230,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             process.nextTick(r => me.listenForUser(user, "restarting for user12", new_email_cb));
         });
         new_email_cb();
-        // await updateForUser(scraper, myImap, user);
     }
 
     Static.updateForUser = async function (user, reset_cb) {
@@ -251,9 +248,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let scraper = Scraper.new(myImap);
         if (myImap.user.last_msgId == undefined || myImap.user.last_msgId == "undefined") {
             myImap.user.last_msgId = myImap.box.uidnext;
-            await me.updateLastMsgId(user._id, myImap.box.uidnext);
+            await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
         }
-        let is_more_than_limit = false
+        let is_more_than_limit = false;
+
         await scraper.update(async function latest_id(id, temp) {
             id && (myImap.box.uidnext = id);
             temp && (is_more_than_limit = true);
@@ -261,7 +259,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         clearInterval(timeoutconst);
         myImap.user.last_msgId = myImap.box.uidnext;
         myImap.end(myImap.imap);
-        await me.updateLastMsgId(user._id, myImap.box.uidnext);
+        await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
         is_more_than_limit && reset_cb();
     }
 
@@ -310,17 +308,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         return token;
     }
 
-    // Static.extractAllEmail = async function (user, folderName) {
-    //     await me.scanStarted(user._id);
-    //     let myImap = await openFolder(user, folderName);
-    //     let names = await myImap.getLabels();
-    //     console.log(names,myImap.box);
-    //     let scraper = Scraper.new(myImap);
-    //     let emails = await scraper.scrapAll(myImap.box.uidnext);
-    //     await me.updateLastTrackMessageId(user._id, myImap.box.uidnext)
-    //     myImap.imap.end(myImap.imap);
-    //     return emails;
-    // }
 
     Static.extractAllEmail = async function (user, folderName) {
         let lastmsg_id;
@@ -359,7 +346,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.extractEmailByDate = async function (user, folderName, data) {
         await me.scanStarted(user._id);
         let myImap = await openFolder(user, folderName);
-        // await mongouser.findOneAndUpdate({ _id: user._id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         let emails = await scraper.byDate(data);
         myImap.imap.end(myImap.imap);
@@ -370,7 +356,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.extractAllEmails = async function (user, folderName) {
         await me.scanStarted(user._id);
         let myImap = await openFolder(user, folderName);
-        // await mongouser.findOneAndUpdate({ _id: user._id }, { last_msgId: myImap.box.uidnext }, { upsert: true })
         let scraper = Scraper.new(myImap);
         let emails = await scraper.getAllEmails();
         myImap.imap.end(myImap.imap);

@@ -112,7 +112,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         let formatted_date = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
         let nextPageToken = null, messages, error;
         let idlist = [];
-        while ({ messages, error, nextPageToken } = await Message.getEmailsBySender(me.gmail, nextPageToken, formatted_date, sender)) {
+        while (({ messages, error, nextPageToken } = await Message.getEmailsBySender(me.gmail, nextPageToken, formatted_date, sender))) {
             [].push.apply(idlist, messages.map(x => x.id));
             if (!nextPageToken || error) {
                 error && console.error(error, "Scraper2")

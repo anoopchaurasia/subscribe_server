@@ -41,6 +41,7 @@ fm.Class('BaseScraper', function (me, BaseController, RedisDB) {
         }
         let url = await getUrlFromEmail(data.payload);
         if (url) {
+            data.source = "url";
             return await me.inboxToUnused(data, url);
         }
         if (data.labelIds.length != 0) {

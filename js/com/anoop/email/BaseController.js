@@ -59,10 +59,6 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return { emaildetail, emailids };
     };
 
-    Static.updateLastMsgId = async function (_id, msg_id) {
-        return await User.updatelastMsgId({ _id: _id }, { last_msgId: msg_id });
-    }
-
     Static.updateInactiveUser = async function (_id, reason) {
         return await User.updateInactiveUser({ _id: _id}, { "inactive_at": new Date(), listener_active: null, inactive_reason: reason });
     };

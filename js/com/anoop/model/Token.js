@@ -37,9 +37,21 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
         }
         token = await token_model.findOne({ "token": token }).exec();
         user = await User.get({_id: token.user_id});
+        ["image_url",
+        "name",
+            "family_name",
+            "given_name",
+            "birth_date",
+            "last_name",
+            "gender",
+            "primary_email",
+            "inactive_reason"].forEach(x=>{
+                delete user[x];
+            })
         user._id = user._id.toHexString();
         await RedisDB.base.setData(token.token, JSON.stringify(user));
         RedisDB.base.setExpire(token.token, 30*60*1000);
         return user;
     };
 });
+
