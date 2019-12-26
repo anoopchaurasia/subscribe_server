@@ -1,5 +1,3 @@
-/* eslint-disable prefer-const */
-/* eslint-disable indent */
 'use strict'
 const express = require('express');
 const AppVersionModel = require('../models/appVersion');
