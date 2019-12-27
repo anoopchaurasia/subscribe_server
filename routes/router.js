@@ -16,6 +16,7 @@ async function authenticate(req, res, next){
     let token = req.body.authID || req.body.token;
     let user = await Token.getUserByToken(token);
     if(!user) {
+        console.error("auth failed for token", token);
         return res.json({error:"auth failed"});
     }
     req.user = user;

@@ -305,7 +305,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }
         myImap.end(myImap.imap);
         let token = await me.createToken(user);
-        await me.UserModel.deleteRedisUser({client_token: token.token});
+        await me.UserModel.deleteRedisUser(user);
         // delay as active status require to setup listner so that it do not set multi listener for same user
         setTimeout(async () => {
             await me.UserModel.updateInactiveUser(user, { "inactive_at": null });

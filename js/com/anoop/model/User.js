@@ -30,10 +30,10 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
 
     Static.deleteRedisUser = async function (user) {
         console.log("deleting redis user ");
-        if(user.client_token) {
-            return await RedisDB.delKEY(user.client_token);
+        if(!user._id) {
+            return console.error("user dont have _id", user);
         }
-        console.warn("client_token not found for user", user._id);  
+        return await RedisDB.delKEY("u_"+user._id.toHexString());
     };
 
     Static.updateInactiveUser = async function (user, set, query) {
@@ -51,6 +51,7 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
 
     Static.updateUserById = async function (query, set) {
         me.updateQueryValidation(query, "_id");
+        me.deleteRedisUser(query);
         return await mongouser.findOneAndUpdate(query, set).exec();
     };
 
@@ -123,6 +124,7 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
         }
         console.warn("missing redis user");
         user  = await me.get({_id: ObjectId(user_id) });
+        if(!user) return null;
         ["image_url",
         "name",
             "family_name",

@@ -35,7 +35,11 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
             return await User.getRedisUser(user_id);
         }
         token = await token_model.findOne({ "token": token }).exec();
+        if(!token) {
+            return null;
+        }
         await RedisDB.base.setData("t_"+token.token, token.user_id.toHexString());  
+        RedisDB.base.setExpire("t_"+token.token, 60*60*1000);
         return await User.getRedisUser(token.user_id.toHexString());      
     };
 });
