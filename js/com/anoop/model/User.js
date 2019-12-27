@@ -116,7 +116,8 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
     };
 
     Static.getRedisUser = async function(user_id){
-        let user = await RedisDB.base.getJSON("u_"+user_id);
+        let key= "u_"+user_id
+        let user = await RedisDB.base.getJSON(key);
         if(user) {
             user._id = ObjectId(user._id);
             console.log("got redis user");
@@ -124,7 +125,10 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
         }
         console.warn("missing redis user");
         user  = await me.get({_id: ObjectId(user_id) });
-        if(!user) return null;
+        if(!user) {
+            console.error("user not found")
+            return null;
+        }
         ["image_url",
         "name",
             "family_name",
@@ -138,8 +142,8 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
         });
         let u = {...user};
         u._id = u._id.toHexString()
-        await RedisDB.base.setJSON("u_"+user_id, u);
-        RedisDB.base.setExpire("u_"+user_id, 15*60*1000);
+        await RedisDB.base.setJSON(key, u);
+        RedisDB.base.setExpire(key, 15*60*1000);
         return user;
     };
 });
