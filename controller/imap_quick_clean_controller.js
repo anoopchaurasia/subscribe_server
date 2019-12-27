@@ -231,10 +231,6 @@ router.post('/getTotalUnreadMail', async (req, res) => {
             data: emails,
             finished: finished,
         });
-        res.status(200).json({
-            error: false,
-            data: emails
-        });
     } catch (err) {
         console.log(err);
     }
