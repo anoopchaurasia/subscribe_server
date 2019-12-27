@@ -74,7 +74,8 @@ var DeviceInfoSchema = new Schema({
     deleted_at:{
         type:Date
     },
-    created_at: Date
+    created_at: Date,
+    appsFlyerUID: String
 });
 
 module.exports = mongoose.model('DeviceoInfo', DeviceInfoSchema);

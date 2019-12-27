@@ -9,3 +9,6 @@ dump.rdb
 .listner_env
 test.js
 tmp
+
+*.key
+*.cert
