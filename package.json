@@ -9,7 +9,7 @@
   "author": "jitendra virani",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "cheerio": "^1.0.0-rc.2",
     "crypto": "^1.0.1",
     "dotenv": "^7.0.0",
@@ -19,7 +19,7 @@
     "jsonwebtoken": "^8.5.1",
     "legit": "^1.0.5",
     "mailparser": "^2.4.3",
-    "mongoose": "^5.2.4",
+    "mongoose": "^5.8.3",
     "randomstring": "^1.1.5",
     "raven": "^2.6.4",
     "redis": "^2.8.0",
