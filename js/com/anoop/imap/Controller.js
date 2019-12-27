@@ -2,7 +2,6 @@ fm.Package("com.anoop.imap");
 fm.Import(".MyImap");
 fm.Import(".Scraper");
 fm.Import(".Label");
-const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
 fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scraper, Label) {
     this.setMe = _me => me = _me;
 
@@ -155,7 +154,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let timeoutconst = setInterval(x => {
             if (!myImap) {
                 let event = "user_" + Math.random().toString(36).slice(2);
-                AppsflyerEvent.sendEventToAppsflyer(event, "process_failed_no_user", { "user": event })
+                me.sendToAppsFlyer(user.email, "process_failed_no_user", { "user": event })
                 throw new Error("imap not available" + user._id);
             }
             if (myImap.imap.state === 'disconnected') {
@@ -165,15 +164,15 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, 2 * 60 * 1000)
         await me.scanStarted(user._id);
         myImap = await openFolder( user, "INBOX");
-        AppsflyerEvent.sendEventToAppsflyer(myImap.user.email, "process_started", { "user": myImap.user.email, "last_mid": myImap.box.uidnext })
+        me.sendToAppsFlyer(user.email, "process_started", { time: Date.now() })
         await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd() {
             console.log("is_finished called");
+            me.sendToAppsFlyer(user.email, "process_finished", { time: Date.now() })
             await me.scanFinished(user._id);
             me.updateUserByActionKey(user._id, { "last_scan_date": new Date() });
             await me.handleRedis(user._id);
-            AppsflyerEvent.sendEventToAppsflyer(myImap.user.email, "process_finished", { "user": myImap.user.email, "last_mid": myImap.box.uidnext })
         });
         clearInterval(timeoutconst);
         myImap.end(myImap.imap);

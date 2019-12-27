@@ -5,7 +5,7 @@ const https = require('https');
 
 class AppsflyerEvent {
 
-    static async sendEventToAppsflyer(user_id, event_name, event_value) {
+    static async sendEventToAppsflyer(user_id, event_name, event_value={time: Date.now()}) {
 
         try {
             var data = JSON.stringify({

@@ -10,7 +10,7 @@ fm.Import("..model.EmailData");
 fm.Import("..model.EmailTrack");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
-var ObjectId = require('mongoose').Types.ObjectId;
+const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
 
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, EmailData,EmailTrack, RedisDB, BaseRedisData) {
     'use strict';
@@ -20,6 +20,9 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
 
     Static.UserModel = User;
     Static.TokenModel = Token;
+    Static.sendToAppsFlyer  =async function(user_id, event_name, event_value){
+        AppsflyerEvent.sendEventToAppsflyer(user_id, event_name, event_value);
+    };
 
     Static.createSenderMail = async function (fromEamil, user_id) {
         return await SenderMail.findOneAndUpdate({ user_id: user_id, senderMail: fromEamil }, { user_id: user_id, senderMail: fromEamil });

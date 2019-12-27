@@ -15,7 +15,6 @@ router.post('/manualUnsubEmailFromUser', async (req, res) => {
 });
 
 router.post('/manualTrashEmailFromUser', async (req, res) => {
-   
 });
 
 /*
@@ -25,7 +24,6 @@ This will get Filter subcription(new subscription only), unread Mail Info and to
 router.post('/readMailInfo', async (req, res) => {
     try {
         const user = req.user;
-
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(user._id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
         const total = await GetEmailQuery.getTotalEmailCount(user._id);
@@ -65,6 +63,7 @@ This will get all the subscription,Moved subscription,total email and total ubsu
 */
 router.post('/readProfileInfo', async (req, res) => {
     try {
+        
         const user = req.user;
         const emailinfos = await GetEmailQuery.getAllSubscription(user._id);
         const movedMail = await GetEmailQuery.getAllMovedSubscription(user._id);
