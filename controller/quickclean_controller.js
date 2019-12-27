@@ -1,16 +1,20 @@
 'use strict'
 const express = require('express');
 const router = express.Router();
+const EmailDataModel = require('../models/emailsData');
+const token_model = require('../models/tokeno');
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
-const EmailDataModel = require('../models/emailsData');
+fm.Include("com.anoop.email.BaseController");
+let BaseController = com.anoop.email.BaseController;
+
 
 
 /* This api will Scrape all the emails from Account and will store into Database. */
 router.post('/getAllEmail', async (req, res) => {
     try {
-        const user = req.user;
-        let emails = await Controller.extractAllEmail(user, 'INBOX').catch(async err => {
+        const doc = req.token;
+        let emails = await Controller.extractAllEmail(doc, 'INBOX').catch(async err => {
             console.log(err);
             await BaseController.scanFinishedQuickClean();
         });
@@ -27,10 +31,10 @@ router.post('/getAllEmail', async (req, res) => {
 /* This api will delete Email from inbox */
 router.post('/deleteQuickMailnew', async (req, res) => {
     try {
-        const user = req.user;
+        const doc = req.token;
         let ids = req.body.email_ids;
         console.log(ids)
-        await Controller.deleteQuickMail(user, ids);
+        await Controller.deleteQuickMail(doc, ids);
         res.status(200).json({
             error: false,
             data: ids
@@ -43,9 +47,9 @@ router.post('/deleteQuickMailnew', async (req, res) => {
 /* This api will delete Email from inbox by from Email*/
 router.post('/deleteQuickMail', async (req, res) => {
     try {
-        const user = req.user;
+        const doc = req.token;
         let ids = req.body.email_ids;
-        let emails = await EmailDataModel.aggregate([{ $match: { "user_id": user._id, email_id: { $in: ids } } }, {
+        let emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, email_id: { $in: ids } } }, {
             $group: {
                 _id: "$box_name",
                 data: {
@@ -59,7 +63,7 @@ router.post('/deleteQuickMail', async (req, res) => {
         { $project: { "email_id": 1, data: 1 } }]);
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
-            await Controller.deleteQuickMailNew(user, ids, data._id);
+            await Controller.deleteQuickMailNew(doc, ids, data._id);
         });
         res.status(200).json({
             error: false,
@@ -76,10 +80,10 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
     try {
         let start_date = req.body.start_date;
         let end_date = req.body.end_date;
-        const user = req.user;
+        const doc = req.token;
         let emails;
         if (start_date == null || end_date == null) {
-            emails = await EmailDataModel.aggregate([{ $match: { "user_id": user._id, is_delete: false } }, {
+            emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
                 $group: {
                     _id: { "size_group": "$size_group" }, data: {
                         $push: {
@@ -98,7 +102,7 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
         } else {
             emails = await EmailDataModel.aggregate([{
                 $match: {
-                    $and: [{ "user_id": user._id }, { is_delete: false },
+                    $and: [{ "user_id": doc.user_id }, { is_delete: false },
                     { receivedDate: { $gte: new Date(start_date) } }, { receivedDate: { $lte: new Date(end_date) } }]
                 }
             }, {
@@ -133,10 +137,10 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
     try {
         let start_date = req.body.start_date;
         let end_date = req.body.end_date;
-        const user = req.user;
+        const doc = req.token;
         let emails;
         if (start_date == null || end_date == null) {
-            emails = await EmailDataModel.aggregate([{ $match: { "user_id": user._id, is_delete: false } }, {
+            emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
                 $group: {
                     _id: { "from_email": "$from_email" }, data: {
                         $push: {
@@ -154,7 +158,7 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
         } else {
             emails = await EmailDataModel.aggregate([{
                 $match: {
-                    $and: [{ "user_id": user._id }, { is_delete: false },
+                    $and: [{ "user_id": doc.user_id }, { is_delete: false },
                     { receivedDate: { $gte: new Date(start_date) } }, { receivedDate: { $lte: new Date(end_date) } }]
                 }
             }, {
@@ -188,15 +192,15 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
 router.post('/getEmailsByDateFromDb', async (req, res) => {
     try {
         let { data } = req.body;
-        const user = req.user;
+        const doc = req.token;
         let emails;
         if (data.isCustom) {
-            emails = await EmailDataModel.find({ user_id: user._id, receivedDate: { $gte: data.since, $lte: data.before }, is_delete: false });
+            emails = await EmailDataModel.find({ user_id: doc.user_id, receivedDate: { $gte: data.since, $lte: data.before }, is_delete: false });
         } else {
             if (data.beforeOrAfter === 'BEFORE') {
-                emails = await EmailDataModel.find({ user_id: user._id, receivedDate: { $lte: data.date }, is_delete: false });
+                emails = await EmailDataModel.find({ user_id: doc.user_id, receivedDate: { $lte: data.date }, is_delete: false });
             } else {
-                emails = await EmailDataModel.find({ user_id: user._id, receivedDate: { $gte: data.date }, is_delete: false });
+                emails = await EmailDataModel.find({ user_id: doc.user_id, receivedDate: { $gte: data.date }, is_delete: false });
             }
         }
         res.status(200).json({
@@ -212,11 +216,21 @@ router.post('/getEmailsByDateFromDb', async (req, res) => {
 /* This api will return the emails based on the Date from database */
 router.post('/getTotalUnreadMail', async (req, res) => {
     try {
-        const user = req.user;
-        let emails = await EmailDataModel.countDocuments({ user_id: user._id, status: "unread", is_delete: false });
+        const doc = req.token;
+        let emails = await EmailDataModel.countDocuments({ user_id: doc.user_id, status: "unread", is_delete: false });
+        let finished = false;
+        let is_finished = await BaseController.isScanFinishedQuickClean(doc.user_id);
+        if (is_finished && is_finished == "true") {
+            console.log("is_finished_quick_clean here-> ", is_finished);
+            finished = true;
+        }
+        if (is_finished === null) {
+            await BaseController.scanFinishedQuickClean(doc.user_id);
+        }
         res.status(200).json({
             error: false,
-            data: emails
+            data: emails,
+            finished: finished,
         });
     } catch (err) {
         console.log(err);
@@ -230,10 +244,10 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
     try {
         let start_date = req.body.start_date;
         let end_date = req.body.end_date;
-        const user = req.user;
+        const doc = req.token;
         let emails;
         if (start_date == null || end_date == null) {
-            emails = await EmailDataModel.aggregate([{ $match: { "user_id": user._id, is_delete: false } }, {
+            emails = await EmailDataModel.aggregate([{ $match: { "user_id": doc.user_id, is_delete: false } }, {
                 $group: {
                     _id: { "box_name": "$box_name" }, data: {
                         $push: {
@@ -252,7 +266,7 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
         } else {
             emails = await EmailDataModel.aggregate([{
                 $match: {
-                    $and: [{ "user_id": user._id }, { is_delete: false },
+                    $and: [{ "user_id": doc.user_id }, { is_delete: false },
                     { receivedDate: { $gte: new Date(start_date) } }, { receivedDate: { $lte: new Date(end_date) } }]
                 }
             }, {
