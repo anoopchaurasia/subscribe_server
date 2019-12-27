@@ -176,7 +176,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
 
     Static.manualEmailAction = async function (user, from_email,action) {
         let accessToken = await Outlook.getAccessToken(user._id);
-        let user = await me.getUserById(user._id);
         let instance = await Outlook.getOutlookInstanceForUser(user);
         let scraper = new Scraper.new(instance);
         await scraper.scrapManualEmail(accessToken, user._id,from_email,action);
