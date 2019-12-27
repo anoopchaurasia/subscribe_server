@@ -18,7 +18,7 @@ let EmailValidate = com.anoop.email.Email;
 
 router.post('/manualUnsubEmailFromUser', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const user = req.user;
         let sender_email = req.body.sender_email;
         let array = sender_email.split(",") || sender_email.split(";");
         array.forEach(async element => {
@@ -27,7 +27,7 @@ router.post('/manualUnsubEmailFromUser', async (req, res) => {
             let validate = await EmailValidate.validate(element);
             console.log("is valid", validate)
             if (validate) {
-                await OutlookController.manualEmailAction(doc.user_id, element, "move");
+                await OutlookController.manualEmailAction(user, element, "move");
             }
         });
         res.status(200).json({
@@ -42,7 +42,7 @@ router.post('/manualUnsubEmailFromUser', async (req, res) => {
 
 router.post('/manualTrashEmailFromUser', async (req, res) => {
     try {
-        const doc = await token_model.findOne({ "token": req.body.token });
+        const user = req.user;
         let sender_email = req.body.sender_email;
         let array = sender_email.split(",") || sender_email.split(";");
         array.forEach(async element => {
@@ -51,7 +51,7 @@ router.post('/manualTrashEmailFromUser', async (req, res) => {
             let validate = await EmailValidate.validate(element);
             console.log("is valid", validate)
             if (validate) {
-                await OutlookController.manualEmailAction(doc.user_id, element, "trash");
+                await OutlookController.manualEmailAction(user, element, "trash");
             }
         });
         res.status(200).json({
@@ -66,8 +66,8 @@ router.post('/manualTrashEmailFromUser', async (req, res) => {
 
 router.post('/getMailListForSender', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(doc.user_id, req.body.from_email);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(user._id, req.body.from_email);
         res.status(200).json({
             error: false,
             data: emailinfos
