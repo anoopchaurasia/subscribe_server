@@ -5,6 +5,9 @@ fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 const EmailDataModel = require('../models/emailsData');
 
+fm.Include("com.anoop.email.BaseController");
+let BaseController = com.anoop.email.BaseController;
+
 
 /* This api will Scrape all the emails from Account and will store into Database. */
 router.post('/getAllEmail', async (req, res) => {
