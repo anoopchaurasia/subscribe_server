@@ -5,6 +5,9 @@ fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 const EmailDataModel = require('../models/emailsData');
 
+fm.Include("com.anoop.email.BaseController");
+let BaseController = com.anoop.email.BaseController;
+
 
 /* This api will Scrape all the emails from Account and will store into Database. */
 router.post('/getAllEmail', async (req, res) => {
@@ -214,9 +217,19 @@ router.post('/getTotalUnreadMail', async (req, res) => {
     try {
         const user = req.user;
         let emails = await EmailDataModel.countDocuments({ user_id: user._id, status: "unread", is_delete: false });
+        let finished = false;
+        let is_finished = await BaseController.isScanFinishedQuickClean(user._id);
+        if (is_finished && is_finished == "true") {
+            console.log("is_finished_quick_clean here-> ", is_finished);
+            finished = true;
+        }
+        if (is_finished === null) {
+            await BaseController.scanFinishedQuickClean(user._id);
+        }
         res.status(200).json({
             error: false,
-            data: emails
+            data: emails,
+            finished: finished,
         });
     } catch (err) {
         console.log(err);
