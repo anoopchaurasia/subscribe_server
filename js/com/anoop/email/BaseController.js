@@ -47,6 +47,13 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         let emaildetailraw = await EmailDetail.storeEamil(data, user_id);
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
     }
+    
+
+    Static.saveManualEmailInfoForOutlook = async function (user_id, data) {
+        let emaildetail = await me.saveManualEmailData(user_id,data);
+        let emailinforaw = await EmailInfo.fromEamil(data, emaildetail._id, null);
+        return await EmailInfo.updateOrCreateAndGet({ from_email_id: emaildetail._id, email_id: emailinforaw.email_id }, emailinforaw);
+    };
 
     Static.updateOrCreateAndGetEMailInfoFromData = async function (emaildetail, data, url) {
         let emailinforaw = await EmailInfo.fromEamil(data, emaildetail._id, url);
@@ -90,6 +97,20 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.isScanFinished = async function (user_id) {
         return await RedisDB.getData(user_id, "is_finished");
     }
+
+
+    Static.scanStartedQuickClean = async function (user_id) {
+        await RedisDB.setData(user_id, "is_finished_quick_clean", false);
+    }
+
+    Static.scanFinishedQuickClean = async function (user_id) {
+        await RedisDB.setData(user_id, "is_finished_quick_clean", true);
+    };
+    
+    Static.isScanFinishedQuickClean = async function (user_id) {
+        return await RedisDB.getData(user_id, "is_finished_quick_clean");
+    }
+
 
     Static.createUser = async function (email, passsword, trash_label) {
         return await User.create({ email, passsword, trash_label });

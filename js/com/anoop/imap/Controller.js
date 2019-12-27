@@ -317,26 +317,33 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.extractAllEmail = async function (user, folderName) {
         let lastmsg_id;
-        await me.scanStarted(user._id);
+        await me.scanStartedQuickClean(user._id);
         let myImap = await openFolder(user, folderName);
         let scraper = Scraper.new(myImap);
         let emails = await scraper.scrapAll(myImap.box.uidnext);
         let names = await myImap.getLabels();
         lastmsg_id = myImap.box.uidnext;
         myImap.imap.end(myImap.imap);
+        console.log(names)
         await names.asyncForEach(async element => {
-            if (element != "INBOX" && (element.indexOf('[') == -1 || element.indexOf('[') == -1)) {
-                let myImap = await openFolder(user, element);
-                console.log("box name => ",myImap.box.name);
-                if (myImap.box.uidnext > lastmsg_id) {
-                    lastmsg_id = myImap.box.uidnext;
-                }
-                let scraper = Scraper.new(myImap);
-                let emails = await scraper.scrapAll(myImap.box.uidnext);
-                myImap.imap.end(myImap.imap);
+            if (element != "INBOX" &&  element != '[Gmail]/All Mail'){//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
+               try {
+                   let myImap = await openFolder(user, element);
+                   console.log("box name => ",myImap.box.name);
+                   if (myImap.box.uidnext > lastmsg_id) {
+                       lastmsg_id = myImap.box.uidnext;
+                   }
+                   let scraper = Scraper.new(myImap);
+                   let emails = await scraper.scrapAll(myImap.box.uidnext);
+                   myImap.imap.end(myImap.imap);
+               } catch (error) {
+                   console.log(error)
+               }
             }
         });
         await me.updateLastTrackMessageId(user._id, lastmsg_id)
+        console.log("last one came");
+        await me.scanFinishedQuickClean(user._id);
         return emails;
     }
 

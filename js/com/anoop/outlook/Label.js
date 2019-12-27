@@ -82,7 +82,7 @@ fm.Class("Label>.Message", function(me){
             },
             "data": JSON.stringify({ "destinationId": folder_id })
         }
-        let response = await axios(settings).catch(e => console.error(e.message, "move mail from inbox"));
+        let response = await axios(settings).catch(e => console.error(e.message, "move mail from inbox"))
         return response.data;
     }
 

@@ -96,7 +96,8 @@ fm.Class("Message", function (me) {
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
                 bodies: body,
-                struct: true
+                struct: true,
+                size:true
             });
             const msgs = [];
             fetch.on('message', async function (msg, seqNo) {
@@ -117,10 +118,21 @@ fm.Class("Message", function (me) {
             });
         });
     }
+
+    async function fetchSize(atts, size_arr=[]){
+        if(Array.isArray(atts)) {
+            atts.forEach(x=> fetchSize(x, size_arr));
+            return size_arr;
+        }
+        size_arr.push({size:atts.size, part_id: atts.partID})
+        return size_arr;
+    }
+
+
     async function parseMessage(msg) {
         let [atts, parsed] = await Promise.all([
             new Promise(resolve => {
-                msg.on('attributes', atts => {
+                msg.on('attributes',async atts => {
                     resolve(atts)
                 });
                 msg.on('error', atts => reject(err));
@@ -133,7 +145,6 @@ fm.Class("Message", function (me) {
                     stream.once('end', async () => {
                         const raw = Buffer.concat(chunks).toString('utf8');
                         let parsed = await simpleParser(raw, { skipHtmlToText: true, skipTextToHtml: true, skipTextLinks: true, skipImageLinks: true });
-                        parsed['size'] = info.size;
                         resolve(parsed)
                     });
                 });
@@ -141,6 +152,7 @@ fm.Class("Message", function (me) {
         ]);
         parsed.uid = atts.uid;
         parsed.flags = atts.flags;
+        parsed.size = atts.size;
         return parsed;
     }
 

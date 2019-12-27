@@ -9,13 +9,73 @@ const ecommerce_cmpany = ["no-reply@flipkart.com", "auto-confirm@amazon.in"];
 fm.Include("com.anoop.email.BaseController");
 let BaseController = com.anoop.email.BaseController;
 
+fm.Include("com.anoop.outlook.Controller");
+let OutlookController = com.anoop.outlook.Controller;
+fm.Include("com.anoop.email.Email");
+let EmailValidate = com.anoop.email.Email;
+
+
 
 router.post('/manualUnsubEmailFromUser', async (req, res) => {
-    
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let sender_email = req.body.sender_email;
+        let array = sender_email.split(",") || sender_email.split(";");
+        array.forEach(async element => {
+            console.log(element)
+            element = element.trim();
+            let validate = await EmailValidate.validate(element);
+            console.log("is valid", validate)
+            if (validate) {
+                await OutlookController.manualEmailAction(doc.user_id, element, "move");
+            }
+        });
+        res.status(200).json({
+            error: false,
+            data: "done"
+        })
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "699");
+        res.sendStatus(400);
+    }
 });
 
 router.post('/manualTrashEmailFromUser', async (req, res) => {
-   
+    try {
+        const doc = await token_model.findOne({ "token": req.body.token });
+        let sender_email = req.body.sender_email;
+        let array = sender_email.split(",") || sender_email.split(";");
+        array.forEach(async element => {
+            console.log(element)
+            element = element.trim();
+            let validate = await EmailValidate.validate(element);
+            console.log("is valid", validate)
+            if (validate) {
+                await OutlookController.manualEmailAction(doc.user_id, element, "trash");
+            }
+        });
+        res.status(200).json({
+            error: false,
+            data: "done"
+        })
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "679");
+        res.sendStatus(400);
+    }
+});
+
+router.post('/getMailListForSender', async (req, res) => {
+    try {
+        const doc = req.token;
+        const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(doc.user_id, req.body.from_email);
+        res.status(200).json({
+            error: false,
+            data: emailinfos
+        })
+    } catch (err) {
+        res.sendStatus(400);
+        console.error(err.message, err.stack, "7");
+    }
 });
 
 /*
