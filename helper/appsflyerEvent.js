@@ -30,10 +30,7 @@ class AppsflyerEvent {
             };
 
             var reqPost = https.request(options, function (res) {
-                console.log("response statusCode: ", res.statusCode);
-                res.on('data', function (data) {
-                    console.log('Posting Result: ', data.toString());
-                });
+               
             });
             reqPost.on('error', function (e) {
                 console.error("here", e);
