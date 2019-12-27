@@ -214,6 +214,20 @@ router.post('/getTotalUnreadMail', async (req, res) => {
     try {
         const user = req.user;
         let emails = await EmailDataModel.countDocuments({ user_id: user._id, status: "unread", is_delete: false });
+        let finished = false;
+        let is_finished = await BaseController.isScanFinishedQuickClean(user._id);
+        if (is_finished && is_finished == "true") {
+            console.log("is_finished_quick_clean here-> ", is_finished);
+            finished = true;
+        }
+        if (is_finished === null) {
+            await BaseController.scanFinishedQuickClean(user._id);
+        }
+        res.status(200).json({
+            error: false,
+            data: emails,
+            finished: finished,
+        });
         res.status(200).json({
             error: false,
             data: emails
