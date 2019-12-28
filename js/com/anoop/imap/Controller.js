@@ -280,7 +280,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
     ///////////------------------------ login ------------------------///
-    Static.login = async function (email, password, provider) {
+    Static.login = async function (email, password, provider, clientAccessMode) {
         let PASSWORD = MyImap.encryptPassword(password);
         let myImap = await MyImap.new({
             email,
@@ -303,9 +303,13 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
         myImap.end();
-
-
+        
         let token = await me.createToken(user);
+        if(clientAccessMode == 'web'){
+            token = await me.createTokenWeb(user, ipaddress);
+        }else{
+            token = await me.createToken(user, ipaddress);
+        }
         await me.UserModel.deleteRedisUser(user);
         // delay as active status require to setup listner so that it do not set multi listener for same user
         setTimeout(async () => {
