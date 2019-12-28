@@ -63,7 +63,7 @@ fm.Class('RedisPush', function(me, RedisDB){
 
 
     Static. extractAllEmail= async  function(user){
-        RedisDB.base.pushData('qc_scan_user_boxes', user._id.toHexString());        
+        RedisDB.base.lPush('qc_scan_user_boxes', user._id.toHexString());        
         
     }
 });
