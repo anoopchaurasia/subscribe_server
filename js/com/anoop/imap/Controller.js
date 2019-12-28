@@ -212,8 +212,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }
 
         if (user.trash_label.toLowerCase().indexOf("inbox") == -1) {
-            myImap = await openFolder(user, user.trash_label );
-            scraper = Scraper.new(myImap);
+            let myImap = await openFolder(user, user.trash_label );
+            let scraper = Scraper.new(myImap);
             await scraper.deletePreviousMessages();
             await closeImap(myImap);
         }
@@ -303,6 +303,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
         myImap.end();
+
+
         let token = await me.createToken(user);
         await me.UserModel.deleteRedisUser(user);
         // delay as active status require to setup listner so that it do not set multi listener for same user

@@ -436,9 +436,9 @@ let saveProviderInfo = async (email) => {
     }
 }
 
-router.post('/findEmailProvider', async (req, res) => {
+router.all('/findEmailProvider', async (req, res) => {
     try {
-        let email = req.body.emailId;
+        let email = req.body.emailId || req.query.emailId;
         let response = await saveProviderInfo(email);
         if (response['provider'] != null && response['provider'] != 'null') {
             res.status(200).json({
