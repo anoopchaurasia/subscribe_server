@@ -58,11 +58,12 @@ router.post('/deleteQuickMail', async (req, res) => {
         { $project: { "email_id": 1, data: 1 } }]);
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
-            await Controller.deleteQuickMailNew(user, ids, data._id);
+            console.log(data._id," ===> ",ids)
+            Controller.deleteQuickMailNew(user, ids, data._id);
         });
         res.status(200).json({
             error: false,
-            data: emails
+            data: "done"
         });
     } catch (err) {
         console.log(err);
@@ -108,13 +109,14 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
                             "subject": "$subject",
                             "status": "$status",
                             "size": "$size",
-                            "email_id": "$email_id"
+                            "email_id": "$email_id",
+                            "from_email": "$from_email"
                         }
                     }, count: { $sum: 1 }
                 }
             },
             { $sort: { "count": -1 } },
-            { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+            { $project: { "labelIds": 1,"from_email": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
         }
         console.log(emails.length);
         res.status(200).json({
@@ -272,13 +274,14 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
                             "subject": "$subject",
                             "status": "$status",
                             "size": "$size",
-                            "email_id": "$email_id"
+                            "email_id": "$email_id",
+                            "from_email":"$from_email"
                         }
                     }, count: { $sum: 1 }
                 }
             },
             { $sort: { "count": -1 } },
-            { $project: { "labelIds": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
+            { $project: { "labelIds": 1,"from_email": 1, "count": 1, "subject": 1, "size": 1, "email_id": 1, data: 1 } }]);
         }
         console.log(emails.length);
         res.status(200).json({

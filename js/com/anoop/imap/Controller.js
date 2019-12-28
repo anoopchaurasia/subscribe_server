@@ -319,8 +319,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await me.scanStartedQuickClean(user._id);
         let myImap = await openFolder(user, "INBOX");
         let names = await myImap.getLabels();
-        console.dir(names)
-        myImap.end();
+        console.dir(names);
+        lastmsg_id = myImap.box.uidnext;
+        await closeImap(myImap);
         await names.asyncForEach(async element => {
             if (element != '[Gmail]/All Mail'){//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
                try {
