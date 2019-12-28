@@ -40,7 +40,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     }
 
     Static.updateForDelete = async function(user_id,ids){
-        return await EmailData.updateForDelete({user_id:user_id,email_id:{$in:ids}},{$set:{is_delete:true}});
+        return await EmailData.updateForDelete({user_id:user_id,email_id:{$in:ids}},{is_delete:true});
     }
 
     Static.storeEmailData = async function(data,user_id){
