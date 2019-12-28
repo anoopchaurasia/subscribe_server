@@ -280,7 +280,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
     ///////////------------------------ login ------------------------///
-    Static.login = async function (email, password, provider, clientAccessMode) {
+    Static.login = async function (email, password, provider, clientAccessMode, ipaddress) {
         let PASSWORD = MyImap.encryptPassword(password);
         let myImap = await MyImap.new({
             email,
@@ -304,7 +304,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }
         myImap.end();
         
-        let token = await me.createToken(user);
+        let token;
         if(clientAccessMode == 'web'){
             token = await me.createTokenWeb(user, ipaddress);
         }else{
