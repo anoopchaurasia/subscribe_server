@@ -28,7 +28,7 @@ router.post('/getAllEmail', async (req, res) => {
 router.post('/deleteQuickMailnew', async (req, res) => {
     try {
         const user = req.user;
-        ImapRedisPush.deleteQuickMail(user, req.body.email_ids);
+        let ids = req.body.email_ids;
         await Controller.deleteQuickMail(user, ids);
         res.status(200).json({
             error: false,
