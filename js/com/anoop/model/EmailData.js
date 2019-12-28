@@ -8,15 +8,36 @@ fm.Class("EmailData>.BaseModel", function(me){
         return await mongo_emaildata.findOne(query).exec();
     };
 
+    let serving_array = [], update_save_timeout;
     Static.updateOrCreateAndGet = async function(query, set) {
         me.updateQueryValidation(query);
-        return await mongo_emaildata.findOneAndUpdate(query, {$set: set}, { upsert: true}).exec();
+        clearTimeout(update_save_timeout);
+        serving_array.push([query, {$set:set}]);
+        if(serving_array.length==200) {
+            await bulkSave(serving_array);
+            serving_array = [];
+        }
+        update_save_timeout = setTimeout(async ()=>{
+            await bulkSave(serving_array);
+            serving_array = [];
+        }, 10000)
     };
-
+    
     Static.updateForDelete = async function (query, set) {
         me.updateQueryValidation(query);
-        return await mongo_emaildata.updateMany(query, set).exec();
+        await mongo_emaildata.updateMany(query, {$set: set}).exec()
     };
+
+    async function bulkSave(serving_array) {
+        var bulk = mongo_emaildata.collection.initializeOrderedBulkOp();
+        serving_array.forEach(([query, set])=>{
+            bulk.find(query).upsert().update(set);
+        });
+        await bulk.execute(function (error) {
+            if(error) return console.error(error, "while saving emaildata for user");
+            console.log("saved emaildata for user", serving_array.length);
+        });
+    }
 
 
     Static.storeEamil = function (emaildata, user_id) {

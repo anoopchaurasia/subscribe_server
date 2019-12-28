@@ -7,19 +7,16 @@ const EmailDataModel = require('../models/emailsData');
 
 fm.Include("com.anoop.email.BaseController");
 let BaseController = com.anoop.email.BaseController;
+fm.Include("com.anoop.imap.RedisPush");
+let ImapRedisPush = com.anoop.imap.RedisPush;
 
 
 /* This api will Scrape all the emails from Account and will store into Database. */
 router.post('/getAllEmail', async (req, res) => {
     try {
-        const user = req.user;
-        let emails = await Controller.extractAllEmail(user, 'INBOX').catch(async err => {
-            console.log(err);
-            await BaseController.scanFinishedQuickClean();
-        });
+        ImapRedisPush.extractAllEmail(req.user);
         res.status(200).json({
             error: false,
-            data: emails
         });
     } catch (err) {
         console.log(err);
@@ -31,8 +28,7 @@ router.post('/getAllEmail', async (req, res) => {
 router.post('/deleteQuickMailnew', async (req, res) => {
     try {
         const user = req.user;
-        let ids = req.body.email_ids;
-        console.log(ids)
+        ImapRedisPush.deleteQuickMail(user, req.body.email_ids);
         await Controller.deleteQuickMail(user, ids);
         res.status(200).json({
             error: false,

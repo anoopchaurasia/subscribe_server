@@ -40,7 +40,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     async function closeImap(myImap) {
         await myImap.closeFolder();
-        myImap.end(myImap.imap);
+        myImap.end();
     };
 
     ///------------------------------------- userAction ---------------------///
@@ -86,7 +86,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         };
         await me.saveManualEmailData(user._id, data);
         me.updateUserByActionKey(user._id, { "last_manual_trash_date": new Date() });
-        myImap.end(myImap.imap);
+        myImap.end();
     };
 
     Static.manualUnusedToUnsub = async function (user, from_email, onDisconnect) {
@@ -100,7 +100,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         };
         await me.saveManualEmailData(user._id, data);
         me.updateUserByActionKey(user._id, { "last_manual_unsub_date": new Date() });
-        myImap.end(myImap.imap);
+        myImap.end();
     };
 
     ///------------------------------------- from keep ---------------------///
@@ -175,14 +175,14 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await me.handleRedis(user._id);
         });
         clearInterval(timeoutconst);
-        myImap.end(myImap.imap);
+        myImap.end();
     }
 
     Static.extractEmailForCronJob = async function (user) {
         let myImap = await openFolder(user, "INBOX");
         let scraper = Scraper.new(myImap);
         await scraper.update();
-        myImap.end(myImap.imap);
+        myImap.end();
         await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
     }
 
@@ -194,10 +194,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.validCredentialCheck = async function (user) {
         let myImap = await openFolder(user, "INBOX");
         if (myImap) {
-            myImap.end(myImap.imap);
+            myImap.end();
             return true
         } else {
-            myImap.end(myImap.imap);
+            myImap.end();
             return false
         }
     }
@@ -262,7 +262,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         });
         clearInterval(timeoutconst);
         myImap.user.last_msgId = myImap.box.uidnext;
-        myImap.end(myImap.imap);
+        myImap.end();
         await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
         is_more_than_limit && reset_cb();
     }
@@ -302,7 +302,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         } else {
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
-        myImap.end(myImap.imap);
+        myImap.end();
         let token = await me.createToken(user);
         await me.UserModel.deleteRedisUser(user);
         // delay as active status require to setup listner so that it do not set multi listener for same user
@@ -314,19 +314,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
 
-    Static.extractAllEmail = async function (user, folderName) {
+    Static.extractAllEmail = async function (user) {
         let lastmsg_id;
         await me.scanStartedQuickClean(user._id);
-        let myImap = await openFolder(user, folderName);
-        let scraper = Scraper.new(myImap);
-        let emails = await scraper.scrapAll(myImap.box.uidnext);
+        let myImap = await openFolder(user, "INBOX");
         let names = await myImap.getLabels();
+        console.dir(names);
         lastmsg_id = myImap.box.uidnext;
-        // myImap.imap.end(myImap.imap);
         await closeImap(myImap);
-        console.log(names)
         await names.asyncForEach(async element => {
-            if (element != "INBOX" &&  element != '[Gmail]/All Mail'){//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
+            if (element != '[Gmail]/All Mail'){//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
                try {
                    let myImap = await openFolder(user, element);
                    console.log("box name => ",myImap.box.name);
@@ -334,9 +331,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                        lastmsg_id = myImap.box.uidnext;
                    }
                    let scraper = Scraper.new(myImap);
-                   let emails = await scraper.scrapAll(myImap.box.uidnext);
-                //    myImap.imap.end(myImap.imap);
-                   await closeImap(myImap);
+                   await scraper.scrapAll(myImap.box.uidnext);
+                   myImap.end();
                } catch (error) {
                    console.log(error)
                }
@@ -345,7 +341,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await me.updateLastTrackMessageId(user._id, lastmsg_id)
         console.log("last one came");
         await me.scanFinishedQuickClean(user._id);
-        return emails;
     }
 
     Static.extractEmailBySize = async function (user, folderName, smallerThan, largerThan) {
@@ -353,7 +348,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let myImap = await openFolder(user, folderName);
         let scraper = Scraper.new(myImap);
         let emails = await scraper.size(smallerThan, largerThan);
-        myImap.imap.end(myImap.imap);
+        myImap.end();
         return emails;
     }
 
@@ -362,7 +357,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let myImap = await openFolder(user, folderName);
         let scraper = Scraper.new(myImap);
         let emails = await scraper.byDate(data);
-        myImap.imap.end(myImap.imap);
+        myImap.end();
         return emails;
     }
 
@@ -372,7 +367,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let myImap = await openFolder(user, folderName);
         let scraper = Scraper.new(myImap);
         let emails = await scraper.getAllEmails();
-        myImap.imap.end(myImap.imap);
+        myImap.end();
         return emails;
     }
 

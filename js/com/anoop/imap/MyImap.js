@@ -49,11 +49,11 @@ fm.Class("MyImap", function (me) {
         return new Promise((resolve, reject) => {
             me.imap.getBoxes(function (err, boxes) {
                 let names = [];
-                Object.keys(boxes).sort().forEach(boxName => {
+                Object.keys(boxes).forEach(boxName => {
                     names.push(boxName);
                     const box = boxes[boxName];
                     if (box.children) {
-                        Object.keys(box.children).sort().forEach(childName => {
+                        Object.keys(box.children).forEach(childName => {
                             names.push(`${boxName}${box.delimiter}${childName}`);
                         });
                     }

@@ -20,6 +20,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
 
     Static.UserModel = User;
     Static.TokenModel = Token;
+    Static.EmailDataModel = EmailData;
+
     Static.sendToAppsFlyer  =async function(user_id, event_name, event_value){
         AppsflyerEvent.sendEventToAppsflyer(user_id, event_name, event_value);
     };
@@ -38,12 +40,12 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     }
 
     Static.updateForDelete = async function(user_id,ids){
-        return await EmailData.updateForDelete({user_id:user_id,email_id:{$in:ids}},{$set:{is_delete:true}});
+        return await EmailData.updateForDelete({user_id:user_id,email_id:{$in:ids}},{is_delete:true});
     }
 
     Static.storeEmailData = async function(data,user_id){
         let emailData = await EmailData.storeEamil(data,user_id);
-        await EmailData.updateOrCreateAndGet({from_email:emailData.from_email,email_id:emailData.email_id,user_id:emailData.user_id,receivedDate:emailData.receivedDate},emailData);
+        return await EmailData.updateOrCreateAndGet({from_email:emailData.from_email,email_id:emailData.email_id,user_id:emailData.user_id,receivedDate:emailData.receivedDate},emailData);
     }
 
     Static.saveManualEmailData = async function (user_id, data) {
