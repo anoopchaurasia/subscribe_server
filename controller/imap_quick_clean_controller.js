@@ -62,8 +62,8 @@ router.post('/deleteQuickMail', async (req, res) => {
         { $project: { "email_id": 1, data: 1 } }]);
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
-            console.log(data._id," ===> ",ids)
-            Controller.deleteQuickMailNew(user, ids, data._id);
+            console.log("deleting ", ids.length, "from ", data._id);
+            await Controller.deleteQuickMailNew(user, ids, data._id);
         });
         res.status(200).json({
             error: false,
