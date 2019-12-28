@@ -8,18 +8,18 @@ fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 
 /* This api will Scrape all the emails from Account and will store into Database. */
-router.post('/getAllEmail', async (req, res) => {
-    try {
-        const user = req.user;
-        let emails = await Controller.extractAllEmail(user, 'INBOX');
-        res.status(200).json({
-            error: false,
-            data: emails
-        });
-    } catch (err) {
-        console.log(err);
-    }
-});
+// router.post('/getAllEmail', async (req, res) => {
+//     try {
+//         const user = req.user;
+//         let emails = await Controller.extractAllEmail(user, 'INBOX');
+//         res.status(200).json({
+//             error: false,
+//             data: emails
+//         });
+//     } catch (err) {
+//         console.log(err);
+//     }
+// });
 
 // read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
