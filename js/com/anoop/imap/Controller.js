@@ -332,7 +332,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                    }
                    let scraper = Scraper.new(myImap);
                    await scraper.scrapAll(myImap.box.uidnext);
-                   myImap.end();
+                   await closeImap(myImap);
                } catch (error) {
                    console.log(error)
                }
