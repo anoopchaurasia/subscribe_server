@@ -27,7 +27,7 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
             unsubscribe: url,
             subject: data.subject,
             labelIds: data.labelIds,
-            date: data['header']?data.header.date.split('Date: ')[1]:data.receivedDateTime
+            date: data['header'] && data.header.date ?data.header.date.split('Date: ')[1]:data.receivedDateTime
         }
     };
 

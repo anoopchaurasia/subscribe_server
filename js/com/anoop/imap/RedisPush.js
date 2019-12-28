@@ -60,4 +60,10 @@ fm.Class('RedisPush', function(me, RedisDB){
         me.addDBAction([user._id, from_email, "move"]);
         me.addImapAction("trashToUnsub", [user._id.toHexString(), from_email]);
     };
+
+
+    Static. extractAllEmail= async  function(user){
+        RedisDB.base.pushData('qc_scan_user_boxes', user._id.toHexString());        
+        
+    }
 });

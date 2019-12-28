@@ -13,10 +13,31 @@ fm.Class("EmailData>.BaseModel", function(me){
         return await mongo_emaildata.findOneAndUpdate(query, {$set: set}, { upsert: true}).exec();
     };
 
+    let serving_array = [], update_save_timeout;
     Static.updateForDelete = async function (query, set) {
+        clearTimeout(update_save_timeout);
+        serving_array.push([query, {$set:set}]);
+        if(serving_array.length==200) {
+            bulkSave(serving_array);
+            serving_array = [];
+        }
+        update_save_timeout = setTimeout(()=>{
+            bulkSave(serving_array);
+            serving_array = [];
+        }, 10000)
         me.updateQueryValidation(query);
-        return await mongo_emaildata.updateMany(query, set).exec();
     };
+
+    function bulkSave(serving_array) {
+        var bulk = me.model.collection.initializeOrderedBulkOp();
+        serving_array.forEach(([query, set])=>{
+            bulk.find(query).upsert().update(set);
+        });
+        bulk.execute(function (error) {
+            if(error) return console.error(error, "while saving emaildata for user");
+            console.log("saved emaildata for user",);
+        });
+    }
 
 
     Static.storeEamil = function (emaildata, user_id) {

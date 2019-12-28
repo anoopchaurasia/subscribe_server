@@ -119,16 +119,6 @@ fm.Class("Message", function (me) {
         });
     }
 
-    async function fetchSize(atts, size_arr=[]){
-        if(Array.isArray(atts)) {
-            atts.forEach(x=> fetchSize(x, size_arr));
-            return size_arr;
-        }
-        size_arr.push({size:atts.size, part_id: atts.partID})
-        return size_arr;
-    }
-
-
     async function parseMessage(msg) {
         let [atts, parsed] = await Promise.all([
             new Promise(resolve => {
@@ -156,18 +146,6 @@ fm.Class("Message", function (me) {
         return parsed;
     }
 
-    Static.getEmailListsBySize = async function (imap, smallerThan, largerThan) {
-
-        let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
-        smallerThan = smallerThan * 1000000;
-        largerThan = largerThan * 1000000;
-        return {
-            seen: await search(imap, ["SEEN", ['LARGER', largerThan], ['SMALLER', smallerThan], ['SINCE', since]]),
-            unseen: await search(imap, ["UNSEEN", ['LARGER', largerThan], ['SMALLER', smallerThan], ['SINCE', since]])
-
-        }
-    };
-
     Static.getALlEmailList = async function (imap, trackedUser) {
         if (trackedUser && trackedUser.last_msgId) {
             return {
@@ -180,51 +158,4 @@ fm.Class("Message", function (me) {
             unseen: await search(imap, ["UNSEEN"])
         }
     };
-
-    Static.getUIDByBeforeOrAfterParticularDate = async function (imap, beforeOrAfter, date) {
-        return {
-            seen: await search(imap, ["SEEN", [beforeOrAfter, date]]),
-            unseen: await search(imap, ["UNSEEN", [beforeOrAfter, date]])
-        }
-    };
-
-    Static.getUIDByBetweenDate = async function (imap, since, before) {
-        console.log(await search(imap, ["SEEN", ['SINCE', since], ['BEFORE', before]]))
-        return {
-            seen: await search(imap, ["SEEN", ['SINCE', since], ['BEFORE', before]]),
-            unseen: await search(imap, ["UNSEEN", ['SINCE', since], ['BEFORE', before]])
-        }
-    };
-
-    Static.getAllUID = async function (imap) {
-        let since = new Date(Date.now() - TWO_MONTH_TIME_IN_MILI);
-        return {
-            seen: await search(imap, ["SEEN", ['SINCE', since]]),
-            unseen: await search(imap, ["UNSEEN", ['SINCE', since]])
-        }
-    };
-
-
-    Static.getBatchMessageAndReturnEmail = async function (imap, message_ids, detector) {
-        return new Promise((resolve, reject) => {
-            const fetch = imap.fetch(message_ids, {
-                bodies: '',
-                struct: true
-            });
-            const msgs = [];
-            fetch.on('message', async function (msg, seqNo) {
-                msgs.push(1)
-                detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
-                msgs.pop();
-                msgs.length === 0 && ended && resolve();
-            });
-            let ended = false;
-            fetch.on('end', async function () {
-                console.log("end")
-                ended = true;
-                msgs.length === 0 && resolve();
-            });
-        });
-    };
-
 })

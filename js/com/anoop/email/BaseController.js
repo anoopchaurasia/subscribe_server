@@ -20,6 +20,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
 
     Static.UserModel = User;
     Static.TokenModel = Token;
+    Static.EmailDataModel = EmailData;
+
     Static.sendToAppsFlyer  =async function(user_id, event_name, event_value){
         AppsflyerEvent.sendEventToAppsflyer(user_id, event_name, event_value);
     };
