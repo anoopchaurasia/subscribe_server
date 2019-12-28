@@ -84,7 +84,7 @@ fm.Class('BaseScraper', function (me, BaseController, RedisDB) {
         return await BaseController.getUserActionData(user_id);
     }
     this.storEmailData = async function(data,user_id){
-        await BaseController.storeEmailData(data,user_id);
+        return await BaseController.storeEmailData(data,user_id);
     }
 
     this.updateLastTrackMessageId = async function(user_id,msg_id){

@@ -14,11 +14,11 @@ fm.Class("EmailData>.BaseModel", function(me){
         clearTimeout(update_save_timeout);
         serving_array.push([query, {$set:set}]);
         if(serving_array.length==200) {
-            bulkSave(serving_array);
+            await bulkSave(serving_array);
             serving_array = [];
         }
-        update_save_timeout = setTimeout(()=>{
-            bulkSave(serving_array);
+        update_save_timeout = setTimeout(async ()=>{
+            await bulkSave(serving_array);
             serving_array = [];
         }, 10000)
     };
@@ -37,12 +37,12 @@ fm.Class("EmailData>.BaseModel", function(me){
         }, 10000)
     };
 
-    function bulkSave(serving_array) {
+    async function bulkSave(serving_array) {
         var bulk = mongo_emaildata.collection.initializeOrderedBulkOp();
         serving_array.forEach(([query, set])=>{
             bulk.find(query).upsert().update(set);
         });
-        bulk.execute(function (error) {
+        await bulk.execute(function (error) {
             if(error) return console.error(error, "while saving emaildata for user");
             console.log("saved emaildata for user", serving_array.length);
         });
