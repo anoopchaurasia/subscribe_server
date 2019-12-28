@@ -47,7 +47,7 @@ fm.Class("EmailData>.BaseModel", function(me){
             email_id: emaildata.email_id,
             subject: emaildata.subject,
             size: emaildata.size,
-            receivedDate: emaildata.receivedDate,
+            receivedDate:  typeof emaildata.receivedDate==="string"? new Date(emaildata.receivedDate): emaildata.receivedDate,
             status:emaildata.status,
             labelIds:emaildata.labelIds,
             box_name:emaildata.box_name,
