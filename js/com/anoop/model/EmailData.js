@@ -24,17 +24,8 @@ fm.Class("EmailData>.BaseModel", function(me){
     };
     
     Static.updateForDelete = async function (query, set) {
-        clearTimeout(update_save_timeout);
         me.updateQueryValidation(query);
-        serving_array.push([query, {$set:set}]);
-        if(serving_array.length==200) {
-            bulkSave(serving_array);
-            serving_array = [];
-        }
-        update_save_timeout = setTimeout(()=>{
-            bulkSave(serving_array);
-            serving_array = [];
-        }, 10000)
+        await mongo_emaildata.updateMany(query, {$set: set}).exec()
     };
 
     async function bulkSave(serving_array) {
