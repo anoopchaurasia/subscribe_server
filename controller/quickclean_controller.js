@@ -277,7 +277,8 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
                             "subject": "$subject",
                             "status": "$status",
                             "size": "$size",
-                            "email_id": "$email_id"
+                            "email_id": "$email_id",
+                            
                         }
                     }, count: { $sum: 1 }
                 }

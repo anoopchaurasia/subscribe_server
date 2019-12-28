@@ -322,7 +322,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let emails = await scraper.scrapAll(myImap.box.uidnext);
         let names = await myImap.getLabels();
         lastmsg_id = myImap.box.uidnext;
-        myImap.imap.end(myImap.imap);
+        // myImap.imap.end(myImap.imap);
+        await closeImap(myImap);
         console.log(names)
         await names.asyncForEach(async element => {
             if (element != "INBOX" &&  element != '[Gmail]/All Mail'){//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
@@ -334,7 +335,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                    }
                    let scraper = Scraper.new(myImap);
                    let emails = await scraper.scrapAll(myImap.box.uidnext);
-                   myImap.imap.end(myImap.imap);
+                //    myImap.imap.end(myImap.imap);
+                   await closeImap(myImap);
                } catch (error) {
                    console.log(error)
                }
