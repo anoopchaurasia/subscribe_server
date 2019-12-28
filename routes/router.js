@@ -10,7 +10,7 @@ router.use('/imap', noauth, require('../controller/imap_controller'));
 router.use('/imap', authenticate, require('../controller/imap_controller_auth')); 
 router.use('/imap', authenticate, require('../controller/imap_action_controller')); 
 router.use('/imap', authenticate, require('../controller/imap_quick_clean_controller')); 
-let jwt = require("jwt");
+let jwt = require("jsonwebtoken");
 async function noauth(req, res, next){
     BaseController.sendToAppsFlyer("temp@temp.com", req.originalUrl.split("/").join("_"));
     next();
