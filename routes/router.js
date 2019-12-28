@@ -18,7 +18,7 @@ async function noauth(req, res, next){
 
 async function authenticate(req, res, next){
     let token = req.body.authID || req.body.token;
-    if(!token && jwt_login(req, res)) {
+    if(!token && jwt_login(req, res, next)) {
         return;
     }
     let user = await BaseController.TokenModel.getUserByToken(token);
@@ -40,7 +40,7 @@ async function jwt_login (req, res, next) {
     if(token.startsWith('Bearer ')){
         token = token.split(' ')[1];
     }
-    jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET, (err, data) => {
+    jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET, async (err, data) => {
         if (err) {
             console.error(err.message,err.stack,'jwtTokenVerify');
             res.status(401).json({
@@ -48,9 +48,10 @@ async function jwt_login (req, res, next) {
                 msg: "unauthorised user"
             });
         } else {
-            req.token = data;
+            let user = await BaseController.UserModel.getRedisUser(data.user_id);
+            req.user = user;
+            next();
         }
-        next();
     })
     return true;
 }

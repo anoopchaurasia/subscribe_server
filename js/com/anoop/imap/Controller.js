@@ -306,7 +306,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         
         let token;
         if(clientAccessMode == 'web'){
-            token = await me.createTokenWeb(user, ipaddress);
+            token = await me.TokenModel.createTokenWeb(user, ipaddress);
         }else{
             token = await me.createToken(user, ipaddress);
         }

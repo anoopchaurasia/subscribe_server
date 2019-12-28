@@ -3,6 +3,7 @@ const uniqid = require('uniqid');
 const token_model = require('../../../../models/tokeno');
 fm.Import("...jeet.memdb.RedisDB");
 fm.Import(".User")
+let jwt = require("jsonwebtoken");
 fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
     this.setMe = _me => me = _me;
 
@@ -42,5 +43,34 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
         RedisDB.base.setExpire("t_"+token.token, 60*60*1000);
         return await User.getRedisUser(token.user_id.toHexString());      
     };
+
+        
+    Static.createTokenWeb = async function (user, ipaddress) {
+        let token = await me.generateJWTToken({ user_id: user._id, email: user.email });
+        new token_model({
+            refresh_token: token.refreshToken,
+            user_id: user._id,
+            last_used_at: new Date(),
+            ipaddress: ipaddress || ''
+        }).save();
+        
+        return {
+            token: token,
+            user: {
+                email: user.email,
+                email_client: user.email_client,
+                primary_email: user.primary_email,
+            }
+        }
+    }
+
+    Static.generateJWTToken = async (user) => {
+        let fiveHoursLater = new Date(new Date().setHours(new Date().getHours() + 5)).toString();
+        return {
+            "accessToken": jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: '5hr' }),
+            "refreshToken": jwt.sign(user, process.env.JWT_REFRESH_TOKEN_SECRET, { expiresIn: '720hr' }),
+            "accessTokenExpireTime": fiveHoursLater
+        }
+    }
 });
 
