@@ -4,8 +4,8 @@ require("jsfm");
 fm.basedir = process.cwd() + "/js";
 global.basedir = process.cwd();
 global.INVALID_LOGIN_REGEX = /user left system|Application-specific password|Please log in via your web|Invalid credentials|Web login required|Invalid login or password|Authentication failed|enabled for IMAP use/i
-var Raven = require('raven');
-Raven.config(process.env.SENTRY_URL || 'https://edb20d0741384f7e8ef743a5a22659d5@sentry.expensebit.com/13').install();
+const Sentry = require('@sentry/node');
+Sentry.init({ dsn: 'https://7f6ed7e0c6854fb5b844256ee24540a6@sentry.expensebit.com/21' })
 let mongoose = require('mongoose');
 mongoose.connect(process.env.MONGO_SERVER, { useNewUrlParser: true });
 let on_connect;

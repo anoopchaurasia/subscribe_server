@@ -9,6 +9,7 @@
   "author": "jitendra virani",
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "^5.5.0",
     "axios": "^0.18.1",
     "cheerio": "^1.0.0-rc.2",
     "crypto": "^1.0.1",
@@ -21,7 +22,6 @@
     "mailparser": "^2.4.3",
     "mongoose": "^5.8.3",
     "randomstring": "^1.1.5",
-    "raven": "^2.6.4",
     "redis": "^2.8.0",
     "simple-oauth2": "^2.2.1",
     "uniqid": "^5.0.3"

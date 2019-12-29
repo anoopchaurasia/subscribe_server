@@ -10,7 +10,7 @@ fm.Import("..model.EmailData");
 fm.Import("..model.EmailTrack");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
-var Raven = require('raven');
+const Sentry = require('@sentry/node');
 const userAppLog = require('../../../../models/userAppLog');
 const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
 
@@ -40,7 +40,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     }
 
     Static.logToSentry = function(err, options){
-        Raven.captureException(err, options);
+        Sentry.captureException(err, options);
     };
 
     Static.sendToAppsFlyer  =async function(user_id, event_name, event_value){
