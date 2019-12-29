@@ -31,7 +31,7 @@ fm.Include("com.anoop.imap.Controller", function(){
         action.error_count = action.error_count || 0
         action.error_count++;
         if(action.error_count) {
-            ImapController.logToSentry(err, {list: 'imap_user_actions', tags: {user_domain: action.args[0], from: action.args[1].split("@")[1], action: action.action } })
+            ImapController.logToSentry(err, {list: 'imap_user_actions', error_count: action.error_count, tags: {user_domain: action.args[0], from: action.args[1].split("@")[1], action: action.action } })
         }
         RedisDB.lPush('imap_user_actions', JSON.stringify(action))
     }
