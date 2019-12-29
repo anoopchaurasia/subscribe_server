@@ -2,14 +2,13 @@
 const express = require('express');
 const router = express.Router();
 const DeviceInfo = require('../models/deviceoInfo');
-const userAppLog = require('../models/userAppLog');
 const providerModel = require('../models/provider');
 const fcmToken = require('../models/fcmoToken');
 const unlistedProviderModel = require('../models/unlistedProvider');
 const loginAnalyticModel = require('../models/loginAnalytic');
 const uniqid = require('uniqid');
 var legit = require('legit');
-var Raven = require('raven');
+
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 
@@ -20,13 +19,13 @@ router.post('/loginWithImap', async (req, res) => {
         let ipaddress = req.header('x-forwarded-for') || req.connection.remoteAddress;
         let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile,  req.query.client, ipaddress).catch(err => {
             console.error(err.message, err, "imap_connect_error", req.body.username);
-            Raven.captureException(err, { tags: { email_domain: req.body.username.split("@")[1], pass_length: req.body.password.length } });
+            Controller.logToSentry(err, { tags: { email_domain: req.body.username.split("@")[1], pass_length: req.body.password.length } })
             let attribute = {
                 "type": "error",
                 "error_message": err.message,
                 "message": "login_failed"
             };
-            createLogForUser(req.body.username, "login", "login_page", "imap_login", attribute, "loginWithImap");
+            Controller.createLogForUser(req.body.username, "login", "login_page", "imap_login", attribute, "loginWithImap");
             if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
                 return res.status(403).json({
                     error: true,
@@ -82,20 +81,7 @@ router.post('/loginWithImap', async (req, res) => {
     }
 });
 
-let createLogForUser = async (email_id, action_name, action_page, action_event, attribute, api_name) => {
-    var userLog = new userAppLog({
-        email_id,
-        attribute,
-        created_at: new Date(),
-        action_name,
-        action_page,
-        action_event,
-        api_name
-    });
-    await userLog.save().catch(err => {
-        console.error(err.message, err.stack);
-    });
-}
+
 
 router.post('/saveOnLaunchDeviceData', async (req, res) => {
     let deviceData = req.body.data;
@@ -457,7 +443,7 @@ router.all('/findEmailProvider', async (req, res) => {
                 "error_message": null,
                 "message": "provider not found"
             };
-            createLogForUser(req.body.emailId, "provider", "email_entry_page", "find_provider", attribute, "findEmailProvider");
+            Controller.createLogForUser(req.body.emailId, "provider", "email_entry_page", "find_provider", attribute, "findEmailProvider");
             res.status(404).json({
                 error: true,
                 status: 404,
@@ -471,7 +457,7 @@ router.all('/findEmailProvider', async (req, res) => {
             "error_message": error.message,
             "message": "provider not found"
         };
-        createLogForUser(req.body.emailId, "provider", "email_entry_page", "find_provider", attribute, "findEmailProvider");
+        Controller.createLogForUser(req.body.emailId, "provider", "email_entry_page", "find_provider", attribute, "findEmailProvider");
         res.status(401).json({
             error: true,
             data: null,

@@ -8,6 +8,7 @@ fm.Include("com.anoop.imap.Controller", function(){
             await ImapController.updateEmailDetailByFromEmail(...action.args);
         }catch(e) {
             console.error(e);
+            ImapController.logToSentry(e, {list: 'db_user_actions', tags: {user_id: action.args[0], from: action.args[1].split("@")[1], action: action.args[2] } })
             if(!e.message.match(global.INVALID_LOGIN_REGEX)) {
                 console.warn("user db_user_actions crashed restarting reason: ", e.message, data[1]);
                 RedisDB.lPush('db_user_actions', data[1])

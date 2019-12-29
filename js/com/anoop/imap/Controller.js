@@ -18,8 +18,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         if(onDisconnect) {
             myImap.keepCheckingConnection(function onFail(){
                 onDisconnect();
-                throw new Error("imap disconnected!");
-            }, 90*1000);
+                setTimeout(()=>{
+                    throw new Error("imap disconnected!");
+                }, 1000)
+            }, 120*1000);
         }
 
         await myImap.connect(provider).catch(async err => {

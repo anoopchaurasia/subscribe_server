@@ -10,6 +10,8 @@ fm.Import("..model.EmailData");
 fm.Import("..model.EmailTrack");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
+var Raven = require('raven');
+const userAppLog = require('../../../../models/userAppLog');
 const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
 
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, EmailData,EmailTrack, RedisDB, BaseRedisData) {
@@ -21,6 +23,25 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.UserModel = User;
     Static.TokenModel = Token;
     Static.EmailDataModel = EmailData;
+
+    Static.createLogForUser = async function async (email_id, action_name, action_page, action_event, attribute, api_name) {
+        var userLog = new userAppLog({
+            email_id,
+            attribute,
+            created_at: new Date(),
+            action_name,
+            action_page,
+            action_event,
+            api_name
+        });
+        await userLog.save().catch(err => {
+            console.error(err.message, err.stack);
+        });
+    }
+
+    Static.logToSentry = function(err, options){
+        Raven.captureException(err, options);
+    };
 
     Static.sendToAppsFlyer  =async function(user_id, event_name, event_value){
         AppsflyerEvent.sendEventToAppsflyer(user_id, event_name, event_value);
