@@ -110,7 +110,7 @@ fm.Class("Redis", function (me) {
         }
         next();
         process.on('SIGINT', function() {
-         //   server_shutting = true;
+            shut_server = true;
             console.log(listner_count, "shutdown")
             if(listner_count==0) {
                 console.log("graceful shuting server");
