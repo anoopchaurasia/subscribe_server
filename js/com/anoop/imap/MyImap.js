@@ -109,7 +109,10 @@ fm.Class("MyImap", function (me) {
                 // console.log("connected again", me.user.email);
                 resolve(me.imap);
             });
-            me.imap.once('error', err => reject(err));
+            me.imap.once('error', err =>{
+                clearInterval(me.interval_const);
+                reject(err);
+            } );
             me.imap.connect();
         });
     };

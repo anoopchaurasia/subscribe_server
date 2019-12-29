@@ -27,7 +27,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 console.warn("leaving user as not loggedin reason:", err.message, user.email)
                 await me.UserModel.updateInactiveUser(user, {inactive_reason: err.message, inactive_at: new Date}, {_id: user._id, inactive_at: null});
             }
-            throw new Error(err);
+            throw new Error(err.message, user.email);
         });
         console.timeLog("openFolder")
         console.log("imap connected");
