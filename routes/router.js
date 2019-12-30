@@ -34,7 +34,6 @@ async function authenticate(req, res, next){
 
 async function jwt_login (req, res, next) {
     let token = req.headers["x-auth-token"] || req.headers['authorization'];
-    return false
     if (!token) {
         return false;
     }

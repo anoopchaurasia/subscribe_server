@@ -31,4 +31,8 @@ router.get('/getAppVersion', async (req, res) => {
     }
 });
 
+router.get("/refreshToken", async (req, res)=>{
+
+});
+
 module.exports = router

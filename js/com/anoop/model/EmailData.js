@@ -40,6 +40,92 @@ fm.Class("EmailData>.BaseModel", function(me){
         });
     }
 
+    Static.getBySender = async function({start_date, end_date, user, offset, limit }){
+        let match = {
+            "user_id": user._id,
+            is_delete: false,
+        };
+        if(start_date) {
+            match.receivedDate = {$gte: new Date(start_date)}
+        }
+        if(end_date) {
+            match.receivedDate = {$lte: new Date(end_date)}
+        }
+        return await mongo_emaildata.aggregate([{
+                $match: {
+                   ...match
+                }
+            }, {
+                $group: {
+                    _id: {
+                        "from_email": "$from_email"
+                    },
+                    data: {
+                        $push: {
+                            "labelIds": "$labelIds",
+                            "subject": "$subject",
+                        },
+                    },
+                    size: {
+                        $sum: "$size"
+                    },
+                    count: {
+                        $sum: 1
+                    }
+                }
+            },
+            {
+                $sort: {
+                    "count": -1
+                }
+            },
+            { $skip : offset },
+            { $limit : limit },
+            {
+                "$project": {
+                    'subject': {
+                        "$slice": ["$data.subject", 5]
+                    },
+                    'labelIds': {
+                        "$slice": ["$data.labelIds", 5]
+                    }
+                },
+            },
+        ])
+    };
+
+
+    Static.getIdsByFromEmail = async function({start_date, end_date, user, from_emails}){
+        let match = {
+            "user_id": user._id,
+            is_delete: false,
+            from_email: {
+                $in: from_emails
+            },
+        };
+        if(start_date) {
+            match.receivedDate = {$gte: new Date(start_date)}
+        }
+        if(end_date) {
+            match.receivedDate = {$lte: new Date(end_date)}
+        }
+        return await mongo_emaildata.aggregate([{
+                $match: {
+                    ...match
+                }
+            }, {
+                $group: {
+                    _id: "$box_name",
+                    data: {
+                        $push: {
+                            "email_id": "$email_id"
+                        }
+                    }
+                }
+            }
+        ]);
+    };
+
 
     Static.storeEamil = function (emaildata, user_id) {
         return {
