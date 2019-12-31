@@ -17,6 +17,9 @@ async function noauth(req, res, next){
 }
 
 async function authenticate(req, res, next){
+    if(req.user) {
+        return next();
+    }
     let token = req.body.authID || req.body.token;
     if(!token) {
         let data;

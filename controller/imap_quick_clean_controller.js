@@ -227,7 +227,8 @@ router.get("/by_sender", async (req, res) => {
 });
 
 router.post("/delete_by_sender",async (req, res)=>{
-    let {start_date, end_date, from_emails} = req.body.start_date;
+
+    let {start_date, end_date, from_emails} = req.body;
     const user = req.user;
     try{
         let emails = await Controller.EmailDataModel.getIdsByFromEmail({

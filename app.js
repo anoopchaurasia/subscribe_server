@@ -21,6 +21,16 @@ app.get('/', function (req, res) {
 });
 
 
+app.get('/routes', function (req, res) {
+    res.json( app._router.stack
+    .map(r => {
+      return {
+        method: Object.keys(r.route.methods)[0].toUpperCase(),
+        path: r.route.path
+      };
+    }))
+});
+
 app.listen(process.env.SERVER_PORT, process.env.SERVER_HOST||"localhost", function (err) {
     if (err) {
         throw err
