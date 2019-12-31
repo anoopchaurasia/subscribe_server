@@ -78,6 +78,28 @@ fm.Class("Redis", function (me) {
         // blpop block entire client for create new client
         let client = require('redis').createClient({ host: process.env.IMAP_REDIS_HOST });
         let shut_server = false;
+        let original_key = key+"";
+        key = Array.isArray(key)? key : [key]
+        key.push(0, async (err, data) => {
+            listner_count++;
+            if (err) {
+                console.error(err);
+                listner_count--;
+                return next()
+            }
+            try {
+                console.time(original_key)
+                console.timeLog(original_key);
+                await cb(data);
+                console.timeEnd(original_key);
+            } catch (e) {
+                console.timeEnd(original_key);
+                console.error(e, original_key, "BLPopListner")
+            } finally {
+                listner_count--;
+                next();
+            }
+        })
         async function next() {
             if(shut_server === true) {
                 if(listner_count==0) {
@@ -86,27 +108,8 @@ fm.Class("Redis", function (me) {
                 }
                 return;
             }
-            console.log("getting next", key);
-            client.blpop(key, 0, async (err, data) => {
-                listner_count++;
-                if (err) {
-                    console.error(err);
-                    listner_count--;
-                    return next()
-                }
-                try {
-                    console.time(key)
-                    console.timeLog(key);
-                    await cb(data);
-                    console.timeEnd(key);
-                } catch (e) {
-                    console.timeEnd(key);
-                    console.error(e, key, "BLPopListner")
-                } finally {
-                    listner_count--;
-                    next();
-                }
-            });
+            console.log("getting next", original_key);
+            client.blpop(...key);
         }
         next();
         process.on('SIGINT', function() {

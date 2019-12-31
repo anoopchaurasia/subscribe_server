@@ -21,8 +21,8 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Imap listener",
-            "program": "${workspaceFolder}/imap_listener.js",
+            "name": "Imap process",
+            "program": "${workspaceFolder}/process.js",
         },
         
         {
