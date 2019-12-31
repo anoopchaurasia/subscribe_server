@@ -67,7 +67,7 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
     Static.generateJWTToken = async (user) => {
         let fiveHoursLater = new Date(new Date().setHours(new Date().getHours() + 5)).toString();
         return {
-            "accessToken": jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: '5hr' }),
+            "accessToken": jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: '1hr' }),
             "refreshToken": jwt.sign(user, process.env.JWT_REFRESH_TOKEN_SECRET, { expiresIn: '720hr' }),
             "accessTokenExpireTime": fiveHoursLater
         }
