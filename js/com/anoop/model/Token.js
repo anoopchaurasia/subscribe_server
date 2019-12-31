@@ -22,7 +22,7 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
             "created_at": new Date()
         });
         await tokmodel.save().catch(err => {
-            console.error(err.message, err.stack);
+            console.error   (err.message, err.stack);
         });
         return {
             "tokenid": token_uniqueid,

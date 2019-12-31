@@ -18,8 +18,13 @@ async function noauth(req, res, next){
 
 async function authenticate(req, res, next){
     let token = req.body.authID || req.body.token;
-    if(!token && jwt_login(req, res, next)) {
-        return;
+    if(!token) {
+        let data;
+        if((data=await jwt_login(req).catch(err=>console.error(err.message)))) {
+            req.user = await BaseController.UserModel.getRedisUser(data.user_id);
+            return next();
+        }
+        return res.status(401).json({error:"auth failed"});
     }
     let user = await BaseController.TokenModel.getUserByToken(token);
     if(!user) {
@@ -32,28 +37,15 @@ async function authenticate(req, res, next){
     next();
 }
 
-async function jwt_login (req, res, next) {
-    let token = req.headers["x-auth-token"] || req.headers['authorization'];
+async function jwt_login (req) {
+    let token = req.headers['authorization'];
     if (!token) {
-        return false;
+        throw new Error("no token available");
     }
     if(token.startsWith('Bearer ')){
         token = token.split(' ')[1];
     }
-    jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET, async (err, data) => {
-        if (err) {
-            console.error(err.message,err.stack,'jwtTokenVerify');
-            res.status(401).json({
-                error: true,
-                msg: "unauthorised user"
-            });
-        } else {
-            let user = await BaseController.UserModel.getRedisUser(data.user_id);
-            req.user = user;
-            next();
-        }
-    })
-    return true;
-}
+    return await jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
+ }
 
 module.exports = router;

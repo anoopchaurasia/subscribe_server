@@ -88,7 +88,9 @@ fm.Class("EmailData>.BaseModel", function(me){
                     },
                     'labelIds': {
                         "$slice": ["$data.labelIds", 5]
-                    }
+                    },
+                    size: 1,
+                    count:1
                 },
             },
         ])

@@ -10,6 +10,9 @@ This api will get code/authentication code from application and using that appli
 code extracting token and user data. and saving and updating into database.
 */
 
+let jwt = require("jsonwebtoken");
+fm.Include("com.anoop.email.BaseController");
+let BaseController = com.anoop.email.BaseController;
 router.get('/getAppVersion', async (req, res) => {
     try {
         let versionData = await AppVersionModel.findOne().sort({ version_name: -1 }).limit(1).catch(err => {
@@ -32,7 +35,17 @@ router.get('/getAppVersion', async (req, res) => {
 });
 
 router.get("/refreshToken", async (req, res)=>{
-
+    jwt.verify(req.query.refresh_token, process.env.JWT_REFRESH_TOKEN_SECRET, async (err, data) => {
+        if (err) {
+            console.error(err.message,err.stack,'jwtTokenVerify');
+            res.status(401).json({
+                error: true,
+                msg: "unauthorised user"
+            });
+        } else {
+           res.json(BaseController.TokenModel.generateJWTToken(data));
+        }
+    })
 });
 
 module.exports = router

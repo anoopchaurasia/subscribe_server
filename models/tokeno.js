@@ -7,7 +7,10 @@ var token = new Schema({
     token: {
         type: String
     },
-    created_at: Date
+    refresh_token: String,
+    last_used_at: Date,
+    ipaddress: String,
+    created_at: String,
 });
 
 
