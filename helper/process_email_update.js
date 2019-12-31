@@ -13,7 +13,7 @@ fm.Include("com.anoop.imap.Controller", function(){
     async function handleLogin(user_id) {
         try{
             let user = await ImapController.UserModel.getRedisUser(user_id);
-            ImapController.extractEmail(user,  function(){
+            await ImapController.extractEmail(user,  function(){
                 RedisDB.lPush('process_user_login', user_id);
             }).catch(err => {
                 console.error(err.message, err.stack);
