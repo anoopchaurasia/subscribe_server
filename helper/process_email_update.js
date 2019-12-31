@@ -2,7 +2,7 @@
 fm.Include("com.anoop.imap.Controller", function(){
     let RedisDB = com.jeet.memdb.RedisDB;
     let ImapController = com.anoop.imap.Controller;
-    RedisDB.BLPopListner(['email_update_for_user', "process_user_login"], async function([key ,data]){
+    RedisDB.BLPopListner(["process_user_login", 'email_update_for_user'], async function([key ,data]){
         console.log(key, data);
         switch(key) {
             case 'email_update_for_user': return await handleUpdate(data);
