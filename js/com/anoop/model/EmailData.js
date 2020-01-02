@@ -134,7 +134,7 @@ fm.Class("EmailData>.BaseModel", function(me){
         return {
             user_id,
             from_email: emaildata.from_email,
-            email_id: emaildata.email_id,
+            email_id: emaildata.email_id+"",
             subject: emaildata.subject,
             size: emaildata.size,
             receivedDate:  typeof emaildata.receivedDate==="string"? new Date(emaildata.receivedDate): emaildata.receivedDate,
