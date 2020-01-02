@@ -30,6 +30,7 @@ fm.Class("EmailData>.BaseModel", function(me){
     };
 
     async function bulkSave(serving_array) {
+
         if(serving_array.length==0) return
         var bulk = mongo_emaildata.collection.initializeOrderedBulkOp();
         serving_array.forEach(([query, set])=>{
