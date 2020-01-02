@@ -95,106 +95,14 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
         let start_date = req.body.start_date;
         let end_date = req.body.end_date;
         const user = req.user;
-        let emails;
-        if (start_date == null || end_date == null) {
-            emails = await EmailDataModel.aggregate([{
-                $match: {
-                    "user_id": user._id,
-                    deleted_at:null
-                }
-            }, {
-                $group: {
-                    _id: {
-                        "size_group": "$size_group"
-                    },
-                    data: {
-                        $push: {
-                            "subject": "$subject",
-                            "size": "$size",
-                            "email_id": "$email_id",
-                            "from_email": "$from_email",
-                            "status": "$status",
-                        }
-                    },
-                    count: {
-                        $sum: 1
-                    }
-                }
-            },
-            {
-                $sort: {
-                    "count": -1
-                }
-            },
-            {
-                $project: {
-                    "from_email": 1,
-                    "count": 1,
-                    "subject": 1,
-                    "size": 1,
-                    "email_id": 1,
-                    "status": 1,
-                    data: 1
-                }
-            }
-            ]);
-        } else {
-            emails = await EmailDataModel.aggregate([{
-                $match: {
-                    $and: [{
-                        "user_id": user._id
-                    }, {
-                        deleted_at:null
-                    },
-                    {
-                        receivedDate: {
-                            $gte: new Date(start_date)
-                        }
-                    }, {
-                        receivedDate: {
-                            $lte: new Date(end_date)
-                        }
-                    }
-                    ]
-                }
-            }, {
-                $group: {
-                    _id: {
-                        "size_group": "$size_group"
-                    },
-                    data: {
-                        $push: {
-                            "subject": "$subject",
-                            "size": "$size",
-                            "email_id": "$email_id",
-                            "from_email": "$from_email",
-                            "status": "$status",
-                        }
-                    },
-                    count: {
-                        $sum: 1
-                    }
-                }
-            },
-            {
-                $sort: {
-                    "count": -1
-                }
-            },
-            {
-                $project: {
-                    "from_email": 1,
-                    "count": 1,
-                    "subject": 1,
-                    "size": 1,
-                    "email_id": 1,
-                    "status": 1,
-                    data: 1
-                }
-            }
-            ]);
-        }
-        console.log(emails.length);
+        let emails = await Controller.EmailDataModel.getBySize({
+            start_date, end_date, user
+        });
+        emails.forEach(element => {
+            let total = element.data.filter(x => x.status == "read").length;
+            element.readcount = total;
+            delete element.data;
+        });
         res.status(200).json({
             error: false,
             data: emails
@@ -213,14 +121,11 @@ router.get("/by_sender", async (req, res) => {
         let emails = await Controller.EmailDataModel.getBySender({
             start_date, end_date, user, offset, limit
         });
-        let emailData = [];
         emails.forEach(element => {
-            let total = element.data.filter(x=>x.status=="read").length;
+            let total = element.data.filter(x => x.status == "read").length;
             element.readcount = total;
             delete element.data;
-            emailData.push(element);
         });
-        console.log(emailData)
         res.status(200).json({
             error: false,
             data: emails
@@ -241,7 +146,7 @@ router.post("/delete_by_sender", async (req, res) => {
         // console.log(emails)
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
-             await Controller.deleteQuickMailNew(user, ids, data._id);
+            await Controller.deleteQuickMailNew(user, ids, data._id);
         });
         res.status(200).json({
             error: false,
@@ -264,7 +169,7 @@ router.post("/delete_by_label", async (req, res) => {
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
             console.log("deleting ", ids.length, "from ", data._id);
-             await Controller.deleteQuickMailNew(user, ids, data._id);
+            await Controller.deleteQuickMailNew(user, ids, data._id);
         });
         res.status(200).json({
             error: false,
@@ -286,7 +191,7 @@ router.post("/delete_by_size", async (req, res) => {
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
             console.log("deleting ", ids.length, "from ", data._id);
-             await Controller.deleteQuickMailNew(user, ids, data._id);
+            await Controller.deleteQuickMailNew(user, ids, data._id);
         });
         res.status(200).json({
             error: false,
@@ -300,153 +205,6 @@ router.post("/delete_by_size", async (req, res) => {
 
 
 
-/* This api will return the emails based on the sender_email and also return total number of email by sender*/
-router.post('/getEmailsBySenderFromDb', async (req, res) => {
-    try {
-        let start_date = req.body.start_date;
-        let end_date = req.body.end_date;
-        const user = req.user;
-        let emails;
-        if (start_date == null || end_date == null) {
-            emails = await EmailDataModel.aggregate([{
-                $match: {
-                    "user_id": user._id,
-                    deleted_at:null
-                }
-            }, {
-                $group: {
-                    _id: {
-                        "from_email": "$from_email"
-                    },
-                    data: {
-                        $push: {
-                            "subject": "$subject",
-                            "size": "$size",
-                            "email_id": "$email_id",
-                            "status": "$status",
-                        }
-                    },
-                    count: {
-                        $sum: 1
-                    }
-                }
-            },
-            {
-                $sort: {
-                    "count": -1
-                }
-            },
-            {
-                $project: {
-                    "count": 1,
-                    "subject": 1,
-                    "size": 1,
-                    "email_id": 1,
-                    "status": 1,
-                    data: 1
-                }
-            }
-            ]);
-        } else {
-            emails = await EmailDataModel.aggregate([{
-                $match: {
-                        "user_id": user._id,
-                        deleted_at:null,
-                        receivedDate: {
-                            $gte: new Date(start_date),
-                            $lte: new Date(end_date)
-                        }
-                  }
-            }, {
-                $group: {
-                    _id: {
-                        "from_email": "$from_email"
-                    },
-                    data: {
-                        $push: {
-                            "subject": "$subject",
-                            "size": "$size",
-                            "email_id": "$email_id"
-                        }
-                    },
-                    count: {
-                        $sum: 1
-                    }
-                }
-            },
-            {
-                $sort: {
-                    "count": -1
-                }
-            },
-            {
-                $project: {
-                    "count": 1,
-                    "subject": 1,
-                    "size": 1,
-                    "email_id": 1,
-                    data: 1
-                }
-            }
-            ]);
-        }
-        console.log(emails.length);
-        res.status(200).json({
-            error: false,
-            data: emails
-        });
-    } catch (err) {
-        console.log(err);
-    }
-});
-
-
-/* This api will return the emails based on the Date from database */
-router.post('/getEmailsByDateFromDb', async (req, res) => {
-    try {
-        let {
-            data
-        } = req.body;
-        const user = req.user;
-        let emails;
-        if (data.isCustom) {
-            emails = await EmailDataModel.find({
-                user_id: user._id,
-                receivedDate: {
-                    $gte: data.since,
-                    $lte: data.before
-                },
-               deleted_at: null
-            });
-        } else {
-            if (data.beforeOrAfter === 'BEFORE') {
-                emails = await EmailDataModel.find({
-                    user_id: user._id,
-                    receivedDate: {
-                        $lte: data.date
-                    },
-                   deleted_at: null
-                });
-            } else {
-                emails = await EmailDataModel.find({
-                    user_id: user._id,
-                    receivedDate: {
-                        $gte: data.date
-                    },
-                   deleted_at: null
-                });
-            }
-        }
-        res.status(200).json({
-            error: false,
-            data: emails
-        });
-    } catch (err) {
-        console.log(err);
-    }
-});
-
-
 /* This api will return the emails based on the Date from database */
 router.post('/getTotalUnreadMail', async (req, res) => {
     try {
@@ -454,7 +212,7 @@ router.post('/getTotalUnreadMail', async (req, res) => {
         let emails = await EmailDataModel.countDocuments({
             user_id: user._id,
             status: "unread",
-           deleted_at: null
+            deleted_at: null
         });
         let finished = false;
         let is_finished = await Controller.isScanFinishedQuickClean(user._id);
@@ -483,99 +241,14 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
         let start_date = req.body.start_date;
         let end_date = req.body.end_date;
         const user = req.user;
-        console.log(req.body)
-        let emails;
-        if (start_date == null || end_date == null) {
-            emails = await EmailDataModel.aggregate([{
-                $match: {
-                    "user_id": user._id,
-                    deleted_at:null
-                }
-            }, {
-                $group: {
-                    _id: {
-                        "box_name": "$box_name"
-                    },
-                    data: {
-                        $push: {
-                            "subject": "$subject",
-                            "size": "$size",
-                            "email_id": "$email_id",
-                            "from_email": "$from_email",
-                            "status": "$status",
-                        }
-                    },
-                    count: {
-                        $sum: 1
-                    }
-                }
-            },
-            {
-                $sort: {
-                    "count": -1
-                }
-            },
-            {
-                $project: {
-                    "from_email": 1,
-                    "count": 1,
-                    "subject": 1,
-                    "size": 1,
-                    "email_id": 1,
-                    "status": 1,
-                    data: 1
-                }
-            }
-            ]);
-        } else {
-            emails = await EmailDataModel.aggregate([{
-                $match: {
-                        "user_id": user._id,
-                        deleted_at:null,
-                        receivedDate: {
-                            $gte: new Date(start_date),
-                            $lte: new Date(end_date)
-                        }
-
-                }
-            }, {
-                $group: {
-                    _id: {
-                        "box_name": "$box_name"
-                    },
-                    data: {
-                        $push: {
-                            "subject": "$subject",
-                            "size": "$size",
-                            "email_id": "$email_id",
-                            "from_email": "$from_email",
-                            "status": "$status",
-                        }
-                    },
-                    count: {
-                        $sum: 1
-                    }
-                }
-            },
-            {
-                $sort: {
-                    "count": -1
-                }
-            },
-            {
-                $project: {
-                    "from_email": 1,
-                    "count": 1,
-                    "subject": 1,
-                    "size": 1,
-                    "email_id": 1,
-                    "status": 1,
-                    data: 1
-                }
-            }
-            ]);
-        }
-        console.log(emails.length);
+        let emails = await Controller.EmailDataModel.getByLabel({
+            start_date, end_date, user
+        });
+        emails.forEach(element => {
+            let total = element.data.filter(x => x.status == "read").length;
+            element.readcount = total;
+            delete element.data;
+        });
         res.status(200).json({
             error: false,
             data: emails

@@ -91,9 +91,94 @@ fm.Class("EmailData>.BaseModel", function(me){
                     'subject': {
                         "$slice": ["$data.subject", 5]
                     },
-                    // 'labelIds': {
-                    //     "$slice": ["$data.labelIds", 5]
-                    // },
+                    data:1,
+                    size: 1,
+                    count:1
+                },
+            },
+        ])
+    };
+
+
+    Static.getByLabel = async function({start_date, end_date, user }){
+        let match = commonQuery({user, start_date, end_date});
+        return await mongo_emaildata.aggregate([{
+                $match: {
+                   ...match
+                }
+            }, {
+                $group: {
+                    _id: {
+                        "box_name": "$box_name"
+                    },
+                    data: {
+                        $push: {
+                            "subject": "$subject",
+                            "status":"$status"
+                        },
+                    },
+                    size: {
+                        $sum: "$size"
+                    },
+                    count: {
+                        $sum: 1
+                    }
+                }
+            },
+            {
+                $sort: {
+                    "count": -1
+                }
+            },
+            {
+                "$project": {
+                    'subject': {
+                        "$slice": ["$data.subject", 5]
+                    },
+                    data:1,
+                    size: 1,
+                    count:1
+                },
+            },
+        ])
+    };
+
+
+    Static.getBySize = async function({start_date, end_date, user }){
+        let match = commonQuery({user, start_date, end_date});
+        return await mongo_emaildata.aggregate([{
+                $match: {
+                   ...match
+                }
+            }, {
+                $group: {
+                    _id: {
+                        "size_group": "$size_group"
+                    },
+                    data: {
+                        $push: {
+                            "subject": "$subject",
+                            "status":"$status"
+                        },
+                    },
+                    size: {
+                        $sum: "$size"
+                    },
+                    count: {
+                        $sum: 1
+                    }
+                }
+            },
+            {
+                $sort: {
+                    "count": -1
+                }
+            },
+            {
+                "$project": {
+                    'subject': {
+                        "$slice": ["$data.subject", 5]
+                    },
                     data:1,
                     size: 1,
                     count:1
@@ -145,9 +230,7 @@ fm.Class("EmailData>.BaseModel", function(me){
 
     Static.getIdsByFromEmail = async function({start_date, end_date, user, from_emails}){
         let match = commonQuery({user, start_date, end_date});
-        match.from_email= {
-            $in: from_emails
-        }
+        match.from_email= { $in: from_emails }
         return await mongo_emaildata.aggregate([{
                 $match: {
                     ...match
