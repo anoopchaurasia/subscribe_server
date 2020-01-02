@@ -25,12 +25,16 @@ fm.Class("RedisDB>com.anoop.vendor.Redis", function(me) {
         return user_id + '-' + from_email;
     }
 
+    Static.remKey = async function(user_id, keyword) {
+        return await me.base.delKEY(createKey(user_id, keyword)).catch(err=> console.error(err));
+    };
+
     Static.pushData = function(user_id, from_email, data) {
         me.base.pushData(createKey(user_id, from_email), data);
     };
 
-    Static.setExpire = function(user_id, from_email) {
-        me.base.setExpire(createKey(user_id, from_email));
+    Static.setExpire = function(user_id, from_email, time) {
+        me.base.setExpire(createKey(user_id, from_email), time);
     };
 
     Static.setData = function(user_id, keyword, data) {

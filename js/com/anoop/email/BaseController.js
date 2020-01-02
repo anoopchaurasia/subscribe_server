@@ -105,7 +105,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     }
 
     Static.scanFinished = async function (user_id) {
-        await RedisDB.setData(user_id, "is_finished", true);
+        await RedisDB.remKey(user_id, "is_finished", true);
     };
 
     Static.updateUserByActionKey = async function (user_id, value) {
@@ -118,10 +118,11 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
 
     Static.scanStarted = async function (user_id) {
         await RedisDB.setData(user_id, "is_finished", false);
+        RedisDB.setExpire(user_id, "is_finished", 1800);// half hour
     }
 
     Static.isScanFinished = async function (user_id) {
-        return await RedisDB.getData(user_id, "is_finished");
+        return (await RedisDB.getData(user_id, "is_finished")) || "true";
     }
 
 
