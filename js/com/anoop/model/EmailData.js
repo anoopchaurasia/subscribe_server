@@ -42,7 +42,7 @@ fm.Class("EmailData>.BaseModel", function(me){
         });
     }
 
-    Static.getBySender = async function({start_date, end_date, user, offset, limit }){
+    function commonQuery({user, start_date, end_date}) {
         let match = {
             "user_id": user._id,
             deleted_at: null,
@@ -50,6 +50,12 @@ fm.Class("EmailData>.BaseModel", function(me){
         if(start_date) {
             match.receivedDate = {$gte: new Date(start_date), $lte: new Date(end_date)}
         }
+        return match;
+    }
+
+    Static.getBySender = async function({start_date, end_date, user, offset, limit }){
+
+        let match = commonQuery({user, start_date, end_date});
         return await mongo_emaildata.aggregate([{
                 $match: {
                    ...match
@@ -61,7 +67,6 @@ fm.Class("EmailData>.BaseModel", function(me){
                     },
                     data: {
                         $push: {
-                            // "labelIds": "$labelIds",
                             "subject": "$subject",
                             "status":"$status"
                         },
@@ -98,15 +103,8 @@ fm.Class("EmailData>.BaseModel", function(me){
     };
 
     Static.getIdsBySize = async function({start_date, end_date, user, size_group}){
-        let match = {
-            "user_id": user._id,
-            is_delete: false,
-            size_group: {$in: size_group}
-        };
-        if(start_date) {
-            match.receivedDate = {$gte: new Date(start_date), $lte: new Date(end_date)}
-        }
-
+        let match = commonQuery({user, start_date, end_date});
+        match.size_group = {$in: size_group}
         return await mongo_emaildata.aggregate([{
                 $match: {
                     ...match
@@ -125,16 +123,8 @@ fm.Class("EmailData>.BaseModel", function(me){
     }; 
 
     Static.getIdsByLabelName = async function({start_date, end_date, user, label_name}){
-        let match = {
-            "user_id": user._id,
-            is_delete: false,
-            box_name:{$in:  label_name}
-        };
-        if(start_date) {
-            match.receivedDate = {$gte: new Date(start_date),$lte: new Date(end_date)}
-        }
-        console.dir(match)
-   
+        let match = commonQuery({user, start_date, end_date});
+        match. box_name = {$in:  label_name};
         return await mongo_emaildata.aggregate([{
                 $match: {
                     ...match
@@ -154,21 +144,10 @@ fm.Class("EmailData>.BaseModel", function(me){
 
 
     Static.getIdsByFromEmail = async function({start_date, end_date, user, from_emails}){
-        let match = {
-            "user_id": user._id,
-            deleted_at: null,
-            from_email: {
-                $in: from_emails
-            },
-        };
-
-        if(start_date) {
-            match.receivedDate = {$gte: new Date(start_date)}
+        let match = commonQuery({user, start_date, end_date});
+        match.from_email= {
+            $in: from_emails
         }
-        if(end_date) {
-            match.receivedDate = {$lte: new Date(end_date)}
-        }
-        console.dir(match);
         return await mongo_emaildata.aggregate([{
                 $match: {
                     ...match
