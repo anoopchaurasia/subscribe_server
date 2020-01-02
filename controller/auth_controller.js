@@ -43,7 +43,8 @@ router.get("/refreshToken", async (req, res)=>{
                 msg: "unauthorised user"
             });
         } else {
-           res.json(BaseController.TokenModel.generateJWTToken(data));
+            let {user_id, email} = data;
+            res.json({token: await BaseController.TokenModel.generateJWTToken({user_id, email}), error: false });;
         }
     })
 });

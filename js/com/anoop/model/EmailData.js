@@ -25,6 +25,7 @@ fm.Class("EmailData>.BaseModel", function(me){
     
     Static.updateForDelete = async function (query, set) {
         me.updateQueryValidation(query);
+        console.log(query, set)
         await mongo_emaildata.updateMany(query, {$set: set}).exec()
     };
 
@@ -43,7 +44,7 @@ fm.Class("EmailData>.BaseModel", function(me){
     Static.getBySender = async function({start_date, end_date, user, offset, limit }){
         let match = {
             "user_id": user._id,
-            is_delete: false,
+            deleted_at: null,
         };
         if(start_date) {
             match.receivedDate = {$gte: new Date(start_date)}
@@ -100,7 +101,7 @@ fm.Class("EmailData>.BaseModel", function(me){
     Static.getIdsByFromEmail = async function({start_date, end_date, user, from_emails}){
         let match = {
             "user_id": user._id,
-            is_delete: false,
+            deleted_at: null,
             from_email: {
                 $in: from_emails
             },
@@ -141,7 +142,7 @@ fm.Class("EmailData>.BaseModel", function(me){
             labelIds:emaildata.labelIds,
             box_name:emaildata.box_name,
             size_group : emaildata.size_group,
-            is_delete:false
+            deleted_at: null
         }
     }
 

@@ -41,13 +41,13 @@
         "type": "node",
         "request": "launch",
         "name": "Test",
-        "program": "${workspaceFolder}\\test.js"
+        "program": "${workspaceFolder}/test.js"
     },
         {
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}\\app.js"
+            "program": "${workspaceFolder}/app.js"
         }
     ]
 }
