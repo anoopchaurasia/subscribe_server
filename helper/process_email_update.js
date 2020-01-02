@@ -16,11 +16,11 @@ fm.Include("com.anoop.imap.Controller", function(){
 
     async function handleLogin(data) {
         try{
+            let [user_id, error_count=0] = data.split("#");
             if(error_count>3) {
                 ImapController.scanFinished(user._id);
                 return console.error("not trying as failed 3 times already",  data);
             }
-            let [user_id, error_count=0] = data.split("#");
             let user = await ImapController.UserModel.getRedisUser(user_id);
             await ImapController.extractEmail(user,  function(){
                 error_count = error_count*1;
