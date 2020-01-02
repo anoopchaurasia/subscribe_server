@@ -109,9 +109,7 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
                         },
                         data: {
                             $push: {
-                                "labelIds": "$labelIds",
                                 "subject": "$subject",
-                                "status": "$status",
                                 "size": "$size",
                                 "email_id": "$email_id",
                                 "from_email": "$from_email"
@@ -129,7 +127,6 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
                 },
                 {
                     $project: {
-                        "labelIds": 1,
                         "from_email": 1,
                         "count": 1,
                         "subject": 1,
@@ -165,9 +162,7 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
                         },
                         data: {
                             $push: {
-                                "labelIds": "$labelIds",
                                 "subject": "$subject",
-                                "status": "$status",
                                 "size": "$size",
                                 "email_id": "$email_id",
                                 "from_email": "$from_email"
@@ -185,7 +180,6 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
                 },
                 {
                     $project: {
-                        "labelIds": 1,
                         "from_email": 1,
                         "count": 1,
                         "subject": 1,
@@ -269,9 +263,7 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
                         },
                         data: {
                             $push: {
-                                "labelIds": "$labelIds",
                                 "subject": "$subject",
-                                "status": "$status",
                                 "size": "$size",
                                 "email_id": "$email_id"
                             }
@@ -288,7 +280,6 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
                 },
                 {
                     $project: {
-                        "labelIds": 1,
                         "count": 1,
                         "subject": 1,
                         "size": 1,
@@ -323,9 +314,7 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
                         },
                         data: {
                             $push: {
-                                "labelIds": "$labelIds",
                                 "subject": "$subject",
-                                "status": "$status",
                                 "size": "$size",
                                 "email_id": "$email_id"
                             }
@@ -342,7 +331,6 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
                 },
                 {
                     $project: {
-                        "labelIds": 1,
                         "count": 1,
                         "subject": 1,
                         "size": 1,
@@ -459,9 +447,7 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
                         },
                         data: {
                             $push: {
-                                "labelIds": "$labelIds",
                                 "subject": "$subject",
-                                "status": "$status",
                                 "size": "$size",
                                 "email_id": "$email_id",
                                 "from_email": "$from_email"
@@ -479,7 +465,6 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
                 },
                 {
                     $project: {
-                        "labelIds": 1,
                         "from_email": 1,
                         "count": 1,
                         "subject": 1,
@@ -515,9 +500,7 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
                         },
                         data: {
                             $push: {
-                                "labelIds": "$labelIds",
                                 "subject": "$subject",
-                                "status": "$status",
                                 "size": "$size",
                                 "email_id": "$email_id",
                                 "from_email": "$from_email"
@@ -535,7 +518,6 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
                 },
                 {
                     $project: {
-                        "labelIds": 1,
                         "from_email": 1,
                         "count": 1,
                         "subject": 1,
