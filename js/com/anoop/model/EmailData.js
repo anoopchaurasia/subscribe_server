@@ -96,6 +96,64 @@ fm.Class("EmailData>.BaseModel", function(me){
         ])
     };
 
+    Static.getIdsBySize = async function({start_date, end_date, user, size_group}){
+        let match = {
+            "user_id": user._id,
+            is_delete: false,
+            size_group: {$in: size_group}
+        };
+        if(start_date) {
+            match.receivedDate = {$gte: new Date(start_date)}
+        }
+        if(end_date) {
+            match.receivedDate = {$lte: new Date(end_date)}
+        }
+        return await mongo_emaildata.aggregate([{
+                $match: {
+                    ...match
+                }
+            }, {
+                $group: {
+                    _id: "$box_name",
+                    data: {
+                        $push: {
+                            "email_id": "$email_id"
+                        }
+                    }
+                }
+            }
+        ]);
+    }; 
+
+    Static.getIdsByLabelName = async function({start_date, end_date, user, label_name}){
+        let match = {
+            "user_id": user._id,
+            is_delete: false,
+            box_name:{$in:  label_name}
+        };
+        if(start_date) {
+            match.receivedDate = {$gte: new Date(start_date)}
+        }
+        if(end_date) {
+            match.receivedDate = {$lte: new Date(end_date)}
+        }
+        return await mongo_emaildata.aggregate([{
+                $match: {
+                    ...match
+                }
+            }, {
+                $group: {
+                    _id: "$box_name",
+                    data: {
+                        $push: {
+                            "email_id": "$email_id"
+                        }
+                    }
+                }
+            }
+        ]);
+    };
+
 
     Static.getIdsByFromEmail = async function({start_date, end_date, user, from_emails}){
         let match = {
