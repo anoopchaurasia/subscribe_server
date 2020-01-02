@@ -43,36 +43,36 @@ router.post('/deleteQuickMail', async (req, res) => {
         const user = req.user;
         let ids = req.body.email_ids;
         let emails = await EmailDataModel.aggregate([{
-                $match: {
-                    "user_id": user._id,
-                    email_id: {
-                        $in: ids
-                    }
-                }
-            }, {
-                $group: {
-                    _id: "$box_name",
-                    data: {
-                        $push: {
-                            "email_id": "$email_id"
-                        }
-                    },
-                    count: {
-                        $sum: 1
-                    }
-                }
-            },
-            {
-                $sort: {
-                    "count": -1
-                }
-            },
-            {
-                $project: {
-                    "email_id": 1,
-                    data: 1
+            $match: {
+                "user_id": user._id,
+                email_id: {
+                    $in: ids
                 }
             }
+        }, {
+            $group: {
+                _id: "$box_name",
+                data: {
+                    $push: {
+                        "email_id": "$email_id"
+                    }
+                },
+                count: {
+                    $sum: 1
+                }
+            }
+        },
+        {
+            $sort: {
+                "count": -1
+            }
+        },
+        {
+            $project: {
+                "email_id": 1,
+                data: 1
+            }
+        }
         ]);
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
@@ -98,96 +98,100 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
         let emails;
         if (start_date == null || end_date == null) {
             emails = await EmailDataModel.aggregate([{
-                    $match: {
-                        "user_id": user._id,
-                        is_delete: false
-                    }
-                }, {
-                    $group: {
-                        _id: {
-                            "size_group": "$size_group"
-                        },
-                        data: {
-                            $push: {
-                                "subject": "$subject",
-                                "size": "$size",
-                                "email_id": "$email_id",
-                                "from_email": "$from_email"
-                            }
-                        },
-                        count: {
-                            $sum: 1
+                $match: {
+                    "user_id": user._id,
+                    is_delete: false
+                }
+            }, {
+                $group: {
+                    _id: {
+                        "size_group": "$size_group"
+                    },
+                    data: {
+                        $push: {
+                            "subject": "$subject",
+                            "size": "$size",
+                            "email_id": "$email_id",
+                            "from_email": "$from_email",
+                            "status": "$status",
                         }
-                    }
-                },
-                {
-                    $sort: {
-                        "count": -1
-                    }
-                },
-                {
-                    $project: {
-                        "from_email": 1,
-                        "count": 1,
-                        "subject": 1,
-                        "size": 1,
-                        "email_id": 1,
-                        data: 1
+                    },
+                    count: {
+                        $sum: 1
                     }
                 }
+            },
+            {
+                $sort: {
+                    "count": -1
+                }
+            },
+            {
+                $project: {
+                    "from_email": 1,
+                    "count": 1,
+                    "subject": 1,
+                    "size": 1,
+                    "email_id": 1,
+                    "status": 1,
+                    data: 1
+                }
+            }
             ]);
         } else {
             emails = await EmailDataModel.aggregate([{
-                    $match: {
-                        $and: [{
-                                "user_id": user._id
-                            }, {
-                                is_delete: false
-                            },
-                            {
-                                receivedDate: {
-                                    $gte: new Date(start_date)
-                                }
-                            }, {
-                                receivedDate: {
-                                    $lte: new Date(end_date)
-                                }
-                            }
-                        ]
-                    }
-                }, {
-                    $group: {
-                        _id: {
-                            "size_group": "$size_group"
-                        },
-                        data: {
-                            $push: {
-                                "subject": "$subject",
-                                "size": "$size",
-                                "email_id": "$email_id",
-                                "from_email": "$from_email"
-                            }
-                        },
-                        count: {
-                            $sum: 1
+                $match: {
+                    $and: [{
+                        "user_id": user._id
+                    }, {
+                        is_delete: false
+                    },
+                    {
+                        receivedDate: {
+                            $gte: new Date(start_date)
+                        }
+                    }, {
+                        receivedDate: {
+                            $lte: new Date(end_date)
                         }
                     }
-                },
-                {
-                    $sort: {
-                        "count": -1
-                    }
-                },
-                {
-                    $project: {
-                        "from_email": 1,
-                        "count": 1,
-                        "subject": 1,
-                        "size": 1,
-                        "email_id": 1,
-                        data: 1
+                    ]
+                }
+            }, {
+                $group: {
+                    _id: {
+                        "size_group": "$size_group"
+                    },
+                    data: {
+                        $push: {
+                            "subject": "$subject",
+                            "size": "$size",
+                            "email_id": "$email_id",
+                            "from_email": "$from_email",
+                            "status": "$status",
+                        }
+                    },
+                    count: {
+                        $sum: 1
                     }
                 }
+            },
+            {
+                $sort: {
+                    "count": -1
+                }
+            },
+            {
+                $project: {
+                    "from_email": 1,
+                    "count": 1,
+                    "subject": 1,
+                    "size": 1,
+                    "email_id": 1,
+                    "status": 1,
+                    data: 1
+                }
+            }
             ]);
         }
         console.log(emails.length);
@@ -203,11 +207,11 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
 router.get("/by_sender", async (req, res) => {
     try {
         const user = req.user;
-        let {start_date, end_date, page} = req.query;
+        let { start_date, end_date, page } = req.query;
         let limit = 20;
-        let offset = (page || 0)*limit;
+        let offset = (page || 0) * limit;
         let emails = await Controller.EmailDataModel.getBySender({
-            start_date, end_date,user, offset, limit
+            start_date, end_date, user, offset, limit
         });
         console.log(emails.length);
         res.status(200).json({
@@ -215,15 +219,15 @@ router.get("/by_sender", async (req, res) => {
             data: emails
         });
     } catch (err) {
-        res.status(502).json({error: err.message})
+        res.status(502).json({ error: err.message })
         console.error(err);
     }
 });
 
-router.post("/delete_by_sender",async (req, res)=>{
-    let {start_date, end_date, from_emails} = req.body;
+router.post("/delete_by_sender", async (req, res) => {
+    let { start_date, end_date, from_emails } = req.body;
     const user = req.user;
-    try{
+    try {
         let emails = await Controller.EmailDataModel.getIdsByFromEmail({
             start_date, end_date, user, from_emails
         })
@@ -231,7 +235,7 @@ router.post("/delete_by_sender",async (req, res)=>{
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
             console.log("deleting ", ids.length, "from ", data._id);
-            // await Controller.deleteQuickMailNew(user, ids, data._id);
+             await Controller.deleteQuickMailNew(user, ids, data._id);
         });
         res.status(200).json({
             error: false,
@@ -242,11 +246,11 @@ router.post("/delete_by_sender",async (req, res)=>{
     }
 });
 
-router.post("/delete_by_label",async (req, res)=>{
-    let {start_date, end_date, label_name} = req.body;
+router.post("/delete_by_label", async (req, res) => {
+    let { start_date, end_date, label_name } = req.body;
     const user = req.user;
-    console.log(start_date,end_date,label_name)
-    try{
+    console.log(start_date, end_date, label_name)
+    try {
         let emails = await Controller.EmailDataModel.getIdsByLabelName({
             start_date, end_date, user, label_name
         })
@@ -254,7 +258,7 @@ router.post("/delete_by_label",async (req, res)=>{
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
             console.log("deleting ", ids.length, "from ", data._id);
-            // await Controller.deleteQuickMailNew(user, ids, data._id);
+             await Controller.deleteQuickMailNew(user, ids, data._id);
         });
         res.status(200).json({
             error: false,
@@ -265,10 +269,10 @@ router.post("/delete_by_label",async (req, res)=>{
     }
 });
 
-router.post("/delete_by_size",async (req, res)=>{
-    let {start_date, end_date, size_group} = req.body;
+router.post("/delete_by_size", async (req, res) => {
+    let { start_date, end_date, size_group } = req.body;
     const user = req.user;
-    try{
+    try {
         let emails = await Controller.EmailDataModel.getIdsBySize({
             start_date, end_date, user, size_group
         })
@@ -276,7 +280,7 @@ router.post("/delete_by_size",async (req, res)=>{
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
             console.log("deleting ", ids.length, "from ", data._id);
-            // await Controller.deleteQuickMailNew(user, ids, data._id);
+             await Controller.deleteQuickMailNew(user, ids, data._id);
         });
         res.status(200).json({
             error: false,
@@ -299,92 +303,94 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
         let emails;
         if (start_date == null || end_date == null) {
             emails = await EmailDataModel.aggregate([{
-                    $match: {
-                        "user_id": user._id,
-                        is_delete: false
-                    }
-                }, {
-                    $group: {
-                        _id: {
-                            "from_email": "$from_email"
-                        },
-                        data: {
-                            $push: {
-                                "subject": "$subject",
-                                "size": "$size",
-                                "email_id": "$email_id"
-                            }
-                        },
-                        count: {
-                            $sum: 1
+                $match: {
+                    "user_id": user._id,
+                    is_delete: false
+                }
+            }, {
+                $group: {
+                    _id: {
+                        "from_email": "$from_email"
+                    },
+                    data: {
+                        $push: {
+                            "subject": "$subject",
+                            "size": "$size",
+                            "email_id": "$email_id",
+                            "status": "$status",
                         }
-                    }
-                },
-                {
-                    $sort: {
-                        "count": -1
-                    }
-                },
-                {
-                    $project: {
-                        "count": 1,
-                        "subject": 1,
-                        "size": 1,
-                        "email_id": 1,
-                        data: 1
+                    },
+                    count: {
+                        $sum: 1
                     }
                 }
+            },
+            {
+                $sort: {
+                    "count": -1
+                }
+            },
+            {
+                $project: {
+                    "count": 1,
+                    "subject": 1,
+                    "size": 1,
+                    "email_id": 1,
+                    "status": 1,
+                    data: 1
+                }
+            }
             ]);
         } else {
             emails = await EmailDataModel.aggregate([{
-                    $match: {
-                        $and: [{
-                                "user_id": user._id
-                            }, {
-                                is_delete: false
-                            },
-                            {
-                                receivedDate: {
-                                    $gte: new Date(start_date)
-                                }
-                            }, {
-                                receivedDate: {
-                                    $lte: new Date(end_date)
-                                }
-                            }
-                        ]
-                    }
-                }, {
-                    $group: {
-                        _id: {
-                            "from_email": "$from_email"
-                        },
-                        data: {
-                            $push: {
-                                "subject": "$subject",
-                                "size": "$size",
-                                "email_id": "$email_id"
-                            }
-                        },
-                        count: {
-                            $sum: 1
+                $match: {
+                    $and: [{
+                        "user_id": user._id
+                    }, {
+                        is_delete: false
+                    },
+                    {
+                        receivedDate: {
+                            $gte: new Date(start_date)
+                        }
+                    }, {
+                        receivedDate: {
+                            $lte: new Date(end_date)
                         }
                     }
-                },
-                {
-                    $sort: {
-                        "count": -1
-                    }
-                },
-                {
-                    $project: {
-                        "count": 1,
-                        "subject": 1,
-                        "size": 1,
-                        "email_id": 1,
-                        data: 1
+                    ]
+                }
+            }, {
+                $group: {
+                    _id: {
+                        "from_email": "$from_email"
+                    },
+                    data: {
+                        $push: {
+                            "subject": "$subject",
+                            "size": "$size",
+                            "email_id": "$email_id"
+                        }
+                    },
+                    count: {
+                        $sum: 1
                     }
                 }
+            },
+            {
+                $sort: {
+                    "count": -1
+                }
+            },
+            {
+                $project: {
+                    "count": 1,
+                    "subject": 1,
+                    "size": 1,
+                    "email_id": 1,
+                    data: 1
+                }
+            }
             ]);
         }
         console.log(emails.length);
@@ -483,96 +489,100 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
         let emails;
         if (start_date == null || end_date == null) {
             emails = await EmailDataModel.aggregate([{
-                    $match: {
-                        "user_id": user._id,
-                        is_delete: false
-                    }
-                }, {
-                    $group: {
-                        _id: {
-                            "box_name": "$box_name"
-                        },
-                        data: {
-                            $push: {
-                                "subject": "$subject",
-                                "size": "$size",
-                                "email_id": "$email_id",
-                                "from_email": "$from_email"
-                            }
-                        },
-                        count: {
-                            $sum: 1
+                $match: {
+                    "user_id": user._id,
+                    is_delete: false
+                }
+            }, {
+                $group: {
+                    _id: {
+                        "box_name": "$box_name"
+                    },
+                    data: {
+                        $push: {
+                            "subject": "$subject",
+                            "size": "$size",
+                            "email_id": "$email_id",
+                            "from_email": "$from_email",
+                            "status": "$status",
                         }
-                    }
-                },
-                {
-                    $sort: {
-                        "count": -1
-                    }
-                },
-                {
-                    $project: {
-                        "from_email": 1,
-                        "count": 1,
-                        "subject": 1,
-                        "size": 1,
-                        "email_id": 1,
-                        data: 1
+                    },
+                    count: {
+                        $sum: 1
                     }
                 }
+            },
+            {
+                $sort: {
+                    "count": -1
+                }
+            },
+            {
+                $project: {
+                    "from_email": 1,
+                    "count": 1,
+                    "subject": 1,
+                    "size": 1,
+                    "email_id": 1,
+                    "status": 1,
+                    data: 1
+                }
+            }
             ]);
         } else {
             emails = await EmailDataModel.aggregate([{
-                    $match: {
-                        $and: [{
-                                "user_id": user._id
-                            }, {
-                                is_delete: false
-                            },
-                            {
-                                receivedDate: {
-                                    $gte: new Date(start_date)
-                                }
-                            }, {
-                                receivedDate: {
-                                    $lte: new Date(end_date)
-                                }
-                            }
-                        ]
-                    }
-                }, {
-                    $group: {
-                        _id: {
-                            "box_name": "$box_name"
-                        },
-                        data: {
-                            $push: {
-                                "subject": "$subject",
-                                "size": "$size",
-                                "email_id": "$email_id",
-                                "from_email": "$from_email"
-                            }
-                        },
-                        count: {
-                            $sum: 1
+                $match: {
+                    $and: [{
+                        "user_id": user._id
+                    }, {
+                        is_delete: false
+                    },
+                    {
+                        receivedDate: {
+                            $gte: new Date(start_date)
+                        }
+                    }, {
+                        receivedDate: {
+                            $lte: new Date(end_date)
                         }
                     }
-                },
-                {
-                    $sort: {
-                        "count": -1
-                    }
-                },
-                {
-                    $project: {
-                        "from_email": 1,
-                        "count": 1,
-                        "subject": 1,
-                        "size": 1,
-                        "email_id": 1,
-                        data: 1
+                    ]
+                }
+            }, {
+                $group: {
+                    _id: {
+                        "box_name": "$box_name"
+                    },
+                    data: {
+                        $push: {
+                            "subject": "$subject",
+                            "size": "$size",
+                            "email_id": "$email_id",
+                            "from_email": "$from_email",
+                            "status": "$status",
+                        }
+                    },
+                    count: {
+                        $sum: 1
                     }
                 }
+            },
+            {
+                $sort: {
+                    "count": -1
+                }
+            },
+            {
+                $project: {
+                    "from_email": 1,
+                    "count": 1,
+                    "subject": 1,
+                    "size": 1,
+                    "email_id": 1,
+                    "status": 1,
+                    data: 1
+                }
+            }
             ]);
         }
         console.log(emails.length);

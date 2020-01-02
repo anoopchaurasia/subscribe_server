@@ -62,8 +62,9 @@ fm.Class("EmailData>.BaseModel", function(me){
                     },
                     data: {
                         $push: {
-                            "labelIds": "$labelIds",
+                            // "labelIds": "$labelIds",
                             "subject": "$subject",
+                            "status":"$status"
                         },
                     },
                     size: {
@@ -86,9 +87,10 @@ fm.Class("EmailData>.BaseModel", function(me){
                     'subject': {
                         "$slice": ["$data.subject", 5]
                     },
-                    'labelIds': {
-                        "$slice": ["$data.labelIds", 5]
-                    },
+                    // 'labelIds': {
+                    //     "$slice": ["$data.labelIds", 5]
+                    // },
+                    data:1,
                     size: 1,
                     count:1
                 },
