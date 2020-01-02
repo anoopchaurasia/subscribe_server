@@ -42,7 +42,7 @@ fm.Include("com.anoop.imap.Controller", function(){
         try{
             let [user_id, error_count=0] = data.split("#");
             if(error_count>3) {
-                return console.error("not trying as failed 3 times already");
+                return console.error("not trying as failed 3 times already", data);
             }
             console.log("token", user_id);
             user = await ImapController.UserModel.getRedisUser(user_id);
