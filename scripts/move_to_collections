@@ -9,7 +9,7 @@ db.emaildatas.find({"user_id":{$exists:true},"labelIds":{$exists:true}}).snapsho
             state="move"
         }else if(doc.is_keeped){
             state="keep"
-        }else if(doc.is_delete){
+        }else if(doc.deleted_at){
             state="delete"
         }
         if(!json[doc.user_id+doc.from_email]) {

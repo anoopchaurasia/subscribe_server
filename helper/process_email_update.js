@@ -10,12 +10,24 @@ fm.Include("com.anoop.imap.Controller", function(){
         }
     });
 
-    async function handleLogin(user_id) {
+    RedisDB.BLPopListner("process_user_login1", async function([key ,data]){
+        return await handleLogin(data);
+    });
+
+    async function handleLogin(data) {
         try{
+            if(error_count>3) {
+                ImapController.scanFinished(user._id);
+                return console.error("not trying as failed 3 times already",  data);
+            }
+            let [user_id, error_count=0] = data.split("#");
             let user = await ImapController.UserModel.getRedisUser(user_id);
             await ImapController.extractEmail(user,  function(){
-                RedisDB.lPush('process_user_login', user_id);
+                error_count = error_count*1;
+                ImapController.logToSentry(new Error("user disconnected"), {list: 'email_update_for_user', error_count: error_count+1, tags: {user_email: user.email.split("@")[1]} })
+                RedisDB.lPush('process_user_login1', user_id+"#"+(error_count+1));
             }).catch(err => {
+                ImapController.logToSentry(err, {list: 'process_user_login', tags: {user_email: user.email.split("@")[1]} })
                 console.error(err.message, err.stack);
                 ImapController.scanFinished(user._id);
             });
@@ -29,6 +41,9 @@ fm.Include("com.anoop.imap.Controller", function(){
         let user;
         try{
             let [user_id, error_count=0] = data.split("#");
+            if(error_count>3) {
+                return console.error("not trying as failed 3 times already", data);
+            }
             console.log("token", user_id);
             user = await ImapController.UserModel.getRedisUser(user_id);
             let last_msgId = await ImapController.UserModel.getLastMsgId(user);
@@ -36,7 +51,7 @@ fm.Include("com.anoop.imap.Controller", function(){
                 user.last_msgId = last_msgId;
             }
             await ImapController.updateForUser(user, function(err){
-                ImapController.logToSentry(err, {list: 'email_update_for_user', tags: {user_email: user.email.split("@")[1]} })
+                ImapController.logToSentry(err, {list: 'email_update_for_user', error_count: error_count+1, tags: {user_email: user.email.split("@")[1]} })
                 error_count = error_count*1;
                 RedisDB.lPush('email_update_for_user', user_id+"#"+(error_count+1));
             });

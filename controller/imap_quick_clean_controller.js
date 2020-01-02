@@ -100,7 +100,7 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
             emails = await EmailDataModel.aggregate([{
                 $match: {
                     "user_id": user._id,
-                    is_delete: false
+                    deleted_at:null
                 }
             }, {
                 $group: {
@@ -144,7 +144,7 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
                     $and: [{
                         "user_id": user._id
                     }, {
-                        is_delete: false
+                        deleted_at:null
                     },
                     {
                         receivedDate: {
@@ -213,7 +213,14 @@ router.get("/by_sender", async (req, res) => {
         let emails = await Controller.EmailDataModel.getBySender({
             start_date, end_date, user, offset, limit
         });
-        console.log(emails.length);
+        let emailData = [];
+        emails.forEach(element => {
+            let total = element.data.filter(x=>x.status=="read").length;
+            element.readcount = total;
+            delete element.data;
+            emailData.push(element);
+        });
+        console.log(emailData)
         res.status(200).json({
             error: false,
             data: emails
@@ -234,7 +241,6 @@ router.post("/delete_by_sender", async (req, res) => {
         // console.log(emails)
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
-            console.log("deleting ", ids.length, "from ", data._id);
              await Controller.deleteQuickMailNew(user, ids, data._id);
         });
         res.status(200).json({
@@ -305,7 +311,7 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
             emails = await EmailDataModel.aggregate([{
                 $match: {
                     "user_id": user._id,
-                    is_delete: false
+                    deleted_at:null
                 }
             }, {
                 $group: {
@@ -344,22 +350,13 @@ router.post('/getEmailsBySenderFromDb', async (req, res) => {
         } else {
             emails = await EmailDataModel.aggregate([{
                 $match: {
-                    $and: [{
-                        "user_id": user._id
-                    }, {
-                        is_delete: false
-                    },
-                    {
+                        "user_id": user._id,
+                        deleted_at:null,
                         receivedDate: {
-                            $gte: new Date(start_date)
-                        }
-                    }, {
-                        receivedDate: {
+                            $gte: new Date(start_date),
                             $lte: new Date(end_date)
                         }
-                    }
-                    ]
-                }
+                  }
             }, {
                 $group: {
                     _id: {
@@ -419,7 +416,7 @@ router.post('/getEmailsByDateFromDb', async (req, res) => {
                     $gte: data.since,
                     $lte: data.before
                 },
-                is_delete: false
+               deleted_at: null
             });
         } else {
             if (data.beforeOrAfter === 'BEFORE') {
@@ -428,7 +425,7 @@ router.post('/getEmailsByDateFromDb', async (req, res) => {
                     receivedDate: {
                         $lte: data.date
                     },
-                    is_delete: false
+                   deleted_at: null
                 });
             } else {
                 emails = await EmailDataModel.find({
@@ -436,7 +433,7 @@ router.post('/getEmailsByDateFromDb', async (req, res) => {
                     receivedDate: {
                         $gte: data.date
                     },
-                    is_delete: false
+                   deleted_at: null
                 });
             }
         }
@@ -457,7 +454,7 @@ router.post('/getTotalUnreadMail', async (req, res) => {
         let emails = await EmailDataModel.countDocuments({
             user_id: user._id,
             status: "unread",
-            is_delete: false
+           deleted_at: null
         });
         let finished = false;
         let is_finished = await Controller.isScanFinishedQuickClean(user._id);
@@ -486,12 +483,13 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
         let start_date = req.body.start_date;
         let end_date = req.body.end_date;
         const user = req.user;
+        console.log(req.body)
         let emails;
         if (start_date == null || end_date == null) {
             emails = await EmailDataModel.aggregate([{
                 $match: {
                     "user_id": user._id,
-                    is_delete: false
+                    deleted_at:null
                 }
             }, {
                 $group: {
@@ -532,21 +530,13 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
         } else {
             emails = await EmailDataModel.aggregate([{
                 $match: {
-                    $and: [{
-                        "user_id": user._id
-                    }, {
-                        is_delete: false
-                    },
-                    {
+                        "user_id": user._id,
+                        deleted_at:null,
                         receivedDate: {
-                            $gte: new Date(start_date)
-                        }
-                    }, {
-                        receivedDate: {
+                            $gte: new Date(start_date),
                             $lte: new Date(end_date)
                         }
-                    }
-                    ]
+
                 }
             }, {
                 $group: {
