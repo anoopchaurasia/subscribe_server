@@ -334,7 +334,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         lastmsg_id = myImap.box.uidnext;
         await closeImap(myImap);
         await names.asyncForEach(async element => {
-            if (element != '[Gmail]/All Mail' && element != "INBOX"){//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
+            if (element != '[Gmail]/All Mail'){//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
                try {
                    let myImap = await openFolder(user, element);
                    console.log("box name => ",myImap.box.name);
