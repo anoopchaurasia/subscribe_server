@@ -267,9 +267,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             temp && (is_more_than_limit = true);
         });
         clearInterval(timeoutconst);
-        myImap.user.last_msgId = myImap.box.uidnext;
         myImap.end();
         await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
+        myImap.user.last_msgId = myImap.box.uidnext;
         is_more_than_limit && reset_cb();
     }
 

@@ -26,7 +26,7 @@ fm.Class("RedisDB>com.anoop.vendor.Redis", function(me) {
     }
 
     Static.remKey = async function(user_id, keyword) {
-        return await me.base.delKEY(createKey(user_id, keyword)).catch(err=> console.error(err));
+        return await me.base.delKEY(createKey(keyword, user_id)).catch(err=> console.error(err));
     };
 
     Static.pushData = function(user_id, from_email, data) {
