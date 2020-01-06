@@ -187,65 +187,41 @@ fm.Class("EmailData>.BaseModel", function(me){
         ])
     };
 
-    Static.getIdsBySize = async function({start_date, end_date, user, size_group}){
-        let match = commonQuery({user, start_date, end_date});
-        match.size_group = {$in: size_group}
-        return await mongo_emaildata.aggregate([{
-                $match: {
-                    ...match
-                }
-            }, {
-                $group: {
-                    _id: "$box_name",
-                    data: {
-                        $push: {
-                            "email_id": "$email_id"
-                        }
+    async function getIdsCommon(match) {
+       return await mongo_emaildata.aggregate([{
+            $match: {
+                ...match
+            }
+        }, {
+            $group: {
+                _id: "$box_name",
+                data: {
+                    $push: {
+                        "email_id": "$email_id"
                     }
                 }
             }
-        ]);
+        }
+    ]);
+    }
+
+    Static.getIdsBySize = async function({start_date, end_date, user, size_group}){
+        let match = commonQuery({user, start_date, end_date});
+        match.size_group = {$in: size_group}
+        return await getIdsCommon(match)
     }; 
 
     Static.getIdsByLabelName = async function({start_date, end_date, user, label_name}){
         let match = commonQuery({user, start_date, end_date});
         match. box_name = {$in:  label_name};
-        return await mongo_emaildata.aggregate([{
-                $match: {
-                    ...match
-                }
-            }, {
-                $group: {
-                    _id: "$box_name",
-                    data: {
-                        $push: {
-                            "email_id": "$email_id"
-                        }
-                    }
-                }
-            }
-        ]);
+        return await getIdsCommon(match);
     };
 
 
     Static.getIdsByFromEmail = async function({start_date, end_date, user, from_emails}){
         let match = commonQuery({user, start_date, end_date});
         match.from_email= { $in: from_emails }
-        return await mongo_emaildata.aggregate([{
-                $match: {
-                    ...match
-                }
-            }, {
-                $group: {
-                    _id: "$box_name",
-                    data: {
-                        $push: {
-                            "email_id": "$email_id"
-                        }
-                    }
-                }
-            }
-        ]);
+        return getIdsCommon(match);
     };
 
 
