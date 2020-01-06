@@ -22,7 +22,7 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
     Static.fromEamil = async function (data, from_email_id, url) {
         let date_string =  data['header'] && data.header.date ?data.header.date.split('Date: ')[1]:data.receivedDateTime;
         let date = new Date(date_string);
-        if(date.toString() === "Invalid Date") {
+        if(date.toString() === "Invalid Date" && date_string) {
             date = new Date(require("chrono-node").parseDate(date_string).toString());
         }  
         return {
