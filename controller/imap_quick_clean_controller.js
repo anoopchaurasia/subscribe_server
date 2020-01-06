@@ -211,7 +211,6 @@ router.post('/getTotalUnreadMail', async (req, res) => {
         const user = req.user;
         let emails = await EmailDataModel.countDocuments({
             user_id: user._id,
-            status: "unread",
             deleted_at: null
         });
         let finished = false;
