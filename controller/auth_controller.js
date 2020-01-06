@@ -9,7 +9,6 @@ Using This api use can logged-in into system.
 This api will get code/authentication code from application and using that application
 code extracting token and user data. and saving and updating into database.
 */
-let public_refresh_key = require("fs").readFileSync(global.basedir+"/"+ process.env.JWT_REFRESH_TOKEN_SECRET_FILE+"public.pem");
 
 let jwt = require("jsonwebtoken");
 fm.Include("com.anoop.email.BaseController");
@@ -34,8 +33,9 @@ router.get('/getAppVersion', async (req, res) => {
         console.error(ex.message, ex.stack);
     }
 });
-
+let public_refresh_key
 router.get("/refreshToken", async (req, res)=>{
+    public_refresh_key = public_refresh_key || require("fs").readFileSync(global.basedir+"/"+ process.env.JWT_REFRESH_TOKEN_SECRET_FILE+"public.pem");
     jwt.verify(req.query.refresh_token, public_refresh_key, {algorithms: ['RS256']}, async (err, data) => {
         if (err) {
             console.error(err.message,err.stack,'jwtTokenVerify');

@@ -51,8 +51,8 @@ fm.Class('BaseScraper', function (me, BaseController, RedisDB) {
             let date_string =  data['header'] && data.header.date ?data.header.date.split('Date: ')[1]:data.receivedDateTime;
             let date = new Date(date_string);
             if(date.toString() === "Invalid Date") {
-                date = require("chrono-node").parse(date_string).toString();
-            }  
+                date = new Date(require("chrono-node").parseDate(date_string).toString());
+            }
             let new_data = {
                 from_email: data.from_email,
                 from_email_name: data.from_email_name,

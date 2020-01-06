@@ -67,7 +67,7 @@ router.post('/saveDeviceInfo', async (req, res) => {
     let userDevice = await DeviceInfo.findOne({ "user_id": user._id }).catch(err => {
         console.error(err.message, err.stack, "27");
     });
-    let tokenInfo = { "user_id": user._id,"device_id":userDevice._id };
+    let tokenInfo = { "user_id": user._id,"device_id":userDevice._id, created_at: new Date };
     await fcmToken.findOneAndUpdate({ "device_id": userDevice._id }, tokenInfo, { upsert: true }).catch(err => {
         console.error(err.message, err.stack, "26");
     });
