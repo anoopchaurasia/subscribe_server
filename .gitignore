@@ -12,3 +12,5 @@ tmp
 
 *.key
 *.cert
+keys/
+*.pem

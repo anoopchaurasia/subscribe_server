@@ -51,7 +51,7 @@ async function jwt_login (req) {
     if(token.startsWith('Bearer ')){
         token = token.split(' ')[1];
     }
-    return await jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
+    return await jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET_KEY);
  }
 
 module.exports = router;
