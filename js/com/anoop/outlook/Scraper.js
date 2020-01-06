@@ -169,7 +169,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         body = await getFormatedEmailBody(body, user_id);
         await me.sendMailToScraper(Parser.parse(body, user_id, null), me.outlook.user);
         let data_info = {
-            header:body.header,
+            receivedDateTime:body.receivedDateTime,
             user_id: user_id,
             from_email,
             email_id:body.email_id,
