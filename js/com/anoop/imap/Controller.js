@@ -162,7 +162,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             }
             if (myImap.imap.state === 'disconnected') {
                 reset_cb();
-                throw new Error("disconnected" + user._id);
+                setTimeout(x=> {
+                    throw new Error("disconnected" + user._id);
+                }, 1000)
             }
         }, 2 * 60 * 1000)
         await me.scanStarted(user._id);
@@ -245,12 +247,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             if (!myImap) {
                 let err = new Error("imap not available " + user.email.split("@")[1])
                 reset_cb(err);
-                throw err;
+                setTimeout(()=>{
+                    throw err;
+                }, 1000)
             }
             if (myImap.imap.state === 'disconnected') {
                 let error = new Error("disconnected " + user.email.split("@")[1])
                 reset_cb(error);
-                throw error;
+                setTimeout(()=>{
+                    throw error;
+                }, 1000)
             }
         }, 2 * 60 * 1000)
   
