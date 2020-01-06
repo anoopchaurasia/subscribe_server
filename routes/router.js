@@ -6,6 +6,7 @@ router.use('/auth', noauth,require('../controller/auth_controller'));
 router.use('/email', authenticate,require('../controller/email_controller'));
 router.use('/users', authenticate,require('../controller/user_controller'));
 router.use('/microsoft', noauth,require('../controller/microsoft_auth'));
+router.use('/microsoft',authenticate,require('../controller/microsoft_auth_controller'));
 router.use('/imap', noauth, require('../controller/imap_controller')); 
 router.use('/imap', authenticate, require('../controller/imap_controller_auth')); 
 router.use('/imap', authenticate, require('../controller/imap_action_controller')); 
