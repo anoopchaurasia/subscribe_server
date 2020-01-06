@@ -157,12 +157,15 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let timeoutconst = setInterval(x => {
             if (!myImap) {
                 let event = "user_" + Math.random().toString(36).slice(2);
-                me.sendToAppsFlyer(user.email, "process_failed_no_user", { "user": event })
-                throw new Error("imap not available" + user._id);
+                me.sendToAppsFlyer(user.email, "process_failed_no_user", { "user": event });
+                reset_cb();
+                return setTimeout(()=>{
+                    throw new Error("imap not available" + user._id);
+                }, 1000)
             }
             if (myImap.imap.state === 'disconnected') {
                 reset_cb();
-                setTimeout(x=> {
+                return setTimeout(x=> {
                     throw new Error("disconnected" + user._id);
                 }, 1000)
             }
@@ -247,14 +250,14 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             if (!myImap) {
                 let err = new Error("imap not available " + user.email.split("@")[1])
                 reset_cb(err);
-                setTimeout(()=>{
+                return setTimeout(()=>{
                     throw err;
                 }, 1000)
             }
             if (myImap.imap.state === 'disconnected') {
                 let error = new Error("disconnected " + user.email.split("@")[1])
                 reset_cb(error);
-                setTimeout(()=>{
+                return setTimeout(()=>{
                     throw error;
                 }, 1000)
             }
