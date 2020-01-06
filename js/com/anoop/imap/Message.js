@@ -98,7 +98,6 @@ fm.Class("Message", function (me) {
         return new Promise((resolve, reject) => {
             const fetch = imap.fetch(message_ids, {
                 bodies: body,
-                struct: true,
                 size:true
             });
             const msgs = [];
