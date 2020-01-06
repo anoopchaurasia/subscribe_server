@@ -145,6 +145,8 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             'unseen': [],
             'seen': []
         }
+        unseen.reverse();
+        seen.reverse();
         if (unseen.length != 0) {
             let unseenEmail = await mailScrapAndReturnEmailData(unseen, ["UNREAD"], 'unread', last_msgId);
             seenAndUnseenEmails.unseen = unseenEmail
