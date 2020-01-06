@@ -19,7 +19,12 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
         return await mongo_emailInfo.findOneAndUpdate(query, { $set: set }, {  upsert: true }).exec();
     }
 
-    Static.fromEamil = async function (data, from_email_id, url) {        
+    Static.fromEamil = async function (data, from_email_id, url) {
+        let date_string =  data['header'] && data.header.date ?data.header.date.split('Date: ')[1]:data.receivedDateTime;
+        let date = new Date(date_string);
+        if(date.toString() === "Invalid Date") {
+            date = require("chrono-node").parse(date_string).toString();
+        }  
         return {
             from_email_id,
             email_id: data.email_id,
@@ -27,7 +32,7 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
             unsubscribe: url,
             subject: data.subject,
             labelIds: data.labelIds,
-            date: data['header'] && data.header.date ?data.header.date.split('Date: ')[1]:data.receivedDateTime
+            date: date
         }
     };
 

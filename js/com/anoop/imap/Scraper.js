@@ -20,7 +20,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         for (let i = 0, len = this.length; i < len; i++) {
             await cb(this[i], i, this);
         }
-    }
+    };
 
     this.onLauchScrap = async function (cb) {
         let actions = await me.getUserActionData(me.myImap.user._id);

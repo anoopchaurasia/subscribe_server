@@ -31,15 +31,19 @@ fm.Class("Parser>.Message", function (me, Header) {
 
     Static.parse = function (body, parse, user) {
         // console.log(parse.date)
+        let date = new Date(parse.date);
+        if(date.toString() === "Invalid Date") {
+            date = require("chrono-node").parse(parse.date).toString();
+        }
         return {
             html: body.payload,
-            date: new Date(parse.date).toString(),
+            date: date.toString(),
             headers: {
                 Subject: body.subject,
                 From: body.from_email
             },
             history_id: parse.id,
-            timestamp: new Date(parse.date).getTime(),
+            timestamp: date.getTime(),
             subject: body.subject,
             from: body.from_email,
             id: parse.uid,
