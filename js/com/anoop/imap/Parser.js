@@ -32,7 +32,7 @@ fm.Class("Parser>.Message", function (me, Header) {
     Static.parse = function (body, parse, user) {
         // console.log(parse.date)
         let date = new Date(parse.date);
-        if(date.toString() === "Invalid Date") {
+        if(date.toString() === "Invalid Date" && parse.date) {
             date = new Date(require("chrono-node").parseDate(parse.date).toString());
         }
         return {
