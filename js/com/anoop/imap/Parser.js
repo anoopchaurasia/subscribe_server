@@ -1,8 +1,6 @@
 fm.Package("com.anoop.imap");
-fm.Import(".Header");
-const Imap = require("imap");
-const simpleParser = require('mailparser').simpleParser;
-fm.Class("Parser>.Message", function (me, Header) {
+fm.Import("com.anoop.model.BaseModel")
+fm.Class("Parser>.Message", function (me, BaseModel) {
     this.setMe = _me => me = _me;
     function parseHeaderLines(list) {
         let key_value = {};
@@ -31,10 +29,7 @@ fm.Class("Parser>.Message", function (me, Header) {
 
     Static.parse = function (body, parse, user) {
         // console.log(parse.date)
-        let date = new Date(parse.date);
-        if(date.toString() === "Invalid Date" && parse.date) {
-            date = new Date(require("chrono-node").parseDate(parse.date).toString());
-        }
+        let date = BaseModel.getDate(parse.date);
         return {
             html: body.payload,
             date: date.toString(),

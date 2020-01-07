@@ -10,17 +10,20 @@ fm.Import("..model.EmailData");
 fm.Import("..model.EmailTrack");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
+fm.Import('..model.BaseModel');
 const Sentry = require('@sentry/node');
 const userAppLog = require('../../../../models/userAppLog');
 const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
 
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, UserAction, SenderMail, EmailData,EmailTrack, RedisDB, BaseRedisData) {
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, 
+    UserAction, SenderMail, EmailData,EmailTrack, RedisDB, BaseRedisData, BaseModel) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
     };
 
     Static.UserModel = User;
+    Static.BaseModel = BaseModel;
     Static.TokenModel = Token;
     Static.EmailDataModel = EmailData;
 
