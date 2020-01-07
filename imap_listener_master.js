@@ -22,7 +22,7 @@ Array.prototype.asynForEach = async function (cb) {
   }
 }
 
-let LISTEN_USER_KEY = "listen_for_user2";
+let LISTEN_USER_KEY = process.env.LISTNER_EVENT_NAME;
 
 async function runJob(offset = 0) {
   RedisDB.delKEY(LISTEN_USER_KEY);
