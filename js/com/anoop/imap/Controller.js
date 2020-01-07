@@ -241,7 +241,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.keepCheckingConnection(x => {
             process.nextTick(r => me.listenForUser(user, "restarting for user12", new_email_cb));
         });
-        new_email_cb();
+        //new_email_cb();
     }
 
     Static.updateForUser = async function (user, reset_cb) {
