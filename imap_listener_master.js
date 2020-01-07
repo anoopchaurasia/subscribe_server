@@ -21,11 +21,20 @@ Array.prototype.asynForEach = async function (cb) {
     await cb(this[i]);
   }
 }
+let oldkey;
+try {
+  oldkey = require("fs").readFileSync("./listner_key").toString();
+} catch(e) {
+  console.log("no file");
+}
 
-let LISTEN_USER_KEY = process.env.LISTNER_EVENT_NAME;
-
+let key = Math.random().toString(36).slice(2);
+let LISTEN_USER_KEY = process.env.LISTNER_EVENT_NAME+key;
+require("fs").writeFileSync("./listner_key", LISTEN_USER_KEY);
+console.log('new key', LISTEN_USER_KEY);
 async function runJob(offset = 0) {
   RedisDB.delKEY(LISTEN_USER_KEY);
+  oldkey && RedisDB.delKEY(oldkey);
   console.log("scheduler called for scrapping mail for imap...");
   let counter = offset;
   const cursor = await ImapController.UserModel.getCursor({
