@@ -32,13 +32,13 @@ fm.Class("Parser>.Message", function (me, BaseModel) {
         let date = BaseModel.getDate(parse.date);
         return {
             html: body.payload,
-            date: date.toString(),
+            date: date && date.toString(),
             headers: {
                 Subject: body.subject,
                 From: body.from_email
             },
             history_id: parse.id,
-            timestamp: date.getTime(),
+            timestamp: date && date.getTime(),
             subject: body.subject,
             from: body.from_email,
             id: parse.uid,
