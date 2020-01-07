@@ -28,7 +28,7 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
             unsubscribe: url,
             subject: data.subject,
             labelIds: data.labelIds,
-            date: me.getDate(date_string)
+            date: me.getDate(date_string, from_email_id)
         }
     };
 

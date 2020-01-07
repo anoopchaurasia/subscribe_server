@@ -49,7 +49,7 @@ fm.Class('BaseScraper', function (me, BaseController, RedisDB) {
                 return
             }
             let date_string =  data['header'] && data.header.date ?data.header.date.split('Date: ')[1]:data.receivedDateTime;
-            let date = BaseController.BaseModel.getDate(date_string)
+            let date = BaseController.BaseModel.getDate(date_string, data.to_email)
             let new_data = {
                 from_email: data.from_email,
                 from_email_name: data.from_email_name,
