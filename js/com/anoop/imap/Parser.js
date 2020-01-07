@@ -30,6 +30,9 @@ fm.Class("Parser>.Message", function (me, BaseModel) {
     Static.parse = function (body, parse, user) {
         // console.log(parse.date)
         let date = BaseModel.getDate(parse.date);
+        if(!date) {
+            console.error("no date", user.email);
+        }
         return {
             html: body.payload,
             date: date && date.toString(),
