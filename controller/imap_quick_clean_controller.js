@@ -140,14 +140,7 @@ router.post("/delete_by_sender", async (req, res) => {
     let { start_date, end_date, from_emails } = req.body;
     const user = req.user;
     try {
-        let emails = await Controller.EmailDataModel.getIdsByFromEmail({
-            start_date, end_date, user, from_emails
-        })
-        // console.log(emails)
-        await emails.asyncForEach(async data => {
-            let ids = data.data.map(x => x.email_id);
-            await Controller.deleteQuickMailNew(user, ids, data._id);
-        });
+        ImapRedisPush.deleteBySender(user,start_date,end_date,from_emails);
         res.status(200).json({
             error: false,
             data: "done"
@@ -162,15 +155,7 @@ router.post("/delete_by_label", async (req, res) => {
     const user = req.user;
     console.log(start_date, end_date, label_name)
     try {
-        let emails = await Controller.EmailDataModel.getIdsByLabelName({
-            start_date, end_date, user, label_name
-        })
-        console.log(emails)
-        await emails.asyncForEach(async data => {
-            let ids = data.data.map(x => x.email_id);
-            console.log("deleting ", ids.length, "from ", data._id);
-            await Controller.deleteQuickMailNew(user, ids, data._id);
-        });
+        ImapRedisPush.deleteByLabel(user,start_date,end_date,label_name);
         res.status(200).json({
             error: false,
             data: "done"
@@ -184,15 +169,7 @@ router.post("/delete_by_size", async (req, res) => {
     let { start_date, end_date, size_group } = req.body;
     const user = req.user;
     try {
-        let emails = await Controller.EmailDataModel.getIdsBySize({
-            start_date, end_date, user, size_group
-        })
-        console.log(emails)
-        await emails.asyncForEach(async data => {
-            let ids = data.data.map(x => x.email_id);
-            console.log("deleting ", ids.length, "from ", data._id);
-            await Controller.deleteQuickMailNew(user, ids, data._id);
-        });
+        ImapRedisPush.deleteBySize(user,start_date,end_date,size_group);
         res.status(200).json({
             error: false,
             data: "done"

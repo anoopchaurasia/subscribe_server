@@ -7,34 +7,34 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     async function openFolder(user, folder, onDisconnect) {
         console.time("openFolder")
-        if(!user){
-            throw new Error("user left system "+ user)
+        if (!user) {
+            throw new Error("user left system " + user)
         }
         let domain = user.email.split("@")[1];
         let provider = await me.getProvider(domain)
         let myImap = await MyImap.new(user, provider);
         console.timeLog("openFolder")
         console.log("got imap instace")
-        if(onDisconnect) {
-            myImap.keepCheckingConnection(function onFail(){
+        if (onDisconnect) {
+            myImap.keepCheckingConnection(function onFail() {
                 onDisconnect();
-                setTimeout(()=>{
+                setTimeout(() => {
                     throw new Error("imap disconnected!");
                 }, 1000)
-            }, 120*1000);
+            }, 120 * 1000);
         }
 
         await myImap.connect(provider).catch(async err => {
             if (err.message.match(global.INVALID_LOGIN_REGEX)) {
                 console.warn("leaving user as not loggedin reason:", err.message, user.email)
-                await me.UserModel.updateInactiveUser(user, {inactive_reason: err.message, inactive_at: new Date}, {_id: user._id, inactive_at: null});
+                await me.UserModel.updateInactiveUser(user, { inactive_reason: err.message, inactive_at: new Date }, { _id: user._id, inactive_at: null });
             }
             console.error(err);
             throw new Error(err.message, user.email);
         });
         console.timeLog("openFolder")
         console.log("imap connected");
-        
+
         await myImap.openFolder(folder);
         console.log("imap folder opened");
         console.timeEnd("openFolder")
@@ -46,7 +46,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.end();
     };
 
-   
+
     ///------------------------------------- userAction ---------------------///
 
     // Static.updateUserByActionKey = async function(user_id,value){
@@ -160,19 +160,19 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 let event = "user_" + Math.random().toString(36).slice(2);
                 me.sendToAppsFlyer(user.email, "process_failed_no_user", { "user": event });
                 reset_cb();
-                return setTimeout(()=>{
+                return setTimeout(() => {
                     throw new Error("imap not available" + user._id);
                 }, 1000)
             }
             if (myImap.imap.state === 'disconnected') {
                 reset_cb();
-                return setTimeout(x=> {
+                return setTimeout(x => {
                     throw new Error("disconnected" + user._id);
                 }, 1000)
             }
         }, 2 * 60 * 1000)
         await me.scanStarted(user._id);
-        myImap = await openFolder( user, "INBOX");
+        myImap = await openFolder(user, "INBOX");
         me.sendToAppsFlyer(user.email, "process_started", { time: Date.now() })
         await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
         let scraper = Scraper.new(myImap);
@@ -221,7 +221,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }
 
         if (user.trash_label.toLowerCase().indexOf("inbox") == -1) {
-            let myImap = await openFolder(user, user.trash_label );
+            let myImap = await openFolder(user, user.trash_label);
             let scraper = Scraper.new(myImap);
             await scraper.deletePreviousMessages();
             await closeImap(myImap);
@@ -251,19 +251,19 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             if (!myImap) {
                 let err = new Error("imap not available " + user.email.split("@")[1])
                 reset_cb(err);
-                return setTimeout(()=>{
+                return setTimeout(() => {
                     throw err;
                 }, 1000)
             }
             if (myImap.imap.state === 'disconnected') {
                 let error = new Error("disconnected " + user.email.split("@")[1])
                 reset_cb(error);
-                return setTimeout(()=>{
+                return setTimeout(() => {
                     throw error;
                 }, 1000)
             }
         }, 2 * 60 * 1000)
-  
+
         myImap = await openFolder(user, "INBOX");
         let scraper = Scraper.new(myImap);
         if (myImap.user.last_msgId == undefined || myImap.user.last_msgId == "undefined") {
@@ -319,11 +319,11 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await me.updateUser(email, "Unsubscribed Emails", trash_label, PASSWORD);
         }
         myImap.end();
-        
+
         let token;
-        if(clientAccessMode == 'web'){
+        if (clientAccessMode == 'web') {
             token = await me.TokenModel.createTokenWeb(user, ipaddress);
-        }else{
+        } else {
             token = await me.createToken(user, ipaddress);
         }
         await me.UserModel.deleteRedisUser(user);
@@ -345,19 +345,19 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         lastmsg_id = myImap.box.uidnext;
         await closeImap(myImap);
         await names.asyncForEach(async element => {
-            if (element != '[Gmail]/All Mail'){//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
-               try {
-                   let myImap = await openFolder(user, element);
-                   console.log("box name => ",myImap.box.name);
-                   if (myImap.box.uidnext > lastmsg_id) {
-                       lastmsg_id = myImap.box.uidnext;
-                   }
-                   let scraper = Scraper.new(myImap);
-                   await scraper.scrapAll(myImap.box.uidnext);
-                   await closeImap(myImap);
-               } catch (error) {
-                   console.log(error)
-               }
+            if (element != '[Gmail]/All Mail') {//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
+                try {
+                    let myImap = await openFolder(user, element);
+                    console.log("box name => ", myImap.box.name);
+                    if (myImap.box.uidnext > lastmsg_id) {
+                        lastmsg_id = myImap.box.uidnext;
+                    }
+                    let scraper = Scraper.new(myImap);
+                    await scraper.scrapAll(myImap.box.uidnext);
+                    await closeImap(myImap);
+                } catch (error) {
+                    console.log(error)
+                }
             }
         });
         await me.updateLastTrackMessageId(user._id, lastmsg_id)
@@ -400,6 +400,39 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await Label.setDeleteFlag(myImap, ids);
         await me.updateForDelete(user._id, ids);
         await closeImap(myImap);
+    }
+
+    async function makeImapActionForQC(emails,user){
+        await emails.asyncForEach(async data => {
+            let ids = data.data.map(x => x.email_id);
+            let myImap = await openFolder(user, data._id);
+            // await Label.setDeleteFlag(myImap, ids);
+            await me.updateForDelete(user._id, ids);
+            await closeImap(myImap);
+        });
+    }
+
+
+    Static.deleteBySender= async function (user, start_date, end_date, from_emails) {
+        let emails = await me.EmailDataModel.getIdsByFromEmail({
+            start_date, end_date, user, from_emails
+        })
+        await makeImapActionForQC(emails,user);
+    }
+
+    Static.deleteByLabel= async function (user, start_date, end_date, label_name) {
+        let emails = await me.EmailDataModel.getIdsByLabelName({
+            start_date, end_date, user, label_name
+        })
+        await makeImapActionForQC(emails,user);
+    }
+
+
+    Static.deleteBySize= async function (user, start_date, end_date, size_group) {
+        let emails = await me.EmailDataModel.getIdsBySize({
+            start_date, end_date, user, size_group
+        })
+        await makeImapActionForQC(emails,user);
     }
 
     Static.deleteQuickMailNew = async function (user, ids, box_name) {

@@ -213,7 +213,7 @@ fm.Class("EmailData>.BaseModel", function(me){
 
     Static.getIdsByLabelName = async function({start_date, end_date, user, label_name}){
         let match = commonQuery({user, start_date, end_date});
-        match. box_name = {$in:  label_name};
+        match.box_name = {$in:  label_name};
         return await getIdsCommon(match);
     };
 

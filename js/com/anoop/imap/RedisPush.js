@@ -1,17 +1,18 @@
 fm.Package('com.anoop.imap')
 fm.Import("com.jeet.memdb.RedisDB")
-fm.Class('RedisPush', function(me, RedisDB){
+fm.Class('RedisPush', function (me, RedisDB) {
     'use strict';
-    this.setMe=_me=>me=_me;
-    
-    
-    Static.addImapAction = async function(action, args){
-        RedisDB.base.pushData('imap_user_actions', {args, action});
+    this.setMe = _me => me = _me;
+
+
+    Static.addImapAction = async function (action, args) {
+        RedisDB.base.pushData('imap_user_actions', { args, action });
     };
-    
-    Static.addDBAction = async function(args){
-        RedisDB.base.pushData('db_user_actions', {args});
+
+    Static.addDBAction = async function (args) {
+        RedisDB.base.pushData('db_user_actions', { args });
     };
+
     ///---------------- unused
     // ImapRedisPush.unusedToKeep
     Static.unusedToKeep = async function (user, from_email) {
@@ -62,8 +63,19 @@ fm.Class('RedisPush', function(me, RedisDB){
     };
 
 
-    Static. extractAllEmail= async  function(user){
-        RedisDB.base.lPush('qc_scan_user_boxes', user._id.toHexString());        
-        
+    Static.extractAllEmail = async function (user) {
+        RedisDB.base.lPush('qc_scan_user_boxes', user._id.toHexString());
     }
+    Static.deleteBySender = async function (user, start_date, end_date, from_emails) {
+        me.addImapAction("deleteBySender", [user._id.toHexString(), start_date,end_date,from_emails]);
+    }
+
+    Static.deleteByLabel = async function (user, start_date, end_date, from_emails) {
+        me.addImapAction("deleteByLabel", [user._id.toHexString(), start_date,end_date,from_emails]);
+    }
+
+    Static.deleteBySize = async function (user, start_date, end_date, from_emails) {
+        me.addImapAction("deleteBySize", [user._id.toHexString(), start_date,end_date,from_emails]);
+    }
+
 });
