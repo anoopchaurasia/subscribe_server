@@ -14,7 +14,8 @@ fm.Include("com.anoop.outlook.Controller");
 let Controller = com.anoop.outlook.Controller;
 
 router.get('/getOutLookApiUrl', async function (req, res) {
-    let returnVal = await Controller.getOutlookUrl().catch(err => {
+    let source = req.query.source;
+    let returnVal = await Controller.getOutlookUrl(source).catch(err => {
         console.error(err);
     });
     if (returnVal) {
