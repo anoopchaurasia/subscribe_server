@@ -22,16 +22,17 @@ async function authenticate(req, res, next){
         return next();
     }
     let token = req.headers["X-AUTH-TOKEN"] || req.headers["x-auth-token"] || req.body.authID || req.body.token;
-    if(token.startsWith('Bearer ')){
-        token = token.split(' ')[1];
-    }
+    
     if(!token) {
         let data;
-        if((data=await jwt_login(req).catch(err=>console.error(err.message)))) {
+        if((data=await jwt_login(req).catch(err=>{ console.error(err.message); res.end(); }) ) ) {
             req.user = await BaseController.UserModel.getRedisUser(data.user_id);
             return next();
         }
         return res.status(401).json({error:"auth failed"});
+    }
+    if(token.startsWith('Bearer ')){
+        token = token.split(' ')[1];
     }
     let user = await BaseController.TokenModel.getUserByToken(token);
     if(!user) {
