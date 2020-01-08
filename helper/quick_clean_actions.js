@@ -9,6 +9,7 @@ fm.Include("com.anoop.imap.Controller", function(){
         let user = await ImapController.UserModel.getRedisUser(user_id);
         if(error_count>3) {
             ImapController.scanFinishedQuickClean(user_id);
+            ImapController.logToSentry(new Error("qc: not trying as failed 3 times already"), {user_id: user_id});
             return console.error("not trying as failed 3 times already",  data);   
         }
         try{
