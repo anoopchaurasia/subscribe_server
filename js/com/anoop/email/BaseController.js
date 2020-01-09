@@ -69,7 +69,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
 
     Static.storeEmailData = async function(data,user_id){
         let emailData = await EmailData.storeEamil(data,user_id);
-        return await EmailData.updateOrCreateAndGet({from_email:emailData.from_email,email_id:emailData.email_id,user_id:emailData.user_id,receivedDate:emailData.receivedDate},emailData);
+        return await EmailData.updateOrCreateAndGet({from_email:emailData.from_email,email_id:emailData.email_id,user_id:emailData.user_id},emailData);
     }
 
     Static.saveManualEmailData = async function (user_id, data) {
