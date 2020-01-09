@@ -406,9 +406,27 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
             let myImap = await openFolder(user, data._id);
-            await Label.setDeleteFlag(myImap, ids);
-            await me.updateForDelete(user._id, ids);
+            // await Label.setDeleteFlag(myImap, ids);
+            // await me.updateForDelete(user._id, ids);
             await closeImap(myImap);
+        });
+    }
+
+    Static.updateDeleteDbBySender= async function (user_id, start_date, end_date, from_emails) {
+        await me.EmailDataModel.updateDeleteDbBySender({
+            start_date, end_date, user_id, from_emails
+        });
+    }
+
+    Static.updateDeleteDbByLabel= async function (user_id, start_date, end_date, label_name) {
+        await me.EmailDataModel.updateDeleteDbByLabel({
+            start_date, end_date, user_id, label_name
+        });
+    }
+
+    Static.updateDeleteDbBySize= async function (user_id, start_date, end_date, size_group) {
+        await me.EmailDataModel.updateDeleteDbBySize({
+            start_date, end_date, user_id, size_group
         });
     }
 
