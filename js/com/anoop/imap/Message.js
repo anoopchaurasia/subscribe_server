@@ -55,7 +55,7 @@ fm.Class("Message", function (me) {
     };
 
     async function search(imap, criteria) {
-        console.log("search", criteria);
+        // console.log("search", criteria);
         return new Promise((resolve, reject) => {
             imap.search(criteria, function (err, uids) {
                 (err ? reject(err) : resolve(uids));
