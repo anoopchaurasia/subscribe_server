@@ -15,6 +15,7 @@ let Controller = com.anoop.outlook.Controller;
 
 router.get('/getOutLookApiUrl', async function (req, res) {
     let source = req.query.source;
+    console.log(source)
     let returnVal = await Controller.getOutlookUrl(source).catch(err => {
         console.error(err);
     });
@@ -45,7 +46,6 @@ router.get('/auth/callback', async function (req, res) {
             console.error(err);
         });
     }
-    console.log(tokeninfo)
     res.status(200).json({
         error: false,
         data: tokeninfo
