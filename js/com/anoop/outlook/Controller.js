@@ -109,11 +109,15 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
     }
 
 
-    Static.getOutlookUrl = async function () {
+    Static.getOutlookUrl = async function (source="") {
         const stateCode = uniqid() + "outlook" + uniqid();
         let oauth2 = await Outlook.getOutlookInstance();
+        let redirect_uri = process.env.REDIRECT_URI;
+        if(source=="web") {
+            redirect_uri = redirect_uri.replace(/v1\/mail/, "v1/web/mail");
+        }
         const returnVal = oauth2.authorizationCode.authorizeURL({
-            redirect_uri: process.env.REDIRECT_URI,
+            redirect_uri: redirect_uri,
             scope: process.env.APP_SCOPES,
             state: stateCode
         });
