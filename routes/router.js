@@ -50,7 +50,7 @@ async function authenticate(req, res, next){
         console.error("auth failed for token", token, req.originalUrl);
         return res.json({error:"auth failed"});
     }
-    BaseController.sendToAppsFlyer(user.email, req._parsedUrl.pathname.split("/").join("_"));
+    BaseController.sendToAppsFlyer(user.af_uid || user.email, req._parsedUrl.pathname.split("/").join("_"));
     req.user = user;
     next();
 }

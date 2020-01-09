@@ -158,7 +158,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let timeoutconst = setInterval(x => {
             if (!myImap) {
                 let event = "user_" + Math.random().toString(36).slice(2);
-                me.sendToAppsFlyer(user.email, "process_failed_no_user", { "user": event });
+                me.sendToAppsFlyer(user.af_uid || user.email, "process_failed_no_user", { "user": event });
                 reset_cb();
                 return setTimeout(() => {
                     throw new Error("imap not available" + user._id);
@@ -173,12 +173,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, 2 * 60 * 1000)
         await me.scanStarted(user._id);
         myImap = await openFolder(user, "INBOX");
-        me.sendToAppsFlyer(user.email, "process_started", { time: Date.now() })
+        me.sendToAppsFlyer(user.af_uid || user.email, "process_started", { time: Date.now() })
         await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
         let scraper = Scraper.new(myImap);
         await scraper.start(async function afterEnd() {
             console.log("is_finished called");
-            me.sendToAppsFlyer(user.email, "process_finished", { time: Date.now() })
+            me.sendToAppsFlyer(user.af_uid || user.email, "process_finished", { time: Date.now() })
             await me.scanFinished(user._id);
             me.updateUserByActionKey(user._id, { "last_scan_date": new Date() });
             await me.handleRedis(user._id);
@@ -242,7 +242,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.keepCheckingConnection(x => {
             process.nextTick(r => me.listenForUser(user, "restarting for user12", new_email_cb));
         });
-        //new_email_cb();
+        new_email_cb();
     }
 
     Static.updateForUser = async function (user, reset_cb) {

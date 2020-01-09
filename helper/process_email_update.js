@@ -58,8 +58,8 @@ fm.Include("com.anoop.imap.Controller", function(){
                 RedisDB.lPush('email_update_for_user', user_id+"#"+(error_count+1));
             });
         }catch(e) {
-            ImapController.logToSentry(e, {list: 'email_update_for_user', tags: {user_email: user.email.split("@")[1]} })
             console.error(e);
+            ImapController.logToSentry(e, {list: 'email_update_for_user', tags: {user_email: user && user.email && user.email.split("@")[1]} })
         }
     }
 

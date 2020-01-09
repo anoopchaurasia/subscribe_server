@@ -10,7 +10,6 @@ class AppsflyerEvent {
         try {
             var data = JSON.stringify({
                 appsflyer_id: user_id,
-                customer_user_id: user_id,
                 eventName: event_name,
                 eventValue: event_value,
                 eventCurrency: 'USD',

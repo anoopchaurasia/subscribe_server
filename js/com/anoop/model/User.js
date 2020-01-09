@@ -1,6 +1,7 @@
 fm.Package("com.anoop.model");
 let ObjectId = require("mongoose").Types.ObjectId;
 const mongouser = require('../../../../models/user');
+const mongodevice = require("../../../../models/deviceoInfo");
 fm.Import("...jeet.memdb.RedisDB");
 fm.Class("User>.BaseModel", function (me, RedisDB) {
     this.setMe = _me => me = _me;
@@ -129,6 +130,9 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
             console.error("user not found")
             return null;
         }
+        let device = await mongodevice.findOne({user_id: user._id}, {appsFlyerUID:1}).lean().exec() 
+        user.af_uid = device && device.appsFlyerUID;
+        console.log(device, "device");
         ["image_url",
         "name",
             "family_name",
