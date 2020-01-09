@@ -34,10 +34,22 @@ router.get('/getOutLookApiUrl', async function (req, res) {
 router.get('/auth/callback', async function (req, res) {
     let auth_code = req.query.code;
     let state = req.query.state;
-    await Controller.createAndStoreToken(auth_code, state).catch(err => {
-        console.error(err);
-    });
-    res.send();
+    let source = req.query.source;
+    let tokeninfo;
+    if(source=="web"){
+        tokeninfo = await Controller.createAndStoreTokenWeb(auth_code, state).catch(err => {
+            console.error(err);
+        });
+    }else{
+        tokeninfo = await Controller.createAndStoreToken(auth_code, state).catch(err => {
+            console.error(err);
+        });
+    }
+    console.log(tokeninfo)
+    res.status(200).json({
+        error: false,
+        data: tokeninfo
+    })
 });
 
 router.get('/getPushNotification', async function (req, res) {
