@@ -406,8 +406,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
             let myImap = await openFolder(user, data._id);
-            // await Label.setDeleteFlag(myImap, ids);
-            // await me.updateForDelete(user._id, ids);
+            console.log(ids)
+            await Label.setDeleteFlag(myImap, ids);
             await closeImap(myImap);
         });
     }
@@ -435,6 +435,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let emails = await me.EmailDataModel.getIdsByFromEmail({
             start_date, end_date, user, from_emails
         })
+        console.log(emails, user, start_date, end_date, from_emails)
         await makeImapActionForQC(emails,user);
     }
 

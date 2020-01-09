@@ -23,7 +23,7 @@ let jwt = require("jsonwebtoken");
 async function noauth(req, res, next){
     let token = req.headers["X-AUTH-TOKEN"] || req.headers["x-auth-token"] || req.body.authID || req.body.token || req.headers['authorization'];
     if(!token) {
-        BaseController.sendToAppsFlyer("temp@temp.com", req.originalUrl.split("?")[1].split("/").join("_"));
+        BaseController.sendToAppsFlyer("temp@temp.com", req._parsedUrl.pathname.split("/").join("_"));
     }
     next();
 }
@@ -33,7 +33,6 @@ async function authenticate(req, res, next){
         return next();
     }
     let token = req.headers["X-AUTH-TOKEN"] || req.headers["x-auth-token"] || req.body.authID || req.body.token;
-    
     if(!token) {
         let data;
         if((data=await jwt_login(req).catch(err=>{ console.error(err.message); res.end(); }) ) ) {
@@ -47,11 +46,11 @@ async function authenticate(req, res, next){
     }
     let user = await BaseController.TokenModel.getUserByToken(token);
     if(!user) {
-        BaseController.sendToAppsFlyer("nolog", req.originalUrl.split("?")[1].split("/").join("_"))
+        BaseController.sendToAppsFlyer("nolog", req._parsedUrl.pathname.split("/").join("_"))
         console.error("auth failed for token", token, req.originalUrl);
         return res.json({error:"auth failed"});
     }
-    BaseController.sendToAppsFlyer(user.email, req.originalUrl.split("?")[1].split("/").join("_"));
+    BaseController.sendToAppsFlyer(user.email, req._parsedUrl.pathname.split("/").join("_"));
     req.user = user;
     next();
 }
