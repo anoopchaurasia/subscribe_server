@@ -207,21 +207,33 @@ fm.Class("EmailData>.BaseModel", function (me) {
         ]);
     }
 
+
+
+    function commonQueryForDelete({ user, start_date, end_date }) {
+        let match = {
+            "user_id": user._id,
+        };
+        if (start_date) {
+            match.receivedDate = { $gte: new Date(start_date), $lte: new Date(end_date) }
+        }
+        return match;
+    }
+
     Static.getIdsBySize = async function ({ start_date, end_date, user, size_group }) {
-        let match = commonQuery({ user, start_date, end_date });
+        let match = commonQueryForDelete({ user, start_date, end_date });
         match.size_group = { $in: size_group }
         return await getIdsCommon(match)
     };
 
     Static.getIdsByLabelName = async function ({ start_date, end_date, user, label_name }) {
-        let match = commonQuery({ user, start_date, end_date });
+        let match = commonQueryForDelete({ user, start_date, end_date });
         match.box_name = { $in: label_name };
         return await getIdsCommon(match);
     };
 
 
     Static.getIdsByFromEmail = async function ({ start_date, end_date, user, from_emails }) {
-        let match = commonQuery({ user, start_date, end_date });
+        let match = commonQueryForDelete({ user, start_date, end_date });
         match.from_email = { $in: from_emails }
         return getIdsCommon(match);
     };

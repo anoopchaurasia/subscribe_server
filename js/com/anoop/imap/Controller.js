@@ -435,7 +435,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let emails = await me.EmailDataModel.getIdsByFromEmail({
             start_date, end_date, user, from_emails
         })
-        console.log(emails, user, start_date, end_date, from_emails)
+        // console.log(emails, user, start_date, end_date, from_emails)
         await makeImapActionForQC(emails,user);
     }
 
