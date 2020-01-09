@@ -15,7 +15,6 @@ let Controller = com.anoop.outlook.Controller;
 
 router.get('/getOutLookApiUrl', async function (req, res) {
     let source = req.query.source;
-    console.log(source)
     let returnVal = await Controller.getOutlookUrl(source).catch(err => {
         console.error(err);
     });
