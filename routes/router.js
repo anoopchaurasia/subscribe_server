@@ -14,14 +14,17 @@ router.use('/imap/saveAnalyticData', function(req, res){
         message: "success"
     });
 })
-router.use('/imap', noauth, require('../controller/imap_controller')); 
 
+router.use('/imap', noauth, require('../controller/imap_controller')); 
 router.use('/imap', authenticate, require('../controller/imap_controller_auth')); 
 router.use('/imap', authenticate, require('../controller/imap_action_controller')); 
 router.use('/imap', authenticate, require('../controller/imap_quick_clean_controller')); 
 let jwt = require("jsonwebtoken");
 async function noauth(req, res, next){
-    BaseController.sendToAppsFlyer("temp@temp.com", req.originalUrl.split("/").join("_"));
+    let token = req.headers["X-AUTH-TOKEN"] || req.headers["x-auth-token"] || req.body.authID || req.body.token || req.headers['authorization'];
+    if(!token) {
+        BaseController.sendToAppsFlyer("temp@temp.com", req.originalUrl.split("?")[1].split("/").join("_"));
+    }
     next();
 }
 
@@ -44,11 +47,11 @@ async function authenticate(req, res, next){
     }
     let user = await BaseController.TokenModel.getUserByToken(token);
     if(!user) {
-        BaseController.sendToAppsFlyer("nolog", req.originalUrl.split("/").join("_"))
+        BaseController.sendToAppsFlyer("nolog", req.originalUrl.split("?")[1].split("/").join("_"))
         console.error("auth failed for token", token, req.originalUrl);
         return res.json({error:"auth failed"});
     }
-    BaseController.sendToAppsFlyer(user.email, req.originalUrl.split("/").join("_"));
+    BaseController.sendToAppsFlyer(user.email, req.originalUrl.split("?")[1].split("/").join("_"));
     req.user = user;
     next();
 }

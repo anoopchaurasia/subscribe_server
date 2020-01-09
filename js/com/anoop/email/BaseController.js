@@ -120,14 +120,15 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     }
 
     Static.scanStarted = async function (user_id) {
-        await RedisDB.setData(user_id, "is_finished", false);
-        RedisDB.setExpire(user_id, "is_finished", 1800);// half hour
+        let key = RedisDB.createKey("is_finished", user_id);
+        await RedisDB.base.setData(key, false);
+        RedisDB.base.setExpire(key, 1800);// half hour
     }
 
     Static.isScanFinished = async function (user_id) {
-        return (await RedisDB.getData(user_id, "is_finished")) || "true";
-    }
-
+        let key = RedisDB.createKey("is_finished", user_id);
+        return (await RedisDB.base.getData(key)) || "true";
+    };
 
     Static.scanStartedQuickClean = async function (user_id) {
         await RedisDB.setData(user_id, "is_finished_quick_clean", false);
