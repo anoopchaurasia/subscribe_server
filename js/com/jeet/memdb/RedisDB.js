@@ -37,6 +37,8 @@ fm.Class("RedisDB>com.anoop.vendor.Redis", function(me) {
         me.base.setExpire(createKey(user_id, from_email), time);
     };
 
+    Static.createKey = createKey;
+
     Static.setData = function(user_id, keyword, data) {
         me.base.setData(createKey(keyword, user_id), data);
     };
