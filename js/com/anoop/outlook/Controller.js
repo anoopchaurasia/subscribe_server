@@ -149,6 +149,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         let token = await Outlook.getToken(auth_code);
         let userInfo = jwt.decode(token.token.id_token);
         let user = await me.getByEmailAndClient(userInfo);
+        /// delete new user created by state to as user already exists
         if (user) {
             await me.removeUserByState(state);
             await me.updateExistingUserInfoOutlook(userInfo, state);
