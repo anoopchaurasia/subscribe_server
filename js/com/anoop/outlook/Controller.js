@@ -144,6 +144,26 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, Outlook, Scr
         return await me.createToken(user);
     }
 
+
+    Static.createAndStoreTokenWeb = async function (auth_code, state) {
+        let token = await Outlook.getToken(auth_code);
+        let userInfo = jwt.decode(token.token.id_token);
+        let user = await me.getByEmailAndClient(userInfo);
+        if (user) {
+            await me.removeUserByState(state);
+            await me.updateExistingUserInfoOutlook(userInfo, state);
+        } else {
+            user = await me.getByState(state);
+            await me.updateNewUserInfoOutlook(userInfo, state);
+        }
+        await OutlookHandler.extract_token(user, token.token.access_token, token.token.refresh_token, token.token.id_token, token.token.expires_at, token.token.scope, token.token.token_type).catch(err => {
+            console.log(err);
+        });
+
+        await Label.subscribeToNotification(token.token.access_token, user._id);
+        return await me.TokenModel.createTokenWeb(user);
+    }
+
     Static.setPrimaryEmail = async function (user_id, email, ipaddress) {
         await me.updateUserById({ "_id": user_id },{$set: { primary_email: email, ipaddress }} );
     }
