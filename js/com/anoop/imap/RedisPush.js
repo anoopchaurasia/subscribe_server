@@ -6,7 +6,15 @@ fm.Class('RedisPush', function (me, RedisDB) {
 
 
     Static.addImapAction = async function (action, args) {
-        RedisDB.base.pushData('imap_user_actions', { args, action });
+        let user_key = 'imap_user_action_'+args[0];
+        let active_key = RedisDB.base.getData(user_key+"active");
+        let is_added = await RedisDB.base.getData(active_key);
+        if(!is_added) {
+            await RedisDB.base.setData(active_key, "1");
+            RedisDB.base.setExpire(active_key, 10*60);
+            RedisDB.base.pushData('imap_user_actions_new', {user_key, active_key});
+        }
+        RedisDB.base.pushData(user_key, {args, action});
     };
 
     Static.addDBAction = async function (args) {

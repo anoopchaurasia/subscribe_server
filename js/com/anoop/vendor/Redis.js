@@ -68,6 +68,12 @@ fm.Class("Redis", function (me) {
         return me.lPush(key, data);
     };
 
+    Static.lPushAsync = function (key, data) {
+        return new Promise(r=> {
+            return client.lpush(key, data, r);
+        });
+    };
+
     Static.lPush = function (key, data) {
         return client.lpush(key, data);
     };
@@ -82,29 +88,30 @@ fm.Class("Redis", function (me) {
         key = Array.isArray(key)? key : [key]
         key.push(0, async (err, data) => {
             listner_count++;
-            if (err) {
-                console.error(err);
-                listner_count--;
-                return next()
-            }
+            let i_will_handle = false;
             try {
+                if (err) {
+                    return console.error(err);
+                }
                 console.time(original_key)
                 console.timeLog(original_key);
-                await cb(data);
+                i_will_handle = await cb(data, next);
                 console.timeEnd(original_key);
             } catch (e) {
                 console.timeEnd(original_key);
                 console.error(e, original_key, "BLPopListner")
             } finally {
                 listner_count--;
-                next();
+                !i_will_handle && next();
             }
         })
         async function next() {
             if(shut_server === true) {
                 if(listner_count==0) {
                     console.log("graceful shuting server");
-                    process.exit(0);
+                    client.quit(()=>{
+                        process.exit(0);
+                    });
                 }
                 return;
             }
@@ -112,16 +119,25 @@ fm.Class("Redis", function (me) {
             client.blpop(...key);
         }
         next();
-        process.on('SIGINT', function() {
+        function onSIGINT(){
             shut_server = true;
             console.log(listner_count, "shutdown")
             if(listner_count==0) {
                 console.log("graceful shuting server");
-                process.exit(0);
+                client.quit(()=>{
+                    process.exit(0);
+                });
             }
-         });
+        }
+        process.on('SIGINT', onSIGINT);
+        return function destroy(){
+            client.quit();
+            client = null;
+            next = null;
+            process.off("SIGINT", onSIGINT);
+        }
     };
-
+    
     Static.popData = async function (key) {
         return new Promise((resolve, reject) => {
             client.lrange(key, 0, -1, (err, res) => {
@@ -130,12 +146,12 @@ fm.Class("Redis", function (me) {
             });
         });
     };
-
+    
     Static.notifyListner = async function (user_id) {
         client.lpush('new_imap_user', user_id);
         client.expire("new_imap_user", 20);
     };
-
+    
     Static.listLength = async function (key) {
         return new Promise((resolve, reject) => {
             client.llen(key, (err, res) => {
