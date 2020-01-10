@@ -402,10 +402,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await closeImap(myImap);
     }
 
-    async function makeImapActionForQC(emails,user){
+    async function makeImapActionForQC(emails,user, onDisconnect){
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
-            let myImap = await openFolder(user, data._id);
+            let myImap = await openFolder(user, data._id, onDisconnect);
             let sendids;
             console.log("total delete length", ids.length);
             while(ids.length) {
@@ -413,7 +413,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 console.log("deleting length", sendids.length);
                 await Label.setDeleteFlag(myImap, sendids);
             }
-            console.log("deleting data");
+            console.log("deleted data");
             await closeImap(myImap);
         });
     }
@@ -437,27 +437,27 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
 
-    Static.deleteBySender= async function (user, start_date, end_date, from_emails) {
+    Static.deleteBySender= async function (user, start_date, end_date, from_emails, onDisconnect) {
         let emails = await me.EmailDataModel.getIdsByFromEmail({
             start_date, end_date, user, from_emails
         })
         // console.log(emails, user, start_date, end_date, from_emails)
-        await makeImapActionForQC(emails,user);
+        await makeImapActionForQC(emails,user, onDisconnect);
     }
 
-    Static.deleteByLabel= async function (user, start_date, end_date, label_name) {
+    Static.deleteByLabel= async function (user, start_date, end_date, label_name, onDisconnect) {
         let emails = await me.EmailDataModel.getIdsByLabelName({
             start_date, end_date, user, label_name
         })
-        await makeImapActionForQC(emails,user);
+        await makeImapActionForQC(emails,user, onDisconnect);
     }
 
 
-    Static.deleteBySize= async function (user, start_date, end_date, size_group) {
+    Static.deleteBySize= async function (user, start_date, end_date, size_group, onDisconnect) {
         let emails = await me.EmailDataModel.getIdsBySize({
             start_date, end_date, user, size_group
         })
-        await makeImapActionForQC(emails,user);
+        await makeImapActionForQC(emails,user, onDisconnect);
     }
 
     Static.deleteQuickMailNew = async function (user, ids, box_name) {
