@@ -406,8 +406,11 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await emails.asyncForEach(async data => {
             let ids = data.data.map(x => x.email_id);
             let myImap = await openFolder(user, data._id);
-            console.log(ids)
-            await Label.setDeleteFlag(myImap, ids);
+            let sendids;
+            while(ids.length) {
+                sendids = ids.splice(0, 10000);
+                await Label.setDeleteFlag(myImap, sendids);
+            }
             await closeImap(myImap);
         });
     }

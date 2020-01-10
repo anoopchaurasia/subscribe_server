@@ -73,8 +73,6 @@ fm.Class("Message", function (me) {
 
     Static.deleteMsg = async function (imap, ids) {
         return await new Promise((resolve, reject) => {
-            let duplicates = {};
-            ids = ids.filter(x=> duplicates[x]? false: (duplicates[x]=true))
             imap.setFlags(ids, ['\\DELETED'], function (err) {
                 (err ? reject(err) : resolve());
             });
