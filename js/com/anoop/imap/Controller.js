@@ -408,6 +408,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             let myImap = await openFolder(user, data._id, onDisconnect);
             let sendids;
             console.log("total delete length", ids.length);
+            myImap.keepCheckingConnection(function onFail() {
+                console.log("reconnecting as disconnected!");
+                myImap.connect();
+            }, 120 * 1000);
             while(ids.length) {
                 sendids = ids.splice(0, 10000);
                 console.log("deleting length", sendids.length);
