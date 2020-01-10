@@ -37,7 +37,7 @@ router.get('/auth/callback', async function (req, res) {
     let source = req.query.source;
     let tokeninfo;
     if(source=="web"){
-        tokeninfo = await Controller.createAndStoreTokenWeb(auth_code, state).catch(err => {
+        tokeninfo = await Controller.createAndStoreTokenWeb(auth_code, state,source).catch(err => {
             console.error(err);
         });
         res.status(200).json({

@@ -32,10 +32,14 @@ fm.Class("Outlook", function(me){
         return new me(oauth2, user);
     };
 
-    Static.getToken = async function(auth_code){
+    Static.getToken = async function(auth_code,source=""){
+        let redirect_uri = process.env.REDIRECT_URI;
+        if(source=="web") {
+            redirect_uri = redirect_uri.replace(/v1\/mail/, "v1/web/mail");
+        }
         let result = await oauth2.authorizationCode.getToken({
             code: auth_code,
-            redirect_uri: process.env.REDIRECT_URI,
+            redirect_uri: redirect_uri,
             scope: process.env.APP_SCOPES
         }).catch(err => {
             console.log(err);
