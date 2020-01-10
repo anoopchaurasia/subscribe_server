@@ -17,6 +17,11 @@ fm.Class("EmailDetail>.BaseModel", function(me){
         return await mongo_emaildetail.findOneAndUpdate(query, {$set: {status}}).exec();
     };
 
+    Static.updateManyStatus = async function(query, status) {
+        me.updateQueryValidation(query);
+        return await mongo_emaildetail.updateMany(query, {$set: {status}}).exec();
+    };
+
     Static.updateOrCreateAndGet = async function(query, set) {
         me.updateQueryValidation(query);
         if(!set.status) {

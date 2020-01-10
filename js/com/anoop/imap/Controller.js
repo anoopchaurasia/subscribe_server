@@ -47,6 +47,27 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
 
+    Static.updateEmailDetailByFromEmail=async(user_id, from_email, status) =>{
+        let from_email_array = await getFromEmailArray(from_email);
+        await me.updateEmailDetailByFromEmailArray(user_id, from_email_array, status);
+    };
+
+    async function getFromEmailArray(from_email) {
+        console.log(Array.isArray(from_email))
+        return Array.isArray(from_email) ? from_email: [from_email];
+    }
+
+
+
+    async function commonImapUserAction(user,from_email,onDisconnect, {folder, labelAction}){
+        let from_email_array = await getFromEmailArray(from_email);
+        let myImap = await openFolder(user, folder, onDisconnect);
+        await from_email_array.asyncForEach(async email => {
+            await Label[labelAction](myImap, email);
+        }); 
+        await closeImap(myImap);
+    }
+
     ///------------------------------------- userAction ---------------------///
 
     // Static.updateUserByActionKey = async function(user_id,value){
@@ -55,28 +76,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     ///------------------------------------- from unused ---------------------///
 
-    Static.unusedToKeep = async function (user, from_email) {
-        me.updateUserByActionKey(user._id, { "last_keep_date": new Date() });
+    Static.unusedToKeep = async function () {
+
     };
 
     Static.unusedToTrash = async function (user, from_email, onDisconnect) {
-        console.log("openfolder")
-        let myImap = await openFolder(user, "INBOX", onDisconnect);
-        console.log("trash")
-        await Label.moveInboxToTrash(myImap, from_email);
-        console.log("close imap")
-        me.updateUserByActionKey(user._id, { "last_trash_date": new Date() });
-        await closeImap(myImap);
+        await commonImapUserAction(user, from_email, onDisconnect, {folder: "INBOX", labelAction: "moveInboxToTrash"});
     };
 
     Static.unusedToUnsub = async function (user, from_email, onDisconnect) {
-        console.log("openfolder")
-        let myImap = await openFolder(user, "INBOX", onDisconnect);
-        console.log("move")
-        await Label.moveInboxToUnsub(myImap, from_email);
-        console.log("close imap")
-        me.updateUserByActionKey(user._id, { "last_unsub_date": new Date() });
-        await closeImap(myImap);
+        await commonImapUserAction(user, from_email, onDisconnect, {folder: "INBOX", labelAction: "moveInboxToUnsub"});
     };
 
     Static.manualUnusedToTrash = async function (user, from_email, onDisconnect) {
@@ -110,42 +119,26 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     ///------------------------------------- from keep ---------------------///
 
     Static.keepToTrash = async function (user, from_email, onDisconnect) {
-        let myImap = await openFolder(user, "INBOX", onDisconnect);
-        await Label.moveActiveToTrash(myImap, from_email);
-        me.updateUserByActionKey(user._id, { "last_trash_date": new Date() });
-        await closeImap(myImap);
+        await commonImapUserAction(user, from_email, onDisconnect, {folder: "INBOX", labelAction: "moveActiveToTrash"});
     };
 
     Static.keepToUnsub = async function (user, from_email, onDisconnect) {
-        let myImap = await openFolder(user, "INBOX", onDisconnect);
-        await Label.moveActiveToUnsub(myImap, from_email);
-        me.updateUserByActionKey(user._id, { "last_unsub_date": new Date() });
-        await closeImap(myImap);
-
+        await commonImapUserAction(user, from_email, onDisconnect, {folder: "INBOX", labelAction: "moveActiveToUnsub"});
     }
     ///---------------------------------------from unsub folder--------------------///
 
     Static.unsubToKeep = async function (user, from_email, onDisconnect) {
-        let myImap = await openFolder(user, user.unsub_label, onDisconnect);
-        await Label.moveUnsubToInbox(myImap, from_email);
-        me.updateUserByActionKey(user._id, { "last_keep_date": new Date() });
-        await closeImap(myImap);
+        await commonImapUserAction(user, from_email, onDisconnect, {folder: user.unsub_label, labelAction: "moveUnsubToInbox"});
     };
 
     Static.unsubToTrash = async function (user, from_email, onDisconnect) {
-        let myImap = await openFolder(user, user.unsub_label, onDisconnect);
-        await Label.moveUnsubToTrash(myImap, from_email);
-        me.updateUserByActionKey(user._id, { "last_trash_date": new Date() });
-        await closeImap(myImap);
-    };
+        await commonImapUserAction(user, from_email, onDisconnect, {folder: user.unsub_label, labelAction: "moveUnsubToTrash"});
+     };
     ///------------------------------------from trash folder---------------------///
 
     Static.trashToKeep = async function (user, from_email, onDisconnect) {
-        let myImap = await openFolder(user, user.trash_label, onDisconnect);
-        await Label.moveTrashToInbox(myImap, from_email);
-        me.updateUserByActionKey(user._id, { "last_keep_date": new Date() });
-        await closeImap(myImap);
-    };
+        await commonImapUserAction(user, from_email, onDisconnect, {folder: user.trash_label, labelAction: "moveTrashToInbox"});
+     };
 
     Static.trashToUnsub = async function (user, from_email) {
         //// not in use

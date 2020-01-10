@@ -111,7 +111,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         await RedisDB.remKey(user_id, "is_finished", true);
     };
 
-    Static.updateUserByActionKey = async function (user_id, value) {
+    Static.updateUserByActionKey = async function () {
         //return await UserAction.updateByKey({ _id: user_id }, value);
     }
 
@@ -244,6 +244,10 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await EmailDetail.updateStatus({ user_id, from_email }, status);
     };
 
+    Static.updateEmailDetailByFromEmailArray = async function (user_id, from_email, status) {
+        return await EmailDetail.updateManyStatus({ user_id, from_email: { $in: from_email } }, status);
+    };
+
     Static.sendMailToScraper = async function (data, user, getBodyCB,is_get_body) {
         await BaseRedisData.sendMailToScraper(data, user, getBodyCB,is_get_body);
     };
@@ -273,7 +277,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return senddata;
     };
 
-    Static.getUnreadCount = async function (emaildetails) {
+    Static.getUnreadCount = async function () {
 
     }
 
