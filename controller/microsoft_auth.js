@@ -40,15 +40,16 @@ router.get('/auth/callback', async function (req, res) {
         tokeninfo = await Controller.createAndStoreTokenWeb(auth_code, state).catch(err => {
             console.error(err);
         });
+        res.status(200).json({
+            error: false,
+            data: tokeninfo
+        })
     }else{
         tokeninfo = await Controller.createAndStoreToken(auth_code, state).catch(err => {
             console.error(err);
         });
+        res.send();
     }
-    res.status(200).json({
-        error: false,
-        data: tokeninfo
-    })
 });
 
 router.get('/getPushNotification', async function (req, res) {
