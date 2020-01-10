@@ -329,10 +329,26 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
 
-    Static.extractAllEmail = async function (user) {
+    Static.extractAllEmail = async function (user, reset_cb) {
         let lastmsg_id;
         await me.scanStartedQuickClean(user._id);
         let myImap = await openFolder(user, "INBOX");
+        let timeoutconst = setInterval(x => {
+            if (!myImap) {
+                let event = "user_" + Math.random().toString(36).slice(2);
+                me.sendToAppsFlyer(user.af_uid || user.email, "process_failed_no_user", { "user": event });
+                reset_cb();
+                return setTimeout(() => {
+                    throw new Error("imap not available" + user._id);
+                }, 1000)
+            }
+            if (myImap.imap.state === 'disconnected') {
+                reset_cb();
+                return setTimeout(x => {
+                    throw new Error("disconnected" + user._id);
+                }, 1000)
+            }
+        }, 2 * 60 * 1000)
         let names = await myImap.getLabels();
         console.dir(names);
         lastmsg_id = myImap.box.uidnext;
@@ -353,6 +369,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 }
             }
         });
+        clearInterval(timeoutconst);
         await me.updateLastTrackMessageId(user._id, lastmsg_id)
         console.log("last one came");
         await me.scanFinishedQuickClean(user._id);
