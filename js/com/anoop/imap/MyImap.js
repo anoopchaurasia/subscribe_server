@@ -94,6 +94,7 @@ fm.Class("MyImap", function (me) {
     };
 
     this.connect = async function (provider) {
+        provider = provider || this.provider;
         let { password, email } = me.user;
         let original_password = me.decryptPassword(password);
         return new Promise((resolve, reject) => {
