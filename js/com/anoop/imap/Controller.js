@@ -407,10 +407,13 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             let ids = data.data.map(x => x.email_id);
             let myImap = await openFolder(user, data._id);
             let sendids;
+            console.log("total delete length", ids.length);
             while(ids.length) {
                 sendids = ids.splice(0, 10000);
+                console.log("deleting length", sendids.length);
                 await Label.setDeleteFlag(myImap, sendids);
             }
+            console.log("deleting data");
             await closeImap(myImap);
         });
     }
