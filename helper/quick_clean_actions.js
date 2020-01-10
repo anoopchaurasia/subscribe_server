@@ -14,7 +14,11 @@ fm.Include("com.anoop.imap.Controller", function(){
         }
         try{
             console.log("qc_scan_user_boxes", data[1]);
-            await ImapController.extractAllEmail(user)
+            await ImapController.extractAllEmail(user, function(){
+                error_count = error_count*1;
+                ImapController.logToSentry(new Error("user disconnected"), {list: 'qc_scan_user_boxes', error_count: error_count+1, tags: {user_email: user.email.split("@")[1]} })
+                RedisDB.lPush('qc_scan_user_boxes', user_id+"#"+(error_count+1));
+            })
         }catch(e) {
             console.error(e);
             if(!e.message.match(global.INVALID_LOGIN_REGEX)) {
