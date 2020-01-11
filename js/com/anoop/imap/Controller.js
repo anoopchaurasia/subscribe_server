@@ -332,7 +332,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.extractAllEmail = async function (user, reset_cb) {
         let lastmsg_id;
         await me.scanStartedQuickClean(user._id);
-        let myImap = await openFolder(user, "INBOX");
+        let myImap;
         let timeoutconst = setInterval(x => {
             if (!myImap) {
                 let event = "user_" + Math.random().toString(36).slice(2);
@@ -342,6 +342,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                     throw new Error("imap not available" + user._id);
                 }, 1000)
             }
+            console.log(myImap.imap.state);
             if (myImap.imap.state === 'disconnected') {
                 reset_cb();
                 return setTimeout(x => {
@@ -349,6 +350,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 }, 1000)
             }
         }, 2 * 60 * 1000)
+        myImap = await openFolder(user, "INBOX");
         let names = await myImap.getLabels();
         console.dir(names);
         lastmsg_id = myImap.box.uidnext;
