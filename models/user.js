@@ -1,6 +1,6 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
-
+var client = require('./../elastic/connection.js');
 
 var UserSchema = new Schema({
     name: {
@@ -63,7 +63,16 @@ var UserSchema = new Schema({
     },
     inactive_reason: String
 });
-
+// client.indices.create({  
+//     index: 'user'
+//   },function(err,resp,status) {
+//     if(err) {
+//       console.log(err);
+//     }
+//     else {
+//       console.log("create",resp);
+//     }
+//   });
 
 
 module.exports = mongoose.model('User', UserSchema);

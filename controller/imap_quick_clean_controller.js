@@ -98,14 +98,28 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
         let emails = await Controller.EmailDataModel.getBySize({
             start_date, end_date, user
         });
+        // emails.forEach(element => {
+        //     let total = element.data.filter(x => x.status == "read").length;
+        //     element.readcount = total;
+        //     delete element.data;
+        // });
+        let emailData = [];
+        emails = emails.aggregations.top_tags.buckets;
         emails.forEach(element => {
-            let total = element.data.filter(x => x.status == "read").length;
-            element.readcount = total;
-            delete element.data;
+            let obj = {
+                "_id":{
+                    "size_group":element.key
+                },
+                "size":element.size.value,
+                "count":element.doc_count,
+                "readcount":element.readcount.doc_count,
+                "subject":element.size_group.hits.hits.map(x=>x._source.subject)
+            }
+            emailData.push(obj);
         });
         res.status(200).json({
             error: false,
-            data: emails
+            data: emailData
         });
     } catch (err) {
         console.log(err);
@@ -115,17 +129,35 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
 router.get("/by_sender", async (req, res) => {
     try {
         const user = req.user;
+        console.log(user)
         let { start_date, end_date, page } = req.query;
         let limit = 20;
         let offset = (page || 0) * limit;
         let emails = await Controller.EmailDataModel.getBySender({
             start_date, end_date, user, offset, limit
         });
+     
+        // let emails = emails.aggregations.top_tags.buckets;
+        // console.log(emails.aggregations.top_tags.buckets)
+        // console.log("total ",)
         emails.forEach(element => {
             let total = element.data.filter(x => x.status == "read").length;
             element.readcount = total;
             delete element.data;
         });
+        let emailData = [];
+        // emails.forEach(element => {
+        //     let obj = {
+        //         "_id":{
+        //             "from_email":element.key
+        //         },
+        //         "size":element.size.value,
+        //         "count":element.doc_count,
+        //         "readcount":element.readcount.doc_count,
+        //         "subject":element.from_email.hits.hits.map(x=>x._source.subject)
+        //     }
+        //     emailData.push(obj);
+        // });
         res.status(200).json({
             error: false,
             data: emails
@@ -220,14 +252,28 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
         let emails = await Controller.EmailDataModel.getByLabel({
             start_date, end_date, user
         });
+        // emails.forEach(element => {
+        //     let total = element.data.filter(x => x.status == "read").length;
+        //     element.readcount = total;
+        //     delete element.data;
+        // });
+        let emailData = [];
+        emails = emails.aggregations.top_tags.buckets;
         emails.forEach(element => {
-            let total = element.data.filter(x => x.status == "read").length;
-            element.readcount = total;
-            delete element.data;
+            let obj = {
+                "_id":{
+                    "box_name":element.key
+                },
+                "size":element.size.value,
+                "count":element.doc_count,
+                "readcount":element.readcount.doc_count,
+                "subject":element.box_name.hits.hits.map(x=>x._source.subject)
+            }
+            emailData.push(obj);
         });
         res.status(200).json({
             error: false,
-            data: emails
+            data: emailData
         });
     } catch (err) {
         console.log(err);

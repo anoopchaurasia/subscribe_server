@@ -69,6 +69,9 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
         });
     };
 
+
+
+
     Static.getByEmailAndClient = async function (query) {
         me.updateQueryValidation(query, "email");
         return await mongouser.findOne(query).exec();

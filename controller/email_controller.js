@@ -256,6 +256,9 @@ router.post('/getKeepedMailInfo', async (req, res) => {
     }
 });
 
+
+
+
 router.post('/getMailListForSender', async (req, res) => {
     try {
         const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(req.user._id, req.body.from_email);    
