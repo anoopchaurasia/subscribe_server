@@ -271,8 +271,8 @@ router.post('/getMailListForSender', async (req, res) => {
 
 router.post('/getMailListForMultipleSender', async (req, res) => {
     try {
-        const doc = req.token;
-        const emailinfos = await GetEmailQuery.getAllMailBasedOnMultipleSender(doc.user_id, req.body.from_email);
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllMailBasedOnMultipleSender(user._id, req.body.from_email);
         res.status(200).json({
             error: false,
             status:200,
