@@ -3,7 +3,7 @@ module.exports = {
       name: "app",
       script: "./app.js",
       exec_mode  : "cluster",
-      instances: 7
+      instances: 3
     },
     {
         name: "qc_action",
@@ -21,7 +21,7 @@ module.exports = {
         name: "db_user_action",
         script: "./db_user_action.js",
         exec_mode  : "cluster",
-        instances: 10
+        instances: 5
       },{
         name: "imap_user_action",
         script: "./imap_user_action.js",

@@ -14,7 +14,6 @@ fm.Import('..model.BaseModel');
 const Sentry = require('@sentry/node');
 const userAppLog = require('../../../../models/userAppLog');
 const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
-
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, 
     UserAction, SenderMail, EmailData,EmailTrack, RedisDB, BaseRedisData, BaseModel) {
     'use strict';
