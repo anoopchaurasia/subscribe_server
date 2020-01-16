@@ -50,7 +50,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     };
 
     Static.createSenderMail = async function (fromEamil, user_id) {
-        return await SenderMail.findOneAndUpdate({ user_id: user_id, senderMail: fromEamil }, { user_id: user_id, senderMail: fromEamil });
+        ///return await SenderMail.findOneAndUpdate({ user_id: user_id, senderMail: fromEamil }, { user_id: user_id, senderMail: fromEamil });
     }
 
     Static.updateOrCreateAndGetEMailDetailFromData = async function (data, user_id) {
