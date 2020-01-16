@@ -19,6 +19,7 @@ fm.Class("EmailDetail>.BaseModel", function(me){
 
     Static.updateManyStatus = async function(query, status) {
         me.updateQueryValidation(query);
+        console.log("update many status", JSON.stringify(query), status);
         return await mongo_emaildetail.updateMany(query, {$set: {status}}).exec();
     };
 
