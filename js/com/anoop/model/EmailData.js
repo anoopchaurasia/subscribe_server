@@ -155,7 +155,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                           }
                         }
                       ],
-                      "size":6,
+                      "size":20,
                       "after": {
                         "from_email": next
                       }
@@ -165,7 +165,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                         "bucket_sort": {
                           "sort": [
                             {
-                              "size": {
+                              "_count": {
                                 "order": "desc"
                               }
                             }
