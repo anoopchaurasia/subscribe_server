@@ -238,10 +238,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.keepCheckingConnection(x => {
             process.nextTick(r => me.listenForUser(user, "restarting for user12", new_email_cb));
         });
-        listnerUpdate().catch(err=>{
-            console.error(err);
-            new_email_cb();
-        })
+        // listnerUpdate().catch(err=>{
+        //     console.error(err);
+        //     new_email_cb();
+        // })
     };
 
     async function listnerUpdate(user, myImap) {
