@@ -47,24 +47,24 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
 
-    Static.updateEmailDetailByFromEmail=async(user_id, from_email, status) =>{
+    Static.updateEmailDetailByFromEmail = async (user_id, from_email, status) => {
         let from_email_array = await getFromEmailArray(from_email);
         await me.updateEmailDetailByFromEmailArray(user_id, from_email_array, status);
     };
 
     async function getFromEmailArray(from_email) {
         console.log(Array.isArray(from_email))
-        return Array.isArray(from_email) ? from_email: [from_email];
+        return Array.isArray(from_email) ? from_email : [from_email];
     }
 
 
 
-    async function commonImapUserAction(user,from_email,onDisconnect, {folder, labelAction}){
+    async function commonImapUserAction(user, from_email, onDisconnect, { folder, labelAction }) {
         let from_email_array = await getFromEmailArray(from_email);
         let myImap = await openFolder(user, folder, onDisconnect);
         await from_email_array.asyncForEach(async email => {
             await Label[labelAction](myImap, email);
-        }); 
+        });
         await closeImap(myImap);
     }
 
@@ -81,11 +81,11 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     };
 
     Static.unusedToTrash = async function (user, from_email, onDisconnect) {
-        await commonImapUserAction(user, from_email, onDisconnect, {folder: "INBOX", labelAction: "moveInboxToTrash"});
+        await commonImapUserAction(user, from_email, onDisconnect, { folder: "INBOX", labelAction: "moveInboxToTrash" });
     };
 
     Static.unusedToUnsub = async function (user, from_email, onDisconnect) {
-        await commonImapUserAction(user, from_email, onDisconnect, {folder: "INBOX", labelAction: "moveInboxToUnsub"});
+        await commonImapUserAction(user, from_email, onDisconnect, { folder: "INBOX", labelAction: "moveInboxToUnsub" });
     };
 
     Static.manualUnusedToTrash = async function (user, from_email, onDisconnect) {
@@ -119,26 +119,26 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     ///------------------------------------- from keep ---------------------///
 
     Static.keepToTrash = async function (user, from_email, onDisconnect) {
-        await commonImapUserAction(user, from_email, onDisconnect, {folder: "INBOX", labelAction: "moveActiveToTrash"});
+        await commonImapUserAction(user, from_email, onDisconnect, { folder: "INBOX", labelAction: "moveActiveToTrash" });
     };
 
     Static.keepToUnsub = async function (user, from_email, onDisconnect) {
-        await commonImapUserAction(user, from_email, onDisconnect, {folder: "INBOX", labelAction: "moveActiveToUnsub"});
+        await commonImapUserAction(user, from_email, onDisconnect, { folder: "INBOX", labelAction: "moveActiveToUnsub" });
     }
     ///---------------------------------------from unsub folder--------------------///
 
     Static.unsubToKeep = async function (user, from_email, onDisconnect) {
-        await commonImapUserAction(user, from_email, onDisconnect, {folder: user.unsub_label, labelAction: "moveUnsubToInbox"});
+        await commonImapUserAction(user, from_email, onDisconnect, { folder: user.unsub_label, labelAction: "moveUnsubToInbox" });
     };
 
     Static.unsubToTrash = async function (user, from_email, onDisconnect) {
-        await commonImapUserAction(user, from_email, onDisconnect, {folder: user.unsub_label, labelAction: "moveUnsubToTrash"});
-     };
+        await commonImapUserAction(user, from_email, onDisconnect, { folder: user.unsub_label, labelAction: "moveUnsubToTrash" });
+    };
     ///------------------------------------from trash folder---------------------///
 
     Static.trashToKeep = async function (user, from_email, onDisconnect) {
-        await commonImapUserAction(user, from_email, onDisconnect, {folder: user.trash_label, labelAction: "moveTrashToInbox"});
-     };
+        await commonImapUserAction(user, from_email, onDisconnect, { folder: user.trash_label, labelAction: "moveTrashToInbox" });
+    };
 
     Static.trashToUnsub = async function (user, from_email) {
         //// not in use
@@ -414,66 +414,115 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await closeImap(myImap);
     }
 
-    async function makeImapActionForQC(emails,user, onDisconnect){
-        await emails.asyncForEach(async data => {
-            let ids = data.data.map(x => x.email_id);
-            let myImap = await openFolder(user, data._id, onDisconnect);
-            let sendids;
-            console.log("total delete length", ids.length);
-            myImap.keepCheckingConnection(function onFail() {
-                console.log("reconnecting as disconnected!");
-                myImap.connect();
-            }, 120 * 1000);
-            while(ids.length) {
-                sendids = ids.splice(0, 10000);
-                console.log("deleting length", sendids.length);
-                await Label.setDeleteFlag(myImap, sendids);
-            }
-            console.log("deleted data");
-            await closeImap(myImap);
-        });
+
+
+    async function makeImapDeleteActionForQC(ids, box_name, user, onDisconnect) {
+        let myImap = await openFolder(user, box_name, onDisconnect);
+        let sendids;
+        console.log("total delete ]]]=====>", ids.length);
+        // myImap.keepCheckingConnection(function onFail() {
+        //     console.log("reconnecting as disconnected!");
+        //     myImap.connect();
+        // }, 120 * 1000);
+        // while(ids.length) {
+        //     sendids = ids.splice(0, 10000);
+        //     console.log("deleting length", sendids.length);
+        //     await Label.setDeleteFlag(myImap, sendids);
+        // }
+        console.log("deleted data");
+        await closeImap(myImap);
     }
 
-    Static.updateDeleteDbBySender= async function (user_id, start_date, end_date, from_emails) {
+    Static.updateDeleteDbBySender = async function (user_id, start_date, end_date, from_emails) {
         await me.EmailDataModel.updateDeleteDbBySender({
             start_date, end_date, user_id, from_emails
         });
     }
 
-    Static.updateDeleteDbByLabel= async function (user_id, start_date, end_date, label_name) {
+    Static.updateDeleteDbByLabel = async function (user_id, start_date, end_date, label_name) {
         await me.EmailDataModel.updateDeleteDbByLabel({
             start_date, end_date, user_id, label_name
         });
     }
 
-    Static.updateDeleteDbBySize= async function (user_id, start_date, end_date, size_group) {
+    Static.updateDeleteDbBySize = async function (user_id, start_date, end_date, size_group) {
         await me.EmailDataModel.updateDeleteDbBySize({
             start_date, end_date, user_id, size_group
         });
     }
 
 
-    Static.deleteBySender= async function (user, start_date, end_date, from_emails, onDisconnect) {
+    Static.deleteBySender = async function (user, start_date, end_date, from_emails, onDisconnect) {
         let emails = await me.EmailDataModel.getIdsByFromEmail({
             start_date, end_date, user, from_emails
         })
-        // console.log(emails, user, start_date, end_date, from_emails)
-        await makeImapActionForQC(emails,user, onDisconnect);
+        await emails.asyncForEach(async data => {
+            await getIdsForFromEmail(start_date, end_date, user, from_emails, data, onDisconnect, 0);
+        });
     }
 
-    Static.deleteByLabel= async function (user, start_date, end_date, label_name, onDisconnect) {
-        let emails = await me.EmailDataModel.getIdsByLabelName({
-            start_date, end_date, user, label_name
-        })
-        await makeImapActionForQC(emails,user, onDisconnect);
+    async function getIdsForFromEmail(start_date, end_date, user, from_emails, data, onDisconnect, offset) {
+        let edata = await me.EmailDataModel.getIdByBoxAndFromEmail({ start_date, end_date, user, from_emails, box_name: data.key, offset });
+        let ids = edata.map(x => x._source.email_id);
+        if (ids.length != 0) {
+            console.log("here came ", ids, " called ", offset, " times");
+            offset = offset + 1;
+            await makeImapDeleteActionForQC(ids, data.key, user, onDisconnect);
+            await getIdsForFromEmail(start_date, end_date, user, from_emails, data, onDisconnect, offset);
+        } else {
+            console.log("total ids ", ids);
+            return ids.length;
+        }
+    }
+
+    async function getIdsForLabel(start_date, end_date, user, box_name, onDisconnect, offset) {
+        let edata = await me.EmailDataModel.getIdByLabelList({ start_date, end_date, user,  box_name, offset });
+        let ids = edata.map(x => x._source.email_id);
+        if (ids.length != 0) {
+            console.log("here came ", ids, " called ", offset, " times");
+            offset = offset + 1;
+            await makeImapDeleteActionForQC(ids, box_name, user, onDisconnect);
+            await getIdsForLabel(start_date, end_date, user, box_name, onDisconnect, offset);
+        } else {
+            console.log("total ids ", ids);
+            return ids.length;
+        }
+    }
+
+    async function getIdsForSize(start_date, end_date, user, data, onDisconnect, offset) {
+        let edata = await me.EmailDataModel.getIdByBox({ start_date, end_date, user, box_name: data.key, offset });
+        let ids = edata.map(x => x._source.email_id);
+        if (ids.length != 0) {
+            console.log("here came ", ids, " called ", offset, " times");
+            offset = offset + 1;
+            await makeImapDeleteActionForQC(ids, data.key, user, onDisconnect);
+            await getIdsForSize(start_date, end_date, user, data, onDisconnect, offset);
+        } else {
+            console.log("total ids ", ids);
+            return ids.length;
+        }
+    }
+
+    Static.deleteByLabel = async function (user, start_date, end_date, label_name, onDisconnect) {
+        await label_name.asyncForEach(async box_name => {
+            await getIdsForLabel(start_date, end_date, user,  box_name, onDisconnect, 0);
+            // let edata = await me.EmailDataModel.getIdByLabelList({ start_date, end_date, user, box_name });
+            // let ids = edata.map(x => x._source.email_id);
+            // await makeImapDeleteActionForQC(ids, box_name, user, onDisconnect)
+        });
     }
 
 
-    Static.deleteBySize= async function (user, start_date, end_date, size_group, onDisconnect) {
+    Static.deleteBySize = async function (user, start_date, end_date, size_group, onDisconnect) {
         let emails = await me.EmailDataModel.getIdsBySize({
             start_date, end_date, user, size_group
         })
-        await makeImapActionForQC(emails,user, onDisconnect);
+        await emails.asyncForEach(async data => {
+            await getIdsForSize(start_date, end_date, user,  data, onDisconnect, 0);
+            // let edata = await me.EmailDataModel.getIdByBox({ start_date, end_date, user, box_name: data.key });
+            // let ids = edata.map(x => x._source.email_id)
+            // await makeImapDeleteActionForQC(ids, data.key, user, onDisconnect)
+        });
     }
 
     Static.deleteQuickMailNew = async function (user, ids, box_name) {

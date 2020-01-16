@@ -130,37 +130,41 @@ router.get("/by_sender", async (req, res) => {
     try {
         const user = req.user;
         console.log(user)
-        let { start_date, end_date, page } = req.query;
+        let { start_date, end_date, page ,after_key} = req.query;
+        console.log(req.query)
         let limit = 20;
         let offset = (page || 0) * limit;
+        let next = after_key;
         let emails = await Controller.EmailDataModel.getBySender({
-            start_date, end_date, user, offset, limit
+            start_date, end_date, user, offset, limit,next
         });
-     
-        // let emails = emails.aggregations.top_tags.buckets;
-        // console.log(emails.aggregations.top_tags.buckets)
-        // console.log("total ",)
-        emails.forEach(element => {
-            let total = element.data.filter(x => x.status == "read").length;
-            element.readcount = total;
-            delete element.data;
-        });
+        // emails = emails.aggregations.top_tags.buckets;
+        let newEmails = emails.aggregations.my_buckets.buckets;
+        let next_key ;
+        if(emails.length!=0){
+            next_key = emails.aggregations.my_buckets.after_key.from_email;
+        }
+        // console.log(emails),
+        console.log(next_key);
+
         let emailData = [];
-        // emails.forEach(element => {
-        //     let obj = {
-        //         "_id":{
-        //             "from_email":element.key
-        //         },
-        //         "size":element.size.value,
-        //         "count":element.doc_count,
-        //         "readcount":element.readcount.doc_count,
-        //         "subject":element.from_email.hits.hits.map(x=>x._source.subject)
-        //     }
-        //     emailData.push(obj);
-        // });
+        newEmails.forEach(element => {
+            let obj = {
+                "_id":{
+                    "from_email":element.key.from_email
+                },
+                "size":element.size.value,
+                "count":element.doc_count,
+                "readcount":element.readcount.doc_count,
+                "subject":element.from_email.hits.hits.map(x=>x._source.subject)
+            }
+            emailData.push(obj);
+        });
+        console.log("response data",emailData)
         res.status(200).json({
             error: false,
-            data: emails
+            data: emailData,
+            next_key : next_key
         });
     } catch (err) {
         res.status(502).json({ error: err.message })
@@ -218,10 +222,11 @@ router.post("/delete_by_size", async (req, res) => {
 router.post('/getTotalUnreadMail', async (req, res) => {
     try {
         const user = req.user;
-        let emails = await EmailDataModel.countDocuments({
-            user_id: user._id,
-            deleted_at: null
-        });
+        // let emails = await EmailDataModel.countDocuments({
+        //     user_id: user._id,
+        //     deleted_at: null
+        // });
+        let emails = await Controller.EmailDataModel.countDocument({user});
         let finished = false;
         let is_finished = await Controller.isScanFinishedQuickClean(user._id);
         if (is_finished && is_finished == "true") {

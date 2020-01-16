@@ -35,7 +35,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
     };
 
 
- 
+
     // async function bulkSave(serving_array) {
 
     //     if (serving_array.length == 0) return
@@ -51,7 +51,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
 
 
     async function bulkSave(serving_array) {
-        if(serving_array.length==0) return
+        if (serving_array.length == 0) return
         let bulkBody = [];
         serving_array.forEach(item => {
             bulkBody.push({
@@ -64,21 +64,43 @@ fm.Class("EmailData>.BaseModel", function (me) {
 
             bulkBody.push(item);
         });
-        console.log("indexing ",serving_array.length);
+        console.log("indexing ", serving_array.length);
         let response = await client.bulk({ body: bulkBody })
-            
+
             .catch(console.err);
-            let errorCount = 0;
-                response.items.forEach(item => {
-                    if (item.index && item.index.error) {
-                        console.log(++errorCount, item.index.error);
-                    }
-                });
-                console.log(
-                    `Successfully indexed ${serving_array.length - errorCount}
+        let errorCount = 0;
+        response.items.forEach(item => {
+            if (item.index && item.index.error) {
+                console.log(++errorCount, item.index.error);
+            }
+        });
+        console.log(
+            `Successfully indexed ${serving_array.length - errorCount}
          out of ${serving_array.length} items`)
 
 
+    }
+    Static.countDocument = async function({user}){
+        console.log("got for count ",user)
+        let response = await client.count({
+            index:'emaildata',
+            type :'emaildata',
+            body:{
+                "query" : {
+                    "bool": {
+                      "must": [
+                        {
+                          "match": {
+                            "user_id": user._id
+                          }
+                        }
+                      ]
+                    }
+                }
+            }
+        });
+        console.log(response);
+        return response.count;
     }
 
 
@@ -94,315 +116,279 @@ fm.Class("EmailData>.BaseModel", function (me) {
         return match;
     }
 
-    Static.getBySender = async function ({ start_date, end_date, user, offset, limit }) {
-
-        let response = await  client.search({  
-            index: 'emaildata',
-            type: 'emaildata',
-            body: {
-              query: {
-                "bool": {
+    Static.getBySender = async function ({ start_date, end_date, user, offset, limit,next="" }) {
+        console.log(offset,limit)
+        let response = await client.search({
+            index:'emaildata',
+            type :'emaildata',
+            body:{
+                "size": 0,
+                "query": {
+                  "bool": {
                     "must": [
-                        {"match": {"user_id.keyword":user._id}},
-                        {"range": {"receivedDate" :
-                                   { "gte": new Date(start_date), 
-                                    "lte": new Date(end_date)
-                                   }}}
+                      {
+                        "match": {
+                            "user_id.keyword": user._id
+                        }
+                         // { "match": { "deleted_at.keyword": null } },
+                      },
+                      {
+                        "range": {
+                          "receivedDate": {
+                            "gte": new Date(start_date),
+                            "lte": new Date(end_date)
+                          }
+                        }
+                      }
                     ]
-             }
-          },
-            "aggs": {
-                "top_tags": {
-                    "terms": {
-                        "field": "from_email.keyword",
-                        "size": 10
+                  }
+                },
+                "aggs": {
+                  "my_buckets": {
+                    "composite": {
+                      "sources": [
+                        {
+                          "from_email": {
+                            "terms": {
+                              "field": "from_email.keyword"
+                            }
+                          }
+                        }
+                      ],
+                      "size":6,
+                      "after": {
+                        "from_email": next
+                      }
                     },
                     "aggs": {
-                        "from_email": {
-                            "top_hits": {
-                                "_source": {
-                                    "includes": [ "subject" ]
-                                }
-        
+                      "mySort": {
+                        "bucket_sort": {
+                          "sort": [
+                            {
+                              "size": {
+                                "order": "desc"
+                              }
                             }
-                        },
-                        "size" : {
-                          "sum" : {
-                            "field" : "size"
-                          }
+                          ]
+                        }
                       },
-                      "readcount" : {
-                        "filter":{
-                           "bool": {
-                          "must" :{
-                            "term" : { "status.keyword" : "read" }
-                          
+                      "from_email": {
+                        "top_hits": {
+                          "_source": {
+                            "includes": [
+                              "subject"
+                            ]
+                          },
+                          "size":5
+                        }
+                      },
+                      "size": {
+                        "sum": {
+                          "field": "size"
+                        }
+                      },
+                      "readcount": {
+                        "filter": {
+                          "bool": {
+                            "must": {
+                              "term": {
+                                "status.keyword": "read"
+                              }
+                            }
                           }
-                      }}
+                        }
                       }
                     }
+                  }
                 }
             }
-        }
         });
-        console.log(response);
-        // return response;
-        // let match = commonQuery({ user, start_date, end_date });
-        
-        // console.log(start_date,end_date)
-        // console.log(match)
-        // return await mongo_emaildata.aggregate([{
-        //     $match: {
-        //         ...match
-        //     }
-        // }, {
-        //     $group: {
-        //         _id: {
-        //             "from_email": "$from_email"
+        console.log(response)
+        // let response = await client.search({
+        //     index: 'emaildata',
+        //     type: 'emaildata',
+        //     body: {
+        //         "from":offset,
+        //         "size":limit,
+        //         query: {
+        //             "bool": {
+        //                 "must": [
+        //                     { "match": { "user_id.keyword": user._id } },
+        //                     // { "match": { "deleted_at.keyword": null } },
+        //                     {
+        //                         "range": {
+        //                             "receivedDate":
+        //                             {
+        //                                 "gte": new Date(start_date),
+        //                                 "lte": new Date(end_date)
+        //                             }
+        //                         }
+        //                     }
+        //                 ]
+        //             }
         //         },
-        //         data: {
-        //             $push: {
-        //                 "subject": "$subject",
-        //                 "status": "$status"
-        //             },
-        //         },
-        //         size: {
-        //             $sum: "$size"
-        //         },
-        //         count: {
-        //             $sum: 1
+        //         "aggs": {
+        //             "top_tags": {
+        //                 "terms": {
+        //                     "field": "from_email.keyword",
+        //                     "size": 10
+        //                 },
+        //                 "aggs": {
+        //                     "from_email": {
+        //                         "top_hits": {
+        //                             "_source": {
+        //                                 "includes": ["subject"]
+        //                             }
+
+        //                         }
+        //                     },
+        //                     "size": {
+        //                         "sum": {
+        //                             "field": "size"
+        //                         }
+        //                     },
+        //                     "readcount": {
+        //                         "filter": {
+        //                             "bool": {
+        //                                 "must": {
+        //                                     "term": { "status.keyword": "read" }
+
+        //                                 }
+        //                             }
+        //                         }
+        //                     }
+        //                 }
+        //             }
         //         }
         //     }
-        // },
-        // {
-        //     $sort: {
-        //         "size": -1
-        //     }
-        // },
-        // { $skip: offset },
-        // { $limit: limit },
-        // {
-        //     "$project": {
-        //         'subject': {
-        //             "$slice": ["$data.subject", 5]
-        //         },
-        //         data: 1,
-        //         size: 1,
-        //         count: 1
-        //     },
-        // },
-        // ])
+        // });
+        // console.log(response);
+        return response;
+
     };
 
 
     Static.getByLabel = async function ({ start_date, end_date, user }) {
-        // let match = commonQuery({ user, start_date, end_date });
-        // return await mongo_emaildata.aggregate([{
-        //     $match: {
-        //         ...match
-        //     }
-        // }, {
-        //     $group: {
-        //         _id: {
-        //             "box_name": "$box_name"
-        //         },
-        //         data: {
-        //             $push: {
-        //                 "subject": "$subject",
-        //                 "status": "$status"
-        //             },
-        //         },
-        //         size: {
-        //             $sum: "$size"
-        //         },
-        //         count: {
-        //             $sum: 1
-        //         }
-        //     }
-        // },
-        // {
-        //     $sort: {
-        //         "count": -1
-        //     }
-        // },
-        // {
-        //     "$project": {
-        //         'subject': {
-        //             "$slice": ["$data.subject", 5]
-        //         },
-        //         data: 1,
-        //         size: 1,
-        //         count: 1
-        //     },
-        // },
-        // ])
-        let response = await  client.search({  
+        let response = await client.search({
             index: 'emaildata',
             type: 'emaildata',
             body: {
-              query: {
-                "bool": {
-                    "must": [
-                        {"match": {"user_id.keyword":user._id}},
-                        {"range": {"receivedDate" :
-                                   { "gte": new Date(start_date), 
-                                    "lte": new Date(end_date)
-                                   }}}
-                    ]
-             }
-          },
-            "aggs": {
-                "top_tags": {
-                    "terms": {
-                        "field": "box_name.keyword",
-                        "size": 10
-                    },
-                    "aggs": {
-                        "box_name": {
-                            "top_hits": {
-                                "_source": {
-                                    "includes": [ "subject" ]
+                query: {
+                    "bool": {
+                        "must": [
+                            { "match": { "user_id.keyword": user._id } },
+                            // { "match": { "deleted_at.keyword": null } },
+                            {
+                                "range": {
+                                    "receivedDate":
+                                    {
+                                        "gte": new Date(start_date),
+                                        "lte": new Date(end_date)
+                                    }
                                 }
-        
                             }
+                        ]
+                    }
+                },
+                "aggs": {
+                    "top_tags": {
+                        "terms": {
+                            "field": "box_name.keyword",
+                            "size": 10
                         },
-                        "size" : {
-                          "sum" : {
-                            "field" : "size"
-                          }
-                      },
-                      "readcount" : {
-                        "filter":{
-                           "bool": {
-                          "must" :{
-                            "term" : { "status.keyword" : "read" }
-                          
-                          }
-                      }}
-                      }
+                        "aggs": {
+                            "box_name": {
+                                "top_hits": {
+                                    "_source": {
+                                        "includes": ["subject"]
+                                    }
+
+                                }
+                            },
+                            "size": {
+                                "sum": {
+                                    "field": "size"
+                                }
+                            },
+                            "readcount": {
+                                "filter": {
+                                    "bool": {
+                                        "must": {
+                                            "term": { "status.keyword": "read" }
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
         });
-        console.log(response);
         return response;
     };
 
 
     Static.getBySize = async function ({ start_date, end_date, user }) {
-        // let match = commonQuery({ user, start_date, end_date });
-        // return await mongo_emaildata.aggregate([{
-        //     $match: {
-        //         ...match
-        //     }
-        // }, {
-        //     $group: {
-        //         _id: {
-        //             "size_group": "$size_group"
-        //         },
-        //         data: {
-        //             $push: {
-        //                 "subject": "$subject",
-        //                 "status": "$status"
-        //             },
-        //         },
-        //         size: {
-        //             $sum: "$size"
-        //         },
-        //         count: {
-        //             $sum: 1
-        //         }
-        //     }
-        // },
-        // {
-        //     $sort: {
-        //         "count": -1
-        //     }
-        // },
-        // {
-        //     "$project": {
-        //         'subject': {
-        //             "$slice": ["$data.subject", 5]
-        //         },
-        //         data: 1,
-        //         size: 1,
-        //         count: 1
-        //     },
-        // },
-        // ])
-        let response = await  client.search({  
+        let response = await client.search({
             index: 'emaildata',
             type: 'emaildata',
             body: {
-              query: {
-                "bool": {
-                    "must": [
-                        {"match": {"user_id.keyword":user._id}},
-                        {"range": {"receivedDate" :
-                                   { "gte": new Date(start_date), 
-                                    "lte": new Date(end_date)
-                                   }}}
-                    ]
-             }
-          },
-            "aggs": {
-                "top_tags": {
-                    "terms": {
-                        "field": "size_group",
-                        "size": 10
-                    },
-                    "aggs": {
-                        "size_group": {
-                            "top_hits": {
-                                "_source": {
-                                    "includes": [ "subject" ]
+                query: {
+                    "bool": {
+                        "must": [
+                            { "match": { "user_id.keyword": user._id } },
+                            // { "match": { "deleted_at.keyword": null } },
+                            {
+                                "range": {
+                                    "receivedDate":
+                                    {
+                                        "gte": new Date(start_date),
+                                        "lte": new Date(end_date)
+                                    }
                                 }
-        
                             }
+                        ]
+                    }
+                },
+                "aggs": {
+                    "top_tags": {
+                        "terms": {
+                            "field": "size_group",
+                            "size": 10
                         },
-                        "size" : {
-                          "sum" : {
-                            "field" : "size"
-                          }
-                      },
-                      "readcount" : {
-                        "filter":{
-                           "bool": {
-                          "must" :{
-                            "term" : { "status.keyword" : "read" }
-                          
-                          }
-                      }}
-                      }
+                        "aggs": {
+                            "size_group": {
+                                "top_hits": {
+                                    "_source": {
+                                        "includes": ["subject"]
+                                    }
+
+                                }
+                            },
+                            "size": {
+                                "sum": {
+                                    "field": "size"
+                                }
+                            },
+                            "readcount": {
+                                "filter": {
+                                    "bool": {
+                                        "must": {
+                                            "term": { "status.keyword": "read" }
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
         });
         console.log(response);
         return response;
     };
-
-    async function getIdsCommon(match) {
-        return await mongo_emaildata.aggregate([{
-            $match: {
-                ...match
-            }
-        }, {
-            $group: {
-                _id: "$box_name",
-                data: {
-                    $push: {
-                        "email_id": "$email_id"
-                    }
-                }
-            }
-        }
-        ]);
-    }
-
-
 
     function commonQueryForDelete({ user, start_date, end_date }) {
         let match = {
@@ -415,23 +401,228 @@ fm.Class("EmailData>.BaseModel", function (me) {
     }
 
     Static.getIdsBySize = async function ({ start_date, end_date, user, size_group }) {
-        let match = commonQueryForDelete({ user, start_date, end_date });
-        match.size_group = { $in: size_group }
-        return await getIdsCommon(match)
+        let response = await client.search({
+            index: 'emaildata',
+            type: 'emaildata',
+            body: {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "terms": {
+                                    "size_group": size_group
+                                }
+                            }
+                        ],
+                        "must": [
+                            { "match": { "user_id.keyword": user._id } },
+
+                            {
+                                "range": {
+                                    "receivedDate":
+                                    {
+                                        "gte": new Date(start_date),
+                                        "lte": new Date(end_date)
+                                    }
+                                }
+                            }
+                        ]
+                    }
+
+                }, "aggregations": {
+                    "data": {
+                        "terms": {
+                            "field": "box_name.keyword"
+                        }
+                    }
+
+                }
+            }
+        });
+        return response.aggregations.data.buckets;
     };
 
     Static.getIdsByLabelName = async function ({ start_date, end_date, user, label_name }) {
-        let match = commonQueryForDelete({ user, start_date, end_date });
-        match.box_name = { $in: label_name };
-        return await getIdsCommon(match);
-    };
+        let response = await client.search({
+            index: 'emaildata',
+            type: 'emaildata',
+            body: {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "terms": {
+                                    "box_name.keyword": label_name
+                                }
+                            }
+                        ],
+                        "must": [
+                            { "match": { "user_id.keyword": user._id } },
 
+                            {
+                                "range": {
+                                    "receivedDate":
+                                    {
+                                        "gte": new Date(start_date),
+                                        "lte": new Date(end_date)
+                                    }
+                                }
+                            }
+                        ]
+                    }
+
+                }, "aggregations": {
+                    "data": {
+                        "terms": {
+                            "field": "box_name.keyword"
+                        }
+                    }
+
+                }
+            }
+        });
+        return response.aggregations.data.buckets;
+    };
 
     Static.getIdsByFromEmail = async function ({ start_date, end_date, user, from_emails }) {
-        let match = commonQueryForDelete({ user, start_date, end_date });
-        match.from_email = { $in: from_emails }
-        return getIdsCommon(match);
+        let response = await client.search({
+            index: 'emaildata',
+            type: 'emaildata',
+            body: {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "terms": {
+                                    "from_email.keyword": from_emails
+                                }
+                            }
+                        ],
+                        "must": [
+                            { "match": { "user_id.keyword": user._id } },
+                            {
+                                "range": {
+                                    "receivedDate":
+                                    {
+                                        "gte": new Date(start_date),
+                                        "lte": new Date(end_date)
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }, "aggregations": {
+                    "data": {
+                        "terms": {
+                            "field": "box_name.keyword"
+                        }
+                    }
+
+                }
+            }
+        });
+        return response.aggregations.data.buckets;
     };
+
+    Static.getIdByBoxAndFromEmail = async function ({ start_date, end_date, user, from_emails, box_name,offset }) {
+        let response = await client.search({
+            index: 'emaildata',
+            type: 'emaildata',
+            body: {
+                "_source": "email_id",
+                "size": 1,
+                "from":offset,
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "terms": {
+                                    "from_email.keyword": from_emails
+                                }
+                            }
+                        ],
+                        "must": [
+                            { "match": { "user_id.keyword": user._id } },
+                            { "match": { "box_name": box_name } },
+                            {
+                                "range": {
+                                    "receivedDate":
+                                    {
+                                        "gte": new Date(start_date),
+                                        "lte": new Date(end_date)
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        });
+        return response.hits.hits;
+    }
+
+    Static.getIdByBox = async function ({ start_date, end_date, user, box_name ,offset}) {
+        let response = await client.search({
+            index: 'emaildata',
+            type: 'emaildata',
+            body: {
+                "_source": "email_id",
+                "size": 1,
+                "from":offset,
+                "query": {
+                    "bool": {
+                        "must": [
+                            { "match": { "user_id.keyword": user._id } },
+                            { "match": { "box_name": box_name } },
+                            {
+                                "range": {
+                                    "receivedDate":
+                                    {
+                                        "gte": new Date(start_date),
+                                        "lte": new Date(end_date)
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        });
+        return response.hits.hits;
+    }
+
+
+    Static.getIdByLabelList = async function ({ start_date, end_date, user, box_name,offset }) {
+        console.log("label name=>", box_name, start_date, end_date, user._id);
+        let response = await client.search({
+            index: 'emaildata',
+            type: 'emaildata',
+            body: {
+                "_source": "email_id",
+                "size": 1,
+                "from":offset,
+                "query": {
+                    "bool": {
+                        "must": [
+                            { "match": { "user_id.keyword": user._id } },
+                            { "match": { "box_name.keyword": box_name } },
+                            {
+                                "range": {
+                                    "receivedDate":
+                                    {
+                                        "gte": new Date(start_date),
+                                        "lte": new Date(end_date)
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        });
+        return response.hits.hits;
+    }
+
 
 
 
@@ -448,27 +639,150 @@ fm.Class("EmailData>.BaseModel", function (me) {
 
 
     Static.updateDeleteDbBySender = async function ({ start_date, end_date, user_id, from_emails }) {
-        let match = commonQueryForUpdate({ user_id, start_date, end_date });
-        match.from_email = { $in: from_emails }
-        return updateQcDeleteCommon(match);
+        return updateQcDeleteBySender(start_date,end_date,user_id,from_emails);
     };
 
     Static.updateDeleteDbByLabel = async function ({ start_date, end_date, user_id, label_name }) {
-        let match = commonQueryForUpdate({ user_id, start_date, end_date });
-        match.box_name = { $in: label_name };
-        return updateQcDeleteCommon(match);
+        return updateQcDeleteByLabel(start_date,end_date,user_id,label_name);
     };
 
     Static.updateDeleteDbBySize = async function ({ start_date, end_date, user_id, size_group }) {
-        let match = commonQueryForUpdate({ user_id, start_date, end_date });
-        match.size_group = { $in: size_group }
-        return updateQcDeleteCommon(match);
+        return updateQcDeleteBySize(start_date,end_date,user_id,size_group);
     };
+
+    async function updateQcDeleteBySender(start_date,end_date,user_id,from_emails) {
+        let response = await client.updateByQuery(
+            {
+                index: "emaildata",
+                type: "emaildata", 
+                body: {
+                    "query": {
+                        "bool": {
+                          "filter": [
+                            {
+                              "terms": {
+                                "from_email.keyword": from_emails
+                              }
+                            }
+                          ],
+                          "must": [
+                            {
+                              "match": {
+                                "user_id.keyword": user_id
+                              }
+                            },
+                            {
+                              "range": {
+                                "receivedDate": {
+                                    "gte": new Date(start_date),
+                                    "lte": new Date(end_date)
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                       "script": {
+                        "source": "ctx._source.deleted_at=1",
+                        lang: 'painless',
+                        params: {
+                          newValue: new Date()
+                        }
+                    }
+                }
+            });
+        console.log(response);
+        return response;
+    }
+
+    async function updateQcDeleteByLabel(start_date,end_date,user_id,box_name) {
+        let response = await client.updateByQuery(
+            {
+                index: "emaildata", type: "emaildata", body: {
+                    "query": {
+                        "bool": {
+                          "filter": [
+                            {
+                              "terms": {
+                                "box_name.keyword": box_name
+                              }
+                            }
+                          ],
+                          "must": [
+                            {
+                              "match": {
+                                "user_id.keyword": user_id
+                              }
+                            },
+                            {
+                              "range": {
+                                "receivedDate": {
+                                    "gte": new Date(start_date),
+                                    "lte": new Date(end_date)
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                       "script": {
+                        "source": "ctx._source.deleted_at=1",
+                        lang: 'painless',
+                        params: {
+                          newValue: new Date()
+                        }
+                    }
+                }
+            });
+        console.log(response);
+        return response;
+    }
+
+    async function updateQcDeleteBySize(start_date,end_date,user_id,size_group) {
+        let response = await client.updateByQuery(
+            {
+                index: "emaildata", type: "emaildata", body: {
+                    "query": {
+                        "bool": {
+                          "filter": [
+                            {
+                              "terms": {
+                                "size_group.keyword": size_group
+                              }
+                            }
+                          ],
+                          "must": [
+                            {
+                              "match": {
+                                "user_id.keyword": user_id
+                              }
+                            },
+                            {
+                              "range": {
+                                "receivedDate": {
+                                    "gte": new Date(start_date),
+                                    "lte": new Date(end_date)
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                       "script": {
+                        "source": "ctx._source.deleted_at=1",
+                        lang: 'painless',
+                        params: {
+                          newValue: new Date()
+                        }
+                    }
+                }
+            });
+        console.log(response);
+        return response;
+    }
 
 
     async function updateQcDeleteCommon(match) {
-        // console.log("here find");
-        // console.log(match)
         try {
             return await mongo_emaildata.updateMany({
                 ...match
