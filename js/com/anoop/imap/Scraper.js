@@ -172,6 +172,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                     'size_group': emailbody.size > 10000000 ? 10 : emailbody.size > 5000000 ? 5 : emailbody.size > 1000000 ? 1 : 0,
                     'receivedDate': emailbody.header.date.split('Date: ')[1],
                     'status': status,
+                    'deleted_at':null,
                     'labelIds': emailbody.labelIds,
                     'box_name': me.myImap.box.name
                 }, me.myImap.user._id);

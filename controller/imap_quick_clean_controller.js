@@ -133,7 +133,8 @@ router.get("/by_sender", async (req, res) => {
         let { start_date, end_date, page ,after_key} = req.query;
         console.log(req.query)
         let limit = 20;
-        let offset = (page || 0) * limit;
+        // let offset = (page || 0) * limit;
+        let offset = page;
         let next = after_key;
         let emails = await Controller.EmailDataModel.getBySender({
             start_date, end_date, user, offset, limit,next
@@ -141,7 +142,7 @@ router.get("/by_sender", async (req, res) => {
         // emails = emails.aggregations.top_tags.buckets;
         let newEmails = emails.aggregations.my_buckets.buckets;
         let next_key ;
-        if(emails.length!=0){
+        if(newEmails.length!=0){
             next_key = emails.aggregations.my_buckets.after_key.from_email;
         }
         // console.log(emails),

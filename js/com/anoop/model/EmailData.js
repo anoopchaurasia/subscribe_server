@@ -94,7 +94,12 @@ fm.Class("EmailData>.BaseModel", function (me) {
                             "user_id": user._id
                           }
                         }
-                      ]
+                      ],
+                      "must_not": {
+                        "exists": {
+                            "field": "deleted_at"
+                        }
+                    }
                     }
                 }
             }
@@ -118,6 +123,104 @@ fm.Class("EmailData>.BaseModel", function (me) {
 
     Static.getBySender = async function ({ start_date, end_date, user, offset, limit,next="" }) {
         console.log(offset,limit)
+        if(offset){
+            for(let i=0;i<offset;i++){
+                let resp = await client.search({
+                    index:'emaildata',
+                    type :'emaildata',
+                    body:{
+                        "size": 0,
+                        "query": {
+                          "bool": {
+                            "must": [
+                              {
+                                "match": {
+                                    "user_id.keyword": user._id
+                                }
+                              },
+                              {
+                                "range": {
+                                  "receivedDate": {
+                                    "gte": new Date(start_date),
+                                    "lte": new Date(end_date)
+                                  }
+                                }
+                              }
+                            ],
+                            "must_not": {
+                                "exists": {
+                                    "field": "deleted_at"
+                                }
+                            }
+                          }
+                        },
+                        "aggs": {
+                          "my_buckets": {
+                            "composite": {
+                              "sources": [
+                                {
+                                  "from_email": {
+                                    "terms": {
+                                      "field": "from_email.keyword"
+                                    }
+                                  }
+                                }
+                              ],
+                              "size":20,
+                              "after": {
+                                "from_email": next
+                              }
+                            },
+                            "aggs": {
+                              "mySort": {
+                                "bucket_sort": {
+                                  "sort": [
+                                    {
+                                      "_count": {
+                                        "order": "desc"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              "from_email": {
+                                "top_hits": {
+                                  "_source": {
+                                    "includes": [
+                                      "subject"
+                                    ]
+                                  },
+                                  "size":5
+                                }
+                              },
+                              "size": {
+                                "sum": {
+                                  "field": "size"
+                                }
+                              },
+                              "readcount": {
+                                "filter": {
+                                  "bool": {
+                                    "must": {
+                                      "term": {
+                                        "status.keyword": "read"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                    }
+                })
+                console.log(resp);
+                let newEmails = resp.aggregations.my_buckets.buckets;
+                if(newEmails.length!=0){
+                    next = resp.aggregations.my_buckets.after_key.from_email;
+                }
+            }
+        }
         let response = await client.search({
             index:'emaildata',
             type :'emaildata',
@@ -130,7 +233,6 @@ fm.Class("EmailData>.BaseModel", function (me) {
                         "match": {
                             "user_id.keyword": user._id
                         }
-                         // { "match": { "deleted_at.keyword": null } },
                       },
                       {
                         "range": {
@@ -140,7 +242,12 @@ fm.Class("EmailData>.BaseModel", function (me) {
                           }
                         }
                       }
-                    ]
+                    ],
+                    "must_not": {
+                        "exists": {
+                            "field": "deleted_at"
+                        }
+                    }
                   }
                 },
                 "aggs": {
@@ -287,7 +394,12 @@ fm.Class("EmailData>.BaseModel", function (me) {
                                     }
                                 }
                             }
-                        ]
+                        ],
+                        "must_not": {
+                            "exists": {
+                                "field": "deleted_at"
+                            }
+                        }
                     }
                 },
                 "aggs": {
@@ -348,7 +460,12 @@ fm.Class("EmailData>.BaseModel", function (me) {
                                     }
                                 }
                             }
-                        ]
+                        ],
+                        "must_not": {
+                            "exists": {
+                                "field": "deleted_at"
+                            }
+                        }
                     }
                 },
                 "aggs": {
@@ -651,6 +768,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
     };
 
     async function updateQcDeleteBySender(start_date,end_date,user_id,from_emails) {
+        console.log("here come for delete update")
         let response = await client.updateByQuery(
             {
                 index: "emaildata",
@@ -683,7 +801,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                         }
                       },
                        "script": {
-                        "source": "ctx._source.deleted_at=1",
+                        "source": "ctx._source.deleted_at=params.newValue",
                         lang: 'painless',
                         params: {
                           newValue: new Date()
@@ -691,7 +809,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                     }
                 }
             });
-        console.log(response);
+        console.log("delete update response came====>",response);
         return response;
     }
 
@@ -726,7 +844,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                         }
                       },
                        "script": {
-                        "source": "ctx._source.deleted_at=1",
+                        "source": "ctx._source.deleted_at=params.newValue",
                         lang: 'painless',
                         params: {
                           newValue: new Date()
@@ -769,7 +887,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                         }
                       },
                        "script": {
-                        "source": "ctx._source.deleted_at=1",
+                        "source": "ctx._source.deleted_at=params.newValue",
                         lang: 'painless',
                         params: {
                           newValue: new Date()
