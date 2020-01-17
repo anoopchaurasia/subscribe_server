@@ -12,6 +12,14 @@ let ImapRedisPush = com.anoop.imap.RedisPush;
 /* This api will Scrape all the emails from Account and will store into Database. */
 router.post('/getAllEmail', async (req, res) => {
     try {
+        let is_finished = await Controller.isScanFinishedQuickClean(req.user._id);
+        if (is_finished == "false") {
+            return res.status(202).json({
+                error: false,
+                data: "already scaning"
+            });
+        }
+        await Controller.scanStartedQuickClean(req.user._id);
         ImapRedisPush.extractAllEmail(req.user);
         res.status(200).json({
             error: false,

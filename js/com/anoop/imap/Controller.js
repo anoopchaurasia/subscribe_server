@@ -424,7 +424,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             console.log("reconnecting as disconnected!");
             myImap.connect();
         }, 120 * 1000);
-        while(ids.length) {
+        while (ids.length) {
             sendids = ids.splice(0, 10000);
             console.log("deleting length", sendids.length);
             // await Label.moveInboxToTrashAuto(myImap, sendids);
@@ -466,26 +466,22 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let edata = await me.EmailDataModel.getIdByBoxAndFromEmail({ start_date, end_date, user, from_emails, box_name: data.key, offset });
         let ids = edata.map(x => x._source.email_id);
         if (ids.length != 0) {
-            console.log("here came ", ids, " called ", offset, " times");
             offset = offset + 5000;
             await makeImapDeleteActionForQC(ids, data.key, user, onDisconnect);
             await getIdsForFromEmail(start_date, end_date, user, from_emails, data, onDisconnect, offset);
         } else {
-            console.log("total ids ", ids);
             return ids.length;
         }
     }
 
     async function getIdsForLabel(start_date, end_date, user, box_name, onDisconnect, offset) {
-        let edata = await me.EmailDataModel.getIdByLabelList({ start_date, end_date, user,  box_name, offset });
+        let edata = await me.EmailDataModel.getIdByLabelList({ start_date, end_date, user, box_name, offset });
         let ids = edata.map(x => x._source.email_id);
         if (ids.length != 0) {
-            console.log("here came ", ids, " called ", offset, " times");
             offset = offset + 5000;
             await makeImapDeleteActionForQC(ids, box_name, user, onDisconnect);
             await getIdsForLabel(start_date, end_date, user, box_name, onDisconnect, offset);
         } else {
-            console.log("total ids ", ids);
             return ids.length;
         }
     }
@@ -494,19 +490,17 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let edata = await me.EmailDataModel.getIdByBox({ start_date, end_date, user, box_name: data.key, offset });
         let ids = edata.map(x => x._source.email_id);
         if (ids.length != 0) {
-            console.log("here came ", ids, " called ", offset, " times");
             offset = offset + 5000;
             await makeImapDeleteActionForQC(ids, data.key, user, onDisconnect);
             await getIdsForSize(start_date, end_date, user, data, onDisconnect, offset);
         } else {
-            console.log("total ids ", ids);
             return ids.length;
         }
     }
 
     Static.deleteByLabel = async function (user, start_date, end_date, label_name, onDisconnect) {
         await label_name.asyncForEach(async box_name => {
-            await getIdsForLabel(start_date, end_date, user,  box_name, onDisconnect, 0);
+            await getIdsForLabel(start_date, end_date, user, box_name, onDisconnect, 0);
         });
     }
 
@@ -516,7 +510,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             start_date, end_date, user, size_group
         })
         await emails.asyncForEach(async data => {
-            await getIdsForSize(start_date, end_date, user,  data, onDisconnect, 0);
+            await getIdsForSize(start_date, end_date, user, data, onDisconnect, 0);
         });
     }
 
