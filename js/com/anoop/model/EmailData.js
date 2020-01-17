@@ -12,6 +12,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
 
     let serving_array = [], update_save_timeout;
     Static.updateOrCreateAndGet = async function (query, set) {
+        // await bulkSave([set]);
         me.updateQueryValidation(query);
         clearTimeout(update_save_timeout);
         serving_array.push(set);
@@ -20,7 +21,6 @@ fm.Class("EmailData>.BaseModel", function (me) {
             let arr = [...serving_array];
             serving_array = [];
             await bulkSave(arr);
-            serving_array = [];
         }
         update_save_timeout = setTimeout(async () => {
             await bulkSave(serving_array);
@@ -123,104 +123,104 @@ fm.Class("EmailData>.BaseModel", function (me) {
 
     Static.getBySender = async function ({ start_date, end_date, user, offset, limit,next="" }) {
         console.log(offset,limit)
-        if(offset){
-            for(let i=0;i<offset;i++){
-                let resp = await client.search({
-                    index:'emaildata',
-                    type :'emaildata',
-                    body:{
-                        "size": 0,
-                        "query": {
-                          "bool": {
-                            "must": [
-                              {
-                                "match": {
-                                    "user_id.keyword": user._id
-                                }
-                              },
-                              {
-                                "range": {
-                                  "receivedDate": {
-                                    "gte": new Date(start_date),
-                                    "lte": new Date(end_date)
-                                  }
-                                }
-                              }
-                            ],
-                            "must_not": {
-                                "exists": {
-                                    "field": "deleted_at"
-                                }
-                            }
-                          }
-                        },
-                        "aggs": {
-                          "my_buckets": {
-                            "composite": {
-                              "sources": [
-                                {
-                                  "from_email": {
-                                    "terms": {
-                                      "field": "from_email.keyword"
-                                    }
-                                  }
-                                }
-                              ],
-                              "size":20,
-                              "after": {
-                                "from_email": next
-                              }
-                            },
-                            "aggs": {
-                              "mySort": {
-                                "bucket_sort": {
-                                  "sort": [
-                                    {
-                                      "_count": {
-                                        "order": "desc"
-                                      }
-                                    }
-                                  ]
-                                }
-                              },
-                              "from_email": {
-                                "top_hits": {
-                                  "_source": {
-                                    "includes": [
-                                      "subject"
-                                    ]
-                                  },
-                                  "size":5
-                                }
-                              },
-                              "size": {
-                                "sum": {
-                                  "field": "size"
-                                }
-                              },
-                              "readcount": {
-                                "filter": {
-                                  "bool": {
-                                    "must": {
-                                      "term": {
-                                        "status.keyword": "read"
-                                      }
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                    }
-                })
-                console.log(resp);
-                let newEmails = resp.aggregations.my_buckets.buckets;
-                if(newEmails.length!=0){
-                    next = resp.aggregations.my_buckets.after_key.from_email;
-                }
-            }
-        }
+        // if(offset){
+        //     for(let i=0;i<offset;i++){
+        //         let resp = await client.search({
+        //             index:'emaildata',
+        //             type :'emaildata',
+        //             body:{
+        //                 "size": 0,
+        //                 "query": {
+        //                   "bool": {
+        //                     "must": [
+        //                       {
+        //                         "match": {
+        //                             "user_id.keyword": user._id
+        //                         }
+        //                       },
+        //                       {
+        //                         "range": {
+        //                           "receivedDate": {
+        //                             "gte": new Date(start_date),
+        //                             "lte": new Date(end_date)
+        //                           }
+        //                         }
+        //                       }
+        //                     ],
+        //                     "must_not": {
+        //                         "exists": {
+        //                             "field": "deleted_at"
+        //                         }
+        //                     }
+        //                   }
+        //                 },
+        //                 "aggs": {
+        //                   "my_buckets": {
+        //                     "composite": {
+        //                       "sources": [
+        //                         {
+        //                           "from_email": {
+        //                             "terms": {
+        //                               "field": "from_email.keyword"
+        //                             }
+        //                           }
+        //                         }
+        //                       ],
+        //                       "size":20,
+        //                       "after": {
+        //                         "from_email": next
+        //                       }
+        //                     },
+        //                     "aggs": {
+        //                       "mySort": {
+        //                         "bucket_sort": {
+        //                           "sort": [
+        //                             {
+        //                               "_count": {
+        //                                 "order": "desc"
+        //                               }
+        //                             }
+        //                           ]
+        //                         }
+        //                       },
+        //                       "from_email": {
+        //                         "top_hits": {
+        //                           "_source": {
+        //                             "includes": [
+        //                               "subject"
+        //                             ]
+        //                           },
+        //                           "size":5
+        //                         }
+        //                       },
+        //                       "size": {
+        //                         "sum": {
+        //                           "field": "size"
+        //                         }
+        //                       },
+        //                       "readcount": {
+        //                         "filter": {
+        //                           "bool": {
+        //                             "must": {
+        //                               "term": {
+        //                                 "status.keyword": "read"
+        //                               }
+        //                             }
+        //                           }
+        //                         }
+        //                       }
+        //                     }
+        //                   }
+        //                 }
+        //             }
+        //         })
+        //         console.log(resp);
+        //         let newEmails = resp.aggregations.my_buckets.buckets;
+        //         if(newEmails.length!=0){
+        //             next = resp.aggregations.my_buckets.after_key.from_email;
+        //         }
+        //     }
+        // }
         let response = await client.search({
             index:'emaildata',
             type :'emaildata',
@@ -262,10 +262,8 @@ fm.Class("EmailData>.BaseModel", function (me) {
                           }
                         }
                       ],
-                      "size":20,
-                      "after": {
-                        "from_email": next
-                      }
+                      "size":10000
+                     
                     },
                     "aggs": {
                       "mySort": {
@@ -276,7 +274,9 @@ fm.Class("EmailData>.BaseModel", function (me) {
                                 "order": "desc"
                               }
                             }
-                          ]
+                          ],
+                          "from": offset,
+                          "size": limit
                         }
                       },
                       "from_email": {
@@ -647,7 +647,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
             type: 'emaildata',
             body: {
                 "_source": "email_id",
-                "size": 1,
+                "size": 10,
                 "from":offset,
                 "query": {
                     "bool": {

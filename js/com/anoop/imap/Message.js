@@ -76,6 +76,7 @@ fm.Class("Message", function (me) {
             imap.setFlags(ids, ['\\DELETED'], function (err) {
                 (err ? reject(err) : resolve());
             });
+           
         });
     };
 

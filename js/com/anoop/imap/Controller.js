@@ -420,15 +420,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let myImap = await openFolder(user, box_name, onDisconnect);
         let sendids;
         console.log("total delete ]]]=====>", ids.length);
-        // myImap.keepCheckingConnection(function onFail() {
-        //     console.log("reconnecting as disconnected!");
-        //     myImap.connect();
-        // }, 120 * 1000);
-        // while(ids.length) {
-        //     sendids = ids.splice(0, 10000);
-        //     console.log("deleting length", sendids.length);
-        //     await Label.setDeleteFlag(myImap, sendids);
-        // }
+        myImap.keepCheckingConnection(function onFail() {
+            console.log("reconnecting as disconnected!");
+            myImap.connect();
+        }, 120 * 1000);
+        while(ids.length) {
+            sendids = ids.splice(0, 10000);
+            console.log("deleting length", sendids.length);
+            await Label.moveInboxToTrashAuto(myImap, sendids);
+            await Label.setDeleteFlag(myImap, sendids);
+        }
         console.log("deleted data");
         await closeImap(myImap);
     }

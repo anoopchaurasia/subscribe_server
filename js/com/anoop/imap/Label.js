@@ -110,15 +110,15 @@ fm.Class("Label>.Message", function (me) {
         return
     };
 
-    ////-------------------------Delete messages
-    Static.setDeleteFlag = async function (myImap, ids) {
-        if (ids.length!=0) {
-            // ids.forEach(async element => {
-               return await me.deleteMsg(myImap.imap, ids);
-            // });
-        }
-        return        
-    };
+    // ////-------------------------Delete messages
+    // Static.setDeleteFlag = async function (myImap, ids) {
+    //     if (ids.length!=0) {
+    //         // ids.forEach(async element => {
+    //            return await me.deleteMsg(myImap.imap, ids);
+    //         // });
+    //     }
+    //     return        
+    // };
 
     Static.moveInboxToTrashAuto = async function (myImap, ids) {
         // console.log(myImap.user,ids)
