@@ -7,6 +7,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
+["LOGIN_REFRESH_PUBLIC_KEY", "LOGIN_REFRESH_PRIVATE_KEY"].forEach(x=>{
+    console.log(x, process.env[x]);
+})
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
   

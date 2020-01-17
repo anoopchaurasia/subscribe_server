@@ -14,6 +14,38 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
         return await mongo_emailInfo.findOneAndUpdate(query, { $setOnInsert: set }, { new: true, upsert: true }).exec();
     };
 
+
+
+    let serving_array = [], update_save_timeout;
+    Static.updateOrCreateAndGet = async function (query, set) {
+        me.updateQueryValidation(query, "from_email_id");
+        clearTimeout(update_save_timeout);
+        serving_array.push([query, {$setOnInsert: set}]);
+        if (serving_array.length == 200) {
+            await bulkSave(serving_array);
+            serving_array = [];
+        }
+        update_save_timeout = setTimeout(async () => {
+            await bulkSave(serving_array);
+            serving_array = [];
+        }, 10000)
+    };
+
+    async function bulkSave(serving_array) {
+        if (serving_array.length == 0) return
+        let copy = [...serving_array];
+        var bulk = mongo_emailInfo.collection.initializeOrderedBulkOp();
+        copy.forEach(([query, set]) => {
+            bulk.find(query).upsert().update(set);
+        });
+        await bulk.execute(function (error) {
+            if (error) return console.error(error, "while saving emailinfo for user");
+            console.log("saved emailinfo for user", copy.length);
+        });
+    }
+
+
+
     Static.updateEmailInfo = async function(query,set){
         me.updateQueryValidation(query, 'email_id');
         return await mongo_emailInfo.findOneAndUpdate(query, { $set: set }, {  upsert: true }).exec();

@@ -7,7 +7,6 @@ let {on_db_connection} = require("./base");
 on_db_connection(function () {
   console.log("Connected to database")
   setTimeout(x => {
-    onNewUser();
     runJob();
   }, 10 * 1000);
   setInterval(new_user_check, 2*60*1000);
@@ -63,7 +62,7 @@ async function new_user_check(){
   let cursor = await ImapController.UserModel.getCursor({listener_active: null, inactive_at: null, email_client:"imap"},
   {_id:1})
     cursor.eachAsync(async user => {
-    RedisDB.notifyListner( user._id.toHexString());
+      onNewUser(user._id.toHexString());
   }).catch(async e => {
     console.error("watch error", e);
   })
@@ -72,8 +71,7 @@ async function new_user_check(){
   })
 }
 
-function onNewUser() {
-  ImapController.onNewUser(async x => {
+async function onNewUser(x) {
     let user = await ImapController.getUserById(x);
     console.log("new user added", user);
     if (user.listener_active && user.inactive_at == null) {
@@ -81,7 +79,6 @@ function onNewUser() {
     }
     RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString());
     console.log("setting for new user", user._id);
-  });
 }
 
 setInterval(async x=>{

@@ -55,9 +55,12 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         }, 5 * 1000);
     };
     const limit = 2000;
-    this.update = async function (latestIDCB) {
+    this.update = async function (latestIDCB, throw_exception_on_log_no=false) {
         let { seen, unseen } = await Message.getLatestMessages(me.myImap.imap, me.myImap.user);
         let arr = [].concat(seen, unseen).sort((a, b) => a - b);
+        if(throw_exception_on_log_no===true && arr.length>3) {
+            throw new Error("more than limit 3");
+        } 
         let is_more_than_limit = false, biggest = arr[arr.length - 1];
         if (arr.length > limit) {
             is_more_than_limit = true;

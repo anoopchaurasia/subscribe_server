@@ -1,4 +1,7 @@
 'use strict'
+process.on('uncaughtException', function (err) {
+    console.error(err, "uncaughtException");
+});
 fm.Include("com.anoop.imap.Controller");
 let ImapController = com.anoop.imap.Controller;
 let RedisDB = com.jeet.memdb.RedisDB;

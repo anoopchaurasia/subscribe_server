@@ -3,13 +3,13 @@ module.exports = {
       name: "app",
       script: "./app.js",
       exec_mode  : "cluster",
-      instances: 7
+      instances: 3
     },
     {
         name: "qc_action",
         script: "./qc_action.js",
         exec_mode  : "cluster",
-        instances: 5
+        instances: 7
       },
       {
         name: "process",

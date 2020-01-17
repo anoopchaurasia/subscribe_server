@@ -151,7 +151,7 @@ router.post('/getTrashMailInfo', async (req, res) => {
         }
     } catch (err) {
         res.sendStatus(400);
-        console.error(err.message, ex.stack);
+        console.error(err.message, err.stack);
     }
 });
 

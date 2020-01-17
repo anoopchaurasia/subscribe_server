@@ -2,7 +2,7 @@ fm.Package("com.anoop.model");
 const mongo_emaildetail = require('../../../../models/emailDetails');
 fm.Class("EmailDetail>.BaseModel", function(me){
     this.setMe=_me=>me=_me;
-
+    console.log("emaildetesdsdsdsdsd");
     Static.executeAggregateQuery = async function(query){
         return await mongo_emaildetail.aggregate(query);
     }
@@ -19,6 +19,7 @@ fm.Class("EmailDetail>.BaseModel", function(me){
 
     Static.updateManyStatus = async function(query, status) {
         me.updateQueryValidation(query);
+        console.log("update many status", JSON.stringify(query), status);
         return await mongo_emaildetail.updateMany(query, {$set: {status}}).exec();
     };
 

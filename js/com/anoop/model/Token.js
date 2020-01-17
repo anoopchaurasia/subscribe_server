@@ -67,7 +67,7 @@ fm.Class("Token>.BaseModel", function (me, RedisDB, User) {
 
     let private_refresh_key;
     Static.generateJWTToken = async (user) => {
-        private_refresh_key = private_refresh_key || require("fs").readFileSync(global.basedir+"/"+ process.env.JWT_REFRESH_TOKEN_SECRET_FILE+"private.pem");
+        private_refresh_key = private_refresh_key || process.env.LOGIN_REFRESH_PRIVATE_KEY || require("fs").readFileSync(global.basedir+"/"+ process.env.JWT_REFRESH_TOKEN_SECRET_FILE+"private.pem");
         let fiveHoursLater = new Date(new Date().setHours(new Date().getHours() + 1)).toString();
         return {
             "accessToken": jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET_KEY, { expiresIn: '1hr'}),

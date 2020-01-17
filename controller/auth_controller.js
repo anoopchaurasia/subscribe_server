@@ -37,7 +37,7 @@ router.get('/getAppVersion', async (req, res) => {
 });
 let public_refresh_key
 router.get("/refreshToken", async (req, res)=>{
-    public_refresh_key = public_refresh_key || require("fs").readFileSync(global.basedir+"/"+ process.env.JWT_REFRESH_TOKEN_SECRET_FILE+"public.pem");
+    public_refresh_key = public_refresh_key || process.env.LOGIN_REFRESH_PUBlIC_KEY || require("fs").readFileSync(global.basedir+"/"+ process.env.JWT_REFRESH_TOKEN_SECRET_FILE+"public.pem");
     jwt.verify(req.query.refresh_token, public_refresh_key, {algorithms: ['RS256']}, async (err, data) => {
         if (err) {
             console.error(err.message,err.stack,'jwtTokenVerify');

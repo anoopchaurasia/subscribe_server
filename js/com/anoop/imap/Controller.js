@@ -226,6 +226,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         text && console.log(text, user.email);
         let myImap = await openFolder(user, "INBOX");
         myImap.listen(async function (x, y) {
+            // listnerUpdate(user, myImap).catch(err=>{
+            //     console.error(err);
+            // })
             new_email_cb(x, y);
         });
         myImap.onEnd(x => {
@@ -235,7 +238,25 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.keepCheckingConnection(x => {
             process.nextTick(r => me.listenForUser(user, "restarting for user12", new_email_cb));
         });
+        // listnerUpdate(user, myImap).catch(err=>{
+        //     console.error(err);
+        // })
         new_email_cb();
+    };
+
+    async function listnerUpdate(user, myImap) {
+        let scraper = Scraper.new(myImap);
+        let last_msgId = await me.UserModel.getLastMsgId(user);
+        if(last_msgId) {
+            user.last_msgId = last_msgId;
+        } else {
+            throw new Error("no last message");
+        }
+        await scraper.update(async function latest_id(id) {
+            id && (myImap.box.uidnext = id);
+        });
+        await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
+        myImap.user.last_msgId = myImap.box.uidnext;
     }
 
     Static.updateForUser = async function (user, reset_cb) {
