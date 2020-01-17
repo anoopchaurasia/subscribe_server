@@ -647,7 +647,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
             type: 'emaildata',
             body: {
                 "_source": "email_id",
-                "size": 10,
+                "size": 5000,
                 "from":offset,
                 "query": {
                     "bool": {
@@ -684,7 +684,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
             type: 'emaildata',
             body: {
                 "_source": "email_id",
-                "size": 1,
+                "size": 5000,
                 "from":offset,
                 "query": {
                     "bool": {
@@ -716,7 +716,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
             type: 'emaildata',
             body: {
                 "_source": "email_id",
-                "size": 1,
+                "size": 5000,
                 "from":offset,
                 "query": {
                     "bool": {
@@ -865,7 +865,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                           "filter": [
                             {
                               "terms": {
-                                "size_group.keyword": size_group
+                                "size_group": size_group
                               }
                             }
                           ],
@@ -914,7 +914,6 @@ fm.Class("EmailData>.BaseModel", function (me) {
         } catch (error) {
             console.log(error);
         }
-
     }
 
 
