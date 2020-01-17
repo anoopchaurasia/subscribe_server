@@ -31,7 +31,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
         me.updateQueryValidation(query);
         await mongo_emaildata.updateMany(query, { $set: set }).exec()
     };
-
+    Static.bulkSave = bulkSave;
     async function bulkSave(serving_array) {
         if (serving_array.length == 0) return
         let bulkBody = [];
@@ -693,6 +693,10 @@ fm.Class("EmailData>.BaseModel", function (me) {
         console.log(response);
         return response;
     }
+
+    Static.getCursor = async function(query, filter={}, offset=0){
+        return await mongo_emaildata.find(query, filter).skip(offset).lean().cursor()
+    };
 
 
     Static.storeEamil = function (emaildata, user_id) {

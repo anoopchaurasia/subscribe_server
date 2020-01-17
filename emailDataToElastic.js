@@ -1,62 +1,30 @@
 'use strict';
 let { on_db_connection } = require("./base");
-var client = require('./elastic/connection.js');
-
-on_db_connection(function () {
-    console.log("dsdssdsd")
-    setTimeout(async x=>{
-        const mongo_emaildata = require('./models/emailsData');
-        console.log(mongo_emaildata)
-        var cursor =await mongo_emaildata.find({}).lean();
-        // let data;
-        // data =cursor[0];
-        // delete data['_id'];
-        // console.log(data)
-        // await bulkSave([cursor[0]]);
-        await cursor.asyncForEach(async data => {
-            console.log(data)
-            delete data._id;
-            await bulkSave([data]);
-        });
-    }, 5*1000);
-})
-
-
-
-
-async function bulkSave(serving_array) {
-    if (serving_array.length == 0) return
-    let bulkBody = [];
-    serving_array.forEach(item => {
-        bulkBody.push({
-            index: {
-                _index: 'emaildata',
-                _type: 'emaildata',
-                _id: item.user_id + item.email_id + item.box_name
-            }
-        });
-
-        bulkBody.push(item);
+fm.Include("com.anoop.model.EmailData")
+let EmailData = com.anoop.model.EmailData;
+async function aa (){
+    let cursor = await EmailData.getCursor({}, {_id:0});
+    cursor.eachAsync(async x=>{
+        await storeData(x);
     });
-    console.log("indexing ", serving_array.length);
-    let response = await client.bulk({ body: bulkBody })
-
-        .catch(console.err);
-    let errorCount = 0;
-    response.items.forEach(item => {
-        if (item.index && item.index.error) {
-            console.log(++errorCount, item.index.error);
-        }
-    });
-    console.log(
-        `Successfully indexed ${serving_array.length - errorCount}
-     out of ${serving_array.length} items`)
-
-
 }
+on_db_connection(function(){
+    aa()
+})
+let serving_array = [], update_save_timeout;
+async function storeData(set) {
+    clearTimeout(update_save_timeout);
+    serving_array.push(set);
 
-
-
-
+    if (serving_array.length == 200) {
+        let arr = [...serving_array];
+        serving_array = [];
+        await EmailData.bulkSave(arr);
+    }
+    update_save_timeout = setTimeout(async () => {
+        await EmailData.bulkSave(serving_array);
+        serving_array = [];
+    }, 10000)
+}
 
 
