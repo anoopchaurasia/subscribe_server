@@ -21,7 +21,7 @@ module.exports = {
         name: "db_user_action",
         script: "./db_user_action.js",
         exec_mode  : "cluster",
-        instances: 20
+        instances: 10
       },{
         name: "imap_user_action",
         script: "./imap_user_action.js",
