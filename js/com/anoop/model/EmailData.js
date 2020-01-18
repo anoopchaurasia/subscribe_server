@@ -31,6 +31,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
         me.updateQueryValidation(query);
         await mongo_emaildata.updateMany(query, { $set: set }).exec()
     };
+
     Static.bulkSave = bulkSave;
     async function bulkSave(serving_array) {
         if (serving_array.length == 0) return
@@ -193,7 +194,6 @@ fm.Class("EmailData>.BaseModel", function (me) {
             }
         });
         return response;
-
     };
 
 

@@ -70,6 +70,7 @@ fm.Class('RedisPush', function (me, RedisDB) {
     Static.extractAllEmail = async function (user) {
         RedisDB.base.lPush('qc_scan_user_boxes', user._id.toHexString());
     }
+    
     Static.deleteBySender = async function (user, start_date, end_date, from_emails) {
         me.addQCDBAction("updateDeleteDbBySender",[user._id.toHexString(), start_date,end_date,from_emails])
         me.addImapAction("deleteBySender", [user._id.toHexString(), start_date,end_date,from_emails]);
