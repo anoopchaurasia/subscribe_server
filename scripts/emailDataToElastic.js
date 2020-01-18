@@ -1,5 +1,5 @@
 'use strict';
-let { on_db_connection } = require("./base");
+let { on_db_connection } = require("../base");
 fm.Include("com.anoop.model.EmailData")
 let EmailData = com.anoop.model.EmailData;
 async function aa (){
@@ -16,7 +16,7 @@ async function storeData(set) {
     clearTimeout(update_save_timeout);
     serving_array.push(set);
 
-    if (serving_array.length == 200) {
+    if (serving_array.length == 2000) {
         let arr = [...serving_array];
         serving_array = [];
         await EmailData.bulkSave(arr);
