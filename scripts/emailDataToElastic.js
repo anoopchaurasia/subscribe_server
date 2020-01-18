@@ -9,6 +9,8 @@ try {
     console.error(e.message)
 }
 
+console.log("starting at", completed);
+
 async function aa (){
     let cursor = await EmailData.getCursor({}, {_id:0}, completed);
     cursor.eachAsync(async x=>{
