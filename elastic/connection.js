@@ -2,7 +2,7 @@ var elasticsearch=require('elasticsearch');
 
 var client = new elasticsearch.Client( {  
   hosts: [
-    process.ELASTIC_URL
+    process.env.ELASTIC_URL
   ]
 });
 
