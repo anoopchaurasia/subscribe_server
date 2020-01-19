@@ -168,6 +168,24 @@ router.post('/getEmailSubscription', async (req, res) => {
     }
 });
 
+
+router.get('/getManualInfo', async (req, res) => {
+    try {
+        let user = req.user;
+        let emails = await Controller.EmailDetail.findBySource(user).catch(err => {
+            console.error(err.message, err.stack);
+        });
+        res.status(200).json({
+            error: false,
+            status: 200,
+            data: emails
+        })
+    } catch (error) {
+        console.log("here", error)
+        res.send({ "status": 401, "data": error })
+    }
+});
+
 router.post('/saveProfileInfo', async (req, res) => {
     try {
         let user = req.user;

@@ -137,9 +137,7 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
 router.get("/by_sender", async (req, res) => {
     try {
         const user = req.user;
-        console.log(user)
         let { start_date, end_date, page ,after_key} = req.query;
-        console.log(req.query)
         let limit = 10;
         let offset = (page || 0) * limit;
         // let offset = page;
@@ -149,13 +147,6 @@ router.get("/by_sender", async (req, res) => {
         });
         // emails = emails.aggregations.top_tags.buckets;
         let newEmails = emails.aggregations.my_buckets.buckets;
-        let next_key ;
-        if(newEmails.length!=0){
-            next_key = emails.aggregations.my_buckets.after_key.from_email;
-        }
-        // console.log(emails),
-        console.log(next_key);
-
         let emailData = [];
         newEmails.forEach(element => {
             let obj = {
@@ -169,11 +160,9 @@ router.get("/by_sender", async (req, res) => {
             }
             emailData.push(obj);
         });
-        console.log("response data",emailData)
         res.status(200).json({
             error: false,
-            data: emailData,
-            next_key : next_key
+            data: emailData
         });
     } catch (err) {
         res.status(502).json({ error: err.message })
@@ -198,7 +187,6 @@ router.post("/delete_by_sender", async (req, res) => {
 router.post("/delete_by_label", async (req, res) => {
     let { start_date, end_date, label_name } = req.body;
     const user = req.user;
-    console.log(start_date, end_date, label_name)
     try {
         ImapRedisPush.deleteByLabel(user,start_date,end_date,label_name);
         res.status(200).json({

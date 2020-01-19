@@ -62,10 +62,9 @@ fm.Class("EmailData>.BaseModel", function (me) {
     }
 
     Static.countDocument = async function ({ user }) {
-        console.log("got for count ", user)
         let response = await client.count({
             index: 'emaildata',
-            type: 'emaildata',
+            type: '_doc',
             body: {
                 "query": {
                     "bool": {
@@ -105,7 +104,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
     Static.getBySender = async function ({ start_date, end_date, user, offset, limit, next = "" }) {
         let response = await client.search({
             index: 'emaildata',
-            type: 'emaildata',
+            type: '_doc',
             body: {
                 "size": 0,
                 "query": {
@@ -113,7 +112,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                         "must": [
                             {
                                 "match": {
-                                    "user_id.keyword": user._id
+                                    "user_id": user._id
                                 }
                             },
                             {
@@ -139,7 +138,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                                 {
                                     "from_email": {
                                         "terms": {
-                                            "field": "from_email.keyword"
+                                            "field": "from_email"
                                         }
                                     }
                                 }
@@ -181,7 +180,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                                     "bool": {
                                         "must": {
                                             "term": {
-                                                "status.keyword": "read"
+                                                "status": "read"
                                             }
                                         }
                                     }
@@ -192,6 +191,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                 }
             }
         });
+        console.log(response)
         return response;
     };
 
@@ -199,12 +199,12 @@ fm.Class("EmailData>.BaseModel", function (me) {
     Static.getByLabel = async function ({ start_date, end_date, user }) {
         let response = await client.search({
             index: 'emaildata',
-            type: 'emaildata',
+            type: '_doc',
             body: {
                 query: {
                     "bool": {
                         "must": [
-                            { "match": { "user_id.keyword": user._id } },
+                            { "match": { "user_id": user._id } },
                             {
                                 "range": {
                                     "receivedDate":
@@ -225,7 +225,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                 "aggs": {
                     "top_tags": {
                         "terms": {
-                            "field": "box_name.keyword",
+                            "field": "box_name",
                             "size": 10
                         },
                         "aggs": {
@@ -246,7 +246,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                                 "filter": {
                                     "bool": {
                                         "must": {
-                                            "term": { "status.keyword": "read" }
+                                            "term": { "status": "read" }
 
                                         }
                                     }
@@ -264,12 +264,12 @@ fm.Class("EmailData>.BaseModel", function (me) {
     Static.getBySize = async function ({ start_date, end_date, user }) {
         let response = await client.search({
             index: 'emaildata',
-            type: 'emaildata',
+            type: '_doc',
             body: {
                 query: {
                     "bool": {
                         "must": [
-                            { "match": { "user_id.keyword": user._id } },
+                            { "match": { "user_id": user._id } },
                             {
                                 "range": {
                                     "receivedDate":
@@ -311,7 +311,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                                 "filter": {
                                     "bool": {
                                         "must": {
-                                            "term": { "status.keyword": "read" }
+                                            "term": { "status": "read" }
 
                                         }
                                     }
@@ -322,14 +322,13 @@ fm.Class("EmailData>.BaseModel", function (me) {
                 }
             }
         });
-        console.log(response);
         return response;
     };
 
     Static.getIdsBySize = async function ({ start_date, end_date, user, size_group }) {
         let response = await client.search({
             index: 'emaildata',
-            type: 'emaildata',
+            type: '_doc',
             body: {
                 "query": {
                     "bool": {
@@ -341,7 +340,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                             }
                         ],
                         "must": [
-                            { "match": { "user_id.keyword": user._id } },
+                            { "match": { "user_id": user._id } },
 
                             {
                                 "range": {
@@ -358,7 +357,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                 }, "aggregations": {
                     "data": {
                         "terms": {
-                            "field": "box_name.keyword"
+                            "field": "box_name"
                         }
                     }
 
@@ -371,19 +370,19 @@ fm.Class("EmailData>.BaseModel", function (me) {
     Static.getIdsByLabelName = async function ({ start_date, end_date, user, label_name }) {
         let response = await client.search({
             index: 'emaildata',
-            type: 'emaildata',
+            type: '_doc',
             body: {
                 "query": {
                     "bool": {
                         "filter": [
                             {
                                 "terms": {
-                                    "box_name.keyword": label_name
+                                    "box_name": label_name
                                 }
                             }
                         ],
                         "must": [
-                            { "match": { "user_id.keyword": user._id } },
+                            { "match": { "user_id": user._id } },
 
                             {
                                 "range": {
@@ -400,7 +399,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                 }, "aggregations": {
                     "data": {
                         "terms": {
-                            "field": "box_name.keyword"
+                            "field": "box_name"
                         }
                     }
 
@@ -413,19 +412,19 @@ fm.Class("EmailData>.BaseModel", function (me) {
     Static.getIdsByFromEmail = async function ({ start_date, end_date, user, from_emails }) {
         let response = await client.search({
             index: 'emaildata',
-            type: 'emaildata',
+            type: '_doc',
             body: {
                 "query": {
                     "bool": {
                         "filter": [
                             {
                                 "terms": {
-                                    "from_email.keyword": from_emails
+                                    "from_email": from_emails
                                 }
                             }
                         ],
                         "must": [
-                            { "match": { "user_id.keyword": user._id } },
+                            { "match": { "user_id": user._id } },
                             {
                                 "range": {
                                     "receivedDate":
@@ -440,7 +439,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                 }, "aggregations": {
                     "data": {
                         "terms": {
-                            "field": "box_name.keyword"
+                            "field": "box_name"
                         }
                     }
 
@@ -453,7 +452,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
     Static.getIdByBoxAndFromEmail = async function ({ start_date, end_date, user, from_emails, box_name, offset }) {
         let response = await client.search({
             index: 'emaildata',
-            type: 'emaildata',
+            type: '_doc',
             body: {
                 "_source": "email_id",
                 "size": 5000,
@@ -463,12 +462,12 @@ fm.Class("EmailData>.BaseModel", function (me) {
                         "filter": [
                             {
                                 "terms": {
-                                    "from_email.keyword": from_emails
+                                    "from_email": from_emails
                                 }
                             }
                         ],
                         "must": [
-                            { "match": { "user_id.keyword": user._id } },
+                            { "match": { "user_id": user._id } },
                             { "match": { "box_name": box_name } },
                             {
                                 "range": {
@@ -490,7 +489,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
     Static.getIdByBox = async function ({ start_date, end_date, user, box_name, offset }) {
         let response = await client.search({
             index: 'emaildata',
-            type: 'emaildata',
+            type: '_doc',
             body: {
                 "_source": "email_id",
                 "size": 5000,
@@ -498,7 +497,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                 "query": {
                     "bool": {
                         "must": [
-                            { "match": { "user_id.keyword": user._id } },
+                            { "match": { "user_id": user._id } },
                             { "match": { "box_name": box_name } },
                             {
                                 "range": {
@@ -521,7 +520,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
     Static.getIdByLabelList = async function ({ start_date, end_date, user, box_name, offset }) {
         let response = await client.search({
             index: 'emaildata',
-            type: 'emaildata',
+            type: '_doc',
             body: {
                 "_source": "email_id",
                 "size": 5000,
@@ -529,8 +528,8 @@ fm.Class("EmailData>.BaseModel", function (me) {
                 "query": {
                     "bool": {
                         "must": [
-                            { "match": { "user_id.keyword": user._id } },
-                            { "match": { "box_name.keyword": box_name } },
+                            { "match": { "user_id": user._id } },
+                            { "match": { "box_name": box_name } },
                             {
                                 "range": {
                                     "receivedDate":
@@ -573,14 +572,14 @@ fm.Class("EmailData>.BaseModel", function (me) {
                             "filter": [
                                 {
                                     "terms": {
-                                        "from_email.keyword": from_emails
+                                        "from_email": from_emails
                                     }
                                 }
                             ],
                             "must": [
                                 {
                                     "match": {
-                                        "user_id.keyword": user_id
+                                        "user_id": user_id
                                     }
                                 },
                                 {
@@ -603,7 +602,6 @@ fm.Class("EmailData>.BaseModel", function (me) {
                     }
                 }
             });
-        console.log("delete update response came====>", response);
         return response;
     }
 
@@ -616,14 +614,14 @@ fm.Class("EmailData>.BaseModel", function (me) {
                             "filter": [
                                 {
                                     "terms": {
-                                        "box_name.keyword": box_name
+                                        "box_name": box_name
                                     }
                                 }
                             ],
                             "must": [
                                 {
                                     "match": {
-                                        "user_id.keyword": user_id
+                                        "user_id": user_id
                                     }
                                 },
                                 {
@@ -646,7 +644,6 @@ fm.Class("EmailData>.BaseModel", function (me) {
                     }
                 }
             });
-        console.log(response);
         return response;
     }
 
@@ -666,7 +663,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
                             "must": [
                                 {
                                     "match": {
-                                        "user_id.keyword": user_id
+                                        "user_id": user_id
                                     }
                                 },
                                 {
@@ -689,7 +686,6 @@ fm.Class("EmailData>.BaseModel", function (me) {
                     }
                 }
             });
-        console.log(response);
         return response;
     }
 
