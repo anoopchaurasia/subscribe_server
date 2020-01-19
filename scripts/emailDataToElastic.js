@@ -12,7 +12,8 @@ try {
 }
 let last_send = Date.now;
 console.log("starting at", completed);
-const EventEmitter = require('events');
+const EventEmitter = require('events').EventEmitter();
+require('events').EventEmitter.defaultMaxListeners = 25
 const eventEmiiter = new EventEmitter();
 async function aa() {
     let cursor = await EmailData.getCursor({}, {
@@ -65,8 +66,8 @@ setInterval(x => {
     require("fs").writeFileSync("es_counter", completed);
 }, 5 * 1000);
 async function storeData(arr, type) {
+    console.log("saved", type, arr.length);
     await EmailData.bulkSave(arr);
-    console.log("saved", type);
     completed += arr.length
     type && eventEmiiter.emit(type);
     
