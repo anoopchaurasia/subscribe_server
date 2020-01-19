@@ -40,7 +40,6 @@ fm.Class("EmailData>.BaseModel", function (me) {
             bulkBody.push({
                 index: {
                     _index: 'emaildata',
-                    _type: 'emaildata',
                     _id: item.user_id + item.email_id + item.box_name
                 }
             });
