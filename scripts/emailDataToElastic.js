@@ -27,26 +27,25 @@ async function aa() {
 
 }
 
-let list = [], is_first=true;
+let pending = ["senddata1", "senddata2", "senddata3"];
+let list = [];
 eventEmiiter.on("senddata1", function () {
-    storeData(list.splice(0, 4000), "senddata1")
+    pending.push("senddata1");
 });
 eventEmiiter.on("senddata2", function () {
-    storeData(list.splice(0, 4000), "senddata2")
+    pending.push("senddata2");
 });
 eventEmiiter.on("senddata3", function () {
-    storeData(list.splice(0, 4000), "senddata3")
+    pending.push("senddata3");
 });
 async function storeData_1(x) {
     list.push(x);
-    if (list.length > 12000) {
-        console.log("more than 12000 docs");
-        if(is_first) {
-                eventEmiiter.emit("senddata1")
-                eventEmiiter.emit("senddata2");
-                eventEmiiter.emit("senddata3");
-                is_first=false;
+    if (list.length > 4000) {
+        let key = pending.shift();
+        if(key) {
+            storeData(list.splice(0, 4000), key);
         } else {
+            console.log("more than 12000 docs");
             await storeData(list.splice(0, 4000));
         }
     }
