@@ -26,15 +26,27 @@ async function aa() {
 
 }
 
-let list = [];
+let list = [], is_first=true;
 async function storeData_1(x) {
     list.push(x);
-    eventEmiiter.on("senddata", function () {
-        storeData(list.splice(0, 4000))
+    eventEmiiter.on("senddata1", function () {
+        storeData(list.splice(0, 4000), "senddata1")
     });
-    if (list.length > 10000) {
-        console.log("more than 10000 docs");
-        await storeData(list.splice(0, 4000));
+    eventEmiiter.on("senddata2", function () {
+        storeData(list.splice(0, 4000), "senddata2")
+    });
+    eventEmiiter.on("senddata3", function () {
+        storeData(list.splice(0, 4000), "senddata3")
+    });
+    if (list.length > 12000) {
+        console.log("more than 12000 docs");
+        if(is_first) {
+                eventEmiiter.emit("senddata1")
+                eventEmiiter.emit("senddata2");
+                eventEmiiter.emit("senddata3");
+        } else {
+            await storeData(list.splice(0, 4000));
+        }
     }
 }
 
@@ -42,7 +54,7 @@ let start = Date.now();
 let start_c = completed;
 
 on_db_connection(function () {
-    aa()
+    aa();
 });
 setInterval(x => {
     if ((Date.now - last_send) > 60 * 1000) {
@@ -52,21 +64,10 @@ setInterval(x => {
     console.log("saving counter", completed / 100000, (completed - start_c) / 100000, Date.now() - start);
     require("fs").writeFileSync("es_counter", completed);
 }, 5 * 1000);
-let serving_array = [],
-    update_save_timeout;
-async function storeData(set) {
-    clearTimeout(update_save_timeout);
-    serving_array.push(...set);
-
-    if (serving_array.length >= 4000) {
-        let arr = [...serving_array];
-        serving_array = [];
-        await EmailData.bulkSave(arr);
-        eventEmiiter.emit("senddata")
-        completed += serving_array.length
-    }
-    update_save_timeout = setTimeout(async () => {
-        await EmailData.bulkSave(serving_array);
-        serving_array = [];
-    }, 10000)
+async function storeData(arr, type) {
+    await EmailData.bulkSave(arr);
+    console.log("saved", type);
+    completed += arr.length
+    type && eventEmiiter.emit(type);
+    
 }
