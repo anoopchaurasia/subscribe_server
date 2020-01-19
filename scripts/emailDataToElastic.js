@@ -12,7 +12,7 @@ try {
 }
 let last_send = Date.now;
 console.log("starting at", completed);
-const EventEmitter = require('events').EventEmitter();
+const EventEmitter = require('events').EventEmitter;
 require('events').EventEmitter.defaultMaxListeners = 25
 const eventEmiiter = new EventEmitter();
 async function aa() {
