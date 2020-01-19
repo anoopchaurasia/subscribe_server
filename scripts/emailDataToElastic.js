@@ -45,6 +45,7 @@ async function storeData_1(x) {
                 eventEmiiter.emit("senddata1")
                 eventEmiiter.emit("senddata2");
                 eventEmiiter.emit("senddata3");
+                is_first=false;
         } else {
             await storeData(list.splice(0, 4000));
         }
