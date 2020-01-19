@@ -28,17 +28,17 @@ async function aa() {
 }
 
 let list = [], is_first=true;
+eventEmiiter.on("senddata1", function () {
+    storeData(list.splice(0, 4000), "senddata1")
+});
+eventEmiiter.on("senddata2", function () {
+    storeData(list.splice(0, 4000), "senddata2")
+});
+eventEmiiter.on("senddata3", function () {
+    storeData(list.splice(0, 4000), "senddata3")
+});
 async function storeData_1(x) {
     list.push(x);
-    eventEmiiter.on("senddata1", function () {
-        storeData(list.splice(0, 4000), "senddata1")
-    });
-    eventEmiiter.on("senddata2", function () {
-        storeData(list.splice(0, 4000), "senddata2")
-    });
-    eventEmiiter.on("senddata3", function () {
-        storeData(list.splice(0, 4000), "senddata3")
-    });
     if (list.length > 12000) {
         console.log("more than 12000 docs");
         if(is_first) {
@@ -68,7 +68,7 @@ setInterval(x => {
 }, 5 * 1000);
 async function storeData(arr, type) {
     console.log("saved", type, arr.length);
-    await EmailData.bulkSave(arr);
+    arr.length && (await EmailData.bulkSave(arr));
     completed += arr.length
     type && eventEmiiter.emit(type);
     
