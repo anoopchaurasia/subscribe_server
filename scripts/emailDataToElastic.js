@@ -33,6 +33,7 @@ async function storeData_1(x) {
         storeData(list.splice(0, 4000))
     });
     if (list.length > 10000) {
+        console.log("more than 10000 docs");
         await storeData(list.splice(0, 4000));
     }
 }
