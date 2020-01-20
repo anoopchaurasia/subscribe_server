@@ -1,8 +1,8 @@
 fm.Package("com.anoop.model");
 const mongo_emaildata = require('../../../../models/emailsData');
 var client = require('./../../../../elastic/connection.js');
-
-fm.Class("EmailData>.BaseModel", function (me) {
+fm.Import(".ES_EmailData")
+fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     this.setMe = _me => me = _me;
 
     Static.get = async function (query) {
@@ -101,36 +101,14 @@ fm.Class("EmailData>.BaseModel", function (me) {
         return match;
     }
 
-    Static.getBySender = async function ({ start_date, end_date, user, offset, limit, next = "" }) {
+
+    Static.getBySender = async function ({ start_date, end_date, user, offset, limit }) {
         let response = await client.search({
             index: 'emaildata',
             type: '_doc',
             body: {
                 "size": 0,
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "match": {
-                                    "user_id": user._id
-                                }
-                            },
-                            {
-                                "range": {
-                                    "receivedDate": {
-                                        "gte": new Date(start_date),
-                                        "lte": new Date(end_date)
-                                    }
-                                }
-                            }
-                        ],
-                        "must_not": {
-                            "exists": {
-                                "field": "deleted_at"
-                            }
-                        }
-                    }
-                },
+                "query": ES_EmailData.commonQuery({start_date, end_date, user_id: user._id}),
                 "aggs": {
                     "my_buckets": {
                         "composite": {
@@ -144,7 +122,6 @@ fm.Class("EmailData>.BaseModel", function (me) {
                                 }
                             ],
                             "size": 10000
-
                         },
                         "aggs": {
                             "mySort": {
@@ -161,31 +138,14 @@ fm.Class("EmailData>.BaseModel", function (me) {
                                 }
                             },
                             "from_email": {
-                                "top_hits": {
-                                    "_source": {
-                                        "includes": [
-                                            "subject"
-                                        ]
-                                    },
-                                    "size": 5
-                                }
+                                "top_hits": ES_EmailData.topHits()
                             },
                             "size": {
                                 "sum": {
                                     "field": "size"
                                 }
                             },
-                            "readcount": {
-                                "filter": {
-                                    "bool": {
-                                        "must": {
-                                            "term": {
-                                                "status": "read"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            "readcount": ES_EmailData.readcount()
                         }
                     }
                 }
@@ -195,63 +155,31 @@ fm.Class("EmailData>.BaseModel", function (me) {
         return response;
     };
 
+ 
+
 
     Static.getByLabel = async function ({ start_date, end_date, user }) {
         let response = await client.search({
             index: 'emaildata',
             type: '_doc',
             body: {
-                query: {
-                    "bool": {
-                        "must": [
-                            { "match": { "user_id": user._id } },
-                            {
-                                "range": {
-                                    "receivedDate":
-                                    {
-                                        "gte": new Date(start_date),
-                                        "lte": new Date(end_date)
-                                    }
-                                }
-                            }
-                        ],
-                        "must_not": {
-                            "exists": {
-                                "field": "deleted_at"
-                            }
-                        }
-                    }
-                },
+                query: ES_EmailData.commonQuery({start_date, end_date, user_id: user._id}),
                 "aggs": {
                     "top_tags": {
                         "terms": {
                             "field": "box_name",
-                            "size": 10
+                            "size": 100
                         },
                         "aggs": {
                             "box_name": {
-                                "top_hits": {
-                                    "_source": {
-                                        "includes": ["subject"]
-                                    }
-
-                                }
+                                "top_hits": ES_EmailData.topHits()
                             },
                             "size": {
                                 "sum": {
                                     "field": "size"
                                 }
                             },
-                            "readcount": {
-                                "filter": {
-                                    "bool": {
-                                        "must": {
-                                            "term": { "status": "read" }
-
-                                        }
-                                    }
-                                }
-                            }
+                            "readcount": ES_EmailData.readcount()
                         }
                     }
                 }
@@ -266,27 +194,7 @@ fm.Class("EmailData>.BaseModel", function (me) {
             index: 'emaildata',
             type: '_doc',
             body: {
-                query: {
-                    "bool": {
-                        "must": [
-                            { "match": { "user_id": user._id } },
-                            {
-                                "range": {
-                                    "receivedDate":
-                                    {
-                                        "gte": new Date(start_date),
-                                        "lte": new Date(end_date)
-                                    }
-                                }
-                            }
-                        ],
-                        "must_not": {
-                            "exists": {
-                                "field": "deleted_at"
-                            }
-                        }
-                    }
-                },
+                query: ES_EmailData.commonQuery({start_date, end_date, user_id: user._id}),
                 "aggs": {
                     "top_tags": {
                         "terms": {
@@ -295,28 +203,14 @@ fm.Class("EmailData>.BaseModel", function (me) {
                         },
                         "aggs": {
                             "size_group": {
-                                "top_hits": {
-                                    "_source": {
-                                        "includes": ["subject"]
-                                    }
-
-                                }
+                                "top_hits": ES_EmailData.topHits()
                             },
                             "size": {
                                 "sum": {
                                     "field": "size"
                                 }
                             },
-                            "readcount": {
-                                "filter": {
-                                    "bool": {
-                                        "must": {
-                                            "term": { "status": "read" }
-
-                                        }
-                                    }
-                                }
-                            }
+                            "readcount": ES_EmailData.readcount()
                         }
                     }
                 }

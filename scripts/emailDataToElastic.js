@@ -4,6 +4,7 @@ let {
 } = require("../base");
 fm.Include("com.anoop.model.EmailData")
 let EmailData = com.anoop.model.EmailData;
+
 let completed = 0;
 try {
     completed = require("fs").readFileSync("es_counter").toString() * 1;
