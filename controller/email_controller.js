@@ -84,11 +84,7 @@ This will get Filter subcription(new subscription only), unread Mail Info and to
 */
 router.post('/readMailInfo', async (req, res) => {
     try {
-        const user = req.user;
-        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(user._id);
-        const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
-        const total = await GetEmailQuery.getTotalEmailCount(user._id);
-        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
+        let only_count = "Home_page" === (req.headers["From-Page"] || req.headers["from-page"]);
         let finished = false;
         let is_finished = await BaseController.isScanFinished(user._id);
         if (is_finished && is_finished == "true") {
@@ -98,6 +94,20 @@ router.post('/readMailInfo', async (req, res) => {
                 console.error(err.message, err.stack, "launch date set error");
             });
         }
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
+        console.log("only_count", only_count);
+        if(only_count) {
+            return res.status(200).json({
+                error: false,
+                data: {length: total},
+                totalEmail: 0,
+                finished: finished
+            });
+        }
+        const user = req.user;
+        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(user._id);
+        const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
+        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
         if (is_finished === null) {
             await BaseController.scanFinished(user._id);
         }
