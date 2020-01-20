@@ -102,7 +102,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                 }
             }
         });
-        console.log(response);
+        // console.log(response);
         return response.count;
     }
 
@@ -132,7 +132,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                 }
             }
         });
-        console.log(response)
+        // console.log(response)
         return response;
     };
 
@@ -324,8 +324,6 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         return response.hits.hits;
     }
 
-
-
     Static.updateDeleteDbBySender = async function ({ start_date, end_date, user_id, from_emails }) {
         return updateQcDeleteBySender(start_date, end_date, user_id, from_emails);
     };
@@ -342,7 +340,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         let response = await client.updateByQuery(
             {
                 index: "emaildata",
-                type: "emaildata",
+                type: "_doc",
                 body: {
                     "query": {
                         "bool": {
@@ -365,7 +363,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     async function updateQcDeleteByLabel(start_date, end_date, user_id, box_name) {
         let response = await client.updateByQuery(
             {
-                index: "emaildata", type: "emaildata", body: {
+                index: "emaildata", type: "_doc", body: {
                     "query": {
                         "bool": {
                             "filter": [
@@ -387,7 +385,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     async function updateQcDeleteBySize(start_date, end_date, user_id, size_group) {
         let response = await client.updateByQuery(
             {
-                index: "emaildata", type: "emaildata", body: {
+                index: "emaildata", type: "_doc", body: {
                     "query": {
                         "bool": {
                             "filter": [
