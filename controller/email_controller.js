@@ -86,6 +86,7 @@ router.post('/readMailInfo', async (req, res) => {
     try {
         let only_count = "Home_page" === (req.headers["From-Page"] || req.headers["from-page"]);
         let finished = false;
+        const user = req.user;
         let is_finished = await BaseController.isScanFinished(user._id);
         if (is_finished && is_finished == "true") {
             console.log("is_finished here-> ", is_finished);
@@ -104,7 +105,6 @@ router.post('/readMailInfo', async (req, res) => {
                 finished: finished
             });
         }
-        const user = req.user;
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(user._id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
         const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
