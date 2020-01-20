@@ -83,7 +83,13 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         let move_list = [], trash_list = [], store_list = [];
         await Message.getBatchMessage(me.myImap.imap, unseen,
             async (parsed) => {
+                
                 let emailbody = await Parser.getEmailBody(parsed, labels);
+                try{
+                    is_get_body === false && QCStore(emailbody, labels[0].toLowerCase())
+                } catch(e) {
+                    console.error(e, "Error while saving QCStore");
+                }
                 await handleCB(emailbody, async (data, status) => {
                     if (status == "move") {
                         move_list.push(data.email_id);
@@ -167,7 +173,6 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             await Message.getBatchMessage(me.myImap.imap, uids, async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
                 await QCStore(emailbody, status);
-             
             }, false);
             resolve();
         });
