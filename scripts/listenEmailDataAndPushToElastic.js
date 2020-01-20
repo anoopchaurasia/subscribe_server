@@ -28,6 +28,7 @@ on_db_connection(function () {
 
 let serving_array = [], update_save_timeout;
 async function insertDoc(set) {
+    console.log(set)
     delete set._id;
     clearTimeout(update_save_timeout);
     serving_array.push(set);

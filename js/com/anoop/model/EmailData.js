@@ -10,20 +10,26 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         return await mongo_emaildata.findOne(query).exec();
     };
 
-    let serving_array = [], update_save_timeout;
+
+    let serving_array = [], serving_array_db = [], update_save_timeout;
     Static.updateOrCreateAndGet = async function (query, set) {
         me.updateQueryValidation(query);
         clearTimeout(update_save_timeout);
         serving_array.push(set);
-
+        serving_array_db.push([query, { $set: set }]);
         if (serving_array.length == 200) {
             let arr = [...serving_array];
+            let arr_db = [...serving_array_db];
             serving_array = [];
+            serving_array_db = [];
+            await bulkSaveToDB(arr_db);
             await bulkSave(arr);
         }
         update_save_timeout = setTimeout(async () => {
+            await bulkSaveToDB(serving_array_db);
             await bulkSave(serving_array);
             serving_array = [];
+            serving_array_db = [];
         }, 10000)
     };
 
@@ -31,6 +37,18 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         me.updateQueryValidation(query);
         await mongo_emaildata.updateMany(query, { $set: set }).exec()
     };
+
+    async function bulkSaveToDB(serving_array) {
+        if (serving_array.length == 0) return
+        var bulk = mongo_emaildata.collection.initializeOrderedBulkOp();
+        serving_array.forEach(([query, set]) => {
+            bulk.find(query).upsert().update(set);
+        });
+        await bulk.execute(function (error) {
+            if (error) return console.error(error, "while saving emaildata for user");
+            console.log("saved emaildata for user", serving_array.length);
+        });
+    }
 
     Static.bulkSave = bulkSave;
     async function bulkSave(serving_array) {
@@ -89,62 +107,25 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     }
 
 
-
-    function commonQuery({ user, start_date, end_date }) {
-        let match = {
-            "user_id": user._id,
-            deleted_at: null,
-        };
-        if (start_date) {
-            match.receivedDate = { $gte: new Date(start_date), $lte: new Date(end_date) }
-        }
-        return match;
-    }
-
-
     Static.getBySender = async function ({ start_date, end_date, user, offset, limit }) {
         let response = await client.search({
             index: 'emaildata',
             type: '_doc',
             body: {
                 "size": 0,
-                "query": ES_EmailData.commonQuery({start_date, end_date, user_id: user._id}),
+                "query": ES_EmailData.commonQuery({ start_date, end_date, user_id: user._id }),
                 "aggs": {
                     "my_buckets": {
                         "composite": {
-                            "sources": [
-                                {
-                                    "from_email": {
-                                        "terms": {
-                                            "field": "from_email"
-                                        }
-                                    }
-                                }
-                            ],
+                            "sources": ES_EmailData.compositeAggregation(),
                             "size": 10000
                         },
                         "aggs": {
-                            "mySort": {
-                                "bucket_sort": {
-                                    "sort": [
-                                        {
-                                            "_count": {
-                                                "order": "desc"
-                                            }
-                                        }
-                                    ],
-                                    "from": offset,
-                                    "size": limit
-                                }
-                            },
+                            "mySort": ES_EmailData.bucketSort({ offset, limit }),
                             "from_email": {
                                 "top_hits": ES_EmailData.topHits()
                             },
-                            "size": {
-                                "sum": {
-                                    "field": "size"
-                                }
-                            },
+                            "size": ES_EmailData.sizeTotal(),
                             "readcount": ES_EmailData.readcount()
                         }
                     }
@@ -155,15 +136,13 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         return response;
     };
 
- 
-
 
     Static.getByLabel = async function ({ start_date, end_date, user }) {
         let response = await client.search({
             index: 'emaildata',
             type: '_doc',
             body: {
-                query: ES_EmailData.commonQuery({start_date, end_date, user_id: user._id}),
+                query: ES_EmailData.commonQuery({ start_date, end_date, user_id: user._id }),
                 "aggs": {
                     "top_tags": {
                         "terms": {
@@ -174,11 +153,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                             "box_name": {
                                 "top_hits": ES_EmailData.topHits()
                             },
-                            "size": {
-                                "sum": {
-                                    "field": "size"
-                                }
-                            },
+                            "size": ES_EmailData.sizeTotal(),
                             "readcount": ES_EmailData.readcount()
                         }
                     }
@@ -194,22 +169,18 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
             index: 'emaildata',
             type: '_doc',
             body: {
-                query: ES_EmailData.commonQuery({start_date, end_date, user_id: user._id}),
+                query: ES_EmailData.commonQuery({ start_date, end_date, user_id: user._id }),
                 "aggs": {
                     "top_tags": {
                         "terms": {
                             "field": "size_group",
-                            "size": 10
+                            "size": 100
                         },
                         "aggs": {
                             "size_group": {
                                 "top_hits": ES_EmailData.topHits()
                             },
-                            "size": {
-                                "sum": {
-                                    "field": "size"
-                                }
-                            },
+                            "size": ES_EmailData.sizeTotal(),
                             "readcount": ES_EmailData.readcount()
                         }
                     }
@@ -233,29 +204,10 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                 }
                             }
                         ],
-                        "must": [
-                            { "match": { "user_id": user._id } },
-
-                            {
-                                "range": {
-                                    "receivedDate":
-                                    {
-                                        "gte": new Date(start_date),
-                                        "lte": new Date(end_date)
-                                    }
-                                }
-                            }
-                        ]
+                        "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id: user._id })
                     }
 
-                }, "aggregations": {
-                    "data": {
-                        "terms": {
-                            "field": "box_name"
-                        }
-                    }
-
-                }
+                }, "aggregations": ES_EmailData.commonBoxnameAggregation()
             }
         });
         return response.aggregations.data.buckets;
@@ -275,29 +227,10 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                 }
                             }
                         ],
-                        "must": [
-                            { "match": { "user_id": user._id } },
-
-                            {
-                                "range": {
-                                    "receivedDate":
-                                    {
-                                        "gte": new Date(start_date),
-                                        "lte": new Date(end_date)
-                                    }
-                                }
-                            }
-                        ]
+                        "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id: user._id })
                     }
 
-                }, "aggregations": {
-                    "data": {
-                        "terms": {
-                            "field": "box_name"
-                        }
-                    }
-
-                }
+                }, "aggregations": ES_EmailData.commonBoxnameAggregation()
             }
         });
         return response.aggregations.data.buckets;
@@ -317,27 +250,9 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                 }
                             }
                         ],
-                        "must": [
-                            { "match": { "user_id": user._id } },
-                            {
-                                "range": {
-                                    "receivedDate":
-                                    {
-                                        "gte": new Date(start_date),
-                                        "lte": new Date(end_date)
-                                    }
-                                }
-                            }
-                        ]
+                        "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id: user._id })
                     }
-                }, "aggregations": {
-                    "data": {
-                        "terms": {
-                            "field": "box_name"
-                        }
-                    }
-
-                }
+                }, "aggregations": ES_EmailData.commonBoxnameAggregation()
             }
         });
         return response.aggregations.data.buckets;
@@ -388,23 +303,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                 "_source": "email_id",
                 "size": 5000,
                 "from": offset,
-                "query": {
-                    "bool": {
-                        "must": [
-                            { "match": { "user_id": user._id } },
-                            { "match": { "box_name": box_name } },
-                            {
-                                "range": {
-                                    "receivedDate":
-                                    {
-                                        "gte": new Date(start_date),
-                                        "lte": new Date(end_date)
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
+                "query": ES_EmailData.commonBoxIdQuery({ start_date, end_date, box_name, user_id: user._id })
             }
         });
         return response.hits.hits;
@@ -419,23 +318,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                 "_source": "email_id",
                 "size": 5000,
                 "from": offset,
-                "query": {
-                    "bool": {
-                        "must": [
-                            { "match": { "user_id": user._id } },
-                            { "match": { "box_name": box_name } },
-                            {
-                                "range": {
-                                    "receivedDate":
-                                    {
-                                        "gte": new Date(start_date),
-                                        "lte": new Date(end_date)
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
+                "query": ES_EmailData.commonBoxIdQuery({ start_date, end_date, box_name, user_id: user._id })
             }
         });
         return response.hits.hits;
@@ -470,30 +353,10 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                     }
                                 }
                             ],
-                            "must": [
-                                {
-                                    "match": {
-                                        "user_id": user_id
-                                    }
-                                },
-                                {
-                                    "range": {
-                                        "receivedDate": {
-                                            "gte": new Date(start_date),
-                                            "lte": new Date(end_date)
-                                        }
-                                    }
-                                }
-                            ]
+                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id })
                         }
                     },
-                    "script": {
-                        "source": "ctx._source.deleted_at=params.newValue",
-                        lang: 'painless',
-                        params: {
-                            newValue: new Date()
-                        }
-                    }
+                    "script": ES_EmailData.setDeleteScript()
                 }
             });
         return response;
@@ -512,30 +375,10 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                     }
                                 }
                             ],
-                            "must": [
-                                {
-                                    "match": {
-                                        "user_id": user_id
-                                    }
-                                },
-                                {
-                                    "range": {
-                                        "receivedDate": {
-                                            "gte": new Date(start_date),
-                                            "lte": new Date(end_date)
-                                        }
-                                    }
-                                }
-                            ]
+                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id })
                         }
                     },
-                    "script": {
-                        "source": "ctx._source.deleted_at=params.newValue",
-                        lang: 'painless',
-                        params: {
-                            newValue: new Date()
-                        }
-                    }
+                    "script": ES_EmailData.setDeleteScript()
                 }
             });
         return response;
@@ -554,36 +397,16 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                     }
                                 }
                             ],
-                            "must": [
-                                {
-                                    "match": {
-                                        "user_id": user_id
-                                    }
-                                },
-                                {
-                                    "range": {
-                                        "receivedDate": {
-                                            "gte": new Date(start_date),
-                                            "lte": new Date(end_date)
-                                        }
-                                    }
-                                }
-                            ]
+                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id })
                         }
                     },
-                    "script": {
-                        "source": "ctx._source.deleted_at=params.newValue",
-                        lang: 'painless',
-                        params: {
-                            newValue: new Date()
-                        }
-                    }
+                    "script": ES_EmailData.setDeleteScript()
                 }
             });
         return response;
     }
 
-    Static.getCursor = async function(query, filter={}, offset=0){
+    Static.getCursor = async function (query, filter = {}, offset = 0) {
         return await mongo_emaildata.find(query, filter).skip(offset).lean().cursor()
     };
 

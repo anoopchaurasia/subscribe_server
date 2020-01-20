@@ -1,15 +1,14 @@
-fm.Package('com.anoop.model')
-
-fm.Class('ES_EmailData', function(me){
+fm.Package('com.anoop.model');
+fm.Class('ES_EmailData', function (me) {
     'use strict';
-    this.setMe=_me=>me=_me;
-    Static.commonQuery = function ({ user, start_date, end_date }) {
+    this.setMe = _me => me = _me;
+    Static.commonQuery = function ({ start_date, end_date, user_id }) {
         return {
             "bool": {
                 "must": [
                     {
                         "match": {
-                            "user_id": user._id
+                            "user_id": user_id
                         }
                     },
                     {
@@ -30,7 +29,7 @@ fm.Class('ES_EmailData', function(me){
         };
     }
 
-    Static.readcount = function (){
+    Static.readcount = function () {
         return {
             "filter": {
                 "bool": {
@@ -53,4 +52,98 @@ fm.Class('ES_EmailData', function(me){
             "size": 5
         }
     }
+
+
+    Static.commonMatchQuery = function ({ start_date, end_date, user_id }) {
+        return [
+            { "match": { "user_id": user_id } },
+            {
+                "range": {
+                    "receivedDate":
+                    {
+                        "gte": new Date(start_date),
+                        "lte": new Date(end_date)
+                    }
+                }
+            }
+        ];
+    }
+
+
+    Static.commonBoxnameAggregation = function () {
+        return {
+            "data": {
+                "terms": {
+                    "field": "box_name"
+                }
+            }
+        }
+    }
+
+    Static.commonBoxIdQuery = function ({ start_date, end_date, box_name, user_id }) {
+        return {
+            "bool": {
+                "must": [
+                    { "match": { "user_id": user_id } },
+                    { "match": { "box_name": box_name } },
+                    {
+                        "range": {
+                            "receivedDate":
+                            {
+                                "gte": new Date(start_date),
+                                "lte": new Date(end_date)
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+
+    Static.bucketSort = function ({ offset, limit }) {
+        return {
+            "bucket_sort": {
+                "sort": [
+                    {
+                        "_count": {
+                            "order": "desc"
+                        }
+                    }
+                ],
+                "from": offset,
+                "size": limit
+            }
+        }
+    }
+
+    Static.compositeAggregation = function(){
+        return [
+            {
+                "from_email": {
+                    "terms": {
+                        "field": "from_email"
+                    }
+                }
+            }
+        ];
+    }
+
+    Static.sizeTotal = function(){
+        return {
+            "sum": {
+                "field": "size"
+            }
+        };
+    }
+
+    Static.setDeleteScript = function(){
+        return {
+            "source": "ctx._source.deleted_at=params.newValue",
+            lang: 'painless',
+            params: {
+                newValue: new Date()
+            }
+        }
+    }
+
 });
