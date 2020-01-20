@@ -95,16 +95,19 @@ router.post('/readMailInfo', async (req, res) => {
                 console.error(err.message, err.stack, "launch date set error");
             });
         }
-        const total = await GetEmailQuery.getTotalEmailCount(user._id);
+        const total_subscription = await GetEmailQuery.getTotalSubscriptionCount(user._id);
+        
+        
         console.log("only_count", only_count);
         if(only_count) {
             return res.status(200).json({
                 error: false,
-                data: {length: total},
+                data: {length: total_subscription},
                 totalEmail: 0,
                 finished: finished
             });
         }
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(user._id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
         const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });

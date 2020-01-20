@@ -25,7 +25,6 @@ class GetEmailQuery {
     }
 
 
-
     static async getTotalKeepSubscription(user_id) {
         let totalNL = await email.countDocuments({ "user_id": user_id, "status": "keep" }).catch(err => {
             console.error(err.message, err.stack, "1eeq");
@@ -126,6 +125,17 @@ class GetEmailQuery {
         }
         return total;
     }
+
+
+      /*
+        This function will return Total subscription Count for particular user.
+    */
+        static async getTotalSubscriptionCount(user_id) {
+            let totalNL = await email.countDocuments({ "user_id": user_id ,"status": "unused"}).catch(err => {
+                console.error(err.message, err.stack, "10eq");
+            });
+            return totalNL;
+        }
 
     /*
         This function will return Total Unsubscribe Email count for particular User
