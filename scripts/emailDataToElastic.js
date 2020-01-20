@@ -70,5 +70,4 @@ async function storeData(arr, type) {
     arr.length && (await EmailData.bulkSave(arr));
     completed += arr.length
     type && eventEmiiter.emit(type);
-    
 }
