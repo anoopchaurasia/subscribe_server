@@ -102,7 +102,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                 }
             }
         });
-        console.log(response);
+        // console.log(response);
         return response.count;
     }
 
@@ -132,7 +132,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                 }
             }
         });
-        console.log(response)
+        // console.log(response)
         return response;
     };
 
@@ -324,25 +324,64 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         return response.hits.hits;
     }
 
+    function commonQueryForUpdate({ user_id, start_date, end_date }) {
+        let match = {
+            "user_id": user_id,
+            deleted_at: null,
+        };
+        if (start_date) {
+            match.receivedDate = { $gte: new Date(start_date), $lte: new Date(end_date) }
+        }
+        return match;
+    }
+
+    async function updateQcDeleteCommon(match) {
+        console.log(match)
+        try {
+            return await mongo_emaildata.updateMany({
+                ...match
+            }, {
+                $set: {
+                    deleted_at: new Date
+                }
+            }
+            ).exec();
+        } catch (error) {
+            console.log(error);
+        }
+
+    }
+
 
 
     Static.updateDeleteDbBySender = async function ({ start_date, end_date, user_id, from_emails }) {
-        return updateQcDeleteBySender(start_date, end_date, user_id, from_emails);
+        updateQcDeleteBySender(start_date, end_date, user_id, from_emails);
+        let match = commonQueryForUpdate({ user_id, start_date, end_date });
+        match.from_email = { $in: from_emails }
+        return updateQcDeleteCommon(match);
     };
 
     Static.updateDeleteDbByLabel = async function ({ start_date, end_date, user_id, label_name }) {
-        return updateQcDeleteByLabel(start_date, end_date, user_id, label_name);
+        updateQcDeleteByLabel(start_date, end_date, user_id, label_name);
+        let match = commonQueryForUpdate({ user_id, start_date, end_date });
+        match.box_name = { $in: label_name };
+        return updateQcDeleteCommon(match);
+
     };
 
     Static.updateDeleteDbBySize = async function ({ start_date, end_date, user_id, size_group }) {
-        return updateQcDeleteBySize(start_date, end_date, user_id, size_group);
+        updateQcDeleteBySize(start_date, end_date, user_id, size_group);
+        let match = commonQueryForUpdate({ user_id, start_date, end_date });
+        match.size_group = { $in: size_group }
+        return updateQcDeleteCommon(match);
+
     };
 
     async function updateQcDeleteBySender(start_date, end_date, user_id, from_emails) {
         let response = await client.updateByQuery(
             {
                 index: "emaildata",
-                type: "emaildata",
+                type: "_doc",
                 body: {
                     "query": {
                         "bool": {
@@ -365,7 +404,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     async function updateQcDeleteByLabel(start_date, end_date, user_id, box_name) {
         let response = await client.updateByQuery(
             {
-                index: "emaildata", type: "emaildata", body: {
+                index: "emaildata", type: "_doc", body: {
                     "query": {
                         "bool": {
                             "filter": [
@@ -387,7 +426,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     async function updateQcDeleteBySize(start_date, end_date, user_id, size_group) {
         let response = await client.updateByQuery(
             {
-                index: "emaildata", type: "emaildata", body: {
+                index: "emaildata", type: "_doc", body: {
                     "query": {
                         "bool": {
                             "filter": [

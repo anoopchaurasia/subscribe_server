@@ -4,14 +4,38 @@ const express = require('express');
 const router = express.Router();
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
+const AppsflyerEvent = require("./../helper/appsflyerEvent").AppsflyerEvent;
+
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 
 
+
+// successfully loggedin api
+router.post('/login_success', async (req, res) => {
+    try {
+        let appsFlyer_id = req.body.appsFlyer_id;
+        console.log("appsflyer_id ",appsFlyer_id);
+        if (appsFlyer_id) {
+            await AppsflyerEvent.sendEventToAppsflyer(appsFlyer_id, "unique_user_login");
+        } else {
+            await AppsflyerEvent.sendEventToAppsflyer(appsFlyer_id, "appsflyer_id_not_found");
+        }
+        return res.status(200).json({
+            error: false,
+            data: "successfully logged-In"
+        });
+    } catch (ex) {
+        console.error(ex.message, ex.stack, "632");
+        res.sendStatus(400);
+    }
+    return;
+});
+
 // read mail using the user token
 router.post('/readZohoMail', async (req, res) => {
     try {
-        let user = req.user; 
+        let user = req.user;
         let is_finished = await Controller.isScanFinished(user._id);
         if (is_finished == "false") {
             return res.status(202).json({
@@ -88,7 +112,7 @@ router.post('/getMailInfo', async (req, res) => {
             // unreadData: unreademail,
             totalEmail: total
         })
-        
+
     } catch (error) {
         console.log("here", error)
         res.send({ "status": 401, "data": error })
@@ -109,7 +133,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
                 totalEmail: total
             })
         }
-        
+
     } catch (err) {
         res.sendStatus(400);
         console.error(err.message, ex.stack);
@@ -129,7 +153,7 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
                 totalEmail: total
             })
         }
-        
+
     } catch (err) {
         res.sendStatus(400);
         console.error(err.message, ex.stack);
@@ -199,10 +223,10 @@ router.post('/saveProfileInfo', async (req, res) => {
         if (req.body.email != null) {
             userObj.primary_email = req.body.email;
         }
-        await Controller.UserModel.updateUserById({ "_id": user._id }, {$set: userObj}).catch(err => {
+        await Controller.UserModel.updateUserById({ "_id": user._id }, { $set: userObj }).catch(err => {
             console.error(err.message, err.stack);
         });
-        user = await Controller.UserModel.get({_id: user._id});
+        user = await Controller.UserModel.get({ _id: user._id });
         res.status(200).json({
             error: false,
             status: 200,
