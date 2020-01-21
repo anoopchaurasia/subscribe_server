@@ -40,9 +40,7 @@ router.post('/saveDeviceInfo', async (req, res) => {
                 Sentry.captureException(err);
                 console.error(err.message, err.stack, "271");
             });
-            res.json({
-                message: "success"
-            });
+           
         }else{
             await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, deviceData, { upsert: true }).catch(err => {
                 Sentry.captureException(err);
@@ -60,9 +58,6 @@ router.post('/saveDeviceInfo', async (req, res) => {
                 console.error(err.message, err.stack, "432");
             });
         }
-        res.json({
-            message: "success"
-        });
     }
     let userDevice = await DeviceInfo.findOne({ "user_id": user._id }).catch(err => {
         console.error(err.message, err.stack, "27");
@@ -71,6 +66,10 @@ router.post('/saveDeviceInfo', async (req, res) => {
     await fcmToken.findOneAndUpdate({ "device_id": userDevice._id }, tokenInfo, { upsert: true }).catch(err => {
         console.error(err.message, err.stack, "26");
     });
+    res.json({
+        message: "success"
+    });
+    BaseController.UserModel.deleteRedisUser(user);
 });
 
 router.post('/saveAppVersion', async (req, res) => {
