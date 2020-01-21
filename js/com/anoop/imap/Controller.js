@@ -247,7 +247,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     async function listnerUpdate(user, myImap) {
         let scraper = Scraper.new(myImap);
         let last_msgId = await me.UserModel.getLastMsgId(user);
-        if(last_msgId) {
+        if (last_msgId) {
             user.last_msgId = last_msgId;
         } else {
             throw new Error("no last message");
@@ -321,8 +321,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         if (!names.includes("Unsubscribed Emails")) {
             await Label.create(myImap, "Unsubscribed Emails");
         }
+        console.log(names);
         let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
         let trash_label = labels;
+        console.log(trash_label);
         let user = await me.getUserByEmail(email);
         if (!user) {
             user = await me.createUser(email, PASSWORD, trash_label);
@@ -448,8 +450,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         while (ids.length) {
             sendids = ids.splice(0, 10000);
             console.log("deleting length", sendids.length);
-            // await Label.moveInboxToTrashAuto(myImap, sendids);
-            await Label.setDeleteFlag(myImap, sendids);
+            // await Label.setDeleteFlag(myImap, sendids);
+            if (myImap.provider.provider === "gmail") {
+                await Label.moveToTrashForQC(myImap, sendids);
+            } else {
+                await Label.setDeleteFlag(myImap, sendids);
+            }
         }
         console.log("deleted data");
         await closeImap(myImap);

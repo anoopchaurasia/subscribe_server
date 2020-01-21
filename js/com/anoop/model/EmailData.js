@@ -66,7 +66,6 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         });
         console.log("indexing ", serving_array.length);
         let response = await client.bulk({ body: bulkBody })
-
             .catch(console.err);
         let errorCount = 0;
         response.items.forEach(item => {
@@ -349,10 +348,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         } catch (error) {
             console.log(error);
         }
-
     }
-
-
 
     Static.updateDeleteDbBySender = async function ({ start_date, end_date, user_id, from_emails }) {
         updateQcDeleteBySender(start_date, end_date, user_id, from_emails);
@@ -366,7 +362,6 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         let match = commonQueryForUpdate({ user_id, start_date, end_date });
         match.box_name = { $in: label_name };
         return updateQcDeleteCommon(match);
-
     };
 
     Static.updateDeleteDbBySize = async function ({ start_date, end_date, user_id, size_group }) {
@@ -374,7 +369,6 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         let match = commonQueryForUpdate({ user_id, start_date, end_date });
         match.size_group = { $in: size_group }
         return updateQcDeleteCommon(match);
-
     };
 
     async function updateQcDeleteBySender(start_date, end_date, user_id, from_emails) {

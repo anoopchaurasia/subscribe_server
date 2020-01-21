@@ -125,6 +125,17 @@ fm.Class("Label>.Message", function (me) {
         return await me.changeFolder(myImap.imap, myImap.user.trash_label, ids);
     };
 
+    Static.moveToTrashForQC = async function (myImap, ids) {
+        if (ids.length!=0) {
+            try {
+                return await me.changeFolder(myImap.imap, ['[Gmail]/Trash'], ids);
+            } catch (e) {
+                return await me.changeFolder(myImap.imap, ['[Gmail]/Bin'], ids);
+            }
+        }
+        return 
+    };
+
     
 
      ////-------------------------Delete messages
