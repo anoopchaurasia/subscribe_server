@@ -8,14 +8,15 @@ fm.Import("..model.UserAction");
 fm.Import("..model.SenderMail");
 fm.Import("..model.EmailData");
 fm.Import("..model.EmailTrack");
+fm.Import("..model.LabelData");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
 fm.Import('..model.BaseModel');
 const Sentry = require('@sentry/node');
 const userAppLog = require('../../../../models/userAppLog');
 const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
-fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider, 
-    UserAction, SenderMail, EmailData,EmailTrack, RedisDB, BaseRedisData, BaseModel) {
+fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider,
+    UserAction, SenderMail, EmailData, EmailTrack, LabelData, RedisDB, BaseRedisData, BaseModel) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -27,7 +28,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.EmailDataModel = EmailData;
     Static.EmailDetail = EmailDetail;
 
-    Static.createLogForUser = async function async (email_id, action_name, action_page, action_event, attribute, api_name) {
+    Static.createLogForUser = async function async(email_id, action_name, action_page, action_event, attribute, api_name) {
         var userLog = new userAppLog({
             email_id,
             attribute,
@@ -42,11 +43,18 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         });
     }
 
-    Static.logToSentry = function(err, options){
+
+    Static.storeLabelData = function (labels, provider) {
+        labels.forEach(element => {
+            LabelData.findOneAndUpdate({ "label_name": element, "provider": provider }, { "is_trash": false });
+        });
+    }
+
+    Static.logToSentry = function (err, options) {
         Sentry.captureException(err, options);
     };
 
-    Static.sendToAppsFlyer  =async function(user_id, event_name, event_value){
+    Static.sendToAppsFlyer = async function (user_id, event_name, event_value) {
         AppsflyerEvent.sendEventToAppsflyer(user_id, event_name, event_value);
     };
 
@@ -59,27 +67,27 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
     }
 
-    Static.getLastTrackMessageId = async function(uid){
-        return await EmailTrack.get({user_id:uid})
+    Static.getLastTrackMessageId = async function (uid) {
+        return await EmailTrack.get({ user_id: uid })
     }
 
-    Static.updateForDelete = async function(user_id,ids){
-        return await EmailData.updateForDelete({user_id:user_id,email_id:{$in:ids}},{deleted_at: new Date});
+    Static.updateForDelete = async function (user_id, ids) {
+        return await EmailData.updateForDelete({ user_id: user_id, email_id: { $in: ids } }, { deleted_at: new Date });
     }
 
-    Static.storeEmailData = async function(data,user_id){
-        let emailData = await EmailData.storeEamil(data,user_id);
-        return await EmailData.updateOrCreateAndGet({from_email:emailData.from_email,email_id:emailData.email_id,user_id:emailData.user_id},emailData);
+    Static.storeEmailData = async function (data, user_id) {
+        let emailData = await EmailData.storeEamil(data, user_id);
+        return await EmailData.updateOrCreateAndGet({ from_email: emailData.from_email, email_id: emailData.email_id, user_id: emailData.user_id }, emailData);
     }
 
     Static.saveManualEmailData = async function (user_id, data) {
         let emaildetailraw = await EmailDetail.storeEamil(data, user_id);
         return await EmailDetail.updateOrCreateAndGet({ from_email: emaildetailraw.from_email, user_id: emaildetailraw.user_id }, emaildetailraw);
     }
-    
+
 
     Static.saveManualEmailInfoForOutlook = async function (user_id, data) {
-        let emaildetail = await me.saveManualEmailData(user_id,data);
+        let emaildetail = await me.saveManualEmailData(user_id, data);
         let emailinforaw = await EmailInfo.fromEamil(data, emaildetail._id, null);
         return await EmailInfo.updateOrCreateAndGet({ from_email_id: emaildetail._id, email_id: emailinforaw.email_id }, emailinforaw);
     };
@@ -95,12 +103,12 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return { emaildetail, emailids };
     };
 
-    Static.updateLastTrackMessageId = async function(uid,last_mId){
-        return await EmailTrack.updatelastMsgId({ user_id: uid }, {$set:{ last_msgId:last_mId }});
+    Static.updateLastTrackMessageId = async function (uid, last_mId) {
+        return await EmailTrack.updatelastMsgId({ user_id: uid }, { $set: { last_msgId: last_mId } });
     }
 
-    Static.removeUserByState = async function(state){
-        return await User.removeUserByState({state:state});
+    Static.removeUserByState = async function (state) {
+        return await User.removeUserByState({ state: state });
     }
 
     Static.updateEmailInfoForOutlook = async function (email_id, new_email_id) {
@@ -137,7 +145,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.scanFinishedQuickClean = async function (user_id) {
         await RedisDB.setData(user_id, "is_finished_quick_clean", true);
     };
-    
+
     Static.isScanFinishedQuickClean = async function (user_id) {
         return await RedisDB.getData(user_id, "is_finished_quick_clean");
     }
@@ -192,24 +200,28 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     }
 
     Static.updateUser = async function (email, unsub_label, trash_label, password) {
-        return await User.updateUser({ email: email }, {$set: {
-            unsub_label,
-            trash_label,
-            password,
-            "email_client": "imap"
-        }});
+        return await User.updateUser({ email: email }, {
+            $set: {
+                unsub_label,
+                trash_label,
+                password,
+                "email_client": "imap"
+            }
+        });
     };
 
     Static.updateTrashLabelUser = async function (email, trash_label) {
         console.warn("setting new label", trash_label);
-        return await User.updateUser({ email: email }, {$set:{
-            trash_label,
-            "email_client": "imap"
-        }});
+        return await User.updateUser({ email: email }, {
+            $set: {
+                trash_label,
+                "email_client": "imap"
+            }
+        });
     };
 
-    Static.getByEmailAndClient = async function(userInfo){
-        return await User.getByEmailAndClient({email:userInfo.preferred_username,email_client:"outlook"})
+    Static.getByEmailAndClient = async function (userInfo) {
+        return await User.getByEmailAndClient({ email: userInfo.preferred_username, email_client: "outlook" })
     }
 
     Static.updateUserById = async function (key, set) {
@@ -248,8 +260,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await EmailDetail.updateManyStatus({ user_id, from_email: { $in: from_email } }, status);
     };
 
-    Static.sendMailToScraper = async function (data, user, getBodyCB,is_get_body) {
-        await BaseRedisData.sendMailToScraper(data, user, getBodyCB,is_get_body);
+    Static.sendMailToScraper = async function (data, user, getBodyCB, is_get_body) {
+        await BaseRedisData.sendMailToScraper(data, user, getBodyCB, is_get_body);
     };
 
     Static.notifyListner = async function (user_id) {
@@ -300,21 +312,21 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         }
     }
 
-    Static.sendToProcessServer = async function(user_id){
+    Static.sendToProcessServer = async function (user_id) {
         me.scanStarted(user_id)
         RedisDB.sendNewUserProcess('process_user_login', user_id);
     };
 
-    Static.getUserAnalyzed = async function (emailDetailsWithInfo,userEmailAnalyziedData) {
+    Static.getUserAnalyzed = async function (emailDetailsWithInfo, userEmailAnalyziedData) {
         emailDetailsWithInfo.forEach((emaildata, index) => {
             let oneWeekBeforeInMillisecond = 7 * 24 * 60 * 60 * 1000
-            let oneWeekBefore = new Date(Date.now()-oneWeekBeforeInMillisecond);
+            let oneWeekBefore = new Date(Date.now() - oneWeekBeforeInMillisecond);
             let status_date = new Date(emaildata.status_date)
             console.log(`${status_date}---${oneWeekBefore}---${new Date()}`);
-            if (!(status_date >= oneWeekBefore && status_date <= new Date())){
+            if (!(status_date >= oneWeekBefore && status_date <= new Date())) {
                 emailDetailsWithInfo.splice(index, 1);
             }
-        });        
+        });
 
         userEmailAnalyziedData.totalProviders = emailDetailsWithInfo.length;
 

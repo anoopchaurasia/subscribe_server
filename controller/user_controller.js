@@ -45,7 +45,7 @@ router.post('/saveDeviceInfo', async (req, res) => {
             });
         }else{
             await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, deviceData, { upsert: true }).catch(err => {
-                Sentry.captureException(err);
+                Sentry.captureException(err); 
                 console.error(err.message, err.stack, "273");
             });
         }

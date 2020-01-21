@@ -322,6 +322,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await Label.create(myImap, "Unsubscribed Emails");
         }
         console.log(names);
+        me.storeLabelData(names,provider.provider);
         let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
         let trash_label = labels;
         console.log(trash_label);
