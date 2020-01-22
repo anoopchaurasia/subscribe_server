@@ -26,7 +26,7 @@ try {
   console.log("no file");
 }
 
-let LISTEN_USER_KEY = key;
+let LISTEN_USER_KEY = key.trim();
 require("fs").writeFileSync("./listner_key", LISTEN_USER_KEY);
 console.log('new key', LISTEN_USER_KEY);
 async function runJob(offset = 0) {
