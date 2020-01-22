@@ -39,7 +39,8 @@ async function runJob(offset = 0) {
   }, {_id:1}, offset);
   cursor.eachAsync(async user => {
     await ImapController.updateUserById({_id: user._id}, {$set: {listener_active: false, inactive_at: null, inactive_reason: null}} );
-      RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString());
+    console.log(LISTEN_USER_KEY);  
+    RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString());
       counter++;
     }).catch(async e => {
       console.error("watch error", counter, e);
