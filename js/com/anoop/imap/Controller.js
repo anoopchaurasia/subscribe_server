@@ -2,6 +2,7 @@ fm.Package("com.anoop.imap");
 fm.Import(".MyImap");
 fm.Import(".Scraper");
 fm.Import(".Label");
+var googleTranslate = require('google-translate')(process.env.google_translate_api_key);
 fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scraper, Label) {
     this.setMe = _me => me = _me;
 
@@ -353,12 +354,13 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             await Label.create(myImap, "Unsubscribed Emails");
         }
         console.log(names);
+        me.storeLabelData(names,provider.provider);
         let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
         let trash_label = labels;
         console.log(trash_label);
-        if(!trash_label){
-            trash_label = await getLabelFromGoogleApi(names);
-        }
+        // if(!trash_label){
+        //     trash_label = await getLabelFromGoogleApi(names);
+        // }
         let user = await me.getUserByEmail(email);
         if (!user) {
             user = await me.createUser(email, PASSWORD, trash_label);

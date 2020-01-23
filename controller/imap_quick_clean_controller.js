@@ -106,11 +106,6 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
         let emails = await Controller.EmailDataModel.getBySize({
             start_date, end_date, user
         });
-        // emails.forEach(element => {
-        //     let total = element.data.filter(x => x.status == "read").length;
-        //     element.readcount = total;
-        //     delete element.data;
-        // });
         let emailData = [];
         emails = emails.aggregations.top_tags.buckets;
         emails.forEach(element => {
@@ -140,12 +135,10 @@ router.get("/by_sender", async (req, res) => {
         let { start_date, end_date, page ,after_key} = req.query;
         let limit = 10;
         let offset = (page || 0) * limit;
-        // let offset = page;
         let next = after_key;
         let emails = await Controller.EmailDataModel.getBySender({
             start_date, end_date, user, offset, limit,next
         });
-        // emails = emails.aggregations.top_tags.buckets;
         let newEmails = emails.aggregations.my_buckets.buckets;
         let emailData = [];
         newEmails.forEach(element => {
@@ -213,16 +206,10 @@ router.post("/delete_by_size", async (req, res) => {
 });
 
 
-
-
 /* This api will return the emails based on the Date from database */
 router.post('/getTotalUnreadMail', async (req, res) => {
     try {
         const user = req.user;
-        // let emails = await EmailDataModel.countDocuments({
-        //     user_id: user._id,
-        //     deleted_at: null
-        // });
         let emails = await Controller.EmailDataModel.countDocument({user});
         let finished = false;
         let is_finished = await Controller.isScanFinishedQuickClean(user._id);
@@ -255,11 +242,6 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
         let emails = await Controller.EmailDataModel.getByLabel({
             start_date, end_date, user
         });
-        // emails.forEach(element => {
-        //     let total = element.data.filter(x => x.status == "read").length;
-        //     element.readcount = total;
-        //     delete element.data;
-        // });
         let emailData = [];
         emails = emails.aggregations.top_tags.buckets;
         emails.forEach(element => {

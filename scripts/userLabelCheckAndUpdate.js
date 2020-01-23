@@ -6,8 +6,7 @@ fm.Include("com.anoop.model.User")
 fm.Include("com.anoop.imap.Controller")
 let UserModel = com.anoop.model.User;
 let Controller = com.anoop.imap.Controller;
-var api = "AIzaSyA6cE2lJ8EG36VtaerCp_Bc4MqhgpAZ194";
-var googleTranslate = require('google-translate')(api);
+var googleTranslate = require('google-translate')(process.env.google_translate_api_key);
 
 let completed = 0;
 try {
@@ -49,23 +48,23 @@ async function findBoxAndCheck(x) {
             }
             let result = await UserModel.updateUser(query, set);
             console.log("got result => ", result)
-        }else if (boxList.includes('[Gmail]/Bin')){
-                // update user with '[Gmail]/Bin' trash_label
-                let query = {
-                    _id: x._id
-                };
-                let set = {
-                    $set: { "trash_label": '[Gmail]/Bin' }
-                }
-                let result = await UserModel.updateUser(query, set);
-                console.log("got result => ", result)
-        }else{
+        } else if (boxList.includes('[Gmail]/Bin')) {
+            // update user with '[Gmail]/Bin' trash_label
+            let query = {
+                _id: x._id
+            };
+            let set = {
+                $set: { "trash_label": '[Gmail]/Bin' }
+            }
+            let result = await UserModel.updateUser(query, set);
+            console.log("got result => ", result)
+        } else {
 
             await boxList.asynForEach(element => {
                 console.log("English :>", element);
                 if (element.indexOf('[Gmail]') != -1) {
                     googleTranslate.translate(element, 'en', async function (err, translation) {
-                        if (translation.translatedText.toLowerCase().indexOf('trash')!=-1) {
+                        if (translation.translatedText.toLowerCase().indexOf('trash') != -1) {
                             console.log("Spanish :>", element, translation.translatedText);
                             let query = {
                                 _id: x._id
@@ -75,7 +74,7 @@ async function findBoxAndCheck(x) {
                             }
                             let result = await UserModel.updateUser(query, set);
                             return
-                        } else if (translation.translatedText.toLowerCase().indexOf('bin')!=-1) {
+                        } else if (translation.translatedText.toLowerCase().indexOf('bin') != -1) {
                             console.log("Spanish :>", element, translation.translatedText);
                             let query = {
                                 _id: x._id

@@ -23,11 +23,11 @@ require('events').EventEmitter.defaultMaxListeners = 25
 const eventEmiiter = new EventEmitter();
 async function caller_function() {
 
-    let distinct_user_id =  await EmailData.getDistinct();
+    let distinct_user_id = await EmailData.getDistinct();
 
     console.log(distinct_user_id);
 
-    let cursor = await UserModel.getCursor({_id:{$in:distinct_user_id}},{}, completed);
+    let cursor = await UserModel.getCursor({ _id: { $in: distinct_user_id } }, {}, completed);
     last_send = Date.now()
     cursor.eachAsync(async x => {
         last_send = Date.now;
@@ -37,22 +37,22 @@ async function caller_function() {
 }
 
 
-async function getEmailDataByUser(x){
+async function getEmailDataByUser(x) {
     console.log(x);
-    let cursoremail = await EmailData.getBoxWiseData(x,new Date());
-    
-    
+    let cursoremail = await EmailData.getBoxWiseData(x, new Date());
+
+
 
     await cursoremail.asynForEach(async mail => {
         last_send = Date.now;
-        if(mail){
+        if (mail) {
             // console.log(mail)
             let from_email = mail._id.from_email;
             // console.log(mail.data);
             // console.log(mail.data.map(x=>x.email_id).length)
-            let max_date = new Date(Math.max.apply(null, mail.data.map(x=>x.receivedDate)));
-            let min_date = new Date(Math.min.apply(null, mail.data.map(x=>x.receivedDate)));
-            await Controller.makeTrashActionFromAlreadyDeletedMails(from_email, "[Gmail]/All Mail", x,min_date,max_date,function onDIsconect() {
+            let max_date = new Date(Math.max.apply(null, mail.data.map(x => x.receivedDate)));
+            let min_date = new Date(Math.min.apply(null, mail.data.map(x => x.receivedDate)));
+            await Controller.makeTrashActionFromAlreadyDeletedMails(from_email, "[Gmail]/All Mail", x, min_date, max_date, function onDIsconect() {
                 console.warn("disconnected crashing");
             })
         }
