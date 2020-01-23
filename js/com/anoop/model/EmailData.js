@@ -17,7 +17,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     };
 
     Static.getDistinct = async function () {
-        return await mongo_emaildata.distinct('user_id',{"deleted_at" :{$exists: true}}).exec();
+        return await mongo_emaildata.distinct('user_id',{"deleted_at" :{$lte: new Date(2020,1,22)}}).exec();
     };
 
 
