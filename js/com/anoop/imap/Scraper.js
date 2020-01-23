@@ -44,14 +44,18 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     this.start = async function (cb) {
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
         console.log(seen.length, unseen.length, "sdsds")
+        let has_ecom;
         if (unseen.length != 0) {
-            await mailScrap(unseen, ["UNREAD"], me.handleEamil);
+            has_ecom =await mailScrap(unseen, ["UNREAD"], me.handleEamil);
         }
         if (seen.length != 0) {
-            await mailScrap(seen, ["READ"], me.handleEamil);
+         let hac_seen_ecom=  await mailScrap(seen, ["READ"], me.handleEamil);
+         if(!has_ecom){
+             has_ecom = hac_seen_ecom;
+         }
         }
         setTimeout(async x => {
-            cb && await cb();
+            cb && await cb(has_ecom);
         }, 5 * 1000);
     };
     const limit = 2000;
@@ -81,6 +85,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
 
     async function mailScrap(unseen, labels, handleCB, is_get_body) {
         let move_list = [], trash_list = [], store_list = [];
+        let has_ecom = null;
         await Message.getBatchMessage(me.myImap.imap, unseen,
             async (parsed) => {
                 
@@ -97,11 +102,13 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                         trash_list.push(data.email_id);
                     }
                 });
-                await me.sendMailToScraper(Parser.parse(emailbody, parsed, me.myImap.user), me.myImap.user,
+                let match_domain = await me.sendMailToScraper(Parser.parse(emailbody, parsed, me.myImap.user), me.myImap.user,
                     async function getBodyCB(data) {
                         store_list.push(data.id);
                     }, is_get_body);
-
+                if(has_ecom!=true){
+                    has_ecom = match_domain;
+                }
             }, is_get_body);
         if (store_list.length) {
             await Message.getBatchMessage(me.myImap.imap, store_list, async (parsed) => {
@@ -113,7 +120,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         }
         trash_list.length && await Label.moveInboxToTrashAuto(me.myImap, trash_list);
         move_list.length && await Label.moveInboxToUnsubAuto(me.myImap, move_list);
-
+        return has_ecom;
     }
 
     this.getEmaiIdsBySender = async function (sender) {

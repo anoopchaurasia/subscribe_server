@@ -229,6 +229,7 @@ router.post('/getTotalUnreadMail', async (req, res) => {
         if (is_finished && is_finished == "true") {
             console.log("is_finished_quick_clean here-> ", is_finished);
             finished = true;
+            
         }
         if (is_finished === null) {
             await Controller.scanFinishedQuickClean(user._id);

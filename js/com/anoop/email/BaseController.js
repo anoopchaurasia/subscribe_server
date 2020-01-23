@@ -249,7 +249,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     };
 
     Static.sendMailToScraper = async function (data, user, getBodyCB,is_get_body) {
-        await BaseRedisData.sendMailToScraper(data, user, getBodyCB,is_get_body);
+        return await BaseRedisData.sendMailToScraper(data, user, getBodyCB,is_get_body);
     };
 
     Static.notifyListner = async function (user_id) {

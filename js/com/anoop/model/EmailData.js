@@ -11,6 +11,35 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     };
 
 
+    Static.getAll = async function (query) {
+        me.updateQueryValidation(query);
+        return await mongo_emaildata.find(query).exec();
+    };
+
+    Static.getDistinct = async function () {
+        return await mongo_emaildata.distinct('user_id').exec();
+    };
+
+
+    Static.getBoxWiseData = async function(user,date){
+        return await mongo_emaildata.aggregate([{ $match: { "user_id": user._id ,'deleted_at':{$lte:date} }}, {
+            $group: {
+                _id: { "from_email": "$from_email" }, data: {
+                    $push: {
+                        "email_id": "$email_id",
+                        "receivedDate":"$receivedDate"
+                    }
+                }
+            }
+        },
+        { $project: {  data: 1 } }]).catch(err => {
+            console.error(err.message, err.stack, "14eq");
+        });
+    }
+
+    
+
+
     let serving_array = [], serving_array_db = [], update_save_timeout;
     Static.updateOrCreateAndGet = async function (query, set) {
         me.updateQueryValidation(query);

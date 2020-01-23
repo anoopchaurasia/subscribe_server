@@ -20,10 +20,13 @@ fm.Class('BaseRedisData', function(me, Domain){
             if(is_get_body===false) {
                return await getBody(data);
             }
+            console.log("got_domain",data.from)
             data.company = "imap";
             data.user_id = ("0x" + `${user._id}`.slice(-8)) * 1 + 1000000000000;
             data.source = data.source || "imap_server";
             redis_client.lpush('raw_email_data', JSON.stringify(data));
+            return true;
         }
+        return false;
     };
 });

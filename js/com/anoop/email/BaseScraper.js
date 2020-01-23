@@ -98,7 +98,7 @@ fm.Class('BaseScraper', function (me, BaseController, RedisDB) {
     }
 
     this.sendMailToScraper = async function (data, user, getBodyCB,is_get_body) {
-        await BaseController.sendMailToScraper(data, user, getBodyCB,is_get_body);
+        return await BaseController.sendMailToScraper(data, user, getBodyCB,is_get_body);
     };
 
     this.notifyListner = async function (user_id) {

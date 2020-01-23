@@ -169,15 +169,36 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         me.sendToAppsFlyer(user.af_uid || user.email, "process_started", { time: Date.now() })
         await me.UserModel.updatelastMsgId(user, myImap.box.uidnext);
         let scraper = Scraper.new(myImap);
-        await scraper.start(async function afterEnd() {
+        await scraper.start(async function afterEnd(has_ecom) {
             console.log("is_finished called");
             me.sendToAppsFlyer(user.af_uid || user.email, "process_finished", { time: Date.now() })
             await me.scanFinished(user._id);
             me.updateUserByActionKey(user._id, { "last_scan_date": new Date() });
             await me.handleRedis(user._id);
+            await setEcommerceData(has_ecom,user);
         });
         clearInterval(timeoutconst);
         myImap.end();
+    }
+
+    async function setEcommerceData(is_ecom_user,user){
+        let userInfo  = await me.UserModel.getRedisUser(user._id);
+        if(!userInfo.af_uid){
+            await me.UserModel.deleteRedisUser(user);
+            userInfo = await me.UserModel.getRedisUser(user._id);
+        }
+        if(userInfo.af_uid){
+            if(is_ecom_user){
+                console.log("ecommerce_user_check_true",userInfo.af_uid);
+                await me.sendToAppsFlyer(userInfo.af_uid,"ecommerce_user_true");
+            }else{
+                console.log("ecommerce_user_check_false",userInfo.af_uid);
+                await me.sendToAppsFlyer(userInfo.af_uid,"ecommerce_user_false");
+            }
+        }else{
+            await me.sendToAppsFlyer(userInfo.af_uid,"ecommerce_user_appsid_missing");
+        }
+       
     }
 
     Static.extractEmailForCronJob = async function (user) {
@@ -309,6 +330,16 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         me.updateTrashLabelUser(myImap.user.email, label);
     }
 
+    async function getLabelFromGoogleApi(){
+        googleTranslate.translate(element, 'en', async function (err, translation) {
+            if (translation.translatedText.toLowerCase().indexOf('trash')!=-1) {
+                return element;
+            } else if (translation.translatedText.toLowerCase().indexOf('bin')!=-1) {
+               return element;
+            }
+        });
+    }
+
     ///////////------------------------ login ------------------------///
     Static.login = async function (email, password, provider, clientAccessMode, ipaddress) {
         let PASSWORD = MyImap.encryptPassword(password);
@@ -325,6 +356,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
         let trash_label = labels;
         console.log(trash_label);
+        if(!trash_label){
+            trash_label = await getLabelFromGoogleApi(names);
+        }
         let user = await me.getUserByEmail(email);
         if (!user) {
             user = await me.createUser(email, PASSWORD, trash_label);
@@ -438,15 +472,47 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
 
+    Static.getAndReturnLabel = async(user,box_name,onDisconnect)=>{
+        let myImap = await openFolder(user,box_name,onDisconnect);
+        return {"boxList":await myImap.getLabels(),"provider":myImap.provider.provider};
+    }
 
-    async function makeImapDeleteActionForQC(ids, box_name, user, onDisconnect) {
+
+    Static.makeTrashActionFromAlreadyDeletedMails = async function(from_email, box_name, user,start_date,end_date, onDisconnect) {
         let myImap = await openFolder(user, box_name, onDisconnect);
         let sendids;
-        console.log("total delete ]]]=====>", ids.length);
+        console.log("total delete ]]]=====>", from_email,box_name);
         myImap.keepCheckingConnection(function onFail() {
             console.log("reconnecting as disconnected!");
             myImap.connect();
         }, 120 * 1000);
+        let ids = await Label.getAllIdsForDeletedEmails(myImap,from_email,start_date,end_date);
+        // console.log(ids)
+        while (ids.length) {
+            sendids = ids.splice(0, 10000);
+            console.log("deleting length", sendids.length);
+
+            // await Label.setDeleteFlag(myImap, sendids);
+            if (myImap.provider.provider === "gmail") {
+                await Label.moveToTrashForQC(myImap, sendids);
+            } else {
+                await Label.setDeleteFlag(myImap, sendids);
+            }
+        }
+        console.log("deleted data");
+        await closeImap(myImap);
+    }
+
+    Static.makeImapDeleteActionForQC =makeImapDeleteActionForQC
+    async function makeImapDeleteActionForQC(ids, box_name, user, onDisconnect) {
+        let myImap = await openFolder(user, box_name, onDisconnect);
+        let sendids;
+        console.log("total delete ]]]=====>", ids.length,box_name);
+        myImap.keepCheckingConnection(function onFail() {
+            console.log("reconnecting as disconnected!");
+            myImap.connect();
+        }, 120 * 1000);
+        
         while (ids.length) {
             sendids = ids.splice(0, 10000);
             console.log("deleting length", sendids.length);

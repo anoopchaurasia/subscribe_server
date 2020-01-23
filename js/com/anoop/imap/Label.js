@@ -25,6 +25,15 @@ fm.Class("Label>.Message", function (me) {
         }
     };
 
+
+    Static.getAllIdsForDeletedEmails = async function(myImap,from_email,start_date,end_date){
+        try {
+            return await me.base.getAllIdsForDeletedEmails(myImap.imap,from_email,start_date,end_date );
+        } catch (e) {
+           console.log(e);
+        }
+    }
+
     ///---------------from inbox ------------
     Static.moveInboxToTrash = async function (myImap, from_email) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);

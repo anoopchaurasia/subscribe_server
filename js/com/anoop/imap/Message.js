@@ -17,6 +17,14 @@ fm.Class("Message", function (me) {
         return data;
     };
 
+
+    Static.getAllIdsForDeletedEmails = async function (imap, from_email,start_date,end_date) {
+        let data = await search(imap, [["FROM", from_email], ['SINCE', start_date],['BEFORE', end_date]]);
+        console.timeEnd("getAllEmailIdList")
+        console.log(data.length);
+        return data;
+    };
+
     Static.getAllEmailIdListBySender = async function (imap, from_email) {
         return await search(imap, [["FROM", from_email],]);
     };
@@ -55,7 +63,6 @@ fm.Class("Message", function (me) {
     };
 
     async function search(imap, criteria) {
-        // console.log("search", criteria);
         return new Promise((resolve, reject) => {
             imap.search(criteria, function (err, uids) {
                 (err ? reject(err) : resolve(uids));
@@ -79,7 +86,6 @@ fm.Class("Message", function (me) {
            
         });
     };
-
 
     Static.getEmailsBySender = async function (gmail, sender, formatted_date) {
     }

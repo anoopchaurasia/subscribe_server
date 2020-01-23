@@ -153,4 +153,8 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
         RedisDB.base.setExpire(key, 15*60*1000);
         return user;
     };
+
+    Static.getCursor = async function (query, filter = {}, offset = 0) {
+        return await mongouser.find(query, filter).skip(offset).lean().cursor()
+    };
 });
