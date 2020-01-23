@@ -248,10 +248,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         text && console.log(text, user.email);
         let myImap = await openFolder(user, "INBOX");
         myImap.listen(async function (x, y) {
-            // listnerUpdate(user, myImap).catch(err=>{
-            //     console.error(err);
-            // })
-            new_email_cb(x, y);
+            listnerUpdate(user, myImap).catch(err=>{
+                console.error(err);
+                new_email_cb(x, y);
+            })
         });
         myImap.onEnd(x => {
             console.log("ended", myImap.user.email);
@@ -262,8 +262,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         });
         // listnerUpdate(user, myImap).catch(err=>{
         //     console.error(err);
+        // new_email_cb();
         // })
-        new_email_cb();
     };
 
     async function listnerUpdate(user, myImap) {
