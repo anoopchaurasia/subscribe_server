@@ -254,6 +254,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         myImap.listen(async function (x, y) {
             listnerUpdate(user, myImap).catch(err=>{
                 console.error(err);
+                global.sendToManager({type:"new_email", formatter: "count", value: 1});
                 new_email_cb(x, y);
             })
         });

@@ -5,6 +5,7 @@ fm.basedir = process.cwd() + "/js";
 global.basedir = process.cwd();
 global.INVALID_LOGIN_REGEX = /user left system|Application-specific password|Please log in via your web|Invalid credentials|Web login required|Invalid login or password|Authentication failed|enabled for IMAP use/i
 const Sentry = require('@sentry/node');
+require("./helper/analytics_to_manager");
 Sentry.init({ dsn: process.env.SENTRY_DNS })
 let mongoose = require('mongoose');
 mongoose.connect(process.env.MONGO_SERVER, { useNewUrlParser: true });
