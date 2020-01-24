@@ -20,11 +20,21 @@ fm.Class('ES_EmailData', function (me) {
                         }
                     }
                 ],
-                "must_not": {
+                "must_not": [
+                    {
                     "exists": {
                         "field": "deleted_at"
                     }
-                }
+                }, {
+                    "term": {
+                        "box_name": "[Gmail]/Trash"
+                    }
+                },
+                {
+                    "term": {
+                        "box_name": "[Gmail]/Bin"
+                    }
+                }]
             }
         };
     }
@@ -116,7 +126,7 @@ fm.Class('ES_EmailData', function (me) {
         }
     }
 
-    Static.compositeAggregation = function(){
+    Static.compositeAggregation = function () {
         return [
             {
                 "from_email": {
@@ -128,7 +138,7 @@ fm.Class('ES_EmailData', function (me) {
         ];
     }
 
-    Static.sizeTotal = function(){
+    Static.sizeTotal = function () {
         return {
             "sum": {
                 "field": "size"
@@ -136,7 +146,7 @@ fm.Class('ES_EmailData', function (me) {
         };
     }
 
-    Static.setDeleteScript = function(){
+    Static.setDeleteScript = function () {
         return {
             "source": "ctx._source.deleted_at=params.newValue",
             lang: 'painless',

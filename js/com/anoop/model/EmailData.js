@@ -121,11 +121,21 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                 }
                             }
                         ],
-                        "must_not": {
+                        "must_not": [{
                             "exists": {
                                 "field": "deleted_at"
                             }
-                        }
+                        },
+                        {
+                            "term": {
+                                "box_name": "[Gmail]/Trash"
+                            }
+                        },
+                        {
+                            "term": {
+                                "box_name": "[Gmail]/Bin"
+                            }
+                        }]
                     }
                 }
             }
