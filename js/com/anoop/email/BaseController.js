@@ -9,6 +9,7 @@ fm.Import("..model.SenderMail");
 fm.Import("..model.EmailData");
 fm.Import("..model.EmailTrack");
 fm.Import("..model.LabelData");
+fm.Import("..model.EcomState");
 fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
 fm.Import('..model.BaseModel');
@@ -16,7 +17,7 @@ const Sentry = require('@sentry/node');
 const userAppLog = require('../../../../models/userAppLog');
 const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider,
-    UserAction, SenderMail, EmailData, EmailTrack, LabelData, RedisDB, BaseRedisData, BaseModel) {
+    UserAction, SenderMail, EmailData, EmailTrack, LabelData,EcomState, RedisDB, BaseRedisData, BaseModel) {
     'use strict';
     this.setMe = function (_me) {
         me = _me;
@@ -27,6 +28,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.TokenModel = Token;
     Static.EmailDataModel = EmailData;
     Static.EmailDetail = EmailDetail;
+    Static.EcomState = EcomState;
 
     Static.createLogForUser = async function async(email_id, action_name, action_page, action_event, attribute, api_name) {
         var userLog = new userAppLog({

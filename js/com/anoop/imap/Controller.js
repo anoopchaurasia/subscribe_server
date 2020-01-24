@@ -189,7 +189,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             userInfo = await me.UserModel.getRedisUser(user._id);
         }
         if(userInfo.af_uid){
-            if(is_ecom_user){
+            if(is_ecom_user.has_ecom){
                 console.log("ecommerce_user_check_true",userInfo.af_uid);
                 await me.sendToAppsFlyer(userInfo.af_uid,"ecommerce_user_true");
             }else{
@@ -199,7 +199,11 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }else{
             await me.sendToAppsFlyer(userInfo.af_uid,"ecommerce_user_appsid_missing");
         }
-       
+        console.log(is_ecom_user);
+       await me.EcomState.updateState({user_id:user._id},{$set:{
+        "is_flipkart": is_ecom_user.flipkart ,
+        "is_amazon": is_ecom_user.amazon 
+    }})
     }
 
     Static.extractEmailForCronJob = async function (user) {
@@ -415,7 +419,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         lastmsg_id = myImap.box.uidnext;
         await closeImap(myImap);
         await names.asyncForEach(async element => {
-            if (element != '[Gmail]/All Mail') {//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
+            if (element != '[Gmail]/All Mail' && element != '[Gmail]/Trash' && element != '[Gmail]/Bin') {//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
                 try {
                     let myImap = await openFolder(user, element);
                     console.log("box name => ", myImap.box.name);

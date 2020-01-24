@@ -44,18 +44,18 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     this.start = async function (cb) {
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
         console.log(seen.length, unseen.length, "sdsds")
-        let has_ecom;
+        let obj;
         if (unseen.length != 0) {
-            has_ecom =await mailScrap(unseen, ["UNREAD"], me.handleEamil);
+            obj =await mailScrap(unseen, ["UNREAD"], me.handleEamil);
         }
         if (seen.length != 0) {
-         let hac_seen_ecom=  await mailScrap(seen, ["READ"], me.handleEamil);
-         if(!has_ecom){
-             has_ecom = hac_seen_ecom;
+         let new_obj =  await mailScrap(seen, ["READ"], me.handleEamil);
+         if(!obj.has_ecom){
+             obj = new_obj;
          }
         }
         setTimeout(async x => {
-            cb && await cb(has_ecom);
+            cb && await cb(obj);
         }, 5 * 1000);
     };
     const limit = 2000;
@@ -85,7 +85,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
 
     async function mailScrap(unseen, labels, handleCB, is_get_body) {
         let move_list = [], trash_list = [], store_list = [];
-        let has_ecom = null;
+        let has_ecom = null,amazon=false,flipkart=false;
         await Message.getBatchMessage(me.myImap.imap, unseen,
             async (parsed) => {
                 
@@ -109,6 +109,12 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                 if(has_ecom!=true){
                     has_ecom = match_domain;
                 }
+                if(flipkart==false && emailbody.from_email=="no-reply@flipkart.com"){
+                    flipkart = true
+                }
+                if(amazon==false && emailbody.from_email=="auto-confirm@amazon.in"){
+                    amazon = true
+                }
             }, is_get_body);
         if (store_list.length) {
             await Message.getBatchMessage(me.myImap.imap, store_list, async (parsed) => {
@@ -120,7 +126,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         }
         trash_list.length && await Label.moveInboxToTrashAuto(me.myImap, trash_list);
         move_list.length && await Label.moveInboxToUnsubAuto(me.myImap, move_list);
-        return has_ecom;
+        return {has_ecom,flipkart,amazon};
     }
 
     this.getEmaiIdsBySender = async function (sender) {
