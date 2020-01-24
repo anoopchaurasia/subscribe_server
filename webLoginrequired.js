@@ -33,7 +33,8 @@ async function runJob(offset = 0) {
   console.log("scheduler called for scrapping mail for imap...");
   let counter = offset;
   const cursor = await ImapController.UserModel.getCursor({
-    inactive_reason: /Web/
+    inactive_reason: /Web/,
+    inactive_at: {$ne: null}
   }, {_id:1}, offset);
   cursor.eachAsync(async user => {
     await ImapController.updateUserById({_id: user._id}, {$set: {listener_active: false, inactive_at: null, inactive_reason: null}} );
