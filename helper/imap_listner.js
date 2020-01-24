@@ -13,6 +13,22 @@ Array.prototype.asynForEach = async function (cb) {
 
 let LISTEN_USER_KEY = global.listner_key;
 
+let process_key = LISTEN_USER_KEY+"_"+process.env.pm_id;
+async function getLastDataUsers() {
+    let all_users = await RedisDB.base.popData(process_key).catch(err=>console.error(err));
+    RedisDB.delKEY(process_key);
+    if(all_users) {
+        await all_users.asynForEach(async user_id=>{
+            let user = await ImapController.getUserById(user_id);
+            await scrapEmailForIamp(user).catch(err => {
+                console.error(err.message, "user -> ", user.email);
+            });
+        });
+    }
+}
+
+setTimeout(()=> getLastDataUsers(), 1000);
+
 RedisDB.BLPopListner(LISTEN_USER_KEY, async function([key, user_id]){
     let user = await ImapController.getUserById(user_id);
     await scrapEmailForIamp(user).catch(err => {
@@ -26,23 +42,23 @@ async function scrapEmailForIamp(user){
     await ImapController.updateUserById({_id: user._id}, {$set: {listener_active: true, inactive_reason: null}} );
     listner_counter++;
     let user_hex_id = user._id.toHexString()
-    RedisDB.base.setData(LISTEN_USER_KEY+"_"+process.env.pm_id, listner_counter);
+    RedisDB.base.lPush(process_key, user_hex_id);
     await ImapController.listenForUser(user, "start", function(x, y){
         console.log(x, "new email update", listner_counter, total_received, failed_counter, user.email);
         RedisDB.lPush("email_update_for_user", user_hex_id);
     }).catch(e=>{
+        RedisDB.base.lREM(process_key, user_hex_id);
         if(!e.message.match(global.INVALID_LOGIN_REGEX)) {
             console.warn("user listener crashed restarting reason: ", e.message, user.email);
-            setTimeout(x=>{
+            setTimeout(()=>{
                 RedisDB.lPush(LISTEN_USER_KEY, user_hex_id)
             }, 60*1000)
         }
         failed_counter++;
         listner_counter--;
         console.warn("removed user", user.email, listner_counter);
-        RedisDB.base.setData("active_listner_for_"+process.env.pm_id, listner_counter);
     });
-};
+}
 
 
 

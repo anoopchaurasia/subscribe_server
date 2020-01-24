@@ -85,7 +85,7 @@ setInterval(async x=>{
   let keys = await RedisDB.base.getKEYS(LISTEN_USER_KEY+"_*");
   let total = 0;
   await keys.asynForEach(async k=>{
-    let c= await RedisDB.base.getData(k);
+    let c= await RedisDB.base.listLength(k);
     total+= c*1;
     console.log("instance serving",k, c, total);
   })

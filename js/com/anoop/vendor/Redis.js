@@ -72,6 +72,10 @@ fm.Class("Redis", function (me) {
         return client.lpush(key, data);
     };
 
+    Static.lREM = function(key, value) {
+        return client.lrem(key, -1, value);
+    }
+
     let listner_count=0;
     Static.BLPopListner = async function (key, cb) {
         listner_count;
@@ -109,7 +113,7 @@ fm.Class("Redis", function (me) {
                 return;
             }
             console.log("getting next", original_key);
-            client.blpop(...key);
+            client.brpop(...key);
         }
         next();
         process.on('SIGINT', function() {
@@ -149,7 +153,7 @@ fm.Class("Redis", function (me) {
         // blpop block entire client for create new client
         let client = require('redis').createClient({ host: process.env.IMAP_REDIS_HOST });
         function next() {
-            client.blpop('new_imap_user', 0, function (err, data) {
+            client.brpop('new_imap_user', 0, function (err, data) {
                 try {
                     cb(data[1]);
                 } catch (e) {
