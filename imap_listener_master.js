@@ -23,6 +23,10 @@ Array.prototype.asynForEach = async function (cb) {
 let oldkey;
 try {
   oldkey = require("fs").readFileSync("./listner_key").toString();
+  (async ()=>{
+    let list = await RedisDB.base.getKEYS(oldkey+"*");
+    RedisDB.delKEY(list);
+  })();
 } catch(e) {
   console.log("no file");
 }

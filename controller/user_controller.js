@@ -34,19 +34,10 @@ router.post('/saveDeviceInfo', async (req, res) => {
 
     //user does not exisst
     if (!checkUserDevice) {
-        // new user identification using unique device id
-        // if (uniqueLaunchDeviceId) {
-        //     await DeviceInfo.findOneAndUpdate({ "userUniqueId": uniqueLaunchDeviceId }, deviceData, { upsert: true }).catch(err => {
-        //         Sentry.captureException(err);
-        //         console.error(err.message, err.stack, "271");
-        //     });
-           
-        // }else{
             await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, deviceData, { upsert: true }).catch(err => {
                 Sentry.captureException(err); 
                 console.error(err.message, err.stack, "273");
             });
-        // }
     } else {
         await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, deviceData, { upsert: true }).catch(err => {
             Sentry.captureException(err);

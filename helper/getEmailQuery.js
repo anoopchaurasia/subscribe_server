@@ -183,10 +183,8 @@ class GetEmailQuery {
         This function will return all moved subscription list for particular user.
     */
     static async getAllMovedSubscription(user_id) {
-        console.log(user_id)
         const emails = await email.find({ "status": "move", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).lean().exec()
         const senddata = [];
-        console.log(emails)
         for (let i = 0, len = emails.length; i < len; i++) {
             let x = emails[i];
             senddata.push({
