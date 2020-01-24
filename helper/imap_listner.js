@@ -23,7 +23,7 @@ let listner_counter = 0, failed_counter=0, total_received=0;
 async function scrapEmailForIamp(user){
     total_received++;
     console.log("here ->",user.email);
-    await ImapController.updateUserById({_id: user._id}, {$set: {listener_active: true}} );
+    await ImapController.updateUserById({_id: user._id}, {$set: {listener_active: true, inactive_reason: null}} );
     listner_counter++;
     let user_hex_id = user._id.toHexString()
     RedisDB.base.setData(LISTEN_USER_KEY+"_"+process.env.pm_id, listner_counter);
