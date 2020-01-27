@@ -25,4 +25,4 @@ async function send() {
     });
 }
 
-setInterval(send, 60*10000)
+setInterval(send, 60*1000)
