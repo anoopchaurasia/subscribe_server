@@ -252,9 +252,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         text && console.log(text, user.email);
         let myImap = await openFolder(user, "INBOX");
         myImap.listen(async function (x, y) {
+            global.sendToManager({type:"new_email", formatter: "count", value: 1});
             listnerUpdate(user, myImap).catch(err=>{
                 console.error(err);
-                global.sendToManager({type:"new_email", formatter: "count", value: 1});
                 new_email_cb(x, y);
             })
         });
