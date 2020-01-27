@@ -16,7 +16,8 @@ let LISTEN_USER_KEY = global.listner_key;
 let process_key = LISTEN_USER_KEY+"_"+process.env.pm_id;
 async function getLastDataUsers() {
     let all_users = await RedisDB.base.popData(process_key).catch(err=>console.error(err));
-    RedisDB.delKEY(process_key);
+    await RedisDB.delKEY(process_key);
+    console.log(all_users.length, "all_users");
     if(all_users) {
         await all_users.asynForEach(async user_id=>{
             let user = await ImapController.getUserById(user_id);
