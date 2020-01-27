@@ -50,7 +50,7 @@ async function getRunning() {
     let obj = {};
     await keys.asynForEach(async k => {
         console.log(k)
-        let c = await RedisDB.base.listLength(k);
+        let c = await RedisDB.base.popData(k);
         c && c.forEach(x => {
             obj[x] = obj[x] || 0;
             obj[x]++;
