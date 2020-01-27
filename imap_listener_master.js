@@ -23,10 +23,6 @@ Array.prototype.asynForEach = async function (cb) {
 let oldkey;
 try {
   oldkey = require("fs").readFileSync("./listner_key").toString();
-  (async ()=>{
-    let list = await RedisDB.base.getKEYS(oldkey+"*");
-    RedisDB.delKEY(list);
-  })();
 } catch(e) {
   console.log("no file");
 }
@@ -37,6 +33,8 @@ require("fs").writeFileSync("./listner_key", LISTEN_USER_KEY);
 console.log('new key', LISTEN_USER_KEY);
 async function runJob(offset = 0) {
   RedisDB.delKEY(LISTEN_USER_KEY);
+  let oldlist = await RedisDB.base.getKEYS(oldkey+"*");
+  RedisDB.delKEY(oldlist);
   oldkey && RedisDB.delKEY(oldkey);
   console.log("scheduler called for scrapping mail for imap...");
   let counter = offset;
