@@ -39,7 +39,7 @@ async function caller_function() {
 
 async function getEmailDataByUser(x) {
     console.log(x);
-    let cursoremail = await EmailData.getBoxWiseData(x, new Date());
+    let cursoremail = await EmailData.getBoxWiseData(x, new Date(2020, 0, 22));
 
 
 

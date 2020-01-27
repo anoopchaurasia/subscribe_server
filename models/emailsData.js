@@ -36,9 +36,6 @@ var emailsdata = new Schema({
         type:String
     }
 });
-emailsdata.index({ email_id: -1, user_id: -1});
-emailsdata.index({ deleted_at: -1, user_id: -1,receivedDate:-1});
-emailsdata.index({ deleted_at: -1, user_id: -1});
 
 var userdata = mongoose.model('EmailsData', emailsdata);
 module.exports = userdata;

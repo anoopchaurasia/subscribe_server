@@ -14,6 +14,7 @@ test.*
 data
 confidential
 .env
+services
 client_secret*.json
 dump.rdb
 .vscode
