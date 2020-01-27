@@ -41,8 +41,12 @@ async function runJob(offset = 0) {
     cursor.eachAsync(async user => {
         if (!obj[user._id.toHexString()]) {
             console.log("missing", user.email);
+            (!user.email.match(/orange.fr$/i)) && RedisDB.lPush(LISTEN_USER_KEY, user._id.toHexString());
         }
-    });
+        delete obj[user._id.toHexString()];
+    }) .then(() => {
+        console.log('done!', obj)
+      });
 }
 
 async function getRunning() {
