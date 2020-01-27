@@ -8,12 +8,10 @@ var emailInfo = new Schema({
         index: true,
     },
     historyId: {
-        type: String,
-        index: true
+        type: String
     },
     subject: {
-        type: String,
-        index: true
+        type: String
     },
     msg_uid: {
         type: String,
