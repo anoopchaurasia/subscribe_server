@@ -21,7 +21,7 @@ Array.prototype.asynForEach = async function (cb) {
 }
 let key;
 try {
-    key = require("fs").readFileSync("./../listner_key").toString();
+    key = require("fs").readFileSync("./listner_key").toString();
 } catch (e) {
     console.log("no file", e);
 }
