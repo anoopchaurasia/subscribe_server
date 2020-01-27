@@ -4,7 +4,7 @@ require("dotenv").config({
 });
 let {
     on_db_connection
-} = require("./base");
+} = require("./../base");
 
 on_db_connection(function () {
     console.log("Connected to database")
