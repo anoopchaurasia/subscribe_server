@@ -1,7 +1,5 @@
 'use strict'
-require("dotenv").config({
-    "path": ".listner_env"
-});
+
 let {
     on_db_connection
 } = require("./../base");
@@ -25,11 +23,10 @@ let key;
 try {
     key = require("fs").readFileSync("./../listner_key").toString();
 } catch (e) {
-    console.log("no file");
+    console.log("no file", e);
 }
 
 let LISTEN_USER_KEY = key.trim();
-require("fs").writeFileSync("./listner_key", LISTEN_USER_KEY);
 console.log('new key', LISTEN_USER_KEY);
 async function runJob(offset = 0) {
     let obj = await getRunning()
