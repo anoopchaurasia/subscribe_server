@@ -49,8 +49,9 @@ async function getRunning() {
     let keys = await RedisDB.base.getKEYS(LISTEN_USER_KEY + "_*");
     let obj = {};
     await keys.asynForEach(async k => {
+        console.log(k)
         let c = await RedisDB.base.listLength(k);
-        c.forEach(x => {
+        c && c.forEach(x => {
             obj[x] = obj[x] || 0;
             obj[x]++;
             if (obj[x] > 1) {
