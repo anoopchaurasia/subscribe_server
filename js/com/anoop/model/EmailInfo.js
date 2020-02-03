@@ -70,7 +70,7 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
             emailInfo = JSON.parse(emailInfo);
             let emailInfoNew = await me.fromEamil(emailInfo, from_email_id, "");
             try {
-                bulk.find({ "email_id": emailInfo.email_id }).upsert().update({ $set: emailInfoNew });
+                bulk.find({ "email_id": emailInfo.email_id, from_email_id }).upsert().update({ $set: emailInfoNew });
             } catch (err) {
                 console.error(err.message, err.stack, "65");
             }

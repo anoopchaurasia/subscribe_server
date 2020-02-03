@@ -31,9 +31,6 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         });
     }
 
-    
-
-
     let serving_array = [], serving_array_db = [], update_save_timeout;
     Static.updateOrCreateAndGet = async function (query, set) {
         me.updateQueryValidation(query);
