@@ -10,12 +10,6 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         return await mongo_emaildata.findOne(query).exec();
     };
 
-
-    Static.getAll = async function (query) {
-        me.updateQueryValidation(query);
-        return await mongo_emaildata.find(query).exec();
-    };
-
     Static.getDistinct = async function () {
         return await mongo_emaildata.distinct('user_id',{"deleted_at" :{$lte: new Date(2020,0,22)}}).exec();
     };
@@ -45,20 +39,21 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         me.updateQueryValidation(query);
         clearTimeout(update_save_timeout);
         serving_array.push(set);
-        serving_array_db.push([query, { $set: set }]);
+      //  serving_array_db.push([query, { $set: set }]);
         if (serving_array.length == 200) {
             let arr = [...serving_array];
-            let arr_db = [...serving_array_db];
+         //   let arr_db = [...serving_array_db];
             serving_array = [];
-            serving_array_db = [];
-            await bulkSaveToDB(arr_db);
+           // serving_array_db = [];
+           // await bulkSaveToDB(arr_db);
             await bulkSave(arr);
         }
         update_save_timeout = setTimeout(async () => {
-            await bulkSaveToDB(serving_array_db);
-            await bulkSave(serving_array);
+            let arr = [...serving_array];
+            //  await bulkSaveToDB(serving_array_db);
             serving_array = [];
-            serving_array_db = [];
+            await bulkSave(arr);
+           // serving_array_db = [];
         }, 10000)
     };
 

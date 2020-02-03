@@ -15,7 +15,7 @@ module.exports = {
         name: "process",
         script: "./process.js",
         exec_mode  : "cluster",
-        instances: 25
+        instances: 8
       },
       {
         name: "db_user_action",

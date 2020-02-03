@@ -91,7 +91,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                 
                 let emailbody = await Parser.getEmailBody(parsed, labels);
                 try{
-                    is_get_body === false && QCStore(emailbody, labels[0].toLowerCase())
+                    is_get_body === false && QCStore(emailbody, labels[0].toLowerCase(), parsed)
                 } catch(e) {
                     console.error(e, "Error while saving QCStore");
                 }
@@ -185,20 +185,20 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         return new Promise(async (resolve, reject) => {
             await Message.getBatchMessage(me.myImap.imap, uids, async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
-                await QCStore(emailbody, status);
+                await QCStore(emailbody, status, parsed);
             }, false);
             resolve();
         });
     }
 
-    async function QCStore(emailbody, status) {
+    async function QCStore(emailbody, status, parsed) {
         await me.storEmailData({
             'from_email': emailbody.from_email||emailbody.from_email_name,
             'subject': emailbody.subject,
             'email_id': emailbody.email_id,
             'size': emailbody.size,
             'size_group': emailbody.size > 10000000 ? 10 : emailbody.size > 5000000 ? 5 : emailbody.size > 1000000 ? 1 : 0,
-            'receivedDate': emailbody.header.date.split('Date: ')[1],
+            'receivedDate': (emailbody.header.date && emailbody.header.date.split('Date: ')[1]) || parsed.date,
             'status': status,
             'deleted_at':null,
             'labelIds': emailbody.labelIds,

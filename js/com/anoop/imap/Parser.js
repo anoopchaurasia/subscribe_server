@@ -29,7 +29,7 @@ fm.Class("Parser>.Message", function (me, BaseModel) {
 
     Static.parse = function (body, parse, user) {
         // console.log(parse.date)
-        let date = BaseModel.getDate(parse.date, user);
+        let date = BaseModel.getDate(parse.date || (body.header && body.header.date && body.header && body.header.date.split('Date: ')[1]), user);
         return {
             html: body.payload,
             date: date && date.toString(),
@@ -45,35 +45,4 @@ fm.Class("Parser>.Message", function (me, BaseModel) {
             to: user.email
         }
     };
-
-    // Static.getEmailBody = function (header,bufferdata, atts, labels) {
-    //     let from = header.from.indexOf("<") != -1 ? header.from.split("<")[1].replace(">", "") : header.from;
-    //     return {
-    //         header, 
-    //         payload: bufferdata,
-    //         email_id: atts,
-    //         labelIds: labels,
-    //         from_email_name: header.from,
-    //         from_email: from,
-    //         subject: header.subject
-    //     };
-    // };
-
-    // Static.parse = function (json,id, data) {
-    //     return {
-    //         html: data.textAsHtml,
-    //         date: new Date(json.header.date).toString(),
-    //         headers:{
-    //             Subject: json.header.subject,
-    //             From: json.header.from
-    //         },
-    //         history_id: id,
-    //         timestamp: new Date(json.header.date).getTime(),
-    //         subject: json.header.subject,
-    //         from: json.header.from,
-    //         id: id,
-    //         to :json.header.to
-    //     }
-    // }; 
-
 });
