@@ -1,6 +1,6 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
-var client = require('./../elastic/connection.js');
+var client = require('./../elastic/connection.js')();
 
 var UserSchema = new Schema({
     name: {

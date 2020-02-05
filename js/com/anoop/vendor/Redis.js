@@ -83,12 +83,15 @@ fm.Class("Redis", function (me) {
         let client = require('redis').createClient({ host: process.env.IMAP_REDIS_HOST });
         let shut_server = false;
         let original_key = key+"";
-        key = Array.isArray(key)? key : [key]
+        key = Array.isArray(key)? key : [key];
+        let start_listner_time = Date.now();
         key.push(0, async (err, data) => {
+            global.sendToManager({type:"redis_pop_"+ original_key, formatter: "value", value: Date.now() - start_listner_time});
             listner_count++;
             if (err) {
                 console.error(err);
                 listner_count--;
+                start_listner_time = Date.now();
                 return next()
             }
             try {
@@ -101,9 +104,11 @@ fm.Class("Redis", function (me) {
                 console.error(e, original_key, "BLPopListner")
             } finally {
                 listner_count--;
+                start_listner_time = Date.now();
                 next();
             }
-        })
+        });
+
         async function next() {
             if(shut_server === true) {
                 if(listner_count==0) {

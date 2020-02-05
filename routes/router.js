@@ -2,23 +2,34 @@ var express = require('express');
 var router = express.Router();
 fm.include("com.anoop.email.BaseController");
 let BaseController = com.anoop.email.BaseController;
-router.use('/auth', noauth,require('../controller/auth_controller'));
-router.use('/email', authenticate,require('../controller/email_controller'));
-router.use('/users', authenticate,require('../controller/user_controller'));
-router.use('/microsoft', noauth,require('../controller/microsoft_auth'));
-router.use('/microsoft',authenticate,require('../controller/microsoft_auth_controller'));
-router.use('/imap/saveAnalyticData', function(req, res){
+router.use('/auth', response_time, noauth,require('../controller/auth_controller'));
+router.use('/email', response_time, authenticate,require('../controller/email_controller'));
+router.use('/users', response_time, authenticate,require('../controller/user_controller'));
+router.use('/microsoft', response_time, noauth,require('../controller/microsoft_auth'));
+router.use('/microsoft', response_time,authenticate,require('../controller/microsoft_auth_controller'));
+router.use('/imap/saveAnalyticData', response_time, function(req, res){
     res.json({
         error: false,
         status: 200,
         message: "success"
     });
-})
+});
 
-router.use('/imap', noauth, require('../controller/imap_controller')); 
-router.use('/imap', authenticate, require('../controller/imap_controller_auth')); 
-router.use('/imap', authenticate, require('../controller/imap_action_controller')); 
-router.use('/imap', authenticate, require('../controller/imap_quick_clean_controller')); 
+var onHeaders = require('on-headers')
+async function response_time(req, res, next) {
+    let start_time = Date.now();
+    onHeaders(res, x=>{
+        let diff = Date.now() - start_time;
+        if(diff<500) return;
+        req._parsedUrl.pathname.split("/").join("_");
+        global.sendValueToElastic({value: diff, api: req._parsedUrl.pathname.split("/").join("_"), type: "api_t"});
+    });
+    next()
+}
+router.use('/imap',response_time, noauth, require('../controller/imap_controller')); 
+router.use('/imap', response_time, authenticate, require('../controller/imap_controller_auth')); 
+router.use('/imap', response_time, authenticate, require('../controller/imap_action_controller')); 
+router.use('/imap', response_time, authenticate, require('../controller/imap_quick_clean_controller')); 
 let jwt = require("jsonwebtoken");
 async function noauth(req, res, next){
     let token = req.headers["X-AUTH-TOKEN"] || req.headers["x-auth-token"] || req.body.authID || req.body.token || req.headers['authorization'];

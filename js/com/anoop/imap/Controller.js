@@ -393,22 +393,25 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
 
-    Static.extractAllEmail = async function (user, reset_cb) {
+    Static.extractAllEmail = async function (user, reset_cb, completed = []) {
         let lastmsg_id;
         await me.scanStartedQuickClean(user._id);
         let myImap;
+        let temp, start_time;
         let timeoutconst = setInterval(x => {
-            if (!myImap) {
+            if (!myImap || (!temp && start_time && (Date.now()- start_time> 2*60*1000))) {
                 let event = "user_" + Math.random().toString(36).slice(2);
-                me.sendToAppsFlyer(user.af_uid || user.email, "process_failed_no_user", { "user": event });
-                reset_cb();
+                me.sendToAppsFlyer(user.af_uid || user.email, "q_process_failed_no_user", { "user": event });
+                reset_cb(completed);
                 return setTimeout(() => {
                     throw new Error("imap not available" + user._id);
                 }, 1000)
             }
             console.log(myImap.imap.state);
             if (myImap.imap.state === 'disconnected') {
-                reset_cb();
+                if(start_time && (Date.now()- start_time < 2*60*1000)) return;
+                reset_cb(completed);
+                me.sendToAppsFlyer(user.af_uid || user.email, "q_process_disconnect", { "user": user.email });
                 return setTimeout(x => {
                     throw new Error("disconnected" + user._id);
                 }, 1000)
@@ -419,16 +422,21 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         console.dir(names);
         lastmsg_id = myImap.box.uidnext;
         await closeImap(myImap);
+        names = names.filter(x=> completed.indexOf(x)==-1);
         await names.asyncForEach(async element => {
             if (element != '[Gmail]/All Mail' && element != '[Gmail]/Trash' && element != '[Gmail]/Bin') {//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
                 try {
-                    let myImap = await openFolder(user, element);
+                    ///dont make it(myImap) local variable, it will fix crash as upper myImap closed and timeout will crash 
+                    temp  = null;
+                    start_time = Date.now();
+                    myImap = temp = await openFolder(user, element);
                     console.log("box name => ", myImap.box.name);
                     if (myImap.box.uidnext > lastmsg_id) {
                         lastmsg_id = myImap.box.uidnext;
                     }
                     let scraper = Scraper.new(myImap);
                     await scraper.scrapAll(myImap.box.uidnext);
+                    completed.push(element);
                     await closeImap(myImap);
                 } catch (error) {
                     console.log(error)
@@ -556,9 +564,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     Static.deleteBySender = async function (user, start_date, end_date, from_emails, onDisconnect) {
         let emails = await me.EmailDataModel.getIdsByFromEmail({
             start_date, end_date, user, from_emails
-        })
+        }).catch(x=> console.error(x, "EmailDataModel.getIdsByFromEmail"))
         await emails.asyncForEach(async data => {
-            await getIdsForFromEmail(start_date, end_date, user, from_emails, data, onDisconnect, 0);
+            await getIdsForFromEmail(start_date, end_date, user, from_emails, data, onDisconnect, 0).catch(x=> console.error(x, "getIdsForFromEmail"));
         });
     }
 

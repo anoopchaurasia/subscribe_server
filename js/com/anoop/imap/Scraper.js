@@ -44,13 +44,13 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
     this.start = async function (cb) {
         let { seen, unseen } = await Message.getEmailList(me.myImap.imap);
         console.log(seen.length, unseen.length, "sdsds")
-        let obj;
+        let obj={};
         if (unseen.length != 0) {
             obj =await mailScrap(unseen, ["UNREAD"], me.handleEamil);
         }
         if (seen.length != 0) {
          let new_obj =  await mailScrap(seen, ["READ"], me.handleEamil);
-         if(!obj.has_ecom){
+         if(!obj.has_ecom && new_obj){
              obj = new_obj;
          }
         }

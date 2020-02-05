@@ -1,6 +1,6 @@
 fm.Package("com.anoop.model");
 const mongo_emaildata = require('../../../../models/emailsData');
-var client = require('./../../../../elastic/connection.js');
+var client = require('./../../../../elastic/connection.js')();
 fm.Import(".ES_EmailData")
 fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     this.setMe = _me => me = _me;
@@ -51,7 +51,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
             serving_array = [];
             await bulkSave(arr);
            // serving_array_db = [];
-        }, 10000)
+        }, 30*1000)
     };
 
     Static.updateForDelete = async function (query, set) {
@@ -225,6 +225,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
             index: 'emaildata',
             type: '_doc',
             body: {
+                "size":0,
                 "query": {
                     "bool": {
                         "filter": [
@@ -248,6 +249,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
             index: 'emaildata',
             type: '_doc',
             body: {
+                "size":0,
                 "query": {
                     "bool": {
                         "filter": [
@@ -271,6 +273,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
             index: 'emaildata',
             type: '_doc',
             body: {
+                "size": 0,
                 "query": {
                     "bool": {
                         "filter": [

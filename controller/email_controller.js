@@ -110,7 +110,7 @@ router.post('/readMailInfo', async (req, res) => {
         const total = await GetEmailQuery.getTotalEmailCount(user._id);
         const emailinfos = await GetEmailQuery.getAllFilteredSubscription(user._id);
         const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
-        const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
+      ///  const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
         if (is_finished === null) {
             await BaseController.scanFinished(user._id);
         }
@@ -121,7 +121,7 @@ router.post('/readMailInfo', async (req, res) => {
             unreadData: unreademail,
             totalEmail: total,
             finished: finished,
-            is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
+        //    is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
         })
     } catch (err) {
         console.error(err.message, err.stack, "8");

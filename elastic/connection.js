@@ -1,9 +1,8 @@
 var elasticsearch=require('elasticsearch');
-
-var client = new elasticsearch.Client( {  
-  hosts: [
-    process.env.ELASTIC_URL
-  ]
-});
-
-module.exports = client; 
+module.exports = function(){
+  return new elasticsearch.Client( {  
+    hosts: [
+      process.env.ELASTIC_URL
+    ]
+  });
+}; 

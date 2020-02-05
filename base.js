@@ -1,5 +1,21 @@
 'use strict';
+
 require("dotenv").config();
+require("./helper/log_to_elasticsearch")
+
+//let orig_log = console.log.bind(console);
+// console.log  = function() {
+//   orig_log.apply(console, arguments);
+//   global.sendLogToELastic(arguments, "out")
+// };
+
+let orig_err = console.error;
+
+console.error  = function() {
+  orig_err.apply(console, arguments);
+  global.sendLogToELastic(arguments, "error");
+};
+
 require("jsfm");
 fm.basedir = process.cwd() + "/js";
 global.basedir = process.cwd();
