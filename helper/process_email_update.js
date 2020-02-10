@@ -10,10 +10,6 @@ fm.Include("com.anoop.imap.Controller", function(){
         }
     });
 
-    RedisDB.BLPopListner("process_user_login1", async function([key ,data]){
-        return await handleLogin(data);
-    });
-
     async function handleLogin(data) {
         let user_id, error_count;
         try{
