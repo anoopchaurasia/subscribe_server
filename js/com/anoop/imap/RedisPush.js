@@ -72,18 +72,18 @@ fm.Class('RedisPush', function (me, RedisDB) {
     }
     
     Static.deleteBySender = async function (user, start_date, end_date, from_emails) {
-        me.addQCDBAction("updateDeleteDbBySender",[user._id.toHexString(), start_date,end_date,from_emails])
-        me.addImapAction("deleteBySender", [user._id.toHexString(), start_date,end_date,from_emails]);
+        me.addQCDBAction("updateDeleteDbBySender",[user._id.toHexString(), start_date,end_date,from_emails.filter(x=>x)])
+        me.addImapAction("deleteBySender", [user._id.toHexString(), start_date,end_date,from_emails.filter(x=>x)]);
     }
 
     Static.deleteByLabel = async function (user, start_date, end_date, from_emails) {
-        me.addQCDBAction("updateDeleteDbByLabel",[user._id.toHexString(), start_date,end_date,from_emails])
-        me.addImapAction("deleteByLabel", [user._id.toHexString(), start_date,end_date,from_emails]);
+        me.addQCDBAction("updateDeleteDbByLabel",[user._id.toHexString(), start_date,end_date,from_emails.filter(x=>x)])
+        me.addImapAction("deleteByLabel", [user._id.toHexString(), start_date,end_date,from_emails.filter(x=>x)]);
     }
 
     Static.deleteBySize = async function (user, start_date, end_date, from_emails) {
-        me.addQCDBAction("updateDeleteDbBySize",[user._id.toHexString(), start_date,end_date,from_emails])
-        me.addImapAction("deleteBySize", [user._id.toHexString(), start_date,end_date,from_emails]);
+        me.addQCDBAction("updateDeleteDbBySize",[user._id.toHexString(), start_date,end_date,from_emails.filter(x=>x)])
+        me.addImapAction("deleteBySize", [user._id.toHexString(), start_date,end_date,from_emails.filter(x=>x)]);
     }
 
 });

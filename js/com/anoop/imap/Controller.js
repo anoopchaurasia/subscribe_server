@@ -562,6 +562,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
 
     Static.deleteBySender = async function (user, start_date, end_date, from_emails, onDisconnect) {
+        from_emails = from_emails.filter(x=>x);
         let emails = await me.EmailDataModel.getIdsByFromEmail({
             start_date, end_date, user, from_emails
         }).catch(x=> console.error(x, "EmailDataModel.getIdsByFromEmail"))
@@ -607,7 +608,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
     Static.deleteByLabel = async function (user, start_date, end_date, label_name, onDisconnect) {
-        await label_name.asyncForEach(async box_name => {
+        await label_name.filter(x=>x).asyncForEach(async box_name => {
             await getIdsForLabel(start_date, end_date, user, box_name, onDisconnect, 0);
         });
     }
@@ -615,7 +616,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     Static.deleteBySize = async function (user, start_date, end_date, size_group, onDisconnect) {
         let emails = await me.EmailDataModel.getIdsBySize({
-            start_date, end_date, user, size_group
+            start_date, end_date, user, size_group: size_group.filter(x=>x)
         })
         await emails.asyncForEach(async data => {
             await getIdsForSize(start_date, end_date, user, data, onDisconnect, 0);
