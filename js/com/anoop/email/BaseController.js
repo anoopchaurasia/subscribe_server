@@ -14,6 +14,7 @@ fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
 fm.Import('..model.BaseModel');
 const Sentry = require('@sentry/node');
+const LabelMapepr = require("./../../../../helper/map_lebel");
 const userAppLog = require('../../../../models/userAppLog');
 const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider,
@@ -46,9 +47,12 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     }
 
 
-    Static.storeLabelData = function (labels, provider) {
-        labels.forEach(element => {
-            LabelData.findOneAndUpdate({ "label_name": element, "provider": provider }, { "is_trash": false });
+    Static.storeLabelData = async function (labels, provider) {
+        let newlist = await LabelMapepr.map(labels);
+        newlist.forEach(element => {
+            LabelData.findOneAndUpdate({ "label_name": element[0], "provider": provider }, {$setOnInsert: {
+                en_name: element[0]
+            }});
         });
     }
 

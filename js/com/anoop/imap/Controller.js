@@ -336,16 +336,6 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         me.updateTrashLabelUser(myImap.user.email, label);
     }
 
-    async function getLabelFromGoogleApi(){
-        googleTranslate.translate(element, 'en', async function (err, translation) {
-            if (translation.translatedText.toLowerCase().indexOf('trash')!=-1) {
-                return element;
-            } else if (translation.translatedText.toLowerCase().indexOf('bin')!=-1) {
-               return element;
-            }
-        });
-    }
-
     ///////////------------------------ login ------------------------///
     Static.login = async function (email, password, provider, clientAccessMode, ipaddress) {
         let PASSWORD = MyImap.encryptPassword(password);
@@ -424,7 +414,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         await closeImap(myImap);
         names = names.filter(x=> completed.indexOf(x)==-1);
         await names.asyncForEach(async element => {
-            if (element != '[Gmail]/All Mail' && element != '[Gmail]/Trash' && element != '[Gmail]/Bin') {//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
+            if ( false === ['[Gmail]/All Mail', '[Gmail]/Trash', '[Gmail]/Bin'].includes(element)) {//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
                 try {
                     ///dont make it(myImap) local variable, it will fix crash as upper myImap closed and timeout will crash 
                     temp  = null;

@@ -17,21 +17,6 @@ fm.Class("MyImap", function (me) {
         this.interval_const = null;
     };
 
-    Static.getProvider = async function (email) {
-        const response = await legit(email);
-        if (response.isValid) {
-            let mxr = response.mxArray[0].exchange;
-            if (mxr.includes("zoho")) {
-                return "imappro.zoho.com";
-            }
-            else if (mxr.includes("yahoo")) {
-                return "imap.mail.yahoo.com";
-            } else if (mxr.includes("google")) {
-                return "imap.gmail.com";
-            }
-        }
-    }
-
     Static.encryptPassword = function (password) {
         var new_password = randomstring.generate(8).toLowerCase() + password.substring(0, 3) + randomstring.generate(4).toLowerCase() + password.substring(3, password.length) + randomstring.generate(6).toLowerCase();
         var cipher = crypto.createCipher(me.PASSWORD_ENCRYPT_ALGO, me.PASSWORD_ENCRYPT_KEY);
