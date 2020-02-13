@@ -4,7 +4,7 @@ let translator = require("./../helper/google_translation");
 let label_mongoose = require("./../models/labelData");
 console.log(process.env.MONGO_SERVER);
 async function start() {
-    let cursor = await label_mongoose.find({en_name: {$ne: null}}, {label_name:1, en_name:1}).limit(100).cursor();
+    let cursor = await label_mongoose.find({en_name: {$ne: null}}, {label_name:1, en_name:1}).limit(2000).cursor();
     let arr = [];
     await cursor.eachAsync(async x=>{
         arr.push([{_id: x._id}, {en_name: x.en_name.toLowerCase()}])
