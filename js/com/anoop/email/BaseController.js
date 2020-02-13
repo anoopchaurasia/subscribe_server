@@ -54,11 +54,11 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         let trash_label, all_email_label;
         db_labels.forEach(x=> {
             temp[x.label_name]=1;
-            if(x.en_name === "[Gmail]/Trash" || x.en_name === "[Gmail]/Bin") {
+            if(["[gmail]/trash", "[gmail]/bin"].includes(x.en_name) ) {
                 trash_label = x.label_name;
-            } else if(x.en_name==="[Gmail]/All Mail") {
+            } else if(x.en_name==="[gmail]/all mail") {
                 all_email_label = x.label_name;
-            } else if((x.en_name==="All" || x.en_name==="All messages") && !all_email_label) {
+            } else if((x.en_name==="all" || x.en_name==="all messages") && !all_email_label) {
                 all_email_label = x.label_name;
             }
         });

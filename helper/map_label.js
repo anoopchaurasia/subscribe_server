@@ -12,8 +12,8 @@ module.exports.map = async function(labels, provider){
 function hasTrashAndAll(labels) {
     let has_all_email= false, has_trash_email = false; 
     labels.forEach(x=> {
-        if(x === "[Gmail]/All Email") has_all_email = true;
-        if(x === "[Gmail]/Trash") has_trash_email = true;
+        if(x.toLowerCase() === "[gmail]/all email") has_all_email = true;
+        if(x.toLowerCase() === "[gmail]/trash" || x.toLowerCase() === "[gmail]/bin") has_trash_email = true;
     });
     return has_all_email && has_trash_email;
 }
@@ -24,6 +24,6 @@ async function handleGmail(labels) {
     let list = await mongoose_labels.find({label_name: {$in: labels}, en_name: {$exists: true}}, {en_name: 1, label_name:1}).lean().exec();
     has_both = hasTrashAndAll(list.map(x=>x.en_name));
     if(has_both) return list.map(x=>[x.label_name,x.en_name]);    
-    let translated = (await translator.translate(labels)).data.translations.map((x)=>  x.translatedText.replace(/\s\/\s/, "/").replace(/\[Google Mail\]/, "[Gmail]") );
+    let translated = (await translator.translate(labels)).data.translations.map((x)=>  x.translatedText.replace(/\s\/\s/, "/").replace(/\[Google Mail\]/, "[Gmail]").toLowerCase() );
     return labels.map((x,i )=> [x, translated[i]])
 }

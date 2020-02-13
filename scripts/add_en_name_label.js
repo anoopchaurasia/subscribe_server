@@ -4,18 +4,18 @@ let translator = require("./../helper/google_translation");
 let label_mongoose = require("./../models/labelData");
 console.log(process.env.MONGO_SERVER);
 async function start() {
-    let cursor = await label_mongoose.find({en_name: null}, {label_name:1}).limit(100).count().cursor();
+    let cursor = await label_mongoose.find({en_name: {$ne: null}}, {label_name:1, en_name:1}).limit(100).cursor();
     let arr = [];
     await cursor.eachAsync(async x=>{
-        arr.push(x)
+        arr.push([{_id: x._id}, {en_name: x.en_name.toLowerCase()}])
     }).then(()=> console.log("done"));
     if(arr.length==0) return;
     let db_setter = [];
-    let response = await translator.translate(arr.map(x=> x.label_name));
-    response.data.translations.forEach((x, i)=> {
-        db_setter.push([{_id: arr[i]._id}, {en_name: x.translatedText.trim().replace(/\s\/\s/, "/").replace(/\[Google Mail\]/, "[Gmail]")}])
-    });
-    await bulkSaveToDB(db_setter);
+    // let response = await translator.translate(arr.map(x=> x.label_name));
+    // response.data.translations.forEach((x, i)=> {
+    //     db_setter.push([{_id: arr[i]._id}, {en_name: x.translatedText.trim().replace(/\s\/\s/, "/").replace(/\[Google Mail\]/, "[Gmail]")}])
+    // });
+    await bulkSaveToDB(arr);
     start();
 }
 
