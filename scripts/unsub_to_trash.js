@@ -7,11 +7,15 @@ async function start(offset) {
     let counter = 0;
     const cursor = await ImapController.UserModel.getCursor({
         "email_client": "imap",
-        email: "someshy.com@gmail.com"
+        trash_label: {$nin: ["[Gmail]/Trash", "[Gmail]/Bin"]}
       }, {}, offset);
       cursor.eachAsync(async user => {
-          await handleUser(user);
-          counter++;
+          try {
+              await handleUser(user);
+              counter++;
+          } catch(e) {
+              console.error(e);
+          }
         }).catch(async e => {
           console.error("watch error", counter, e);
           if (e.codeName == "CursorNotFound") {
@@ -19,7 +23,7 @@ async function start(offset) {
           }
         })
         .then(() => {
-          console.log('done!')
+          console.log('done!', counter)
         })
 }
 
