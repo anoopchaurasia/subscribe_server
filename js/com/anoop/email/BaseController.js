@@ -54,7 +54,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         let trash_label, all_email_label;
         db_labels.forEach(x=> {
             temp[x.label_name]=1;
-            if(["[gmail]/trash", "[gmail]/bin"].includes(x.en_name) ) {
+            if(["[gmail]/trash", "[gmail]/bin", "[gmail]/delete"].includes(x.en_name) ) {
                 trash_label = x.label_name;
             } else if(x.en_name==="[gmail]/all mail") {
                 all_email_label = x.label_name;
@@ -71,7 +71,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         console.log(newlist, labels);
         await newlist.asyncForEach(async ([label, en_name]) => {
             await LabelData.findOneAndUpdate({ "label_name": label, "provider": provider }, {$setOnInsert: {
-                en_name
+                (en_name+"").trim()
             }});
         });
     }
