@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
-const EmailDataModel = require('../models/emailsData');
 
 fm.Include("com.anoop.imap.RedisPush");
 let ImapRedisPush = com.anoop.imap.RedisPush;

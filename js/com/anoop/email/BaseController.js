@@ -14,7 +14,7 @@ fm.Import("com.jeet.memdb.RedisDB");
 fm.Import(".BaseRedisData");
 fm.Import('..model.BaseModel');
 const Sentry = require('@sentry/node');
-const LabelMapepr = require("./../../../../helper/map_lebel");
+const LabelMapepr = require("../../../../helper/map_label");
 const userAppLog = require('../../../../models/userAppLog');
 const AppsflyerEvent = require("../../../../helper/appsflyerEvent").AppsflyerEvent;
 fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Provider,
@@ -30,6 +30,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.EmailDataModel = EmailData;
     Static.EmailDetail = EmailDetail;
     Static.EcomState = EcomState;
+    Static.LabelDataModel = LabelData;
 
     Static.createLogForUser = async function async(email_id, action_name, action_page, action_event, attribute, api_name) {
         var userLog = new userAppLog({
@@ -46,12 +47,31 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         });
     }
 
+    
+    Static.getDBLabels = async function(labels) {
+        let db_labels = await LabelData.getByNames(labels);
+        let temp = {};
+        let trash_label, all_email_label;
+        db_labels.forEach(x=> {
+            temp[x.label_name]=1;
+            if(x.en_name === "[Gmail]/Trash" || x.en_name === "[Gmail]/Bin") {
+                trash_label = x.label_name;
+            } else if(x.en_name==="[Gmail]/All Mail") {
+                all_email_label = x.label_name;
+            } else if((x.en_name==="All" || x.en_name==="All messages") && !all_email_label) {
+                all_email_label = x.label_name;
+            }
+        });
+        if(!trash_label || !all_email_label) global.sendLogToELastic(["trash or all email missing", trash_label, all_email_label], "out");
+        return {mapped: db_labels, trash_label, all_email_label, non_mapped: labels.filter(r=> temp[r.label_name]!==1)}
+    };
 
     Static.storeLabelData = async function (labels, provider) {
-        let newlist = await LabelMapepr.map(labels);
-        newlist.forEach(element => {
-            LabelData.findOneAndUpdate({ "label_name": element[0], "provider": provider }, {$setOnInsert: {
-                en_name: element[0]
+        let newlist = await LabelMapepr.map(labels, provider);
+        console.log(newlist, labels);
+        newlist.forEach(([label, en_name]) => {
+            LabelData.findOneAndUpdate({ "label_name": label, "provider": provider }, {$setOnInsert: {
+                en_name
             }});
         });
     }

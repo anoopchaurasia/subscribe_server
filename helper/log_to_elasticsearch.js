@@ -11,7 +11,6 @@ let task_id;
 let req = http.request(op, x=> {
     x.on("data", f=> {
         try{
-            
             let info = JSON.parse(f);
             task_id = info.Arn.split("/")[1]
         } catch(e) {

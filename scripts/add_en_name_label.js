@@ -1,20 +1,22 @@
 let {on_db_connection} = require("./../base.js");
 on_db_connection(start);
 let translator = require("./../helper/google_translation");
-
 let label_mongoose = require("./../models/labelData");
+console.log(process.env.MONGO_SERVER);
 async function start() {
-    let cursor = label_mongoose.find({en_name: null}, {label_name:1}).limit(10).lean().cursor();
+    let cursor = await label_mongoose.find({en_name: null}, {label_name:1}).limit(100).count().cursor();
     let arr = [];
     await cursor.eachAsync(async x=>{
         arr.push(x)
     }).then(()=> console.log("done"));
+    if(arr.length==0) return;
     let db_setter = [];
-    (await translator.translate(arr.map(x=> x.label_name)))
-    .data.translations.forEach((x, i)=> {
+    let response = await translator.translate(arr.map(x=> x.label_name));
+    response.data.translations.forEach((x, i)=> {
         db_setter.push([{_id: arr[i]._id}, {en_name: x.translatedText.trim().replace(/\s\/\s/, "/").replace(/\[Google Mail\]/, "[Gmail]")}])
     });
     await bulkSaveToDB(db_setter);
+    start();
 }
 
 async function bulkSaveToDB(serving_array) {

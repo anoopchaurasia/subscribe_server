@@ -18,7 +18,7 @@ module.exports.translate = async function(label_list) {
         req.on("error", err=> {console.error(err); reject(err)});
         req.write(JSON.stringify({
             q: label_list,
-            target: "DE"
+            target: "EN"
         }));
         req.end()
     })

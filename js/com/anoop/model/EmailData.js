@@ -79,6 +79,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
             bulkBody.push({
                 index: {
                     _index: 'emaildata',
+                    _type: "_doc",
                     _id: item.user_id + item.email_id + item.box_name
                 }
             });
@@ -91,7 +92,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         let errorCount = 0;
         response.items.forEach(item => {
             if (item.index && item.index.error) {
-                console.log(++errorCount, item.index.error);
+                console.log(++errorCount, "dfdf", item.index.error);
             }
         });
         console.log(

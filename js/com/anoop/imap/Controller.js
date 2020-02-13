@@ -201,9 +201,9 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }
         console.log(is_ecom_user);
        await me.EcomState.updateState({user_id:user._id},{$set:{
-        "is_flipkart": is_ecom_user.flipkart ,
-        "is_amazon": is_ecom_user.amazon 
-    }})
+            "is_flipkart": is_ecom_user.flipkart ,
+            "is_amazon": is_ecom_user.amazon 
+        }})
     }
 
     Static.extractEmailForCronJob = async function (user) {
@@ -348,7 +348,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         if (!names.includes("Unsubscribed Emails")) {
             await Label.create(myImap, "Unsubscribed Emails");
         }
-        console.log(names);
+        console.dir(names);
         me.storeLabelData(names,provider.provider);
         let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
         let trash_label = labels;
@@ -409,12 +409,13 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, 2 * 60 * 1000)
         myImap = await openFolder(user, "INBOX");
         let names = await myImap.getLabels();
-        console.dir(names);
+        let db_names = await me.getDBLabels(names);
+        console.dir(db_names);
         lastmsg_id = myImap.box.uidnext;
         await closeImap(myImap);
         names = names.filter(x=> completed.indexOf(x)==-1);
         await names.asyncForEach(async element => {
-            if ( false === ['[Gmail]/All Mail', '[Gmail]/Trash', '[Gmail]/Bin'].includes(element)) {//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
+            if ( false === [db_names.all_email_label, db_names.trash_label].includes(element)) {//(element.indexOf('[') == -1 || element.indexOf('[') == -1)) {//element != '[Gmail]/All Mail')
                 try {
                     ///dont make it(myImap) local variable, it will fix crash as upper myImap closed and timeout will crash 
                     temp  = null;
@@ -433,10 +434,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
                 }
             }
         });
+        await me.scanFinishedQuickClean(user._id);
         clearInterval(timeoutconst);
         await me.updateLastTrackMessageId(user._id, lastmsg_id)
         console.log("last one came");
-        await me.scanFinishedQuickClean(user._id);
     }
 
     Static.extractEmailBySize = async function (user, folderName, smallerThan, largerThan) {
