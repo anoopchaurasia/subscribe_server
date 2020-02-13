@@ -2,10 +2,9 @@ fm.Package("com.anoop.imap");
 fm.Import(".MyImap");
 fm.Import(".Scraper");
 fm.Import(".Label");
-var googleTranslate = require('google-translate')(process.env.google_translate_api_key);
 fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scraper, Label) {
     this.setMe = _me => me = _me;
-
+    Static.openFolder = openFolder;
     async function openFolder(user, folder, onDisconnect) {
         console.time("openFolder")
         if (!user) {
@@ -45,7 +44,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     async function closeImap(myImap) {
         await myImap.closeFolder();
         myImap.end();
-    };
+    }
 
 
     Static.updateEmailDetailByFromEmail = async (user_id, from_email, status) => {

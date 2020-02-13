@@ -69,8 +69,8 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.storeLabelData = async function (labels, provider) {
         let newlist = await LabelMapepr.map(labels, provider);
         console.log(newlist, labels);
-        newlist.forEach(([label, en_name]) => {
-            LabelData.findOneAndUpdate({ "label_name": label, "provider": provider }, {$setOnInsert: {
+        await newlist.asyncForEach(async ([label, en_name]) => {
+            await LabelData.findOneAndUpdate({ "label_name": label, "provider": provider }, {$setOnInsert: {
                 en_name
             }});
         });
