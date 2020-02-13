@@ -71,7 +71,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         console.log(newlist, labels);
         await newlist.asyncForEach(async ([label, en_name]) => {
             await LabelData.findOneAndUpdate({ "label_name": label, "provider": provider }, {$setOnInsert: {
-                (en_name+"").trim()
+                en_name: (en_name+"").trim()
             }});
         });
     }
