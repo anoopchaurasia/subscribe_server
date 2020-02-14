@@ -30,6 +30,7 @@ async function start(offset) {
       worker.on("message", ()=>{
       counter++;
       counter %50 ==0  && console.log("counter", counter);
+      if(arr.length===0) return;
       worker.send(arr.shift());
     });
     counter++;
