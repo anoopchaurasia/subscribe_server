@@ -4,6 +4,7 @@ let {
 
 fm.Include("com.anoop.imap.Controller");
 let ImapController = com.anoop.imap.Controller;
+let ObjectId = require("mongoose").Types.ObjectId;
 let cluster = require("cluster");
 async function start(offset) {
   let counter = 0;
@@ -24,7 +25,7 @@ async function start(offset) {
     .then(() => {
       console.log('done!', counter)
     })
-    for(let i=0; i< 1; i++) {
+    for(let i=0; i< 10; i++) {
       let worker  = cluster.fork();
       worker.on("message", ()=>{
       counter++;
@@ -58,6 +59,7 @@ async function closeImap(myImap) {
 }
 
 async function handleUser(user) {
+  user._id = new ObjectId(user._id);
   console.log(user, typeof user);
   let myImap = await ImapController.openFolder(user, "INBOX");
   let labels = await myImap.getLabels();
