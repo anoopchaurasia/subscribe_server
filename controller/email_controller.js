@@ -133,6 +133,57 @@ router.post('/readMailInfo', async (req, res) => {
     }
 });
 
+router.get('/subscriptions', async (req, res) => {
+    try {
+        let only_count = "Home_page" === (req.headers["From-Page"] || req.headers["from-page"]);
+        let finished = false;
+        const user = req.user;
+        let is_finished = await BaseController.isScanFinished(user._id);
+        if (is_finished && is_finished == "true") {
+            console.log("is_finished here-> ", is_finished);
+            finished = true;
+            BaseController.updateUserByActionKey(user._id, { "last_launch_date": new Date() }).catch(err => {
+                console.error(err.message, err.stack, "launch date set error");
+            });
+        }
+        const total_subscription = await GetEmailQuery.getTotalSubscriptionCount(user._id);
+        
+        
+        console.log("only_count", only_count);
+        if(only_count) {
+            return res.status(200).json({
+                error: false,
+                data: {length: total_subscription},
+                totalEmail: 0,
+                finished: finished
+            });
+        }
+       // const total = await GetEmailQuery.getTotalEmailCount(user._id);
+        let limit = 20;
+        let offset = (req.query.offset||0)*1
+        const {senddata, unreadcount} = await GetEmailQuery.getAllFilteredSubscription(user._id, {offset, limit});
+       // const unreademail = await GetEmailQuery.getUnreadEmailData(emailinfos);
+      ///  const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
+        if (is_finished === null) {
+            await BaseController.scanFinished(user._id);
+        }
+        await BaseController.handleRedis(user._id, false);
+        res.status(200).json({
+            error: false,
+            limit,
+            offset,
+            total_subscription: total_subscription,
+            data: senddata,
+            unreadData: unreadcount,
+            finished: finished,
+        //    is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
+        })
+    } catch (err) {
+        console.error(err.message, err.stack, "8");
+        res.sendStatus(400);
+    }
+});
+
 
 
 /*
