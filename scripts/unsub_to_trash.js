@@ -10,7 +10,7 @@ async function start(offset) {
   let counter = 0;
   const cursor = await ImapController.UserModel.getCursor({
     inactive_at: null,
-    trash_label: null,
+    trash_label: "Unsubscribed Emails",
     email_client: "imap"
   }, {}, offset);
   let arr = [];
@@ -62,7 +62,7 @@ async function closeImap(myImap) {
 async function handleUser(user) {
   user._id = new ObjectId(user._id);
   let myImap = await ImapController.openFolder(user, "INBOX");
-  if(myImap.provider.provider=="gmail") return;
+ // if(myImap.provider.provider=="gmail") return;
   let labels = await myImap.getLabels();
   let newlabels = await ImapController.storeLabelData(labels, myImap.provider.provider);
   console.log(user,  newlabels);
