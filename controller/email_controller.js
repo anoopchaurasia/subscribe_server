@@ -108,8 +108,10 @@ router.post('/readMailInfo', async (req, res) => {
             });
         }
         const total = await GetEmailQuery.getTotalEmailCount(user._id);
-        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(user._id);
-        const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
+        let limit = 20;
+        let offset = (req.body.page||0)*20
+        const {senddata, unreadcount} = await GetEmailQuery.getAllFilteredSubscription(user._id, {offset, limit});
+       // const unreademail = await GetEmailQuery.getUnreadEmailData(emailinfos);
       ///  const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
         if (is_finished === null) {
             await BaseController.scanFinished(user._id);
@@ -117,8 +119,10 @@ router.post('/readMailInfo', async (req, res) => {
         await BaseController.handleRedis(user._id, false);
         res.status(200).json({
             error: false,
-            data: emailinfos,
-            unreadData: unreademail,
+            limit,
+            offset,
+            data: senddata,
+            unreadData: unreadcount,
             totalEmail: total,
             finished: finished,
         //    is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false

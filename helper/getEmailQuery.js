@@ -6,22 +6,31 @@ class GetEmailQuery {
         This function will get All New subscription Information.
         New Means All Boolean with false vvalue(moved,trash,keep,delete)
     */
-    static async getAllFilteredSubscription(user_id) {
-        const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).exec()
+    static async getAllFilteredSubscription(user_id, {offset=0, limit=20}) {
+        const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(offset).limit(limit).lean().exec()
         const senddata = [];
-        for (let i = 0, len = emails.length; i < len; i++) {
-            let x = emails[i];
+        let agg = await emailInformation.aggregate([
+            {$match: {from_email_id: {$in: emails.map(x=> x._id)}}},
+            {$group: {_id: {f: "$from_email_id",l: "$labelIds" }, c: {$sum: 1}}}
+        ]).exec();
+        let temp = {}, unreadcount = {};
+        agg.forEach(x=> {
+            let id = x._id.f.toHexString();
+            temp[id] = (temp[id] || 0) + x.c;
+            unreadcount[id] = (unreadcount[id]||0) + x._id.l.filter(r=> r==="UNREAD").length
+        });
+        emails.forEach(e=> {
+            let x = temp[e._id];
             senddata.push({
                 _id: {
-                    from_email: x.from_email
+                    from_email: e.from_email
                 },
-                data: [{ from_email_name: x.from_email_name }],
-                count: await emailInformation.countDocuments({ "from_email_id": x._id }).catch(err => {
-                    console.error(err.message, err.stack, "1eq");
-                })
+                data: [{ from_email_name: e.from_email_name }],
+                count: x,
             })
-        }
-        return senddata;
+        })
+
+        return {senddata, unreadcount};
     }
 
 
@@ -49,12 +58,13 @@ class GetEmailQuery {
     /*
         This function will return all unread subscription Information.
     */
-    static async getUnreadEmailData(user_id) {
-        const emails = await email.find({ "status": "unused", "user_id": user_id }).catch(err => {
-            console.error(err.message, err.stack, "6eq");
-        });
+    static async getUnreadEmailData(emails) {
         let mailInfo = {};
         let count;
+        let agg = await emailInformation.aggregate([
+            {$match: {from_email_id: {$in: emails.map(x=> x._id)}}},
+            {$group: {_id: "$from_email_id", c: {$sum: 1}}}
+        ]);
         for (let i = 0; i < emails.length; i++) {
             count = await emailInformation.countDocuments({ "labelIds": "UNREAD", "from_email_id": emails[i]._id }).catch(err => {
                 console.error(err.message, err.stack, "7eq");
