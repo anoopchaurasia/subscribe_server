@@ -65,7 +65,7 @@ async function handleUser(user) {
   if(myImap.provider.provider=="gmail") return;
   let labels = await myImap.getLabels();
   let newlabels = await ImapController.storeLabelData(labels, myImap.provider.provider);
-  console.dir(user, typeof user, newlabels);
+  console.log(user,  newlabels);
   let db_labels = await ImapController.getDBLabels(labels, myImap.provider.provider);
   if (user.trash_label !== db_labels.trash_label && db_labels.trash_label) {
     await ImapController.UserModel.updateUserById({
