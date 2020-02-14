@@ -107,9 +107,9 @@ router.post('/readMailInfo', async (req, res) => {
                 finished: finished
             });
         }
-        const total = await GetEmailQuery.getTotalEmailCount(user._id);
+       // const total = await GetEmailQuery.getTotalEmailCount(user._id);
         let limit = 20;
-        let offset = (req.body.page||0)*20
+        let offset = (req.query.page||0)*20
         const {senddata, unreadcount} = await GetEmailQuery.getAllFilteredSubscription(user._id, {offset, limit});
        // const unreademail = await GetEmailQuery.getUnreadEmailData(emailinfos);
       ///  const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
@@ -121,9 +121,9 @@ router.post('/readMailInfo', async (req, res) => {
             error: false,
             limit,
             offset,
+            total_subscription: total_subscription,
             data: senddata,
             unreadData: unreadcount,
-            totalEmail: total,
             finished: finished,
         //    is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
         })
