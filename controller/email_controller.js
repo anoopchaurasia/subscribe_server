@@ -108,7 +108,7 @@ router.post('/readMailInfo', async (req, res) => {
             });
         }
        // const total = await GetEmailQuery.getTotalEmailCount(user._id);
-        let limit = 20;
+        let limit = 2000;
         let offset = (req.query.offset||0)*1
         const {senddata, unreadcount} = await GetEmailQuery.getAllFilteredSubscription(user._id, {offset, limit});
        // const unreademail = await GetEmailQuery.getUnreadEmailData(emailinfos);
