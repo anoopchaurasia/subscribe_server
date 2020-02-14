@@ -13,7 +13,7 @@ async function start(offset) {
     email_client: "imap"
   }, {}, offset);
   let arr = [];
-  cursor.eachAsync(async user => {
+  await cursor.eachAsync(async user => {
     arr.push(user);
     }).catch(async e => {
       console.error("watch error", counter, e);
