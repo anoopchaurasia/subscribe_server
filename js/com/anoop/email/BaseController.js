@@ -48,18 +48,24 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     }
 
     
-    Static.getDBLabels = async function(labels) {
+    Static.getDBLabels = async function(labels, provider) {
         let db_labels = await LabelData.getByNames(labels);
         let temp = {};
         let trash_label, all_email_label;
         db_labels.forEach(x=> {
             temp[x.label_name]=1;
-            if(["[gmail]/trash", "[gmail]/bin", "[gmail]/delete"].includes(x.en_name) ) {
-                trash_label = x.label_name;
-            } else if(x.en_name==="[gmail]/all mail") {
-                all_email_label = x.label_name;
-            } else if((x.en_name==="all" || x.en_name==="all messages") && !all_email_label) {
-                all_email_label = x.label_name;
+            if(provider==="gmail") {
+                if(["[gmail]/trash", "[gmail]/bin", "[gmail]/delete"].includes(x.en_name) ) {
+                    trash_label = x.label_name;
+                } else if(x.en_name==="[gmail]/all mail") {
+                    all_email_label = x.label_name;
+                } else if((x.en_name==="all" || x.en_name==="all messages") && !all_email_label) {
+                    all_email_label = x.label_name;
+                }
+            } else {
+                if(["trash",  "deleted messages"].includes(x.en_name) ) {
+                    trash_label = x.label_name;
+                }
             }
         });
         if(!trash_label || !all_email_label) global.sendLogToELastic(["trash or all email missing", trash_label, all_email_label], "out");
@@ -68,12 +74,12 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
 
     Static.storeLabelData = async function (labels, provider) {
         let newlist = await LabelMapepr.map(labels, provider);
-        console.log(newlist, labels);
         await newlist.asyncForEach(async ([label, en_name]) => {
             await LabelData.findOneAndUpdate({ "label_name": label, "provider": provider }, {$setOnInsert: {
-                en_name: (en_name+"").trim()
+                en_name: (en_name+"").toLowerCase().trim()
             }});
         });
+        return newlist
     }
 
     Static.logToSentry = function (err, options) {

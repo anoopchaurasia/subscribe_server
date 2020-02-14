@@ -23,7 +23,7 @@ async function start(offset) {
       }
     })
     .then(() => {
-      console.log('done!', counter)
+      console.log('done!', arr.length)
     })
     for(let i=0; i< 10; i++) {
       let worker  = cluster.fork();
@@ -61,11 +61,12 @@ async function closeImap(myImap) {
 
 async function handleUser(user) {
   user._id = new ObjectId(user._id);
-  console.log(user, typeof user);
   let myImap = await ImapController.openFolder(user, "INBOX");
+  if(myImap.provider.provider=="gmail") return;
   let labels = await myImap.getLabels();
-  await ImapController.storeLabelData(labels, myImap.provider.provider);
-  let db_labels = await ImapController.getDBLabels(labels);
+  let newlabels = await ImapController.storeLabelData(labels, myImap.provider.provider);
+  console.dir(user, typeof user, newlabels);
+  let db_labels = await ImapController.getDBLabels(labels, myImap.provider.provider);
   if (user.trash_label !== db_labels.trash_label && db_labels.trash_label) {
     await ImapController.UserModel.updateUserById({
       _id: user._id

@@ -408,7 +408,7 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }, 2 * 60 * 1000)
         myImap = await openFolder(user, "INBOX");
         let names = await myImap.getLabels();
-        let db_names = await me.getDBLabels(names);
+        let db_names = await me.getDBLabels(names, myImap.provider.provider);
         console.dir(db_names);
         lastmsg_id = myImap.box.uidnext;
         await closeImap(myImap);
