@@ -55,7 +55,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         db_labels.forEach(x=> {
             temp[x.label_name]=1;
             if(provider==="gmail") {
-                if(["[gmail]/trash", "[gmail]/bin", "[gmail]/delete"].includes(x.en_name) ) {
+                if(["[gmail]/trash", "[gmail]/bin", "[gmail]/delete", "[gmail]/lightweight"].includes(x.en_name) ) {
                     trash_label = x.label_name;
                 } else if(x.en_name==="[gmail]/all mail") {
                     all_email_label = x.label_name;
