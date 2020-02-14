@@ -18,10 +18,10 @@ fm.Class("Label>.Message", function (me) {
     Static.moveInboxToUnsubAuto = async function (myImap, ids) {
         try {
             // console.log(ids)
-            return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
+            return await me.changeFolder(myImap.imap, myImap.user.trash_label || myImap.user.unsub_label, ids);
         } catch (e) {
             await me.create(myImap);
-            return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
+            return await me.changeFolder(myImap.imap, myImap.user.trash_label || myImap.user.unsub_label, ids);
         }
     };
 
@@ -60,10 +60,10 @@ fm.Class("Label>.Message", function (me) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         if (ids.length != 0) {
             try {
-                return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
+                return await me.changeFolder(myImap.imap, myImap.user.trash_label || myImap.user.unsub_label, ids);
             } catch (e) {
                 await me.create(myImap);
-                return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
+                return await me.changeFolder(myImap.imap, myImap.user.trash_label || myImap.user.unsub_label, ids);
             }
         }
         return
@@ -110,10 +110,10 @@ fm.Class("Label>.Message", function (me) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         if (ids.length != 0) {
             try {
-                return await me.changeFolder(myImap.user.unsub_label, ids);
+                return await me.changeFolder(myImap.user.trash_label || myImap.user.unsub_label, ids);
             } catch (e) {
                 await me.create(myImap);
-                return await me.changeFolder(myImap.user.unsub_label, ids);
+                return await me.changeFolder(myImap.user.trash_label || myImap.user.unsub_label, ids);
             }
         }
         return
@@ -174,16 +174,16 @@ fm.Class("Label>.Message", function (me) {
         let ids = await me.getAllEmailIdList(myImap.imap, from_email);
         if (ids.length != 0) {
             try {
-                return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
+                return await me.changeFolder(myImap.imap, myImap.user.trash_label || myImap.user.unsub_label, ids);
             } catch (e) {
                 await me.create(myImap);
-                return await me.changeFolder(myImap.imap, myImap.user.unsub_label, ids);
+                return await me.changeFolder(myImap.imap, myImap.user.trash_label || myImap.user.unsub_label, ids);
             }
         }
         return
     };
 
-    Static.create = async function (myImap, name = myImap.user.unsub_label) {
+    Static.create = async function (myImap, name = myImap.user.trash_label || myImap.user.unsub_label) {
         await myImap.createlabel(name).catch(e => console.error(e.message, "create label", name));
     };
 });

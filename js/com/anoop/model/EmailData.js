@@ -4,7 +4,8 @@ var client = require('./../../../../elastic/connection.js')();
 fm.Import(".ES_EmailData")
 fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     this.setMe = _me => me = _me;
-
+    if(!process.env.ES_INDEX_NAME) throw new Error("no ES_INDEX_NAME provided")
+    Static.index_name = process.env.ES_INDEX_NAME;
     Static.get = async function (query) {
         me.updateQueryValidation(query);
         return await mongo_emaildata.findOne(query).exec();
@@ -78,7 +79,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         serving_array.forEach(item => {
             bulkBody.push({
                 index: {
-                    _index: 'emaildata',
+                    _index: me.index_name,
                     _type: "_doc",
                     _id: item.user_id + item.email_id + item.box_name
                 }
@@ -102,7 +103,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.countDocument = async function ({ user }) {
         let response = await client.count({
-            index: 'emaildata',
+            index: me.index_name,
             type: '_doc',
             body: {
                 "query": {
@@ -140,7 +141,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getBySender = async function ({ start_date, end_date, user, offset, limit }) {
         let response = await client.search({
-            index: 'emaildata',
+            index: me.index_name,
             type: '_doc',
             body: {
                 "size": 0,
@@ -170,7 +171,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getByLabel = async function ({ start_date, end_date, user }) {
         let response = await client.search({
-            index: 'emaildata',
+            index: me.index_name,
             type: '_doc',
             body: {
                 query: ES_EmailData.commonQuery({ start_date, end_date, user_id: user._id }),
@@ -197,7 +198,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getBySize = async function ({ start_date, end_date, user }) {
         let response = await client.search({
-            index: 'emaildata',
+            index: me.index_name,
             type: '_doc',
             body: {
                 query: ES_EmailData.commonQuery({ start_date, end_date, user_id: user._id }),
@@ -223,7 +224,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdsBySize = async function ({ start_date, end_date, user, size_group }) {
         let response = await client.search({
-            index: 'emaildata',
+            index: me.index_name,
             type: '_doc',
             body: {
                 "size":0,
@@ -247,7 +248,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdsByLabelName = async function ({ start_date, end_date, user, label_name }) {
         let response = await client.search({
-            index: 'emaildata',
+            index: me.index_name,
             type: '_doc',
             body: {
                 "size":0,
@@ -271,7 +272,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdsByFromEmail = async function ({ start_date, end_date, user, from_emails }) {
         let response = await client.search({
-            index: 'emaildata',
+            index: me.index_name,
             type: '_doc',
             body: {
                 "size": 0,
@@ -294,7 +295,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdByBoxAndFromEmail = async function ({ start_date, end_date, user, from_emails, box_name, offset }) {
         let response = await client.search({
-            index: 'emaildata',
+            index: me.index_name,
             type: '_doc',
             body: {
                 "_source": "email_id",
@@ -331,7 +332,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdByBox = async function ({ start_date, end_date, user, box_name, offset }) {
         let response = await client.search({
-            index: 'emaildata',
+            index: me.index_name,
             type: '_doc',
             body: {
                 "_source": "email_id",
@@ -346,7 +347,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdByLabelList = async function ({ start_date, end_date, user, box_name, offset }) {
         let response = await client.search({
-            index: 'emaildata',
+            index: me.index_name,
             type: '_doc',
             body: {
                 "_source": "email_id",
@@ -409,7 +410,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     async function updateQcDeleteBySender(start_date, end_date, user_id, from_emails) {
         let response = await client.updateByQuery(
             {
-                index: "emaildata",
+                index: me.index_name,
                 type: "_doc",
                 body: {
                     "query": {
@@ -433,7 +434,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     async function updateQcDeleteByLabel(start_date, end_date, user_id, box_name) {
         let response = await client.updateByQuery(
             {
-                index: "emaildata", type: "_doc", body: {
+                index: me.index_name, type: "_doc", body: {
                     "query": {
                         "bool": {
                             "filter": [
@@ -455,7 +456,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     async function updateQcDeleteBySize(start_date, end_date, user_id, size_group) {
         let response = await client.updateByQuery(
             {
-                index: "emaildata", type: "_doc", body: {
+                index: me.index_name, type: "_doc", body: {
                     "query": {
                         "bool": {
                             "filter": [

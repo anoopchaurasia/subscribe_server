@@ -234,7 +234,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.updateUser = async function (email, unsub_label, trash_label, password) {
         return await User.updateUser({ email: email }, {
             $set: {
-                unsub_label,
+                unsub_label: trash_label || unsub_label,
                 trash_label,
                 password,
                 "email_client": "imap"

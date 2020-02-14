@@ -128,11 +128,11 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     ///---------------------------------------from unsub folder--------------------///
 
     Static.unsubToKeep = async function (user, from_email, onDisconnect) {
-        await commonImapUserAction(user, from_email, onDisconnect, { folder: user.unsub_label, labelAction: "moveUnsubToInbox" });
+        await commonImapUserAction(user, from_email, onDisconnect, { folder: user.trash_label|| user.unsub_label, labelAction: "moveUnsubToInbox" });
     };
 
     Static.unsubToTrash = async function (user, from_email, onDisconnect) {
-        await commonImapUserAction(user, from_email, onDisconnect, { folder: user.unsub_label, labelAction: "moveUnsubToTrash" });
+        await commonImapUserAction(user, from_email, onDisconnect, { folder: user.trash_label|| user.unsub_label, labelAction: "moveUnsubToTrash" });
     };
     ///------------------------------------from trash folder---------------------///
 
@@ -231,8 +231,8 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
 
     //////////////////// delete msg for user ///////////////////
     Static.deletePreviousMsg = async function (user) {
-        if (user.unsub_label.toLowerCase().indexOf("inbox") == -1) {
-            let myImap = await openFolder(user, user.unsub_label);
+        if ((user.trash_label|| user.unsub_label).toLowerCase().indexOf("inbox") == -1) {
+            let myImap = await openFolder(user, user.trash_label|| user.unsub_label);
             let scraper = Scraper.new(myImap);
             await scraper.deletePreviousMessages();
             await closeImap(myImap);
@@ -324,12 +324,14 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
     }
 
     Static.updateTrashLabel = async function (myImap) {
-        let names = await myImap.getLabels();
-        let label = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
+        let labels = await myImap.getLabels();
+        await me.storeLabelData(labels, myImap.provider.provider);
+        let db_labels = await me.getDBLabels(labels, myImap.provider.provider);
+        let label = db_labels.trash_label;
         console.warn("creating new label", label, myImap.user.email);
         if (label == undefined) {
             console.warn("moving to unsub_label");
-            label = myImap.user.unsub_label;
+            label = myImap.user.trash_label|| myImap.user.unsub_label;
         }
         myImap.user.trash_label = label;
         me.updateTrashLabelUser(myImap.user.email, label);
