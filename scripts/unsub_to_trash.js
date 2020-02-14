@@ -58,7 +58,7 @@ async function closeImap(myImap) {
 }
 
 async function handleUser(user) {
-  console.log(user);
+  console.log(user, typeof user);
   let myImap = await ImapController.openFolder(user, "INBOX");
   let labels = await myImap.getLabels();
   await ImapController.storeLabelData(labels, myImap.provider.provider);

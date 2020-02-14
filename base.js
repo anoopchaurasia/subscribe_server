@@ -55,11 +55,11 @@ exports.on_db_connection = function (cb) {
 };
 
 if (process.env.NODE_ENV == "production") {
-  process.on('SIGINT', function () {
-    console.log("shuting server in 30 secs")
-    setTimeout(x => {
-      console.log("shut server");
-      process.exit(1);
-    }, 30 * 1000);
-  });
+  // process.on('SIGINT', function () {
+  //   console.log("shuting server in 30 secs")
+  //   setTimeout(x => {
+  //     console.log("shut server");
+  //     process.exit(1);
+  //   }, 30 * 1000);
+  // });
 }
