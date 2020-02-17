@@ -21,35 +21,18 @@ class GetEmailQuery {
                 "_id":{
                     "from_email":element.key
                 },
+                data: [],
                 "count":element.doc_count,
                 "readcount":element.readcount.doc_count
-            }
+            };
             unreadcount_1[element.key] = element.readcount.doc_count;
             emailData.push(obj);
         });
-        let agg = await emailInformation.aggregate([
-            {$match: {from_email_id: {$in: emails.map(x=> x._id)}}},
-            {$group: {_id: {f: "$from_email_id",l: "$labelIds" }, c: {$sum: 1}}}
-        ]).exec();
-        let temp = {}, unreadcount = {};
-        agg.forEach(x=> {
-            let id = x._id.f.toHexString();
-            temp[id] = (temp[id] || 0) + x.c;
-            unreadcount[id] = (unreadcount[id]||0) + x._id.l.filter(r=> r==="UNREAD").length
-        });
-        emails.forEach(e=> {
-            let x = temp[e._id];
-            senddata.push({
-                _id: {
-                    from_email: e.from_email
-                },
-                data: [{ from_email_name: e.from_email_name }],
-                count: x,
-            })
-        });
-        console.log(unreadcount, unreadcount_1, JSON.stringify(emailData, null, 1), JSON.stringify(senddata, null, 1))
 
-        return {senddata, unreadcount};
+    
+        console.log(unreadcount_1, JSON.stringify(emailData, null, 1), JSON.stringify(senddata, null, 1))
+
+        return {senddata, unreadcount: unreadcount_1};
     }
 
 
