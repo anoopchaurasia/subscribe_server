@@ -8,7 +8,7 @@ class GetEmailQuery {
         This function will get All New subscription Information.
         New Means All Boolean with false vvalue(moved,trash,keep,delete)
     */
-    static async getAllFilteredSubscription(user_id, {offset=0, limit=1}) {
+    static async getAllFilteredSubscription(user_id, {offset=0, limit=20}) {
 
         const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(offset).limit(limit).lean().exec()
         const senddata = [];
