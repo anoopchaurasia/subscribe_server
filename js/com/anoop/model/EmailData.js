@@ -136,7 +136,68 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         });
         // console.log(response);
         return response.count;
-    }
+    };
+
+    Static.getByFromEmail = async function ({
+        from_emails,
+        user_id
+    }) {
+        let response = await client.search({
+            index: me.ES_INDEX_NAME,
+            type: '_doc',
+            body: {
+                "size": 0,
+                "query": {
+                    "bool": {
+                        "must": [{
+                                "match": {
+                                    "user_id": user_id
+                                }
+                            },
+                            {
+                                "bool": {
+                                    "filter": [{
+                                        "terms": {
+                                            "from_email": from_emails
+                                        }
+                                    }]
+                                }
+                            }
+                        ],
+                        "must_not": [{
+                                "term": {
+                                    "box_name": "[Gmail]/Trash"
+                                }
+                            },
+                            {
+                                "term": {
+                                    "box_name": "[Gmail]/Bin"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "aggs": {
+                    "from_email": {
+                        "terms": {
+                            "field": "from_email"
+                        },
+                        "aggs": {
+                            "readcount": {
+                                "filter": {
+                                    "term": {
+                                        "status": "read"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        // console.log(response)
+        return response;
+    };
 
 
     Static.getBySender = async function ({ start_date, end_date, user, offset, limit }) {
