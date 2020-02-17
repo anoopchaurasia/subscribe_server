@@ -14,7 +14,7 @@ class GetEmailQuery {
         const senddata = [];
         let data = await EmailData.getByFromEmail({user_id,from_emails: emails.map(x=> x.from_email, user_id)});
         console.log(data);
-        let newEmails = data.aggregations;
+        let newEmails = data.aggregations.from_email.buckets;
         let emailData = [];
         newEmails.forEach(element => {
             let obj = {
