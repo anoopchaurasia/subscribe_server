@@ -130,51 +130,68 @@ router.post('/readMailInfo', async (req, res) => {
     }
 });
 
-router.get('/subscriptions', async (req, res) => {
-    try {
-        let only_count = "Home_page" === (req.headers["From-Page"] || req.headers["from-page"]);
-        let finished = false;
-        const user = req.user;
-        let is_finished = await BaseController.isScanFinished(user._id);
+router.get("/subscriptions_count", async (req, res) =>{
+    const user = req.user;
+    let finished = false;
+    let is_finished = await BaseController.isScanFinished(user._id);
         if (is_finished && is_finished == "true") {
             console.log("is_finished here-> ", is_finished);
             finished = true;
-            BaseController.updateUserByActionKey(user._id, { "last_launch_date": new Date() }).catch(err => {
-                console.error(err.message, err.stack, "launch date set error");
-            });
         }
-        const total_subscription = await GetEmailQuery.getTotalSubscriptionCount(user._id);
-        
-        
-        console.log("only_count", only_count);
-        if(only_count) {
-            return res.status(200).json({
-                error: false,
-                data: {length: total_subscription},
-                totalEmail: 0,
-                finished: finished
-            });
-        }
-       // const total = await GetEmailQuery.getTotalEmailCount(user._id);
+
+        let total = await BaseController.EmailDetail.getByQuery({
+            user_id: user._id,
+            status: "unused"
+        });
+        return res.status(200).json({
+            error: false,
+            count: total,
+            finished: finished
+        });
+})
+
+router.get('/subscriptions', async (req, res) => {
+    try {
+        const user = req.user;
+        await BaseController.handleRedis(user._id, false);
+        let total = await BaseController.EmailDetail.countDocuments({
+            user_id: user._id,
+            status: "unused"
+        });
         let limit = 20;
         let offset = (req.query.offset||0)*1
-        const {senddata, unreadcount} = await GetEmailQuery.getAllFilteredSubscription(user._id, {offset, limit});
-       // const unreademail = await GetEmailQuery.getUnreadEmailData(emailinfos);
-      ///  const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
-        if (is_finished === null) {
-            await BaseController.scanFinished(user._id);
+        const emails = await await BaseController.EmailDetail.getByQuery({ "status": "unused", "user_id": user._id }, 
+            { from_email: 1, from_email_name: 1 }, {offset, limit});
+        let mapper = {};
+        let emailData = [];
+        let unreadcount_1 = {}
+        if(emails.length>0) {
+            let data = await BaseController.EmailDataModel.getByFromEmail({user_id: user._id,from_emails: emails.map(x=> {
+                mapper [x.from_email]= x.from_email_name;
+                return x.from_email;
+            })});
+            let newEmails = data.aggregations.from_email.buckets;
+            newEmails.forEach(element => {
+                let obj = {
+                    "_id":{
+                        "from_email":element.key
+                    },
+                    data: [{from_email_name: mapper[element.key]}],
+                    "count":element.doc_count,
+                    "readcount":element.readcount.doc_count
+                };
+                unreadcount_1[element.key] = element.readcount.doc_count;
+                emailData.push(obj);
+            });
         }
-        await BaseController.handleRedis(user._id, false);
-        res.status(200).json({
+        return res.status(200).json({
             error: false,
             limit,
             offset,
-            total_subscription: total_subscription,
-            data: senddata,
-            unreadData: unreadcount,
-            finished: finished,
-        //    is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
-        })
+            count: total,
+            data: emailData,
+            unreadcount: unreadcount_1
+        });
     } catch (err) {
         console.error(err.message, err.stack, "8");
         res.sendStatus(400);
