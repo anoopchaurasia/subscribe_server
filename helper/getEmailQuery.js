@@ -49,7 +49,7 @@ class GetEmailQuery {
         });
         console.log(unreadcount, unreadcount_1, JSON.stringify(emailData, null, 1), JSON.stringify(senddata, null, 1))
 
-        return {senddata, unreadcount_1};
+        return {senddata, unreadcount};
     }
 
 

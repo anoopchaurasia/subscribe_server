@@ -142,6 +142,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         from_emails,
         user_id
     }) {
+        console.log(from_emails);
         let response = await client.search({
             index: me.ES_INDEX_NAME,
             type: '_doc',
@@ -161,17 +162,6 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                             "from_email": from_emails
                                         }
                                     }]
-                                }
-                            }
-                        ],
-                        "must_not": [{
-                                "term": {
-                                    "box_name": "[Gmail]/Trash"
-                                }
-                            },
-                            {
-                                "term": {
-                                    "box_name": "[Gmail]/Bin"
                                 }
                             }
                         ]
