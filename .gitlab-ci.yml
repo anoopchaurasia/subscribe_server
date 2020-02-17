@@ -7,6 +7,7 @@ stages:
 
 build-dev:
   before_script:
+    - rsync ~/.secrets/.env_dev .    
     - printf "ES_INDEX_NAME=$ES_INDEX_NAME\n" >> .env_dev
     - printf '%s\n' "MONGO_SERVER=${MONGO_SERVER}" >> .env_dev
   tags:
@@ -19,8 +20,7 @@ build-dev:
   script:
     - docker build -t sub_server_dev .
   after_script:
-    - sed -i '/MONGO_SERVER/d' .env_dev
-    - sed -i '/ES_INDEX_NAME/d' .env_dev
+    - rm .env_dev
 
 deploy-dev:
   tags:
