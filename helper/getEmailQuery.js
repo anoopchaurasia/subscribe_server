@@ -11,7 +11,7 @@ class GetEmailQuery {
     static async getAllFilteredSubscription(user_id, {offset=0, limit=10}) {
 
         const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(offset).limit(limit).lean().exec()
-        let data = await EmailData.getByFromEmail({user_id,from_emails: emails.map(x=> x.from_email, user_id)});
+        let data = await EmailData.getByFromEmail({user_id,from_emails: emails.map(x=> x.from_email)});
         let newEmails = data.aggregations.from_email.buckets;
         let emailData = [];
         let unreadcount_1 = {}
