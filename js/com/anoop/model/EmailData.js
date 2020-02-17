@@ -142,7 +142,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         from_emails,
         user_id
     }) {
-        console.log(from_emails);
+        console.log(from_emails.length, "from_emails.length");
         let response = await client.search({
             index: me.ES_INDEX_NAME,
             type: '_doc',
