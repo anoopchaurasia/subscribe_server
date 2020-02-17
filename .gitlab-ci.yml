@@ -1,0 +1,72 @@
+stages:
+  - build-dev
+  - build-prod
+  - deploy-dev
+  - deploy-prod
+
+
+build-dev:
+  before_script:
+    - printf "ES_INDEX_NAME=$ES_INDEX_NAME\n" >> .env_dev
+    - printf '%s\n' "MONGO_SERVER=${MONGO_SERVER}" >> .env_dev
+  tags:
+    - Devops
+  stage: build-dev
+  cache:
+    untracked: true
+  only:
+    - customindexname
+  script:
+    - docker build -t sub_server_dev .
+  after_script:
+    - sed -i '/MONGO_SERVER/d' .env_dev
+    - sed -i '/ES_INDEX_NAME/d' .env_dev
+
+deploy-dev:
+  tags:
+    - Devops
+  stage: deploy-dev
+  before_script:
+    - aws ecr get-login-password | docker login --username AWS --password-stdin 400541374133.dkr.ecr.eu-central-1.amazonaws.com
+  cache:
+    untracked: true
+  only:
+    - customindexname
+  script:
+    - docker tag sub_server_dev:latest 400541374133.dkr.ecr.eu-central-1.amazonaws.com/subscribe_app:test
+    - docker push 400541374133.dkr.ecr.eu-central-1.amazonaws.com/subscribe_app:test
+    - aws ecs update-service --cluster Main-Prod --service Subscribe_server_dev --force-new-deployment
+
+
+
+
+
+build-prod:
+  tags:
+    - Devops
+  stage: build-prod
+  cache:
+    untracked: true
+  only:
+    - prod
+  script:
+    - docker build -t sub_server .
+
+deploy-prod:
+  tags:
+    - Devops
+  stage: deploy-prod
+  before_script:
+    - aws ecr get-login-password | docker login --username AWS --password-stdin 400541374133.dkr.ecr.eu-central-1.amazonaws.com
+  cache:
+    untracked: true
+  only:
+    - prod
+  script:
+    - docker tag sub_server:latest 400541374133.dkr.ecr.eu-central-1.amazonaws.com/subscribe_app:nodeonly
+    - docker push 400541374133.dkr.ecr.eu-central-1.amazonaws.com/subscribe_app:nodeonly
+    - aws ecs update-service --cluster Main-Prod --service u_action_ec2 --force-new-deployment && sleep 5m
+    - aws ecs update-service --cluster Main-Prod --service qc_ec2 --force-new-deployment && sleep 5m
+    - aws ecs update-service --cluster Main-Prod --service process_ec2 --force-new-deployment && sleep 5m
+    - aws ecs update-service --cluster Main-Prod --service db_ec2 --force-new-deployment && sleep 5m
+

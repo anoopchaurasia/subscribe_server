@@ -13,7 +13,7 @@ USER node
 RUN npm install
 
 COPY --chown=node:node . .
-COPY .env_prod .env
+COPY .env_dev .env
 
 ENV file default_env_value
 
