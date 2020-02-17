@@ -15,7 +15,7 @@ build-dev:
   cache:
     untracked: true
   only:
-    - customindexname
+    - dev
   script:
     - docker build -t sub_server_dev .
   after_script:
@@ -31,7 +31,7 @@ deploy-dev:
   cache:
     untracked: true
   only:
-    - customindexname
+    - dev
   script:
     - docker tag sub_server_dev:latest 400541374133.dkr.ecr.eu-central-1.amazonaws.com/subscribe_app:test
     - docker push 400541374133.dkr.ecr.eu-central-1.amazonaws.com/subscribe_app:test
