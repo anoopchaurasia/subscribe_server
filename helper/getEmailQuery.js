@@ -1,7 +1,7 @@
 'use strict'
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
-fm.Include("coma.anoop.model.EmailData")
+fm.Include("com.anoop.model.EmailData")
 let EmailData = com.anoop.model.EmailData; 
 class GetEmailQuery {
     /*
