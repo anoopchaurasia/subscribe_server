@@ -17,7 +17,6 @@ class GetEmailQuery {
             return x.from_email;
         })});
         let newEmails = data.aggregations.from_email.buckets;
-        console.log(emails.length, data.length);
         let emailData = [];
         let unreadcount_1 = {}
         newEmails.forEach(element => {
@@ -32,10 +31,6 @@ class GetEmailQuery {
             unreadcount_1[element.key] = element.readcount.doc_count;
             emailData.push(obj);
         });
-
-
-        console.log(unreadcount_1, JSON.stringify(emailData, null, 1))
-
         return {senddata: emailData, unreadcount: unreadcount_1};
     }
 

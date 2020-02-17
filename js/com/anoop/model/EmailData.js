@@ -170,7 +170,8 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                 "aggs": {
                     "from_email": {
                         "terms": {
-                            "field": "from_email"
+                            "field": "from_email",
+                            "size": from_emails.length
                         },
                         "aggs": {
                             "readcount": {
