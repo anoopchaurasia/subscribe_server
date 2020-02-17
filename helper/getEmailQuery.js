@@ -12,7 +12,7 @@ class GetEmailQuery {
 
         const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(offset).limit(limit).lean().exec()
         const senddata = [];
-        let data = await EmailData.getByFromEmail({from_emails: emails.map(x=> x.from_email, user_id)});
+        let data = await EmailData.getByFromEmail({user_id,from_emails: emails.map(x=> x.from_email, user_id)});
         let newEmails = data.aggregations.my_buckets.buckets;
         let emailData = [];
         newEmails.forEach(element => {
@@ -20,10 +20,8 @@ class GetEmailQuery {
                 "_id":{
                     "from_email":element.key.from_email
                 },
-                "size":element.size.value,
                 "count":element.doc_count,
-                "readcount":element.readcount.doc_count,
-                "subject":element.from_email.hits.hits.map(x=>x._source.subject)
+                "readcount":element.readcount.doc_count
             }
             emailData.push(obj);
         });
@@ -47,7 +45,7 @@ class GetEmailQuery {
                 count: x,
             })
         });
-        console.log(JSON.stringify(emailData, null, 1), JSON.stringify(senddata, null, 1))
+        console.log(unreadcount, JSON.stringify(emailData, null, 1), JSON.stringify(senddata, null, 1))
 
         return {senddata, unreadcount};
     }
