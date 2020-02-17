@@ -14,5 +14,6 @@ RUN npm install
 COPY --chown=node:node . .
 COPY .env_dev .env
 
+RUN echo asd
 
 CMD [ "node", "all.js" ]
