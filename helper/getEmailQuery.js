@@ -21,7 +21,7 @@ class GetEmailQuery {
                 "_id":{
                     "from_email":element.key
                 },
-                data: [],
+                data: [{from_email_name: "asas"}],
                 "count":element.doc_count,
                 "readcount":element.readcount.doc_count
             };
