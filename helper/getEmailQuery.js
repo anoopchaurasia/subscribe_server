@@ -1,14 +1,32 @@
 'use strict'
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
+fm.Include("coma.anoop.model.EmailData")
+let EmailData = com.anoop.model.EmailData; 
 class GetEmailQuery {
     /*
         This function will get All New subscription Information.
         New Means All Boolean with false vvalue(moved,trash,keep,delete)
     */
-    static async getAllFilteredSubscription(user_id, {offset=0, limit=20}) {
+    static async getAllFilteredSubscription(user_id, {offset=0, limit=1}) {
+
         const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(offset).limit(limit).lean().exec()
         const senddata = [];
+        let data = await EmailData.getByFromEmail({from_emails: emails.map(x=> x.from_email, user_id)});
+        let newEmails = data.aggregations.my_buckets.buckets;
+        let emailData = [];
+        newEmails.forEach(element => {
+            let obj = {
+                "_id":{
+                    "from_email":element.key.from_email
+                },
+                "size":element.size.value,
+                "count":element.doc_count,
+                "readcount":element.readcount.doc_count,
+                "subject":element.from_email.hits.hits.map(x=>x._source.subject)
+            }
+            emailData.push(obj);
+        });
         let agg = await emailInformation.aggregate([
             {$match: {from_email_id: {$in: emails.map(x=> x._id)}}},
             {$group: {_id: {f: "$from_email_id",l: "$labelIds" }, c: {$sum: 1}}}
@@ -28,7 +46,8 @@ class GetEmailQuery {
                 data: [{ from_email_name: e.from_email_name }],
                 count: x,
             })
-        })
+        });
+        console.log(JSON.stringify(emailData, null, 1), JSON.stringify(senddata, null, 1))
 
         return {senddata, unreadcount};
     }
