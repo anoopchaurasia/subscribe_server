@@ -13,7 +13,7 @@ class GetEmailQuery {
         const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(offset).limit(limit).lean().exec()
         const senddata = [];
         let data = await EmailData.getByFromEmail({user_id,from_emails: emails.map(x=> x.from_email, user_id)});
-        let newEmails = data.aggregations.my_buckets.buckets;
+        let newEmails = data.aggregations;
         let emailData = [];
         newEmails.forEach(element => {
             let obj = {
