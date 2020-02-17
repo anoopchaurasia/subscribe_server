@@ -11,7 +11,11 @@ class GetEmailQuery {
     static async getAllFilteredSubscription(user_id, {offset=0, limit=10}) {
 
         const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(offset).limit(limit).lean().exec()
-        let data = await EmailData.getByFromEmail({user_id,from_emails: emails.map(x=> x.from_email)});
+        let mapper = {};
+        let data = await EmailData.getByFromEmail({user_id,from_emails: emails.map(x=> {
+            mapper [x.from_email]= x.from_email_name;
+            return x.from_email;
+        })});
         let newEmails = data.aggregations.from_email.buckets;
         console.log(emails.length, data.length);
         let emailData = [];
@@ -21,7 +25,7 @@ class GetEmailQuery {
                 "_id":{
                     "from_email":element.key
                 },
-                data: [{from_email_name: "asas"}],
+                data: [{from_email_name: mapper[element.key]}],
                 "count":element.doc_count,
                 "readcount":element.readcount.doc_count
             };
