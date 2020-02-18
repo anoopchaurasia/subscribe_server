@@ -136,7 +136,7 @@ router.get("/subscriptions_count", async (req, res) =>{
             finished = true;
         }
 
-        let total = await BaseController.EmailDetail.getByQuery({
+        let total = await BaseController.EmailDetail.getCountByQuery({
             user_id: user._id,
             status: "unused"
         });
@@ -151,7 +151,7 @@ router.get('/subscriptions', async (req, res) => {
     try {
         const user = req.user;
         await BaseController.handleRedis(user._id, false);
-        let total = await BaseController.EmailDetail.countDocuments({
+        let total = await BaseController.EmailDetail.getCountByQuery({
             user_id: user._id,
             status: "unused"
         });
