@@ -161,7 +161,6 @@ router.get('/subscriptions', async (req, res) => {
             { from_email: 1, from_email_name: 1 }, {offset, limit});
         let mapper = {};
         let emailData = [];
-        let unreadcount_1 = {}
         if(emails.length>0) {
             let data = await BaseController.EmailDataModel.getByFromEmail({user_id: user._id,from_emails: emails.map(x=> {
                 mapper [x.from_email]= x.from_email_name;
@@ -175,9 +174,8 @@ router.get('/subscriptions', async (req, res) => {
                     },
                     data: [{from_email_name: mapper[element.key]}],
                     "count":element.doc_count,
-                    "readcount":element.readcount.doc_count
+                    "unread":element.unreadcount.doc_count
                 };
-                unreadcount_1[element.key] = element.readcount.doc_count;
                 emailData.push(obj);
             });
         }
@@ -190,7 +188,6 @@ router.get('/subscriptions', async (req, res) => {
             totalEmail: total,
             data: emailData,
             finished: false,
-            unreadcount: unreadcount_1
         });
     } catch (err) {
         console.error(err.message, err.stack, "8");

@@ -174,10 +174,10 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                             "size": from_emails.length
                         },
                         "aggs": {
-                            "readcount": {
+                            "unreadcount": {
                                 "filter": {
                                     "term": {
-                                        "status": "read"
+                                        "status": "unread"
                                     }
                                 }
                             }
