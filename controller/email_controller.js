@@ -181,12 +181,15 @@ router.get('/subscriptions', async (req, res) => {
                 emailData.push(obj);
             });
         }
+        console.log(JSON.stringify(emailData, null, 1));
         return res.status(200).json({
             error: false,
             limit,
             offset,
             count: total,
+            totalEmail: total,
             data: emailData,
+            finished: false,
             unreadcount: unreadcount_1
         });
     } catch (err) {
