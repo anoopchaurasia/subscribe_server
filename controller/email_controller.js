@@ -104,11 +104,9 @@ router.post('/readMailInfo', async (req, res) => {
                 finished: finished
             });
         }
-       // const total = await GetEmailQuery.getTotalEmailCount(user._id);
-        let limit = 2000;
-        let offset = (req.query.offset||0)*1
-        const {senddata, unreadcount} = await GetEmailQuery.getAllFilteredSubscription(user._id, {offset, limit});
-       // const unreademail = await GetEmailQuery.getUnreadEmailData(emailinfos);
+        const total = await GetEmailQuery.getTotalEmailCount(user._id);
+        const emailinfos = await GetEmailQuery.getAllFilteredSubscription(user._id);
+        const unreademail = await GetEmailQuery.getUnreadEmailData(user._id);
       ///  const ecom_data = await SenderEmailModel.find({ senderMail: { $in: ecommerce_cmpany },user_id:user._id });
         if (is_finished === null) {
             await BaseController.scanFinished(user._id);
@@ -116,11 +114,9 @@ router.post('/readMailInfo', async (req, res) => {
         await BaseController.handleRedis(user._id, false);
         res.status(200).json({
             error: false,
-            limit,
-            offset,
-            total_subscription: total_subscription,
-            data: senddata,
-            unreadData: unreadcount,
+            data: emailinfos,
+            unreadData: unreademail,
+            totalEmail: total,
             finished: finished,
         //    is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
         })
@@ -129,6 +125,7 @@ router.post('/readMailInfo', async (req, res) => {
         res.sendStatus(400);
     }
 });
+
 
 router.get("/subscriptions_count", async (req, res) =>{
     const user = req.user;

@@ -8,33 +8,28 @@ class GetEmailQuery {
         This function will get All New subscription Information.
         New Means All Boolean with false vvalue(moved,trash,keep,delete)
     */
-    static async getAllFilteredSubscription(user_id, {offset=0, limit=10}) {
-
-        const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).skip(offset).limit(limit).lean().exec()
-        let mapper = {};
-        let emailData = [];
-        let unreadcount_1 = {}
-        if(emails.length>0) {
-            let data = await EmailData.getByFromEmail({user_id,from_emails: emails.map(x=> {
-                mapper [x.from_email]= x.from_email_name;
-                return x.from_email;
-            })});
-            let newEmails = data.aggregations.from_email.buckets;
-            newEmails.forEach(element => {
-                let obj = {
-                    "_id":{
-                        "from_email":element.key
-                    },
-                    data: [{from_email_name: mapper[element.key]}],
-                    "count":element.doc_count,
-                    "readcount":element.readcount.doc_count
-                };
-                unreadcount_1[element.key] = element.readcount.doc_count;
-                emailData.push(obj);
-            });
-        }
-        return {senddata: emailData, unreadcount: unreadcount_1};
+   
+/*
+        This function will get All New subscription Information.
+        New Means All Boolean with false vvalue(moved,trash,keep,delete)
+    */
+   static async getAllFilteredSubscription(user_id) {
+    const emails = await email.find({ "status": "unused", "user_id": user_id }, { from_email: 1, from_email_name: 1 }).exec()
+    const senddata = [];
+    for (let i = 0, len = emails.length; i < len; i++) {
+        let x = emails[i];
+        senddata.push({
+            _id: {
+                from_email: x.from_email
+            },
+            data: [{ from_email_name: x.from_email_name }],
+            count: await emailInformation.countDocuments({ "from_email_id": x._id }).catch(err => {
+                console.error(err.message, err.stack, "1eq");
+            })
+        })
     }
+    return senddata;
+}
 
 
     static async getTotalKeepSubscription(user_id) {
