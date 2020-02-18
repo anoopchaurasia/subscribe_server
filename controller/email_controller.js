@@ -131,20 +131,20 @@ router.get("/subscriptions_count", async (req, res) =>{
     const user = req.user;
     let finished = false;
     let is_finished = await BaseController.isScanFinished(user._id);
-        if (is_finished && is_finished == "true") {
-            console.log("is_finished here-> ", is_finished);
-            finished = true;
-        }
+    if (is_finished && is_finished == "true") {
+        console.log("is_finished here-> ", is_finished);
+        finished = true;
+    }
 
-        let total = await BaseController.EmailDetail.getCountByQuery({
-            user_id: user._id,
-            status: "unused"
-        });
-        return res.status(200).json({
-            error: false,
-            count: total,
-            finished: finished
-        });
+    let total = await BaseController.EmailDetail.getCountByQuery({
+        user_id: user._id,
+        status: "unused"
+    });
+    return res.status(200).json({
+        error: false,
+        count: total,
+        finished: finished
+    });
 })
 
 router.get('/subscriptions', async (req, res) => {
@@ -155,6 +155,12 @@ router.get('/subscriptions', async (req, res) => {
             user_id: user._id,
             status: "unused"
         });
+        let finished = false;
+        let is_finished = await BaseController.isScanFinished(user._id);
+        if (is_finished && is_finished == "true") {
+            console.log("is_finished here-> ", is_finished);
+            finished = true;
+        }
         let limit = 20;
         let offset = (req.query.offset||0)*1
         const emails = await await BaseController.EmailDetail.getByQuery({ "status": "unused", "user_id": user._id }, 
@@ -187,7 +193,7 @@ router.get('/subscriptions', async (req, res) => {
             count: total,
             totalEmail: total,
             data: emailData,
-            finished: false,
+            finished,
         });
     } catch (err) {
         console.error(err.message, err.stack, "8");
