@@ -34,7 +34,17 @@ fm.Class("EmailDetail>.BaseModel", function (me) {
 
     Static.getIfExist = async function (query) {
         me.updateQueryValidation(query);
-        return await mongo_emaildetail.findOne(query);
+        return await mongo_emaildetail.findOne(query).lean().exec();
+    };
+
+    Static.getByQuery = async function(query, projection={}, {offset, limit}={}) {
+        me.updateQueryValidation(query);
+        return await mongo_emaildetail.find(query, projection).skip(offset).limit(limit).lean().exec();
+    };
+
+    Static.getCountByQuery = async function(query) {
+        me.updateQueryValidation(query);
+        return await mongo_emaildetail.countDocuments(query).exec();
     };
 
     Static.getMultiple = async function (query, filter) {

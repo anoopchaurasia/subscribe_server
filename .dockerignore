@@ -7,7 +7,6 @@ scripts
 .eslintignore
 .eslintrc.json
 .env
-all.js
 aws_upload
 server.*
 test.*

@@ -136,7 +136,59 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         });
         // console.log(response);
         return response.count;
-    }
+    };
+
+    Static.getByFromEmail = async function ({
+        from_emails,
+        user_id
+    }) {
+        console.log(from_emails.length, "from_emails.length");
+        let response = await client.search({
+            index: me.ES_INDEX_NAME,
+            type: '_doc',
+            body: {
+                "size": 0,
+                "query": {
+                    "bool": {
+                        "must": [{
+                                "match": {
+                                    "user_id": user_id
+                                }
+                            },
+                            {
+                                "bool": {
+                                    "filter": [{
+                                        "terms": {
+                                            "from_email": from_emails
+                                        }
+                                    }]
+                                }
+                            }
+                        ]
+                    }
+                },
+                "aggs": {
+                    "from_email": {
+                        "terms": {
+                            "field": "from_email",
+                            "size": from_emails.length
+                        },
+                        "aggs": {
+                            "unreadcount": {
+                                "filter": {
+                                    "term": {
+                                        "status": "unread"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        // console.log(response)
+        return response;
+    };
 
 
     Static.getBySender = async function ({ start_date, end_date, user, offset, limit }) {

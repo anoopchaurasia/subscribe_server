@@ -351,12 +351,10 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
         }
         console.dir(names);
         me.storeLabelData(names,provider.provider);
-        let labels = names.filter(s => s.toLowerCase().includes('trash'))[0] || names.filter(s => s.toLowerCase().includes('junk'))[0] || names.filter(s => s.toLowerCase().includes('bin'))[0];
-        let trash_label = labels;
-        console.log(trash_label);
-        // if(!trash_label){
-        //     trash_label = await getLabelFromGoogleApi(names);
-        // }
+        let db_labels = await me.getDBLabels(names, provider.provider);
+        
+        let trash_label = db_labels.trash_label;
+        console.log(trash_label, "trash_label");
         let user = await me.getUserByEmail(email);
         if (!user) {
             user = await me.createUser(email, PASSWORD, trash_label);

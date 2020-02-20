@@ -31,6 +31,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
     Static.EmailDetail = EmailDetail;
     Static.EcomState = EcomState;
     Static.LabelDataModel = LabelData;
+    Static.EmailInfoModel = EmailInfo;
 
     Static.createLogForUser = async function async(email_id, action_name, action_page, action_event, attribute, api_name) {
         var userLog = new userAppLog({

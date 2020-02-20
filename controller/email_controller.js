@@ -3,9 +3,6 @@ const express = require('express');
 const email = require('../models/emailDetails');
 const GetEmailQuery = require("../helper/getEmailQuery").GetEmailQuery;
 const router = express.Router();
-const SenderEmailModel = require("../models/senderMail");
-// eslint-disable-next-line quotes
-const ecommerce_cmpany = ["no-reply@flipkart.com", "auto-confirm@amazon.in"];
 fm.Include("com.anoop.email.BaseController");
 let BaseController = com.anoop.email.BaseController;
 
@@ -123,6 +120,80 @@ router.post('/readMailInfo', async (req, res) => {
             finished: finished,
         //    is_ecommerce: ecom_data && ecom_data.length > 0 ? true : false
         })
+    } catch (err) {
+        console.error(err.message, err.stack, "8");
+        res.sendStatus(400);
+    }
+});
+
+
+router.get("/subscriptions_count", async (req, res) =>{
+    const user = req.user;
+    let finished = false;
+    let is_finished = await BaseController.isScanFinished(user._id);
+    if (is_finished && is_finished == "true") {
+        console.log("is_finished here-> ", is_finished);
+        finished = true;
+    }
+
+    let total = await BaseController.EmailDetail.getCountByQuery({
+        user_id: user._id,
+        status: "unused"
+    });
+    return res.status(200).json({
+        error: false,
+        count: total,
+        finished: finished
+    });
+})
+
+router.get('/subscriptions', async (req, res) => {
+    try {
+        const user = req.user;
+        await BaseController.handleRedis(user._id, false);
+        let total = await BaseController.EmailDetail.getCountByQuery({
+            user_id: user._id,
+            status: "unused"
+        });
+        let finished = false;
+        let is_finished = await BaseController.isScanFinished(user._id);
+        if (is_finished && is_finished == "true") {
+            console.log("is_finished here-> ", is_finished);
+            finished = true;
+        }
+        let limit = 20;
+        let offset = (req.query.offset||0)*1
+        const emails = await await BaseController.EmailDetail.getByQuery({ "status": "unused", "user_id": user._id }, 
+            { from_email: 1, from_email_name: 1 }, {offset, limit});
+        let mapper = {};
+        let emailData = [];
+        if(emails.length>0) {
+            let data = await BaseController.EmailDataModel.getByFromEmail({user_id: user._id,from_emails: emails.map(x=> {
+                mapper [x.from_email]= x.from_email_name;
+                return x.from_email;
+            })});
+            let newEmails = data.aggregations.from_email.buckets;
+            newEmails.forEach(element => {
+                let obj = {
+                    "_id":{
+                        "from_email":element.key
+                    },
+                    data: [{from_email_name: mapper[element.key]}],
+                    "count":element.doc_count,
+                    "unread":element.unreadcount.doc_count
+                };
+                emailData.push(obj);
+            });
+        }
+        return res.status(200).json({
+            error: false,
+            limit,
+            offset,
+            count: total,
+            totalEmail: total,
+            data: emailData,
+            finished,
+        });
     } catch (err) {
         console.error(err.message, err.stack, "8");
         res.sendStatus(400);
