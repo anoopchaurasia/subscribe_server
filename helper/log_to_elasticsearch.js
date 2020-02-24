@@ -8,18 +8,18 @@ port: 51678,
 }
 
 let task_id;
-// let req = http.request(op, x=> {
-//     x.on("data", f=> {
-//         try{
-//             let info = JSON.parse(f);
-//             task_id = info.Arn.split("/")[1]
-//         } catch(e) {
-//             console.error(e);
-//         }
-//     })
-// })
-// req.on("error", console.error);
-// req.end()
+let req = http.request(op, x=> {
+    x.on("data", f=> {
+        try{
+            let info = JSON.parse(f);
+            task_id = info.Arn.split("/")[1]
+        } catch(e) {
+            console.error(e);
+        }
+    })
+})
+req.on("error", console.error);
+req.end()
 
 /// -------------------------------------------------------
 

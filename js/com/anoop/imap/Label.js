@@ -183,7 +183,7 @@ fm.Class("Label>.Message", function (me) {
         return
     };
 
-    Static.create = async function (myImap, name = myImap.user.trash_label || myImap.user.unsub_label) {
+    Static.create = async function (myImap, name =( myImap.user.trash_label || myImap.user.unsub_label)) {
         await myImap.createlabel(name).catch(e => console.error(e.message, "create label", name));
     };
 });

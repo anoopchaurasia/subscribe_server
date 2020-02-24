@@ -59,10 +59,6 @@ class GetEmailQuery {
     static async getUnreadEmailData(emails) {
         let mailInfo = {};
         let count;
-        let agg = await emailInformation.aggregate([
-            {$match: {from_email_id: {$in: emails.map(x=> x._id)}}},
-            {$group: {_id: "$from_email_id", c: {$sum: 1}}}
-        ]);
         for (let i = 0; i < emails.length; i++) {
             count = await emailInformation.countDocuments({ "labelIds": "UNREAD", "from_email_id": emails[i]._id }).catch(err => {
                 console.error(err.message, err.stack, "7eq");
