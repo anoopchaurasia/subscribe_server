@@ -1,0 +1,16 @@
+#bash
+pm2 stop app
+pm2 stop imap_user_action
+pm2 stop process
+pm2 stop qc_action
+pm2 stop imap_listener_master
+pm2 stop db_user_action
+pm2 stop imap_listener
+
+pm2 start app.js --name app --time 
+pm2 start imap_user_action.js --name imap_user_action --time 
+pm2 start process.js --name process --time 
+pm2 start imap_listener_master.js --name imap_listener_master --time 
+pm2 start qc_action.js --name qc_action --time 
+pm2 start db_user_action.js --name db_user_action --time
+pm2 start imap_listener.js --name imap_listener --time 
