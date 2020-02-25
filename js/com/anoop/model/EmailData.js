@@ -142,6 +142,8 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         from_emails,
         user_id
     }) {
+        let date = new Date(Date().now() - 12*31*24*60*60*1000);
+
         console.log(from_emails.length, "from_emails.length");
         let response = await client.search({
             index: me.ES_INDEX_NAME,
@@ -158,6 +160,13 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                             {
                                 "match": {
                                     "box_name": "INBOX"
+                                }
+                            },
+                            {
+                                "range": {
+                                    "receivedDate": {
+                                        "gte": date
+                                    }
                                 }
                             },
                             {
