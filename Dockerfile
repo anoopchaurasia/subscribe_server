@@ -8,10 +8,12 @@ WORKDIR /home/node/app
 COPY package*.json ./
 COPY ecosystem.config.js .
 
+RUN npm install pm2 -g
+
 USER node
 
 RUN npm install
-RUN npm install pm2
+ 
 
 
 COPY --chown=node:node . .
