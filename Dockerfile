@@ -11,9 +11,13 @@ COPY ecosystem.config.js .
 USER node
 
 RUN npm install
+RUN npm install pm2
+
 
 COPY --chown=node:node . .
 COPY .env_prod .env
+
+RUN chmod +x listener.sh
 
 ENV file default_env_value
 
