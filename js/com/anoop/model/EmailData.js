@@ -153,6 +153,11 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                         "must": [{
                                 "match": {
                                     "user_id": user_id
+                                },
+                            },
+                            {
+                                "match": {
+                                    "box_name": "INBOX"
                                 }
                             },
                             {
