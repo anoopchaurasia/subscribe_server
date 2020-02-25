@@ -27,14 +27,14 @@ try{
   console.error(e.message);
 }
 try {
-  oldkey = require("fs").readFileSync(`${process.env.HOME}/key/listner_key`).toString();
+  oldkey = require("fs").readFileSync(`${process.env.HOME}/app/key/listner_key`).toString();
 } catch(e) {
   console.log("no file");
 }
 
 let key = Math.random().toString(36).slice(2);
 let LISTEN_USER_KEY = process.env.LISTNER_EVENT_NAME+key;
-require("fs").writeFileSync(`${process.env.HOME}/key/listner_key`, LISTEN_USER_KEY);
+require("fs").writeFileSync(`${process.env.HOME}/app/key/listner_key`, LISTEN_USER_KEY);
 console.log('new key', LISTEN_USER_KEY);
 async function runJob(offset = 0) {
   RedisDB.delKEY(LISTEN_USER_KEY);
