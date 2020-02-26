@@ -143,65 +143,108 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         user_id
     }) {
         let date = new Date(Date.now() - 12*31*24*60*60*1000);
-
         console.log(from_emails.length, "from_emails.length");
-        let response = await client.search({
-            index: me.ES_INDEX_NAME,
-            type: '_doc',
-            body: {
-                "size": 0,
-                "query": {
-                    "bool": {
-                        "must": [{
-                                "match": {
-                                    "user_id": user_id
+        let responses = [];
+        let resolve, p = new Promise((res)=>{resolve=res}); 
+        from_emails.forEach(async x => {
+            responses.push({key: x, data: await client.search({
+                index: me.ES_INDEX_NAME,
+                type: '_doc',
+                body: {
+                    "size": 0,
+                    "query": {
+                        "bool": {
+                            "must": [{
+                                    "match": {
+                                        "user_id": user_id
+                                    }
                                 },
-                            },
-                            {
-                                "match": {
-                                    "box_name": "INBOX"
-                                }
-                            },
-                            {
-                                "range": {
-                                    "receivedDate": {
-                                        "gte": date
+                                {
+                                    "match": {
+                                        "from_email": x
+                                    }
+                                },
+                                {
+                                    "match": {
+                                        "box_name": "INBOX"
                                     }
                                 }
-                            },
-                            {
-                                "bool": {
-                                    "filter": [{
-                                        "terms": {
-                                            "from_email": from_emails
-                                        }
-                                    }]
-                                }
-                            }
-                        ]
-                    }
-                },
-                "aggs": {
-                    "from_email": {
-                        "terms": {
-                            "field": "from_email",
-                            "size": from_emails.length
-                        },
-                        "aggs": {
-                            "unreadcount": {
-                                "filter": {
-                                    "term": {
-                                        "status": "unread"
-                                    }
+                            ]
+                        }
+                    },
+                    "aggs": {
+                        "readcount": {
+                            "filter": {
+                                "term": {
+                                    "status": "unread"
                                 }
                             }
                         }
+
                     }
                 }
-            }
-        });
+            })
+            });
+            if (responses.length === from_emails.length) resolve(responses);
+        })
+        return p;
+        // let response = await client.search({
+        //     index: me.ES_INDEX_NAME,
+        //     type: '_doc',
+        //     body: {
+        //         "size": 0,
+        //         "query": {
+        //             "bool": {
+        //                 "must": [{
+        //                         "match": {
+        //                             "user_id": user_id
+        //                         },
+        //                     },
+        //                     {
+        //                         "match": {
+        //                             "box_name": "INBOX"
+        //                         }
+        //                     },
+        //                     {
+        //                         "range": {
+        //                             "receivedDate": {
+        //                                 "gte": date
+        //                             }
+        //                         }
+        //                     },
+        //                     {
+        //                         "bool": {
+        //                             "filter": [{
+        //                                 "terms": {
+        //                                     "from_email": from_emails
+        //                                 }
+        //                             }]
+        //                         }
+        //                     }
+        //                 ]
+        //             }
+        //         },
+        //         "aggs": {
+        //             "from_email": {
+        //                 "terms": {
+        //                     "field": "from_email",
+        //                     "size": from_emails.length
+        //                 },
+        //                 "aggs": {
+        //                     "unreadcount": {
+        //                         "filter": {
+        //                             "term": {
+        //                                 "status": "unread"
+        //                             }
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // });
         // console.log(response)
-        return response;
+       // return response;
     };
 
 

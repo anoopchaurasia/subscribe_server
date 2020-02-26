@@ -172,15 +172,15 @@ router.get('/subscriptions', async (req, res) => {
                 mapper [x.from_email]= x.from_email_name;
                 return x.from_email;
             })});
-            let newEmails = data.aggregations.from_email.buckets;
-            newEmails.forEach(element => {
+            data.forEach(element => {
+                if(!element.data) return;
                 let obj = {
                     "_id":{
                         "from_email":element.key
                     },
                     data: [{from_email_name: mapper[element.key]}],
-                    "count":element.doc_count,
-                    "unread":element.unreadcount.doc_count
+                    "count":element.data.hits.total.value,
+                    "unread":element.data.aggregations.unreadcount.doc_count
                 };
                 emailData.push(obj);
             });
