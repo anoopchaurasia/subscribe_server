@@ -13,13 +13,9 @@ RUN npm install pm2 -g
 USER node
 
 RUN npm install
- 
-
 
 COPY --chown=node:node . .
 COPY .env_prod .env
-
-RUN chmod +x listener.sh
 
 ENV file default_env_value
 
