@@ -173,7 +173,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                         }
                     },
                     "aggs": {
-                        "readcount": {
+                        "unreadcount": {
                             "filter": {
                                 "term": {
                                     "status": "unread"
