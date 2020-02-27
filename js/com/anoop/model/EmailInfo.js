@@ -18,17 +18,18 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
 
     let serving_array = [], update_save_timeout;
     Static.updateOrCreateAndGet = async function (query, set) {
-        me.updateQueryValidation(query, "from_email_id");
-        clearTimeout(update_save_timeout);
-        serving_array.push([query, {$setOnInsert: set}]);
-        if (serving_array.length == 200) {
-            await bulkSave(serving_array);
-            serving_array = [];
-        }
-        update_save_timeout = setTimeout(async () => {
-            await bulkSave(serving_array);
-            serving_array = [];
-        }, 10000)
+        return ;
+        // me.updateQueryValidation(query, "from_email_id");
+        // clearTimeout(update_save_timeout);
+        // serving_array.push([query, {$setOnInsert: set}]);
+        // if (serving_array.length == 200) {
+        //     await bulkSave(serving_array);
+        //     serving_array = [];
+        // }
+        // update_save_timeout = setTimeout(async () => {
+        //     await bulkSave(serving_array);
+        //     serving_array = [];
+        // }, 10000)
     };
 
     async function bulkSave(serving_array) {
