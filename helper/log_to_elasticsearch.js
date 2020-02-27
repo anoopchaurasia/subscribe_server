@@ -34,7 +34,7 @@ let elastic_client = new elasticsearch.Client( {
 
 global.sendLogToELastic = async function(data, type) {
     try{
-        send({msg: [...data].map(x=>( x && x.stack? x.stack: x)|| x).join(" "), type, p: process.env.file, t_id: task_id})
+     //   send({msg: [...data].map(x=>( x && x.stack? x.stack: x)|| x).join(" "), type, p: process.env.file, t_id: task_id})
     } catch(e) {
         console.error(e);
     }
@@ -43,18 +43,5 @@ global.sendLogToELastic = async function(data, type) {
 global.sendValueToElastic = async function(data){
     data.t_id = task_id;
     data.p = this.process.env.file
-    send(data);
-}
-;
-let senddata = [],  timeout ;
-async function send(d) {
-    d.d = new Date();
-    senddata.push(d);
-    clearTimeout(timeout);
-    if(senddata.length>=100) {
-       return bulkSave();
-    }
-    timeout = setTimeout(x=>{
-        bulkSave();
-    }, 10*1000);
+//    send(data);
 }
