@@ -61,20 +61,6 @@ router.post('/manualTrashEmailFromUser', async (req, res) => {
     }
 });
 
-router.post('/getMailListForSender', async (req, res) => {
-    try {
-        const user = req.user;
-        const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(user._id, req.body.from_email);
-        res.status(200).json({
-            error: false,
-            data: emailinfos
-        })
-    } catch (err) {
-        res.sendStatus(400);
-        console.error(err.message, err.stack, "7");
-    }
-});
-
 /*
 This Api for Getting all Mail Subscri for Home screen for App.
 This will get Filter subcription(new subscription only), unread Mail Info and total Count
@@ -163,7 +149,7 @@ router.get('/subscriptions', async (req, res) => {
         }
         let limit = 20;
         let offset = (req.query.offset||0)*1
-        const emails = await await BaseController.EmailDetail.getByQuery({ "status": "unused", "user_id": user._id }, 
+        const emails = await BaseController.EmailDetail.getByQuery({ "status": "unused", "user_id": user._id }, 
             { from_email: 1, from_email_name: 1 }, {offset, limit});
         let mapper = {};
         let emailData = [];
@@ -345,7 +331,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
 
 router.post('/getMailListForSender', async (req, res) => {
     try {
-        const emailinfos = await GetEmailQuery.getAllMailBasedOnSender(req.user._id, req.body.from_email);    
+        const emailinfos = await BaseController.EmailDataModel.getAllMailBasedOnSender(req.user._id, req.body.from_email);    
         res.status(200).json({
             error: false,
             data: emailinfos

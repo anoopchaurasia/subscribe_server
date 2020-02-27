@@ -138,6 +138,37 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         return response.count;
     };
 
+    Static.getAllMailBasedOnSender = async function (user_id, from_email){
+        await client.search({
+            index: me.ES_INDEX_NAME,
+            type: '_doc',
+            body: {
+                "size": 20,
+                "_source": "subject",
+                "query": {
+                    "bool": {
+                        "must": [{
+                                "match": {
+                                    "user_id": user_id
+                                }
+                            },
+                            {
+                                "match": {
+                                    "from_email": from_email
+                                }
+                            },
+                            {
+                                "match": {
+                                    "box_name": "INBOX"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        })
+    }
+
     Static.getByFromEmail = async function ({
         from_emails,
         user_id

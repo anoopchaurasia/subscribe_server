@@ -1,8 +1,6 @@
 'use strict'
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
-fm.Include("com.anoop.model.EmailData")
-let EmailData = com.anoop.model.EmailData; 
 class GetEmailQuery {
     /*
         This function will get All New subscription Information.
