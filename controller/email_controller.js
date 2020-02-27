@@ -239,12 +239,12 @@ router.post('/getUnsubscribeMailInfo', async (req, res) => {
     try {
         const user = req.user;
         const emailinfos = await GetEmailQuery.getAllMovedSubscription(user._id);
-        let unreadData = await GetEmailQuery.getUnreadMovedEmail(user._id);
+    //    let unreadData = await GetEmailQuery.getUnreadMovedEmail(user._id);
         const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
-            unreadData: unreadData,
+            unreadData: {},
             totalEmail: total
         })
     } catch (err) {
@@ -277,12 +277,12 @@ router.post('/getDeletedEmailData', async (req, res) => {
     try {
         const user = req.user;
         const emailinfos = await GetEmailQuery.getAllTrashSubscription(user._id);
-        let unreadData = await GetEmailQuery.getUnreadTrashEmail(user._id);
+       // let unreadData = await GetEmailQuery.getUnreadTrashEmail(user._id);
         const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
-            unreadData: unreadData,
+            unreadData: {},
             totalEmail: total
         })
     } catch (err) {
@@ -327,12 +327,12 @@ router.post('/getKeepedMailInfo', async (req, res) => {
     try {
         const user = req.user;
         const emailinfos = await GetEmailQuery.getAllKeepedSubscription(user._id);
-        let unreadData = await GetEmailQuery.getUnreadKeepedEmail(user._id);
+    //    let unreadData = await GetEmailQuery.getUnreadKeepedEmail(user._id);
         const total = await GetEmailQuery.getTotalEmailCount(user._id);
         res.status(200).json({
             error: false,
             data: emailinfos,
-            unreadData: unreadData,
+            unreadData: {},
             totalEmail: total
         })
     } catch (err) {

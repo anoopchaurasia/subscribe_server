@@ -196,9 +196,7 @@ class GetEmailQuery {
                     from_email: x.from_email
                 },
                 data: [{ from_email_name: x.from_email_name }],
-                count: await emailInformation.countDocuments({ "from_email_id": x._id }).catch(err => {
-                    console.error(err.message, err.stack, "15eq");
-                })
+                count: 0
             })
         }
         return senddata;
@@ -264,9 +262,7 @@ class GetEmailQuery {
                     from_email: x.from_email
                 },
                 data: [{ from_email_name: x.from_email_name }],
-                count: await emailInformation.countDocuments({ "from_email_id": x._id }).catch(err => {
-                    console.error(err.message, err.stack, "19eq");
-                })
+                count:0
             })
         }
         return senddata;
