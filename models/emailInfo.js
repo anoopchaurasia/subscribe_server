@@ -14,8 +14,7 @@ var emailInfo = new Schema({
         type: String
     },
     msg_uid: {
-        type: String,
-        index: true,
+        type: String
     },
     mail_data: {
         type: Object,
@@ -24,8 +23,7 @@ var emailInfo = new Schema({
         type: String,
     },
     labelIds: {
-        type: Array,
-        index: true
+        type: Array
     },
     main_label: {
         type: Array
