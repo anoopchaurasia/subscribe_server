@@ -139,7 +139,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     };
 
     Static.getAllMailBasedOnSender = async function (user_id, from_email){
-        await client.search({
+        return await client.search({
             index: me.ES_INDEX_NAME,
             type: '_doc',
             body: {
