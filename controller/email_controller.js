@@ -334,7 +334,7 @@ router.post('/getMailListForSender', async (req, res) => {
         const emailinfos = await BaseController.EmailDataModel.getAllMailBasedOnSender(req.user._id, req.body.from_email);    
         res.status(200).json({
             error: false,
-            data: emailinfos
+            data: emailinfos.hits.hits.map(x=> ({subject: x._source.subject, _id: {from_email: req.body.from_email}}))
         })
     } catch (err) {
         res.sendStatus(400);
