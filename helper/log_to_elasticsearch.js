@@ -7,12 +7,12 @@ port: 51678,
  path: `/v1/tasks?dockerid=${process.env.HOSTNAME}`
 }
 
-let task_id;
+global.task_id=null;
 let req = http.request(op, x=> {
     x.on("data", f=> {
         try{
             let info = JSON.parse(f);
-            task_id = info.Arn.split("/")[1]
+            global.task_id = info.Arn.split("/")[1]
         } catch(e) {
             console.error(e);
         }
@@ -57,30 +57,4 @@ async function send(d) {
     timeout = setTimeout(x=>{
         bulkSave();
     }, 10*1000);
-}
-
-
-async function bulkSave() {
-    let serving_array = [...senddata];
-    senddata = [];
-    if (serving_array.length == 0) return
-    let bulkBody = [];
-    serving_array.forEach(item => {
-        bulkBody.push({
-            index: {
-                _index: 'applog',
-                _type:  "_doc"
-            }
-        });
-
-        bulkBody.push(item);
-    });
-    let response = await elastic_client.bulk({ body: bulkBody }).catch(console.err);
-    let errorCount = 0;
-    response.items.forEach(item => {
-        if (item.index && item.index.error) {
-            console.log(++errorCount, item.index.error, "errorororoor");
-        }
-    });
-    console.log( `Successfully indexed ${serving_array.length - errorCount} out of ${serving_array.length} items`)
 }
