@@ -9,9 +9,10 @@ let {
     const cursor = await ImapController.UserModel.getCursor({
       inactive_at: null,
       email_client: "imap"
-    }, {trash_label:1, unsub_label}, offset);
+    }, {trash_label:1, unsub_label:1}, offset);
 
     await cursor.eachAsync(async user => {
+      if(user.trash_label === user.unsub_label) return;
       counter++;
         await ImapController.UserModel.updateUserById({
           _id: user._id

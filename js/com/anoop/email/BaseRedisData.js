@@ -16,6 +16,7 @@ fm.Class('BaseRedisData', function(me, Domain){
 
 
     Static.sendMailToScraper = async function(data, user, getBody,is_get_body){
+        if(process.env.NO_RAW_DATA_REQUIRED==="yes") return false;
         if (Domain.match(data.from)) {
             if(is_get_body===false) {
                return await getBody(data);

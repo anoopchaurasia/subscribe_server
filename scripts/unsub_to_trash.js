@@ -10,7 +10,7 @@ async function start(offset) {
   let counter = 0;
   const cursor = await ImapController.UserModel.getCursor({
     inactive_at: null,
-    trash_label: "Unsubscribed Emails",
+    "trash_label": {$not: /\[Gmail\]/ }, 
     email_client: "imap"
   }, {}, offset);
   let arr = [];
