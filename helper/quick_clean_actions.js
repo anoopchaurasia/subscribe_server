@@ -3,7 +3,8 @@
 fm.Include("com.anoop.imap.Controller", function(){
     let RedisDB = com.jeet.memdb.RedisDB;
     let ImapController = com.anoop.imap.Controller;
-
+    const WAIT_TIME_FOR_AWAIT_FAIL = 30*60*1000;
+    let timeoutconst;
     RedisDB.BLPopListner('qc_scan_user_boxes', async function(data){
         let [user_id, error_count=0, completed=[]] = data[1].split("#");
         let user = await ImapController.UserModel.getRedisUser(user_id);
@@ -12,6 +13,10 @@ fm.Include("com.anoop.imap.Controller", function(){
             ImapController.logToSentry(new Error("qc: not trying as failed 3 times already"), {user_id: user_id});
             return console.error("not trying as failed 3 times already",  data);   
         }
+        clearTimeout(timeoutconst);
+        timeoutconst = setTimeout(()=>{
+            throw new Error("no response from application action after 1 hrs");
+        }, WAIT_TIME_FOR_AWAIT_FAIL);
         try{
             if(completed.length) {
                 console.log("completed", completed);
@@ -31,6 +36,8 @@ fm.Include("com.anoop.imap.Controller", function(){
             } else{
                 await ImapController.scanFinishedQuickClean(user._id);
             }
+        }finally{
+            clearTimeout(timeoutconst);
         }
     });
 });

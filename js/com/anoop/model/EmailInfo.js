@@ -9,13 +9,6 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
         return emails.map(x => x.email_id);
     };
 
-    Static.updateOrCreateAndGet = async function (query, set) {
-        me.updateQueryValidation(query, 'from_email_id');
-        return await mongo_emailInfo.findOneAndUpdate(query, { $setOnInsert: set }, { new: true, upsert: true }).exec();
-    };
-
-
-
     let serving_array = [], update_save_timeout;
     Static.updateOrCreateAndGet = async function (query, set) {
         return ;

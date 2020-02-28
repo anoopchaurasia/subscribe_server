@@ -2,12 +2,19 @@
 fm.Include("com.anoop.imap.Controller", function(){
     let RedisDB = com.jeet.memdb.RedisDB;
     let ImapController = com.anoop.imap.Controller;
+    const WAIT_TIME_FOR_AWAIT_FAIL = 30*60*1000;
+    let timeoutconst;
     RedisDB.BLPopListner(["process_user_login", 'email_update_for_user'], async function([key ,data]){
         console.log(key, data);
+        clearTimeout(timeoutconst);
+        timeoutconst = setTimeout(()=>{
+            throw new Error("no response from application action after 1 hrs");
+        }, WAIT_TIME_FOR_AWAIT_FAIL);
         switch(key) {
-            case 'email_update_for_user': return await handleUpdate(data);
-            case 'process_user_login': return await handleLogin(data);
+            case 'email_update_for_user':  await handleUpdate(data); break;
+            case 'process_user_login':  await handleLogin(data); break;
         }
+        clearTimeout(timeoutconst);
     });
 
     async function handleLogin(data) {

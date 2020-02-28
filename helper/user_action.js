@@ -1,13 +1,18 @@
 fm.Include("com.anoop.imap.Controller", function(){
     let RedisDB = com.jeet.memdb.RedisDB;
     let ImapController = com.anoop.imap.Controller;
-
+    const WAIT_TIME_FOR_AWAIT_FAIL = 30*60*1000;
+    let timeoutconst;
     RedisDB.BLPopListner('imap_user_actions', async function(data){
         let action  = JSON.parse(data[1]);
         if(action.error_count> 3) {
             console.error(`error occured more than {action.error_count} times for `, data[1])
             return;
         }
+        clearTimeout(timeoutconst);
+        timeoutconst = setTimeout(()=>{
+            throw new Error("no response from application action after 1 hrs");
+        }, WAIT_TIME_FOR_AWAIT_FAIL);
         try{
             console.log(action.action)
             action.args[0] = await ImapController.UserModel.getRedisUser(action.args[0]);
@@ -23,6 +28,8 @@ fm.Include("com.anoop.imap.Controller", function(){
             } else {
                 ImapController.logToSentry(e, {list: 'imap_user_actions', tags: {user_id: action.args[0]._id.toHexString(), from: action.args[1].split("@")[1], action: action.action } })
             }
+        }finally{
+            clearTimeout(timeoutconst);
         }
     });
 
