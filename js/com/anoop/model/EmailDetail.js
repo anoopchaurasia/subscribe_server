@@ -14,13 +14,17 @@ fm.Class("EmailDetail>.BaseModel", function (me) {
 
     Static.updateStatus = async function (query, status) {
         me.updateQueryValidation(query);
-        return await mongo_emaildetail.findOneAndUpdate(query, { $set: { status } }).exec();
+        return await mongo_emaildetail.findOneAndUpdate(query, { $set: { status } }).exec().catch(err=>{
+            console.error(err, "Static.updateStatus", query);
+        });
     };
 
     Static.updateManyStatus = async function (query, status) {
         me.updateQueryValidation(query);
         console.log("update many status", JSON.stringify(query), status);
-        return await mongo_emaildetail.updateMany(query, { $set: { status } }).exec();
+        return await mongo_emaildetail.updateMany(query, { $set: { status } }).exec().catch(err=>{
+            console.error(err, "Static.updateManyStatus", query);
+        });
     };
 
     Static.updateOrCreateAndGet = async function (query, set) {
@@ -29,7 +33,9 @@ fm.Class("EmailDetail>.BaseModel", function (me) {
             set.status = "unused";
             console.error("no status provided")
         }
-        return await mongo_emaildetail.findOneAndUpdate(query, { $set: set }, { new: true, upsert: true }).exec();
+        return await mongo_emaildetail.findOneAndUpdate(query, { $set: set }, { new: true, upsert: true }).exec().catch(err=>{
+            console.error(err, "Static.updateOrCreateAndGet", query);
+        });
     };
 
     Static.getIfExist = async function (query) {

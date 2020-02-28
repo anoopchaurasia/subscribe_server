@@ -22,7 +22,9 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
         let query = {_id: user._id};
         let set = {$set: {last_msgId}}
         me.updateQueryValidation(query, "_id");
-        return await mongouser.findOneAndUpdate(query, set).exec();
+        return await mongouser.findOneAndUpdate(query, set).exec().catch(err=>{
+            console.error(err, "Static.updatelastMsgId", query);
+        });
     };
 
     Static.getLastMsgId = async function(user){
@@ -42,18 +44,24 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
         query = query || {_id: user._id};
         me.updateQueryValidation(query, "_id");
         console.log(query, set);
-        return await mongouser.findOneAndUpdate(query, { '$set': set}).exec();
+        return await mongouser.findOneAndUpdate(query, { '$set': set}).exec().catch(err=>{
+            console.error(err, "Static.updateInactiveUser", query);
+        });
     };
 
     Static.updateUser = async function (query, set) {
         me.updateQueryValidation(query, "email");
-        return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec();
+        return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec().catch(err=>{
+            console.error(err, "Static.updateUser", query);
+        });
     };
 
     Static.updateUserById = async function (query, set) {
         me.updateQueryValidation(query, "_id");
         me.deleteRedisUser(query);
-        return await mongouser.findOneAndUpdate(query, set).exec();
+        return await mongouser.findOneAndUpdate(query, set).exec().catch(err=>{
+            console.error(err, "Static.updatelastMsgId", query);
+        });
     };
 
     Static.create = async function(query){
@@ -89,12 +97,16 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
 
     Static.updateUserInfoOutlook = async function (query, set) {
         me.updateQueryValidation(query, "email");
-        return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec();
+        return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec().catch(err=>{
+            console.error(err, "Static.updateUserInfoOutlook", query);
+        });
     };
 
     Static.updateUserInfoOutlookWithState = async function(query,set){
         me.updateQueryValidation(query, "state");
-        return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec();
+        return await mongouser.findOneAndUpdate(query, set, { upsert: true }).exec().catch(err=>{
+            console.error(err, "Static.updateUserInfoOutlookWithState", query);
+        });
     }
 
     Static.createForOutlook = async function(query){
