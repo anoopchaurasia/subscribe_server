@@ -202,8 +202,9 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
                     }
                 }
-            })
+            }).catch(err=> console.error(err, x, "getByFromEmail"))
             });
+            responses.length && console.log("took",responses[responses.length-1] && responses[responses.length-1].data.took, x)
             if (responses.length === from_emails.length) resolve(responses);
         })
         return p;

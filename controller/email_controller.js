@@ -164,7 +164,6 @@ router.get('/subscriptions', async (req, res) => {
                 });
             });
             if(!data) return;
-            console.log("took", data.took);
             data.forEach(element => {
                 if(!element.data) return;
                 let obj = {
