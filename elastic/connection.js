@@ -3,6 +3,7 @@ module.exports = function(){
   return new elasticsearch.Client( {  
     hosts: [
       process.env.ELASTIC_URL
-    ]
+    ],
+    requestTimeout: 60*1000
   });
 }; 

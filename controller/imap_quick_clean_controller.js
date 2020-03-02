@@ -45,7 +45,7 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
             });
         });
         if(!emails) return;
-        console.log("took", emails.took);
+        console.log("getEmailsBySizeFromDb took", emails.took);
         let emailData = [];
         emails = emails.aggregations.top_tags.buckets;
         emails.forEach(element => {
@@ -85,7 +85,7 @@ router.get("/by_sender", async (req, res) => {
             });
         });
         if(!emails) return;
-        console.log("took", emails.took);
+        console.log("by_sender took", emails.took);
         let newEmails = emails.aggregations.my_buckets.buckets;
         let emailData = [];
         newEmails.forEach(element => {
@@ -202,7 +202,7 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
             });
         });
         if(!emails) return;
-        console.log("took", emails.took);
+        console.log("getEmailsByLabelFromDb took", emails.took);
         let emailData = [];
         emails = emails.aggregations.top_tags.buckets;
         emails.forEach(element => {

@@ -164,6 +164,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
     }) {
         console.log(from_emails.length, "from_emails.length");
         let responses = [];
+        let date = new Date(Date.now()-12*30*24*60*60*1000);
         let resolve, p = new Promise((res)=>{resolve=res}); 
         from_emails.forEach(async x => {
             responses.push({key: x, data: await client.search({
@@ -187,6 +188,12 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                     "match": {
                                         "box_name": "INBOX"
                                     }
+                                },{
+                                    "range": {
+                                        "receivedDate": {
+                                            "gte": date
+                                        }
+                                    }
                                 }
                             ]
                         }
@@ -204,7 +211,8 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                 }
             }).catch(err=> console.error(err, x, "getByFromEmail"))
             });
-            responses.length && console.log("took",responses[responses.length-1] && responses[responses.length-1].data.took, x)
+            let last = responses[responses.length-1];
+            last && console.log("getByFromEmail","took",last && last.data && last.data.took, x)
             if (responses.length === from_emails.length) resolve(responses);
         })
         return p;

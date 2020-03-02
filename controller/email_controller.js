@@ -147,7 +147,7 @@ router.get('/subscriptions', async (req, res) => {
             console.log("is_finished here-> ", is_finished);
             finished = true;
         }
-        let limit = 20;
+        let limit = 10;
         let offset = (req.query.offset||0)*1
         const emails = await BaseController.EmailDetail.getByQuery({ "status": "unused", "user_id": user._id }, 
             { from_email: 1, from_email_name: 1 }, {offset, limit});
