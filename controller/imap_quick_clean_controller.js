@@ -38,7 +38,14 @@ router.post('/getEmailsBySizeFromDb', async (req, res) => {
         const user = req.user;
         let emails = await Controller.EmailDataModel.getBySize({
             start_date, end_date, user
+        }).catch(err=> {
+            console.error(err, "getEmailsBySizeFromDb")
+            res.status(500).json({
+                error: true,
+            });
         });
+        if(!emails) return;
+        console.log("took", emails.took);
         let emailData = [];
         emails = emails.aggregations.top_tags.buckets;
         emails.forEach(element => {
@@ -71,7 +78,14 @@ router.get("/by_sender", async (req, res) => {
         let next = after_key;
         let emails = await Controller.EmailDataModel.getBySender({
             start_date, end_date, user, offset, limit,next
+        }).catch(err=> {
+            console.error(err, "by_sender")
+            res.status(500).json({
+                error: true,
+            });
         });
+        if(!emails) return;
+        console.log("took", emails.took);
         let newEmails = emails.aggregations.my_buckets.buckets;
         let emailData = [];
         newEmails.forEach(element => {
@@ -143,7 +157,14 @@ router.post("/delete_by_size", async (req, res) => {
 router.post('/getTotalUnreadMail', async (req, res) => {
     try {
         const user = req.user;
-        let emails = await Controller.EmailDataModel.countDocument({user});
+        let emails = await Controller.EmailDataModel.countDocument({user}).catch(err=> {
+            console.error(err, "getTotalUnreadMail")
+            res.status(500).json({
+                error: true,
+            });
+        });
+        if(!emails) return;
+        console.log("took", emails.took);
         let finished = false;
         let is_finished = await Controller.isScanFinishedQuickClean(user._id);
         if (is_finished && is_finished == "true") {
@@ -174,7 +195,14 @@ router.post('/getEmailsByLabelFromDb', async (req, res) => {
         const user = req.user;
         let emails = await Controller.EmailDataModel.getByLabel({
             start_date, end_date, user
+        }).catch(err=> {
+            console.error(err, "getEmailsByLabelFromDb")
+            res.status(500).json({
+                error: true,
+            });
         });
+        if(!emails) return;
+        console.log("took", emails.took);
         let emailData = [];
         emails = emails.aggregations.top_tags.buckets;
         emails.forEach(element => {

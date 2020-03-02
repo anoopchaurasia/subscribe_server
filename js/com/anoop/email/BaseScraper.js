@@ -18,6 +18,7 @@ fm.Class('BaseScraper', function (me, BaseController, RedisDB) {
             return
         }
         let emaildetail = await BaseController.updateOrCreateAndGetEMailDetailFromData(data, me.user_id);
+        if(!emaildetail) return;
         await BaseController.updateOrCreateAndGetEMailInfoFromData(emaildetail, data, url);
     }
 

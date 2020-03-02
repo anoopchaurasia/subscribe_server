@@ -2,7 +2,7 @@
 
 require("dotenv").config();
 require("./helper/log_to_elasticsearch")
-
+process.env.HOME = process.env.HOME||process.cwd();
 // let orig_log = console.log
 // console.log  = function() {
 //   orig_log.apply(console, [global.task_id, ...arguments]);

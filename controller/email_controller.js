@@ -157,7 +157,14 @@ router.get('/subscriptions', async (req, res) => {
             let data = await BaseController.EmailDataModel.getByFromEmail({user_id: user._id,from_emails: emails.map(x=> {
                 mapper [x.from_email]= x.from_email_name;
                 return x.from_email;
-            })});
+            })}).catch(err=> {
+                console.error(err, "subscriptions")
+                res.status(500).json({
+                    error: true,
+                });
+            });
+            if(!data) return;
+            console.log("took", data.took);
             data.forEach(element => {
                 if(!element.data) return;
                 let obj = {

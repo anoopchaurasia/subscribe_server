@@ -60,18 +60,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         await mongo_emaildata.updateMany(query, { $set: set }).exec()
     };
 
-    async function bulkSaveToDB(serving_array) {
-        if (serving_array.length == 0) return
-        var bulk = mongo_emaildata.collection.initializeOrderedBulkOp();
-        serving_array.forEach(([query, set]) => {
-            bulk.find(query).upsert().update(set);
-        });
-        await bulk.execute(function (error) {
-            if (error) return console.error(error, "while saving emaildata for user");
-            console.log("saved emaildata for user", serving_array.length);
-        });
-    }
-
+  
     Static.bulkSave = bulkSave;
     async function bulkSave(serving_array) {
         if (serving_array.length == 0) return
@@ -173,7 +162,6 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         from_emails,
         user_id
     }) {
-        let date = new Date(Date.now() - 12*31*24*60*60*1000);
         console.log(from_emails.length, "from_emails.length");
         let responses = [];
         let resolve, p = new Promise((res)=>{resolve=res}); 
@@ -219,63 +207,6 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
             if (responses.length === from_emails.length) resolve(responses);
         })
         return p;
-        // let response = await client.search({
-        //     index: me.ES_INDEX_NAME,
-        //     type: '_doc',
-        //     body: {
-        //         "size": 0,
-        //         "query": {
-        //             "bool": {
-        //                 "must": [{
-        //                         "match": {
-        //                             "user_id": user_id
-        //                         },
-        //                     },
-        //                     {
-        //                         "match": {
-        //                             "box_name": "INBOX"
-        //                         }
-        //                     },
-        //                     {
-        //                         "range": {
-        //                             "receivedDate": {
-        //                                 "gte": date
-        //                             }
-        //                         }
-        //                     },
-        //                     {
-        //                         "bool": {
-        //                             "filter": [{
-        //                                 "terms": {
-        //                                     "from_email": from_emails
-        //                                 }
-        //                             }]
-        //                         }
-        //                     }
-        //                 ]
-        //             }
-        //         },
-        //         "aggs": {
-        //             "from_email": {
-        //                 "terms": {
-        //                     "field": "from_email",
-        //                     "size": from_emails.length
-        //                 },
-        //                 "aggs": {
-        //                     "unreadcount": {
-        //                         "filter": {
-        //                             "term": {
-        //                                 "status": "unread"
-        //                             }
-        //                         }
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        // });
-        // console.log(response)
-       // return response;
     };
 
 
