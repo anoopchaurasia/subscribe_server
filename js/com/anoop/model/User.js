@@ -64,13 +64,20 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
         });
     };
 
+    function two(str) {
+        return ("00"+str).slice(-2);
+    }
+
     Static.create = async function(query){
+        let date = new Date();
         var newUser = new mongouser({
             "email": query.email,
             "password": query.password,
             "trash_label": query.trash_label,
             "email_client": "imap",
-            "primary_email":query.email
+            "primary_email":query.email,
+            "created_at": date,
+            "elastic_emaildata_index": "emaildata-"+date.getFullYear()+"."+two(date.getMonth()+1)+"."+two(date.getDate())
         });
         return await newUser.save().catch(err => {
             console.error(err.message, err.stack);

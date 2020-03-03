@@ -61,7 +61,9 @@ var UserSchema = new Schema({
     listener_active: {
         type: Boolean
     },
-    inactive_reason: String
+    inactive_reason: String,
+    created_at: Date,
+    elastic_emaildata_index: String
 });
 // client.indices.create({  
 //     index: 'user'

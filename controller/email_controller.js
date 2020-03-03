@@ -154,7 +154,7 @@ router.get('/subscriptions', async (req, res) => {
         let mapper = {};
         let emailData = [];
         if(emails.length>0) {
-            let data = await BaseController.EmailDataModel.getByFromEmail({user_id: user._id,from_emails: emails.map(x=> {
+            let data = await BaseController.EmailDataModel.getByFromEmail({user_id: user,from_emails: emails.map(x=> {
                 mapper [x.from_email]= x.from_email_name;
                 return x.from_email;
             })}).catch(err=> {
@@ -337,7 +337,7 @@ router.post('/getKeepedMailInfo', async (req, res) => {
 
 router.post('/getMailListForSender', async (req, res) => {
     try {
-        const emailinfos = await BaseController.EmailDataModel.getAllMailBasedOnSender(req.user._id, req.body.from_email);    
+        const emailinfos = await BaseController.EmailDataModel.getAllMailBasedOnSender(req.user, req.body.from_email);    
         res.status(200).json({
             error: false,
             data: emailinfos.hits.hits.map(x=> ({subject: x._source.subject, _id: {from_email: req.body.from_email}}))

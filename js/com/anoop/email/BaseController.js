@@ -108,9 +108,9 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
         return await EmailData.updateForDelete({ user_id: user_id, email_id: { $in: ids } }, { deleted_at: new Date });
     }
 
-    Static.storeEmailData = async function (data, user_id) {
-        let emailData = await EmailData.storeEamil(data, user_id);
-        return await EmailData.updateOrCreateAndGet({ from_email: emailData.from_email, email_id: emailData.email_id, user_id: emailData.user_id }, emailData);
+    Static.storeEmailData = async function (data, user) {
+        let emailData = await EmailData.storeEamil(data, user._id);
+        return await EmailData.updateOrCreateAndGet({ from_email: emailData.from_email, email_id: emailData.email_id, user_id: emailData.user_id }, emailData, user);
     }
 
     Static.saveManualEmailData = async function (user_id, data) {

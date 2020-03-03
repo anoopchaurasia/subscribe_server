@@ -32,26 +32,20 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         });
     }
 
-    let serving_array = [], serving_array_db = [], update_save_timeout;
-    Static.updateOrCreateAndGet = async function (query, set) {
+    let serving_array = [], update_save_timeout;
+    Static.updateOrCreateAndGet = async function (query, set, user) {
         me.updateQueryValidation(query);
         clearTimeout(update_save_timeout);
         serving_array.push(set);
-      //  serving_array_db.push([query, { $set: set }]);
         if (serving_array.length == 200) {
             let arr = [...serving_array];
-         //   let arr_db = [...serving_array_db];
             serving_array = [];
-           // serving_array_db = [];
-           // await bulkSaveToDB(arr_db);
-            await bulkSave(arr);
+            await bulkSave(arr, user);
         }
         update_save_timeout = setTimeout(async () => {
             let arr = [...serving_array];
-            //  await bulkSaveToDB(serving_array_db);
             serving_array = [];
-            await bulkSave(arr);
-           // serving_array_db = [];
+            await bulkSave(arr, user);
         }, 30*1000)
     };
 
@@ -62,13 +56,13 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
   
     Static.bulkSave = bulkSave;
-    async function bulkSave(serving_array) {
+    async function bulkSave(serving_array, user) {
         if (serving_array.length == 0) return
         let bulkBody = [];
         serving_array.forEach(item => {
             bulkBody.push({
                 index: {
-                    _index: me.index_name,
+                    _index: user.elastic_emaildata_index || me.index_name,
                     _type: "_doc",
                     _id: item.user_id + item.email_id + item.box_name
                 }
@@ -92,7 +86,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.countDocument = async function ({ user }) {
         let response = await client.count({
-            index: me.index_name,
+            index: user.elastic_emaildata_index || me.index_name,
             type: '_doc',
             body: {
                 "query": {
@@ -127,9 +121,9 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         return response.count;
     };
 
-    Static.getAllMailBasedOnSender = async function (user_id, from_email){
+    Static.getAllMailBasedOnSender = async function (user, from_email){
         return await client.search({
-            index: me.ES_INDEX_NAME,
+            index: user.elastic_emaildata_index || me.index_name,
             type: '_doc',
             body: {
                 "size": 20,
@@ -138,7 +132,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                     "bool": {
                         "must": [{
                                 "match": {
-                                    "user_id": user_id
+                                    "user_id": user._id
                                 }
                             },
                             {
@@ -160,7 +154,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getByFromEmail = async function ({
         from_emails,
-        user_id
+        user
     }) {
         console.log(from_emails.length, "from_emails.length");
         let responses = [];
@@ -168,7 +162,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         let resolve, p = new Promise((res)=>{resolve=res}); 
         from_emails.forEach(async x => {
             responses.push({key: x, data: await client.search({
-                index: me.ES_INDEX_NAME,
+                index: user.elastic_emaildata_index || me.index_name,
                 type: '_doc',
                 body: {
                     "size": 0,
@@ -176,7 +170,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                         "bool": {
                             "must": [{
                                     "match": {
-                                        "user_id": user_id
+                                        "user_id": user._id
                                     }
                                 },
                                 {
@@ -221,7 +215,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getBySender = async function ({ start_date, end_date, user, offset, limit }) {
         let response = await client.search({
-            index: me.index_name,
+            index: user.elastic_emaildata_index || me.index_name,
             type: '_doc',
             body: {
                 "size": 0,
@@ -251,7 +245,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getByLabel = async function ({ start_date, end_date, user }) {
         let response = await client.search({
-            index: me.index_name,
+            index: user.elastic_emaildata_index|| me.index_name,
             type: '_doc',
             body: {
                 query: ES_EmailData.commonQuery({ start_date, end_date, user_id: user._id }),
@@ -278,7 +272,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getBySize = async function ({ start_date, end_date, user }) {
         let response = await client.search({
-            index: me.index_name,
+            index: user.elastic_emaildata_index|| me.index_name,
             type: '_doc',
             body: {
                 query: ES_EmailData.commonQuery({ start_date, end_date, user_id: user._id }),
@@ -304,7 +298,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdsBySize = async function ({ start_date, end_date, user, size_group }) {
         let response = await client.search({
-            index: me.index_name,
+            index: user.elastic_emaildata_index || me.index_name,
             type: '_doc',
             body: {
                 "size":0,
@@ -328,7 +322,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdsByLabelName = async function ({ start_date, end_date, user, label_name }) {
         let response = await client.search({
-            index: me.index_name,
+            index:user.elastic_emaildata_index || me.index_name,
             type: '_doc',
             body: {
                 "size":0,
@@ -352,7 +346,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdsByFromEmail = async function ({ start_date, end_date, user, from_emails }) {
         let response = await client.search({
-            index: me.index_name,
+            index:user.elastic_emaildata_index|| me.index_name,
             type: '_doc',
             body: {
                 "size": 0,
@@ -375,7 +369,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdByBoxAndFromEmail = async function ({ start_date, end_date, user, from_emails, box_name, offset }) {
         let response = await client.search({
-            index: me.index_name,
+            index:user.elastic_emaildata_index|| me.index_name,
             type: '_doc',
             body: {
                 "_source": "email_id",
@@ -412,7 +406,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdByBox = async function ({ start_date, end_date, user, box_name, offset }) {
         let response = await client.search({
-            index: me.index_name,
+            index:user.elastic_emaildata_index|| me.index_name,
             type: '_doc',
             body: {
                 "_source": "email_id",
@@ -427,7 +421,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
 
     Static.getIdByLabelList = async function ({ start_date, end_date, user, box_name, offset }) {
         let response = await client.search({
-            index: me.index_name,
+            index:user.elastic_emaildata_index|| me.index_name,
             type: '_doc',
             body: {
                 "_source": "email_id",
@@ -466,31 +460,22 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         }
     }
 
-    Static.updateDeleteDbBySender = async function ({ start_date, end_date, user_id, from_emails }) {
-        updateQcDeleteBySender(start_date, end_date, user_id, from_emails);
-        let match = commonQueryForUpdate({ user_id, start_date, end_date });
-        match.from_email = { $in: from_emails }
-        return updateQcDeleteCommon(match);
+    Static.updateDeleteDbBySender = async function ({ start_date, end_date, user, from_emails }) {
+        updateQcDeleteBySender(start_date, end_date, user, from_emails);
     };
 
-    Static.updateDeleteDbByLabel = async function ({ start_date, end_date, user_id, label_name }) {
-        updateQcDeleteByLabel(start_date, end_date, user_id, label_name);
-        let match = commonQueryForUpdate({ user_id, start_date, end_date });
-        match.box_name = { $in: label_name };
-        return updateQcDeleteCommon(match);
+    Static.updateDeleteDbByLabel = async function ({ start_date, end_date, user, label_name }) {
+        updateQcDeleteByLabel(start_date, end_date, user, label_name);
     };
 
-    Static.updateDeleteDbBySize = async function ({ start_date, end_date, user_id, size_group }) {
-        updateQcDeleteBySize(start_date, end_date, user_id, size_group);
-        let match = commonQueryForUpdate({ user_id, start_date, end_date });
-        match.size_group = { $in: size_group }
-        return updateQcDeleteCommon(match);
+    Static.updateDeleteDbBySize = async function ({ start_date, end_date, user, size_group }) {
+        updateQcDeleteBySize(start_date, end_date, user, size_group);
     };
 
-    async function updateQcDeleteBySender(start_date, end_date, user_id, from_emails) {
+    async function updateQcDeleteBySender(start_date, end_date, user, from_emails) {
         let response = await client.updateByQuery(
             {
-                index: me.index_name,
+                index: user.elastic_emaildata_index || me.index_name,
                 type: "_doc",
                 body: {
                     "query": {
@@ -502,7 +487,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                     }
                                 }
                             ],
-                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id })
+                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user._id })
                         }
                     },
                     "script": ES_EmailData.setDeleteScript()
@@ -511,10 +496,10 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         return response;
     }
 
-    async function updateQcDeleteByLabel(start_date, end_date, user_id, box_name) {
+    async function updateQcDeleteByLabel(start_date, end_date, user, box_name) {
         let response = await client.updateByQuery(
             {
-                index: me.index_name, type: "_doc", body: {
+                index: user.elastic_emaildata_index || me.index_name, type: "_doc", body: {
                     "query": {
                         "bool": {
                             "filter": [
@@ -524,7 +509,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                     }
                                 }
                             ],
-                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id })
+                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id: user._id })
                         }
                     },
                     "script": ES_EmailData.setDeleteScript()
@@ -533,10 +518,10 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
         return response;
     }
 
-    async function updateQcDeleteBySize(start_date, end_date, user_id, size_group) {
+    async function updateQcDeleteBySize(start_date, end_date, user, size_group) {
         let response = await client.updateByQuery(
             {
-                index: me.index_name, type: "_doc", body: {
+                index: user.elastic_emaildata_index|| me.index_name, type: "_doc", body: {
                     "query": {
                         "bool": {
                             "filter": [
@@ -546,7 +531,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                     }
                                 }
                             ],
-                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id })
+                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id: user._id })
                         }
                     },
                     "script": ES_EmailData.setDeleteScript()

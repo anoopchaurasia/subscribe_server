@@ -203,7 +203,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
             'deleted_at':null,
             'labelIds': emailbody.labelIds,
             'box_name': me.myImap.box.name
-        }, me.myImap.user._id);
+        }, me.myImap.user);
     }
 
     this.deletePreviousMessages = async function () {
