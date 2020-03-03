@@ -154,7 +154,7 @@ router.get('/subscriptions', async (req, res) => {
         let mapper = {};
         let emailData = [];
         if(emails.length>0) {
-            let data = await BaseController.EmailDataModel.getByFromEmail({user_id: user,from_emails: emails.map(x=> {
+            let data = await BaseController.EmailDataModel.getByFromEmail({user: user,from_emails: emails.map(x=> {
                 mapper [x.from_email]= x.from_email_name;
                 return x.from_email;
             })}).catch(err=> {

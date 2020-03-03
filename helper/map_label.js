@@ -25,9 +25,10 @@ async function handleGmail(labels) {
     let list = await mongoose_labels.find({label_name: {$in: labels}, en_name: {$exists: true}}, {en_name: 1, label_name:1}).lean().exec();
     has_both = hasTrashAndAll(list.map(x=>x.en_name));
     if(has_both) return list.map(x=>[x.label_name,x.en_name]); 
-    console.log("translated")   
     let translated = (await translator.translate(labels)).data.translations.map((x)=>  x.translatedText.replace(/\s\/\s/, "/").replace(/\[Google Mail\]/, "[Gmail]").toLowerCase() );
-    return labels.map((x,i )=> [x, translated[i]])
+    let tran_labels = labels.map((x,i )=> [x, translated[i]])
+    console.log("translated", tran_labels)
+    return tran_labels;
 }
 
 
