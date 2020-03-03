@@ -487,7 +487,7 @@ fm.Class("EmailData>.BaseModel", function (me, ES_EmailData) {
                                     }
                                 }
                             ],
-                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user._id })
+                            "must": ES_EmailData.commonMatchQuery({ start_date, end_date, user_id: user._id })
                         }
                     },
                     "script": ES_EmailData.setDeleteScript()
