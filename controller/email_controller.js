@@ -289,7 +289,8 @@ this will changed changed is_keeped value in database for keped subscription
 */
 router.post('/keepMailInformation', async (req, res) => {
     try {
-        const from_email = req.body.from_email;
+        let from_email = req.body.from_email;
+        if(typeof from_email=='object') from_email = {$in: from_email}; 
         const user = req.user;
         var oldvalue = {
             "from_email": from_email,
