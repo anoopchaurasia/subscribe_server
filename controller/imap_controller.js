@@ -88,6 +88,7 @@ router.post('/saveOnLaunchDeviceData', async (req, res) => {
     let userUniqueId = deviceData['serialno'] + uniqid() + uniqid() + uniqid() + uniqid();
     deviceData['user_id'] = null;
     deviceData['userUniqueId'] = userUniqueId;
+    console.log("appsflyeruid set", deviceData.appsFlyerUID);
     deviceData['deviceIpAddress'] = { "ip": req.header('x-forwarded-for') || req.connection.remoteAddress };
     await DeviceInfo.findOneAndUpdate({ "userUniqueId": userUniqueId }, { $set: deviceData }, { upsert: true }).catch(err => {
         console.error(err.message, err.stack, "27");

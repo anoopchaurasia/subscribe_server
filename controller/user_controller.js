@@ -27,24 +27,25 @@ router.post('/saveDeviceInfo', async (req, res) => {
     deviceData['user_id'] = req.user._id;
     deviceData['deviceIpAddress'] = { "ip": req.header('x-forwarded-for') || req.connection.remoteAddress };
     let uniqueLaunchDeviceId = req.body['uniqueLaunchDeviceId'];
-    let checkUserDevice = await DeviceInfo.findOne({ "user_id": deviceData['user_id'] }).catch(err => {
+    let checkUserDevice = await DeviceInfo.findOne({ "user_id": deviceData['user_id'] }, {_id:1}).catch(err => {
         Sentry.captureException(err);
         console.error(err.message, err.stack, "27");
     });
 
-    //user does not exisst
-    if (!checkUserDevice) {
-            await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, deviceData, { upsert: true }).catch(err => {
-                Sentry.captureException(err); 
-                console.error(err.message, err.stack, "273");
-            });
-    } else {
-        await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, deviceData, { upsert: true }).catch(err => {
+    if(checkUserDevice) {
+        await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, {$set: deviceData}, { upsert: true }).catch(err => {
             Sentry.captureException(err);
             console.error(err.message, err.stack, "273");
         });
-        if (uniqueLaunchDeviceId) {
-            await DeviceInfo.findOneAndUpdate({ "userUniqueId": uniqueLaunchDeviceId }, { $set: { "deleted_at": new Date(),"user_id": deviceData['user_id']} }, { upsert: true }).catch(err => {
+    } else if (uniqueLaunchDeviceId) {
+        let deviceinfodb = await DeviceInfo.findOne({ "userUniqueId": uniqueLaunchDeviceId}).exec();
+        if(deviceinfodb.user_id && deviceinfodb.user_id.toHexString() != req.user._id.toHexString() ) {
+            await DeviceInfo.findOneAndUpdate({ "userUniqueId": uniqueLaunchDeviceId }, {$set: deviceData}, { upsert: true }).catch(err => {
+                Sentry.captureException(err);
+                console.error(err.message, err.stack, "432");
+            });
+        } else {
+            await DeviceInfo.findOneAndUpdate({ "userUniqueId": uniqueLaunchDeviceId }, {$set: deviceData}, { upsert: true }).catch(err => {
                 Sentry.captureException(err);
                 console.error(err.message, err.stack, "432");
             });

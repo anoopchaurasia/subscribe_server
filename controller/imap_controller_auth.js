@@ -5,7 +5,7 @@ const router = express.Router();
 const email = require('../models/emailDetails');
 const emailInformation = require('../models/emailInfo');
 const AppsflyerEvent = require("./../helper/appsflyerEvent").AppsflyerEvent;
-
+const DeviceInfoModel = require("../models/deviceoInfo");
 fm.Include("com.anoop.imap.Controller");
 let Controller = com.anoop.imap.Controller;
 
@@ -18,6 +18,8 @@ router.post('/login_success', async (req, res) => {
         console.log("appsflyer_id ",appsFlyer_id);
         if (appsFlyer_id) {
             await AppsflyerEvent.sendEventToAppsflyer(appsFlyer_id, "unique_user_login");
+            await DeviceInfoModel.findOneAndUpdate({user_id: req.user._id}, {$set: {appsFlyerUID: appsFlyer_id}}).exec();
+            await Controller.UserModel.deleteRedisUser(req.user);
         } else {
             await AppsflyerEvent.sendEventToAppsflyer(appsFlyer_id, "appsflyer_id_not_found");
         }
