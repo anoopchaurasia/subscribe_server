@@ -66,6 +66,10 @@ This Api for Getting all Mail Subscri for Home screen for App.
 This will get Filter subcription(new subscription only), unread Mail Info and total Count
 */
 router.post('/readMailInfo', async (req, res) => {
+   await readMailInfo(req, res);
+});
+
+async function readMailInfo(req, res){
     try {
         let only_count = "Home_page" === (req.headers["From-Page"] || req.headers["from-page"]);
         let finished = false;
@@ -110,8 +114,7 @@ router.post('/readMailInfo', async (req, res) => {
         console.error(err.message, err.stack, "8");
         res.sendStatus(400);
     }
-});
-
+}
 
 router.get("/subscriptions_count", async (req, res) =>{
     const user = req.user;
@@ -136,6 +139,7 @@ router.get("/subscriptions_count", async (req, res) =>{
 router.get('/subscriptions', async (req, res) => {
     try {
         const user = req.user;
+        if(user.email_client=="outlook") return readMailInfo(req, res);
         await BaseController.handleRedis(user._id, false);
         let total = await BaseController.EmailDetail.getCountByQuery({
             user_id: user._id,
