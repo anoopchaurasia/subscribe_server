@@ -80,11 +80,12 @@ fm.Class("MyImap", function (me) {
 
     this.connect = async function (provider) {
         provider = provider || this.provider;
-        let { password, email } = me.user;
+        let { password, email, authtoken } = me.user;
         let original_password = me.decryptPassword(password);
         return new Promise((resolve, reject) => {
             me.imap = new Imap({
                 user: email,
+                xoauth: authtoken,
                 password: original_password,
                 host: provider.imap_host,
                 port: provider.port,

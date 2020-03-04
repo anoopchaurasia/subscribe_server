@@ -2,6 +2,7 @@ fm.Package("com.anoop.model");
 let ObjectId = require("mongoose").Types.ObjectId;
 const mongouser = require('../../../../models/user');
 const mongodevice = require("../../../../models/deviceoInfo");
+const authtokenModel = require("../../../../models/authoToken");
 fm.Import("...jeet.memdb.RedisDB");
 fm.Class("User>.BaseModel", function (me, RedisDB) {
     this.setMe = _me => me = _me;
@@ -141,6 +142,9 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
     Static.getRedisUser = async function(user_id){
         let key= "u_"+user_id
         let user = await RedisDB.base.getJSON(key);
+        if(user.email_client=="outlook" && !user.authtoken) {
+            user=null;
+        }
         if(user) {
             user._id = ObjectId(user._id);
             console.log("got redis user");
@@ -154,6 +158,11 @@ fm.Class("User>.BaseModel", function (me, RedisDB) {
         }
         let device = await mongodevice.findOne({user_id: user._id}, {appsFlyerUID:1}).lean().exec() 
         user.af_uid = device && device.appsFlyerUID;
+        if(user.email_client==="outlook") {
+            let authtoken = authtokenModel.findOne({user_id: user._id});
+            user.authtoken = authtoken.access_token
+            user.expiry_date = authtoken.expiry_date;
+        }
         console.log(device, "device");
         ["image_url",
         "name",
