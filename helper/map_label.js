@@ -13,8 +13,8 @@ module.exports.map = async function(labels, provider){
 function hasTrashAndAll(labels) {
     let has_all_email= false, has_trash_email = false; 
     labels.forEach(x=> {
-        if(x.toLowerCase() === "[gmail]/all email") has_all_email = true;
-        if(x.toLowerCase() === "[gmail]/trash" || x.toLowerCase() === "[gmail]/bin") has_trash_email = true;
+        if( ["[gmail]/all mail", "[gmail]/all mails", "[gmail]/all email", "[gmail]/all emails"].includes(x.toLowerCase())) has_all_email = true;
+        if(["[gmail]/trash", "[gmail]/bin", "[gmail]/delete", "[gmail]/lightweight"].includes(x.toLowerCase())) has_trash_email = true;
     });
     return has_all_email && has_trash_email;
 }

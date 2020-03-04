@@ -58,25 +58,6 @@ fm.Class("EmailInfo>.BaseModel", function (me) {
         }
     };
 
-    Static.bulkInsert = async function (bulkdata, from_email_id) {
-        var bulk = mongo_emailInfo.collection.initializeUnorderedBulkOp();
-        await bulkdata.asynForEach(async emailInfo => {
-            emailInfo = JSON.parse(emailInfo);
-            let emailInfoNew = await me.fromEamil(emailInfo, from_email_id, "");
-            try {
-                bulk.find({ "email_id": emailInfo.email_id, from_email_id }).upsert().update({ $set: emailInfoNew });
-            } catch (err) {
-                console.error(err.message, err.stack, "65");
-            }
-        });
-        if (bulk.length > 0) {
-            bulk.execute(function (err, result) {
-                if (err) {
-                    console.error(err, "66")
-                }
-            })
-        }
-    };
 
     Static.getBulkCount = async function (emaildetail_ids, aggregatedat) {
         let steps = [];

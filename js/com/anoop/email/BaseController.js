@@ -58,7 +58,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
             if(provider==="gmail") {
                 if(["[gmail]/trash", "[gmail]/bin", "[gmail]/delete", "[gmail]/lightweight"].includes(x.en_name) || ["[gmail]/корзина"].includes(x.label_name.toLowerCase()) ) {
                     trash_label = x.label_name;
-                } else if(x.en_name==="[gmail]/all mail") {
+                } else if(["[gmail]/all mail", "[gmail]/all mails", "[gmail]/all email", "[gmail]/all emails"].includes(x.en_name)) {
                     all_email_label = x.label_name;
                 } else if((x.en_name==="all" || x.en_name==="all messages") && !all_email_label) {
                     all_email_label = x.label_name;
@@ -335,9 +335,7 @@ fm.Class('BaseController', function (me, EmailDetail, EmailInfo, User, Token, Pr
                 if (mail.length != 0) {
                     let result = await RedisDB.findPercent(mail);
                     if (result) {
-                        let from_email_id = await me.updateOrCreateAndGetEMailDetailFromData(JSON.parse(mail[0]), user_id)
-                        // console.log(from_email_id)
-                        await EmailInfo.bulkInsert(mail, from_email_id._id);
+                        await me.updateOrCreateAndGetEMailDetailFromData(JSON.parse(mail[0]), user_id)
                     }
                 }
             });
