@@ -344,7 +344,12 @@ fm.Class("Controller>com.anoop.email.BaseController", function (me, MyImap, Scra
             email,
             password: PASSWORD
         }, provider.provider);
-        await myImap.connect(provider);
+        try {
+            await myImap.connect(provider);
+        } catch(e) {
+            console.error(e);
+            throw new Error(e);
+        }
         let names = await myImap.getLabels();
         if (!names.includes("Unsubscribed Emails")) {
             await Label.create(myImap, "Unsubscribed Emails");

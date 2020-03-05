@@ -17,8 +17,9 @@ router.post('/loginWithImap', async (req, res) => {
     try {
         let profile = await saveProviderInfo(req.body.username.toLowerCase());
         let ipaddress = req.header('x-forwarded-for') || req.connection.remoteAddress;
-        let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile,  req.query.client, ipaddress).catch(err => {
-            console.error(err.message, err, "imap_connect_error", req.body.username);
+        let response = await Controller.login(req.body.username.toLowerCase(), req.body.password, profile,  req.query.client, ipaddress)
+        .catch(err => {
+            console.error(err.message, "imap_connect_error", req.body.username);
             Controller.logToSentry(err, { tags: { email_domain: req.body.username.split("@")[1], pass_length: req.body.password.length } })
             let attribute = {
                 "type": "error",
@@ -27,41 +28,45 @@ router.post('/loginWithImap', async (req, res) => {
             };
             Controller.createLogForUser(req.body.username, "login", "login_page", "imap_login", attribute, "loginWithImap");
             if (err.message.includes("enabled for IMAP") || err.message.includes("IMAP is disabled") || err.message.includes("IMAP use")) {
-                return res.status(403).json({
+                res.status(403).json({
                     error: true,
                     status: 403,
                     data: err.message,
                     message: "IMAP is disabled."
                 })
+                return;
             } else if (err.message.includes("Invalid credentials")) {
-                return res.status(401).json({
+                res.status(401).json({
                     error: true,
                     status: 401,
                     data: err.message,
                     message: "Invalid Credentials."
                 })
+                return;
             } else if (err.message.includes("Timed out")) {
-                return res.status(402).json({
+                res.status(402).json({
                     error: true,
                     status: 402,
                     data: err.message,
                     message: "Invalid Credential."
                 })
+                return;
             } else if (err.message.includes("Application specific password")) {
-                return res.status(404).json({
+                res.status(404).json({
                     error: true,
                     status: 404,
                     data: err.message,
                     message: "Application Specific Password Required."
                 })
+                return;
             } else {
-
-                return res.status(404).json({
+                res.status(404).json({
                     error: true,
                     status: 404,
                     data: err.message,
                     message: "Invalid Credentials."
                 })
+                return;
             }
         });
         if (response) {

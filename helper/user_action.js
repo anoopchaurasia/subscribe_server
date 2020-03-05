@@ -26,7 +26,7 @@ fm.Include("com.anoop.imap.Controller", function(){
                 console.warn("user imap_user_actions crashed restarting reason: ", e.message, data[1]);
                 reAddToRedis(data, e);
             } else {
-                ImapController.logToSentry(e, {list: 'imap_user_actions', tags: {user_id: action.args[0]._id.toHexString(), from: action.args[1].split("@")[1], action: action.action } })
+                ImapController.logToSentry(e, {list: 'imap_user_actions', tags: {user_id: action.args[0]._id.toHexString(), action: action.action } })
             }
         }finally{
             clearTimeout(timeoutconst);
@@ -38,7 +38,7 @@ fm.Include("com.anoop.imap.Controller", function(){
         action.error_count = action.error_count || 0
         action.error_count++;
         if(action.error_count) {
-            ImapController.logToSentry(err, {list: 'imap_user_actions', error_count: action.error_count, tags: {user_domain: action.args[0], from: action.args[1].split("@")[1], action: action.action } })
+            ImapController.logToSentry(err, {list: 'imap_user_actions', error_count: action.error_count, tags: {user_domain: action.args[0], action: action.action } })
         }
         RedisDB.lPush('imap_user_actions', JSON.stringify(action))
     }

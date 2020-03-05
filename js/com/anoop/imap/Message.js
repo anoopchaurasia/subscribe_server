@@ -109,7 +109,7 @@ fm.Class("Message", function (me) {
             fetch.on('message', async function (msg, seqNo) {
                 msgs.push(1);
                 try {
-                    await detector(await parseMessage(msg, 'utf8').catch(err => console.error(err)));
+                    await detector(await parseMessage(msg, 'utf8').catch(err => console.error(err))).catch(err=> console.error(err));
                 } finally {
                     msgs.pop();
                     msgs.length === 0 && ended && resolve();

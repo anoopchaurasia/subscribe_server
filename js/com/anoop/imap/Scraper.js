@@ -101,11 +101,11 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                     } else if (status == "trash") {
                         trash_list.push(data.email_id);
                     }
-                });
+                }).catch(err=> console.error(err));
                 let match_domain = await me.sendMailToScraper(Parser.parse(emailbody, parsed, me.myImap.user), me.myImap.user,
                     async function getBodyCB(data) {
                         store_list.push(data.id);
-                    }, is_get_body);
+                    }, is_get_body).catch(error=> console.error(error));
                 if(has_ecom!=true){
                     has_ecom = match_domain;
                 }
@@ -115,7 +115,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
                 if(amazon==false && emailbody.from_email=="auto-confirm@amazon.in"){
                     amazon = true
                 }
-            }, is_get_body);
+            }, is_get_body).catch(error=> console.error(error));
         if (store_list.length) {
             await Message.getBatchMessage(me.myImap.imap, store_list, async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
@@ -185,7 +185,7 @@ fm.Class("Scraper>..email.BaseScraper", function (me, Message, Parser, Label) {
         return new Promise(async (resolve, reject) => {
             await Message.getBatchMessage(me.myImap.imap, uids, async (parsed) => {
                 let emailbody = await Parser.getEmailBody(parsed, labels);
-                await QCStore(emailbody, status, parsed);
+                await QCStore(emailbody, status, parsed).catch(err=> console.error(err));
             }, false);
             resolve();
         });
