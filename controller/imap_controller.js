@@ -66,7 +66,6 @@ router.post('/loginWithImap', async (req, res) => {
                     data: err.message,
                     message: "Invalid Credentials."
                 })
-                return;
             }
         });
         if (response) {
@@ -76,10 +75,6 @@ router.post('/loginWithImap', async (req, res) => {
                 data: response,
                 provider: profile.provider
             })
-        } else {
-            return res.status(404).json({
-                error: true
-            });
         }
     } catch (error) {
         console.log("here", error)
