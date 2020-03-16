@@ -32,7 +32,7 @@ router.post('/saveDeviceInfo', async (req, res) => {
         console.error(err.message, err.stack, "27");
     });
 
-    if(checkUserDevice) {
+    if(checkUserDevice && !uniqueLaunchDeviceId) {
         await DeviceInfo.findOneAndUpdate({ "user_id": deviceData['user_id'] }, {$set: deviceData}, { upsert: true }).catch(err => {
             Sentry.captureException(err);
             console.error(err.message, err.stack, "273");

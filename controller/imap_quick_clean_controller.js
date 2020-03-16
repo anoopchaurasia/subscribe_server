@@ -163,7 +163,6 @@ router.post('/getTotalUnreadMail', async (req, res) => {
                 error: true,
             });
         });
-        if(!emails) return;
         /// not available  console.log("took", emails.took);
         let finished = false;
         let is_finished = await Controller.isScanFinishedQuickClean(user._id);
